@@ -1,0 +1,15 @@
+clang
+
+-std=gnu++14
+
+-Iinclude
+-Iinclude/posix
+-I/usr/local/Cellar/cpputest/4.0/include
+
+-isystem /usr/local/include
+-isystem /Library/Developer/CommandLineTools/usr/bin/../include/c++/v1
+-isystem /Library/Developer/CommandLineTools/usr/lib/clang/12.0.0/include
+-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
+-isystem /Library/Developer/CommandLineTools/usr/include
+
+-lpthread
