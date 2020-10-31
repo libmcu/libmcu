@@ -1,5 +1,5 @@
-#ifndef MONONN_JOBPOOL_H
-#define MONONN_JOBPOOL_H 1
+#ifndef JOBPOOL_H
+#define JOBPOOL_H 1
 
 #include <stddef.h>
 #include <stdint.h>
@@ -43,4 +43,4 @@ job_error_t job_delete(jobpool_t *pool, job_t *job);
 uint8_t job_count(jobpool_t *pool);
 const char *job_stringify_error(job_error_t error_code);
 
-#endif /* MONONN_JOBPOOL_H */
+#endif /* JOBPOOL_H */
