@@ -42,7 +42,7 @@ static inline void list_add_tail(struct list *node, struct list *head)
 	(*ref)->next = node;
 }
 
-static inline int list_del(struct list *node, struct list *head)
+static inline int list_del(const struct list *node, struct list *head)
 {
 	struct list **ref = &head;
 
@@ -58,7 +58,7 @@ static inline int list_del(struct list *node, struct list *head)
 	return 0;
 }
 
-static inline bool list_empty(struct list *head)
+static inline bool list_empty(const struct list *head)
 {
 	if (head->next == head) {
 		return true;

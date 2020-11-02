@@ -94,7 +94,7 @@ static size_t memory_kvstore_read(const kvstore_t *kvstore,
 {
 	const struct memory_kvstore *obj =
 		(const struct memory_kvstore *)kvstore;
-	struct memory_kvstore_entry *entry = find_key(obj, key);
+	const struct memory_kvstore_entry *entry = find_key(obj, key);
 	if (entry) {
 		size_t size = MIN(bufsize, entry->value_size);
 		memcpy(buf, entry->value, size);
