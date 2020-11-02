@@ -1,14 +1,5 @@
-ifndef SILENCE
-SILENCE = @
-endif
-
-CPPUTEST_HOME ?= /usr
-ifneq ($(shell uname), Darwin)
-TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
-endif
-
 TEST_SRC_FILES += test_runners/test_all.cpp
-MOCKS_SRC_DIRS += mocks
+#MOCKS_SRC_DIRS += mocks
 INCLUDE_DIRS   += fakes spies
 
 export TEST_TARGET = $(BUILDIR)/$(COMPONENT_NAME)_tests
@@ -34,10 +25,22 @@ export CPPUTEST_WARNINGFLAGS = \
 	-Wno-packed \
 	-Wno-unused-parameter \
 	\
+	-Werror
+
+ifndef SILENCE
+SILENCE = @
+endif
+
+CPPUTEST_HOME ?= /usr
+ifeq ($(shell uname), Darwin)
+CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=poison-system-directories \
 	-Wno-error=c++11-extensions \
 	-Wno-error=language-extension-token \
-	-Wno-error=unused-function \
-	-Werror
+	-Wno-error=covered-switch-default \
+	-Wno-error=unused-function
+else
+TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
+endif
 
 include ../external/cpputest/build/MakefileWorker.mk

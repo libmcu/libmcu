@@ -252,6 +252,7 @@ const char *job_stringify_error(job_error_t error_code)
 	case JOB_ERROR_PARAM:
 		return "wrong parameters";
 	case JOB_ERROR:
+	default:
 		break;
 	}
 

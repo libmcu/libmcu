@@ -21,7 +21,8 @@ static inline const char *mode_stringify(runmode_t mode)
 	case REPORT_MODE:
 		return "report";
 	case UNKNOWN_MODE:
-		return "unknown";
+	default:
+		break;
 	}
 
 	return "unknown";

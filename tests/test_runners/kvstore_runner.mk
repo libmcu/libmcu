@@ -2,7 +2,8 @@ COMPONENT_NAME = KVStore
 
 SRC_FILES = \
 	../src/memory_kvstore.c \
-	../ports/esp-idf/nvs_kvstore.c
+	../ports/esp-idf/nvs_kvstore.c \
+	mocks/mock_nvs.cpp
 
 TEST_SRC_FILES = \
 	src/test_memory_kvstore.cpp \
