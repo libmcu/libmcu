@@ -22,7 +22,7 @@ static int nvs_kvstore_open(const char *ns, nvs_handle_t *namespace_handle)
 static size_t nvs_kvstore_write(kvstore_t *kvstore,
 		const char *key, const void *value, size_t size)
 {
-	const struct nvs_kvstore_s *p = (typeof(p))kvstore;
+	struct nvs_kvstore_s *p = (typeof(p))kvstore;
 
 	if (nvs_set_blob(p->handle, key, value, size)) {
 		return 0;
