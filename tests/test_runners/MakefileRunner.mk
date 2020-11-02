@@ -37,6 +37,7 @@ export CPPUTEST_WARNINGFLAGS = \
 	-Wno-error=poison-system-directories \
 	-Wno-error=c++11-extensions \
 	-Wno-error=language-extension-token \
+	-Wno-error=unused-function \
 	-Werror
 
 include ../external/cpputest/build/MakefileWorker.mk
