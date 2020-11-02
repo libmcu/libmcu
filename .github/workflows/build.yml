@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Compile and Test
+    runs-on: ubuntu-latest
+    container: onkwon/yaos:0.4
+    steps:
+      - name: Clone Repository
+        uses: actions/master
+        with:
+          submodules: recursive
+      - name: Test
+        run: make -C tests
+      - name: Build coverage results
+        run: |
+          echo $(pwd)
+          mkdir -p coverage_report
+          cd coverage_report
+          gcov -abcfu ../src/* -o ../tests/build/src/
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v1
+        with:
+          name: code-coverage-report
+          path: coverage_report
+      - name: codecov
+        run: |
+          bash -c "bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}"
+
+  sonarCloud:
+    name: SonarCloud Scan
+    needs: build
+    runs-on: ubuntu-latest
+    container: onkwon/yaos:0.4
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v2
+      - name: Download code coverage results
+        uses: actions/download-artifact@v1
+        with:
+          name: code-coverage-report
+          path: coverage_report
+      - name: Analyze with SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          build-wrapper-linux-x86-64 --out-dir bw-output \
+              make -C tests
+          sonar-scanner \
+              -Dsonar.organization=onkwon-github \
+              -Dsonar.projectKey=onkwon_libmcu \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.cfamily.build-wrapper-output=bw-output \
+              -Dsonar.login=${{ secrets.SONAR_CLOUD_LOGIN }}
