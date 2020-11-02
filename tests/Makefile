@@ -16,6 +16,7 @@ $(TESTS):
 	$(MAKE) -f $@ $(BUILD_RULE)
 
 LCOV_INFO_FILE = $(BUILDIR)/lcov.info
+.PHONY: lcov
 lcov: $(TESTS)
 	@lcov \
         --base-directory . \
@@ -33,6 +34,9 @@ lcov: $(TESTS)
         --num-spaces 4 \
         $(LCOV_INFO_FILE) \
         -o $(BUILDIR)/test_coverage/
+.PHONY: coverage
+coverage: lcov
+	$(Q)open $(BUILDIR)/test_coverage/index.html
 
 .PHONY: clean
 clean:

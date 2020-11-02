@@ -11,7 +11,7 @@
 	for (pos = (head)->next, tmp = pos->next; pos != (head); \
 			pos = tmp, tmp = pos->next)
 #define list_entry(ptr, type, member) \
-	((void *)((char *)(ptr) - offsetof(type, member)))
+	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
 
 #define DEFINE_LIST_HEAD(name)		struct list name = { .next = &name, }
 

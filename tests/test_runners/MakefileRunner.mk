@@ -9,6 +9,7 @@ endif
 
 TEST_SRC_FILES += test_runners/test_all.cpp
 MOCKS_SRC_DIRS += mocks
+INCLUDE_DIRS   += fakes spies
 
 export TEST_TARGET = $(BUILDIR)/$(COMPONENT_NAME)_tests
 export CPPUTEST_OBJS_DIR = $(BUILDIR)/objs
@@ -35,6 +36,7 @@ export CPPUTEST_WARNINGFLAGS = \
 	\
 	-Wno-error=poison-system-directories \
 	-Wno-error=c++11-extensions \
+	-Wno-error=language-extension-token \
 	-Werror
 
 include ../external/cpputest/build/MakefileWorker.mk
