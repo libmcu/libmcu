@@ -87,7 +87,11 @@ static void *jobpool_task(void *e)
 {
 	while (jobpool_process(e));
 
+#if defined(UNITTEST)
+	return NULL;
+#else
 	pthread_exit(NULL);
+#endif
 }
 
 jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
@@ -121,7 +125,7 @@ out:
 job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr)
 {
 	if (!pool || !attr) {
-		return JOB_ERROR_PARAM;
+		return JOB_INVALID_PARAM;
 	}
 
 	pool->attr = *attr;
@@ -132,11 +136,12 @@ job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr)
 job_error_t jobpool_destroy(jobpool_t *pool)
 {
 	if (!pool) {
-		return JOB_ERROR_PARAM;
+		return JOB_INVALID_PARAM;
 	}
 
-	if (job_count(pool) != 0) {
-		warn("jobs to be run exist");
+	uint8_t jobs_left = job_count(pool);
+	if (jobs_left != 0) {
+		warn("%u jobs to be run exist", jobs_left);
 	}
 
 	pthread_mutex_lock(&pool->lock);
@@ -153,7 +158,7 @@ job_error_t jobpool_destroy(jobpool_t *pool)
 job_error_t job_init(jobpool_t *pool, job_t *job, job_callback_t callback, job_context_t *context)
 {
 	if (!pool || !job) {
-		return JOB_ERROR_PARAM;
+		return JOB_INVALID_PARAM;
 	}
 
 	struct job *pjob = (struct job *)job;
@@ -169,7 +174,7 @@ job_error_t job_init(jobpool_t *pool, job_t *job, job_callback_t callback, job_c
 job_error_t job_delete(jobpool_t *pool, job_t *job)
 {
 	if (!pool || !job) {
-		return JOB_ERROR_PARAM;
+		return JOB_INVALID_PARAM;
 	}
 
 	pthread_mutex_lock(&pool->lock);
@@ -194,11 +199,18 @@ job_error_t job_delete(jobpool_t *pool, job_t *job)
 job_error_t job_schedule(jobpool_t *pool, job_t *job)
 {
 	if (!pool || !job) {
-		return JOB_ERROR_PARAM;
+		return JOB_INVALID_PARAM;
 	}
 
 	pthread_mutex_lock(&pool->lock);
 	{
+		struct job *pjob = (struct job *)job;
+		if (pjob->state != JOB_STATE_SCHEDULED) {
+			list_add_tail(&pjob->entry, &pool->job_list);
+			pjob->state = JOB_STATE_SCHEDULED;
+			sem_post(&pool->sem);
+		}
+
 		if (job_count_internal(pool) >= pool->active_threads
 				&& pool->active_threads < pool->attr.max_threads) {
 			pthread_t thread;
@@ -209,13 +221,6 @@ job_error_t job_schedule(jobpool_t *pool, job_t *job)
 			if (pthread_create(&thread, &attr, jobpool_task, pool) == 0) {
 				pool->active_threads++;
 			}
-		}
-
-		struct job *pjob = (struct job *)job;
-		if (pjob->state != JOB_STATE_SCHEDULED) {
-			list_add_tail(&pjob->entry, &pool->job_list);
-			pjob->state = JOB_STATE_SCHEDULED;
-			sem_post(&pool->sem);
 		}
 	}
 	pthread_mutex_unlock(&pool->lock);
@@ -249,8 +254,8 @@ const char *job_stringify_error(job_error_t error_code)
 		return "success";
 	case JOB_RETRY:
 		return "retry";
-	case JOB_ERROR_PARAM:
-		return "wrong parameters";
+	case JOB_INVALID_PARAM:
+		return "invalid parameters";
 	case JOB_ERROR:
 	default:
 		break;

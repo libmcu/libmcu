@@ -10,12 +10,14 @@ jobs:
   build:
     name: Compile and Test
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.4
+    container: onkwon/yaos:0.5
     steps:
       - name: Clone Repository
         uses: actions/checkout@v1
         with:
           submodules: 'recursive'
+      - name: Install test framework
+        run: make -C tests install
       - name: Test
         run: make -C tests
       - name: Build coverage results
@@ -37,7 +39,7 @@ jobs:
     name: SonarCloud Scan
     needs: build
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.4
+    container: onkwon/yaos:0.5
     steps:
       - name: Clone Repository
         uses: actions/checkout@v1
@@ -53,7 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           build-wrapper-linux-x86-64 --out-dir bw-output \
-              make -C tests
+              make
           sonar-scanner \
               -Dsonar.organization=onkwon-github \
               -Dsonar.projectKey=onkwon_libmcu \

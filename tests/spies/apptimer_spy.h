@@ -1,6 +1,10 @@
 #ifndef APP_TIMER_SPY_H
 #define APP_TIMER_SPY_H
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include "apptimer.h"
 
@@ -14,5 +18,9 @@ enum {
 };
 
 uint32_t apptimerspy_get_state(apptimer_t *timer);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif

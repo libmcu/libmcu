@@ -1,5 +1,6 @@
+export CPPUTEST_HOME = ../external/cpputest
 export BUILDIR ?= build
-export INCLUDE_DIRS += ../include
+export INCLUDE_DIRS += $(CPPUTEST_HOME)/include ../include .
 
 TESTS := $(wildcard test_runners/*_runner.mk)
 
@@ -16,8 +17,7 @@ $(TESTS):
 	$(MAKE) -f $@ $(BUILD_RULE)
 
 LCOV_INFO_FILE = $(BUILDIR)/lcov.info
-.PHONY: lcov
-lcov: $(TESTS)
+$(BUILDIR)/test_coverage: $(BUILDIR)
 	@lcov \
         --base-directory . \
         --directory . \
@@ -33,11 +33,19 @@ lcov: $(TESTS)
         -t "coverage" \
         --num-spaces 4 \
         $(LCOV_INFO_FILE) \
-        -o $(BUILDIR)/test_coverage/
+        -o $@
+
 .PHONY: coverage
-coverage: lcov
+coverage: $(BUILDIR)/test_coverage
 	$(Q)open $(BUILDIR)/test_coverage/index.html
+$(BUILDIR): $(TESTS)
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILDIR)
+
+.PHONY: install reinstall
+install:
+	@cd $(CPPUTEST_HOME) && autoreconf -i && ./configure && make
+reinstall:
+	@cd $(CPPUTEST_HOME) && make

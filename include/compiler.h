@@ -1,7 +1,11 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
-#if defined(TEST)
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#if defined(UNITTEST)
 #define STATIC
 #else
 #define STATIC				static
@@ -17,5 +21,9 @@
 #define READ_ONCE(x)
 
 #define NO_OPTIMIZE			__attribute__((optimize("O0")))
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* COMPILER_H */

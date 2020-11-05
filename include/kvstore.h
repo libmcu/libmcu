@@ -1,6 +1,10 @@
 #ifndef KVSTORE_H
 #define KVSTORE_H 1
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <stddef.h>
 
 typedef struct kvstore {
@@ -21,5 +25,9 @@ static inline size_t kvstore_read(const kvstore_t *kvstore,
 {
 	return kvstore->read(kvstore, key, buf, bufsize);
 }
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* KVSTORE_H */

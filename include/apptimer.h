@@ -1,6 +1,10 @@
 #ifndef APPTIMER_H
 #define APPTIMER_H 1
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -30,5 +34,9 @@ int apptimer_delete(apptimer_t *timer);
 
 int apptimer_start(apptimer_t *timer);
 int apptimer_stop(apptimer_t *timer);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* APPTIMER_H */

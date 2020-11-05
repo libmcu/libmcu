@@ -1,8 +1,6 @@
 #include "CppUTest/TestHarness.h"
 
-extern "C" {
 #include "list.h"
-}
 
 TEST_GROUP(SinglyLinkedList) {
 	struct list head;
@@ -30,34 +28,43 @@ TEST(SinglyLinkedList, init_ShouldSetNextItself) {
 	struct list tmp;
 	head.next = (struct list *)1;
 	list_init(&tmp);
-	CHECK_EQUAL(&tmp, tmp.next);
+	POINTERS_EQUAL(&tmp, tmp.next);
 }
 
 TEST(SinglyLinkedList, add_ShouldAddNodeNextToHead) {
 	struct list node1, node2;
 	list_add(&node1, &head); // head->node1->NULL
 	list_add(&node2, &head); // head->node2->node1->NULL
-	CHECK_EQUAL(&node2, head.next);
-	CHECK_EQUAL(&node1, head.next->next);
-	CHECK_EQUAL(&head, head.next->next->next);
+	POINTERS_EQUAL(&node2, head.next);
+	POINTERS_EQUAL(&node1, head.next->next);
+	POINTERS_EQUAL(&head, head.next->next->next);
 }
 
 TEST(SinglyLinkedList, add_tail_ShouldAddNodeAtTheEnd) {
 	struct list node1, node2;
 	list_add_tail(&node1, &head); // head->node1->NULL
 	list_add_tail(&node2, &head); // head->node1->node2->NULL
-	CHECK_EQUAL(&node1, head.next);
-	CHECK_EQUAL(&node2, head.next->next);
-	CHECK_EQUAL(&head, head.next->next->next);
+	POINTERS_EQUAL(&node1, head.next);
+	POINTERS_EQUAL(&node2, head.next->next);
+	POINTERS_EQUAL(&head, head.next->next->next);
 }
 
-TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList) {
+TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList_WhenNodeAddedInOrder) {
 	struct list node1, node2;
 	list_add_tail(&node1, &head); // head->node1->NULL
 	list_add_tail(&node2, &head); // head->node1->node2->NULL
 	CHECK(list_del(&node1, &head) == 0);
-	CHECK_EQUAL(&node2, head.next);
-	CHECK_EQUAL(&head, head.next->next);
+	POINTERS_EQUAL(&node2, head.next);
+	POINTERS_EQUAL(&head, head.next->next);
+}
+
+TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList_WhenNodeAddedOutOfOrder) {
+	struct list node1, node2;
+	list_add_tail(&node1, &head); // head->node1->NULL
+	list_add(&node2, &head); // head->node2->node1->NULL
+	CHECK(list_del(&node1, &head) == 0);
+	POINTERS_EQUAL(&node2, head.next);
+	POINTERS_EQUAL(&head, head.next->next);
 }
 
 TEST(SinglyLinkedList, del_ShouldFailDeleting_WhenThereIsNoMatchingNode) {

@@ -1,6 +1,11 @@
-TEST_SRC_FILES += test_runners/test_all.cpp
-#MOCKS_SRC_DIRS += mocks
-INCLUDE_DIRS   += fakes spies
+ifndef SILENCE
+SILENCE = @
+endif
+
+TEST_SRC_FILES    += test_runners/test_all.cpp
+#MOCKS_SRC_DIRS    += mocks
+INCLUDE_DIRS      += fakes spies
+CPPUTEST_CPPFLAGS += -DUNITTEST
 
 export TEST_TARGET = $(BUILDIR)/$(COMPONENT_NAME)_tests
 export CPPUTEST_OBJS_DIR = $(BUILDIR)/objs
@@ -27,11 +32,6 @@ export CPPUTEST_WARNINGFLAGS = \
 	\
 	-Werror
 
-ifndef SILENCE
-SILENCE = @
-endif
-
-CPPUTEST_HOME ?= /usr
 ifeq ($(shell uname), Darwin)
 CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=poison-system-directories \
@@ -40,7 +40,7 @@ CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=covered-switch-default \
 	-Wno-error=unused-function
 else
-TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
+#TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
 endif
 
 include ../external/cpputest/build/MakefileWorker.mk

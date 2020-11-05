@@ -56,11 +56,12 @@ static size_t memory_kvstore_write(kvstore_t *kvstore,
 
 	struct memory_kvstore_entry *entry;
 	if ((entry = find_key(obj, key))) {
-		void *t = entry->value;
-		if (!(entry->value = malloc(size))) {
-			return 0;
+		void *new_value = malloc(size);
+		if (!new_value) {
+			goto err;
 		}
-		free(t);
+		free(entry->value);
+		entry->value = new_value;
 	} else {
 		if (!(entry = malloc(sizeof(*entry)))) {
 			goto err;

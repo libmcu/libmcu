@@ -1,9 +1,7 @@
 #include "CppUTest/TestHarness.h"
 
-extern "C" {
 #include "apptimer.h"
 #include "apptimer_spy.h"
-}
 
 TEST_GROUP(AppTimer) {
 	void setup(void) {

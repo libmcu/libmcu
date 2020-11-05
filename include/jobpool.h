@@ -1,6 +1,10 @@
 #ifndef JOBPOOL_H
 #define JOBPOOL_H 1
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -8,7 +12,7 @@ typedef enum {
 	JOB_SUCCESS				= 0,
 	JOB_RETRY,
 	JOB_ERROR,
-	JOB_ERROR_PARAM,
+	JOB_INVALID_PARAM,
 } job_error_t;
 
 typedef union {
@@ -25,7 +29,7 @@ typedef struct job_context job_context_t;
 typedef struct jobpool jobpool_t;
 typedef struct jobpool_attr {
 	size_t stack_size_bytes;
-	uint8_t min_threads;
+	int8_t min_threads;
 	uint8_t max_threads;
 	int8_t priority;
 } jobpool_attr_t;
@@ -42,5 +46,9 @@ job_error_t job_delete(jobpool_t *pool, job_t *job);
 
 uint8_t job_count(jobpool_t *pool);
 const char *job_stringify_error(job_error_t error_code);
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* JOBPOOL_H */

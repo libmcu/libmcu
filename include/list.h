@@ -1,6 +1,10 @@
 #ifndef LINKED_LIST_H
 #define LINKED_LIST_H 1
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -75,5 +79,9 @@ static inline int list_count(struct list *head)
 	}
 	return n;
 }
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* LINKED_LIST_H */

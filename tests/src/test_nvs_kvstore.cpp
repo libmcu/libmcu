@@ -1,10 +1,8 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTestExt/MockSupport.h"
-#include <string.h>
 
-extern "C" {
+#include <string.h>
 #include "nvs_kvstore.h"
-}
 
 TEST_GROUP(NVSKVStore) {
 	void setup(void) {
@@ -18,17 +16,17 @@ TEST_GROUP(NVSKVStore) {
 
 TEST(NVSKVStore, init_ShouldCall_nvs_flash_init) {
 	mock().expectOneCall("nvs_flash_init").andReturnValue(0);
-	CHECK_EQUAL(0, nvs_kvstore_init());
+	LONGS_EQUAL(0, nvs_kvstore_init());
 }
 
 TEST(NVSKVStore, new_ShouldCall_nvs_open) {
 	mock().expectOneCall("nvs_open").andReturnValue(-1);
-	CHECK_EQUAL(0, nvs_kvstore_new("namespace"));
+	LONGS_EQUAL(0, nvs_kvstore_new("namespace"));
 }
 
 TEST(NVSKVStore, new_ShouldReturnNull_When_nvs_open_fails) {
 	mock().expectOneCall("nvs_open").andReturnValue(-1);
-	CHECK_EQUAL(0, nvs_kvstore_new("namespace"));
+	LONGS_EQUAL(0, nvs_kvstore_new("namespace"));
 }
 
 TEST(NVSKVStore, new_ShouldReturnKVStoreObject) {
@@ -54,7 +52,7 @@ TEST(NVSKVStore, write_ShouldCall_nvs_commit) {
 
 IGNORE_TEST(NVSKVStore, write_ShouldReturnWrittenBytes) {
 	kvstore_t *kvstore = nvs_kvstore_new("namespace");
-	CHECK_EQUAL(5, kvstore_write(kvstore, "key", "value", 5));
+	LONGS_EQUAL(5, kvstore_write(kvstore, "key", "value", 5));
 	nvs_kvstore_delete(kvstore);
 }
 
@@ -69,6 +67,6 @@ TEST(NVSKVStore, read_ShouldCall_nvs_get_blob) {
 IGNORE_TEST(NVSKVStore, read_ShouldReturnReadBytes) {
 	char buf[10];
 	kvstore_t *kvstore = nvs_kvstore_new("namespace");
-	CHECK_EQUAL(10, kvstore_read(kvstore, "key", buf, 10));
+	LONGS_EQUAL(10, kvstore_read(kvstore, "key", buf, 10));
 	nvs_kvstore_delete(kvstore);
 }

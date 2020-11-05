@@ -1,8 +1,7 @@
 #include "CppUTest/TestHarness.h"
+#include "CppUTest/TestHarness_c.h"
 
-extern "C" {
 #include "mode.h"
-}
 
 TEST_GROUP(RunMode) {
 	void setup(void) {
@@ -22,20 +21,20 @@ static void mode_change_handler(void *param) {
 
 TEST(RunMode, mode_set_ShouldKeepTheModeAsIs_WhenUnknownMode) {
 	mode_set(UNKNOWN_MODE);
-	CHECK_EQUAL(REPORT_MODE, mode_get());
+	LONGS_EQUAL(REPORT_MODE, mode_get());
 }
 
 TEST(RunMode, mode_set_ShouldKeepTheModeAsIs_WhenTheSameMode) {
 	mode_set(REPORT_MODE);
-	CHECK_EQUAL(REPORT_MODE, mode_get());
+	LONGS_EQUAL(REPORT_MODE, mode_get());
 }
 
 TEST(RunMode, mode_set_ShouldCallHandlersRegistered) {
 	mode_register_transition_callback(mode_change_handler);
 	nr_handler_called = 0;
 	mode_set(PROVISIONING_MODE);
-	CHECK_EQUAL(1, nr_handler_called);
-	CHECK_EQUAL(PROVISIONING_MODE, current_mode);
+	LONGS_EQUAL(1, nr_handler_called);
+	LONGS_EQUAL(PROVISIONING_MODE, current_mode);
 	mode_unregister_transition_callback(mode_change_handler);
 }
 
@@ -44,20 +43,26 @@ TEST(RunMode, mode_set_ShouldCallHandlersRegisteredOnlyOnce_WhenSameHandlerRegis
 	mode_register_transition_callback(mode_change_handler);
 	nr_handler_called = 0;
 	mode_set(PROVISIONING_MODE);
-	CHECK_EQUAL(1, nr_handler_called);
-	CHECK_EQUAL(PROVISIONING_MODE, current_mode);
+	LONGS_EQUAL(1, nr_handler_called);
+	LONGS_EQUAL(PROVISIONING_MODE, current_mode);
 	mode_unregister_transition_callback(mode_change_handler);
 }
 
 TEST(RunMode, mode_get_ShouldReturnTheCurrentMode) {
-	CHECK_EQUAL(REPORT_MODE, mode_get());
+	LONGS_EQUAL(REPORT_MODE, mode_get());
 	mode_set(PROVISIONING_MODE);
-	CHECK_EQUAL(PROVISIONING_MODE, mode_get());
+	LONGS_EQUAL(PROVISIONING_MODE, mode_get());
 }
 
 TEST(RunMode, callback_register_ShouldReturnZero) {
-	CHECK_EQUAL(0, mode_register_transition_callback(mode_change_handler));
+	LONGS_EQUAL(0, mode_register_transition_callback(mode_change_handler));
 	mode_unregister_transition_callback(mode_change_handler);
+}
+
+TEST(RunMode, callback_register_ShouldReturnError_WhenAllocFails) {
+	cpputest_malloc_set_out_of_memory();
+	LONGS_EQUAL(-1, mode_register_transition_callback(mode_change_handler));
+	cpputest_malloc_set_not_out_of_memory();
 }
 
 #if 0

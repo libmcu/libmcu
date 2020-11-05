@@ -1,131 +1,151 @@
 #include "CppUTest/TestHarness.h"
+#include "CppUTest/TestHarness_c.h"
+#include "CppUTestExt/MockSupport.h"
 
-extern "C" {
+#include <string.h>
 #include "jobpool.h"
-#include <pthread.h>
 
-	struct job_context {
-		bool is_callback_called;
-		pthread_t thread;
-	};
-}
+#define MAX_JOBS	10
+
+struct job_context {
+	bool is_callback_called;
+};
 
 TEST_GROUP(JobPool) {
 	jobpool_t *jobpool;
+	job_t jobs[MAX_JOBS];
+	job_context_t jobctx[MAX_JOBS];
 
 	void setup(void) {
-		jobpool = jobpool_create(100);
+		mock().ignoreOtherCalls();
 
-		pthread_attr_t attr;
-		size_t stacksize;
-		pthread_attr_init(&attr);
-		pthread_attr_getstacksize(&attr, &stacksize);
+		jobpool = jobpool_create(100);
 		jobpool_attr_t jobpool_attr = {
-			.stack_size_bytes = stacksize,
-			.min_threads = 0,
-			.max_threads = 10,
+			.stack_size_bytes = 1024,
+			.min_threads = -1, // to avoid infinite loop in jobpool_process()
+			.max_threads = 1,
 			.priority = 0,
 		};
 		jobpool_set_attr(jobpool, &jobpool_attr);
+
+		memset(jobs, 0, sizeof(jobs));
+		memset(jobctx, 0, sizeof(jobctx));
 	}
 	void teardown(void) {
 		jobpool_destroy(jobpool);
-	}
 
-	void wait_callback_to_be_called(job_context_t *ctx) {
-		while (!ctx->is_callback_called);
+		mock().checkExpectations();
+		mock().clear();
 	}
 
 	static job_error_t callback(job_context_t *context) {
 		context->is_callback_called = true;
-		context->thread = pthread_self();
 		return JOB_SUCCESS;
 	}
 };
 
-#ifdef __APPLE__
-IGNORE_TEST(JobPool, IgnoreTest_WhenSemaphoreNotWorkAsExpectedOnMacOSX) {
-}
-#else
 TEST(JobPool, stringify_ShouldReturnErrorString) {
 	STRCMP_EQUAL("success", job_stringify_error(JOB_SUCCESS));
 	STRCMP_EQUAL("retry", job_stringify_error(JOB_RETRY));
+	STRCMP_EQUAL("invalid parameters", job_stringify_error(JOB_INVALID_PARAM));
 	STRCMP_EQUAL("unknown error", job_stringify_error(JOB_ERROR));
 }
 
 TEST(JobPool, init_ShouldReturnParamError_WhenPoolOrJobIsNull) {
-	job_t job;
-	CHECK_EQUAL(JOB_ERROR_PARAM, job_init(NULL, &job, NULL, NULL));
-	CHECK_EQUAL(JOB_ERROR_PARAM, job_init(jobpool, NULL, NULL, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_init(NULL, &jobs[0], NULL, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_init(jobpool, NULL, NULL, NULL));
 }
 
 TEST(JobPool, init_ShouldReturnSuccess) {
-	job_t job;
-	CHECK_EQUAL(JOB_SUCCESS, job_init(jobpool, &job, NULL, NULL));
+	LONGS_EQUAL(JOB_SUCCESS, job_init(jobpool, &jobs[0], NULL, NULL));
 }
 
 TEST(JobPool, schedule_ShouldReturnParamError_WhenPoolOrJobIsNull) {
-	job_t job;
-	job_init(jobpool, &job, NULL, NULL);
+	job_init(jobpool, &jobs[0], NULL, NULL);
 
-	CHECK_EQUAL(JOB_ERROR_PARAM, job_schedule(NULL, &job));
-	CHECK_EQUAL(JOB_ERROR_PARAM, job_schedule(jobpool, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_schedule(NULL, &jobs[0]));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_schedule(jobpool, NULL));
 }
 
 TEST(JobPool, schedule_ShouldReturnSuccess) {
-	job_t job;
-	job_context_t jobctx = { 0, 0, };
-	job_init(jobpool, &job, callback, &jobctx);
+	job_init(jobpool, &jobs[0], callback, &jobctx[0]);
 
-	CHECK_EQUAL(JOB_SUCCESS, job_schedule(jobpool, &job));
+	mock().expectOneCall("pthread_attr_init");
+	mock().expectOneCall("pthread_attr_setstacksize");
+	mock().expectOneCall("pthread_attr_setdetachstate");
+	mock().expectOneCall("pthread_create");
 
-	wait_callback_to_be_called(&jobctx);
-	pthread_join(jobctx.thread, NULL);
+	LONGS_EQUAL(JOB_SUCCESS, job_schedule(jobpool, &jobs[0]));
+	CHECK(jobctx[0].is_callback_called == true);
+}
+
+TEST(JobPool, delete_ShouldReturnInvalidParam_WhenNullPointersGiven) {
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_delete(NULL, &jobs[0]));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_delete(jobpool, NULL));
 }
 
 TEST(JobPool, delete_ShouldReturnSuccess_WhenNoMatchingScheduledJob) {
-	job_t job;
-	job_init(jobpool, &job, NULL, NULL);
+	job_init(jobpool, &jobs[0], NULL, NULL);
 
-	CHECK_EQUAL(0, job_count(jobpool));
-	CHECK_EQUAL(JOB_SUCCESS, job_delete(jobpool, &job));
-	CHECK_EQUAL(0, job_count(jobpool));
+	LONGS_EQUAL(0, job_count(jobpool));
+	LONGS_EQUAL(JOB_SUCCESS, job_delete(jobpool, &jobs[0]));
+	LONGS_EQUAL(0, job_count(jobpool));
+}
+
+TEST(JobPool, delete_ShouldReturnSuccess_WhenScheduledJobDeleted) {
+	job_init(jobpool, &jobs[0], NULL, NULL);
+
+	LONGS_EQUAL(0, job_count(jobpool));
+	mock().expectOneCall("pthread_create").andReturnValue(-1);
+	job_schedule(jobpool, &jobs[0]);
+	LONGS_EQUAL(1, job_count(jobpool));
+
+	LONGS_EQUAL(JOB_SUCCESS, job_delete(jobpool, &jobs[0]));
+	LONGS_EQUAL(0, job_count(jobpool));
 }
 
 TEST(JobPool, count_ShouldReturnJobsScheduled) {
-	job_t job;
-	job_context_t jobctx = { 0, 0, };
-	job_init(jobpool, &job, callback, &jobctx);
+	mock().expectNCalls(MAX_JOBS, "pthread_create").andReturnValue(-1);
 
-	CHECK_EQUAL(0, job_count(jobpool));
-	job_schedule(jobpool, &job);
-	CHECK_EQUAL(1, job_count(jobpool));
+	for (int i = 0; i < MAX_JOBS; i++) {
+		job_init(jobpool, &jobs[i], callback, &jobctx[i]);
 
-	wait_callback_to_be_called(&jobctx);
-	pthread_join(jobctx.thread, NULL);
+		LONGS_EQUAL(i, job_count(jobpool));
+		job_schedule(jobpool, &jobs[i]);
+		CHECK_EQUAL(false, jobctx[i].is_callback_called);
+	}
+
+	LONGS_EQUAL(MAX_JOBS, job_count(jobpool));
 }
 
 TEST(JobPool, schedule_ShouldRunCallback_WhenCallbackRegistered) {
-	job_t job1, job2, job3;
-	job_context_t jobctx1 = { 0, 0, };
-	job_context_t jobctx2 = { 0, 0, };
-	job_context_t jobctx3 = { 0, 0, };
-	job_init(jobpool, &job1, callback, &jobctx1);
-	job_init(jobpool, &job2, callback, &jobctx2);
-	job_init(jobpool, &job3, callback, &jobctx3);
-	job_schedule(jobpool, &job1);
-	job_schedule(jobpool, &job2);
-	job_schedule(jobpool, &job3);
-	wait_callback_to_be_called(&jobctx1);
-	wait_callback_to_be_called(&jobctx2);
-	wait_callback_to_be_called(&jobctx3);
+	mock().expectNCalls(MAX_JOBS, "pthread_create");
 
-	CHECK_EQUAL(true, jobctx1.is_callback_called);
-	CHECK_EQUAL(true, jobctx2.is_callback_called);
-	CHECK_EQUAL(true, jobctx3.is_callback_called);
-
-	pthread_join(jobctx1.thread, NULL);
-	pthread_join(jobctx2.thread, NULL);
-	pthread_join(jobctx3.thread, NULL);
+	for (int i = 0; i < MAX_JOBS; i++) {
+		job_init(jobpool, &jobs[i], callback, &jobctx[i]);
+		job_schedule(jobpool, &jobs[i]);
+		CHECK_EQUAL(true, jobctx[i].is_callback_called);
+	}
 }
-#endif
+
+TEST(JobPool, Create_ShouldReturnNull_WhenSemInitFail) {
+	mock().expectOneCall("sem_init").andReturnValue(-1);
+	POINTERS_EQUAL(NULL, jobpool_create(1));
+}
+
+TEST(JobPool, Create_ShouldReturnNull_WhenAllocFail) {
+	cpputest_malloc_set_out_of_memory();
+	POINTERS_EQUAL(NULL, jobpool_create(1));
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(JobPool, set_attr_ShouldReturnInvalidParam_WhenNullPointersGiven) {
+	LONGS_EQUAL(JOB_INVALID_PARAM, jobpool_set_attr(NULL, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM, jobpool_set_attr(jobpool, NULL));
+	jobpool_attr_t attr = { 0, };
+	LONGS_EQUAL(JOB_INVALID_PARAM, jobpool_set_attr(NULL, &attr));
+}
+
+TEST(JobPool, destroy_ShouldReturnInvalidParam_WhenNullPointerGiven) {
+	LONGS_EQUAL(JOB_INVALID_PARAM, jobpool_destroy(NULL));
+}
