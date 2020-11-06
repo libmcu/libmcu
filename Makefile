@@ -113,7 +113,7 @@ test:
 	$(Q)$(MAKE) -C tests
 .PHONY: coverage
 coverage:
-	$(Q)$(MAKE) -C coverage
+	$(Q)$(MAKE) -C tests $@
 .PHONY: clean
 clean:
 	$(Q)$(MAKE) -C tests clean
