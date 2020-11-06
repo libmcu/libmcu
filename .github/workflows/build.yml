@@ -59,7 +59,7 @@ jobs:
           sonar-scanner \
               -Dsonar.organization=onkwon-github \
               -Dsonar.projectKey=onkwon_libmcu \
-              -Dsonar.sources=src \
+              -Dsonar.sources=src,include,ports \
               -Dsonar.tests=tests \
               -Dsonar.test.inclusions=**/test_*.c \
               -Dsonar.cfamily.gcov.reportsPath=coverage_report \

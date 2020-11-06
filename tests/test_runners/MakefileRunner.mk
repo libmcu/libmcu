@@ -38,6 +38,8 @@ CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=c++11-extensions \
 	-Wno-error=language-extension-token \
 	-Wno-error=covered-switch-default \
+	-Wno-error=format-nonliteral \
+	-Wno-error=pedantic \
 	-Wno-error=unused-function
 else
 #TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
