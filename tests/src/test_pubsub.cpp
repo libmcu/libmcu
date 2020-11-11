@@ -1,6 +1,6 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
-
+#include <string.h>
 #include "pubsub.h"
 
 static int callback_count;
