@@ -24,6 +24,17 @@ typedef struct subscribe subscribe_t;
 
 pubsub_error_t pubsub_create(const char * const topic);
 pubsub_error_t pubsub_destroy(const char * const topic);
+/** Publish a message to a topic
+ *
+ * It delivers the message for all subscribers in the context of the caller.
+ * So the caller of publish takes time to finish calling all the callbacks
+ * registered in subscriptions. You may want some kind of signal to make it to
+ * run in another context such as jobpool.
+ *
+ * @param topic is where the message gets publshed to
+ * @param msg A message to publish
+ * @param msglen The length of the message
+ */
 pubsub_error_t pubsub_publish(const char * const topic,
 		const void * const msg, size_t msglen);
 subscribe_t *pubsub_subscribe(const char * const topic,
