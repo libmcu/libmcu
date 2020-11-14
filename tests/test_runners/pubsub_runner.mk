@@ -1,4 +1,4 @@
-COMPONENT_NAME = PubSub
+COMPONENT_NAME = pubsub
 
 SRC_FILES = \
 	    ../src/pubsub.c

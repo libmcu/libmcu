@@ -1,4 +1,4 @@
-COMPONENT_NAME = AppTimer
+COMPONENT_NAME = apptimer
 
 SRC_FILES = \
 	../ports/esp-idf/apptimer.c \

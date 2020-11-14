@@ -1,4 +1,4 @@
-COMPONENT_NAME = RunMode
+COMPONENT_NAME = mode
 
 SRC_FILES = \
 	../src/mode.c

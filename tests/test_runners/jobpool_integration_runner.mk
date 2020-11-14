@@ -1,4 +1,4 @@
-COMPONENT_NAME = JobPool_integration
+COMPONENT_NAME = jobpool_integration
 
 SRC_FILES = \
 	../src/jobpool.c

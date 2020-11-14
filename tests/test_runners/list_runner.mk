@@ -1,4 +1,4 @@
-COMPONENT_NAME = linked_list
+COMPONENT_NAME = list
 
 SRC_FILES = \
 	stubs/empty.c
