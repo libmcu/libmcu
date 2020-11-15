@@ -11,7 +11,7 @@
 #define TOPIC_DESTROY_MESSAGE			"topic destroyed"
 
 typedef struct {
-	char name[PUBSUB_TOPIC_NAME_MAXLEN];
+	char *name;
 	struct list pubsub_node; // list entry for the pubsub_list
 	pthread_mutex_t subscription_lock;
 	struct list subscriptions; // list head for subscriptions
@@ -92,7 +92,8 @@ static topic_t *find_topic(const char * const topic)
 		struct list *i;
 		list_for_each(i, &pubsub_list) {
 			p = list_entry(i, topic_t, pubsub_node);
-			if (strcmp(topic, p->name) == 0) {
+			if (strncmp(topic, p->name, PUBSUB_TOPIC_NAME_MAXLEN)
+					== 0) {
 				break;
 			} else {
 				p = NULL;
@@ -123,11 +124,17 @@ pubsub_error_t pubsub_create(const char * const topic)
 		return PUBSUB_NO_MEMORY;
 	}
 
-	strncpy(p->name, topic, PUBSUB_TOPIC_NAME_MAXLEN);
+	size_t topic_len = strnlen(topic, PUBSUB_TOPIC_NAME_MAXLEN);
+	if (!(p->name = (char *)calloc(1, topic_len + 1))) {
+		free(p);
+		return PUBSUB_NO_MEMORY;
+	}
+
+	strlcpy(p->name, topic, topic_len + 1);
 	initialize_subscriptions(p);
 	add_topic(p);
 
-	debug("%s topic created", topic);
+	debug("%s topic created", p->name);
 
 	return PUBSUB_SUCCESS;
 }
@@ -147,9 +154,11 @@ pubsub_error_t pubsub_destroy(const char * const topic)
 			TOPIC_DESTROY_MESSAGE, sizeof(TOPIC_DESTROY_MESSAGE));
 	remove_subscriptions(p);
 	remove_topic(p);
-	free(p);
 
-	debug("%s " TOPIC_DESTROY_MESSAGE, topic);
+	debug("%s " TOPIC_DESTROY_MESSAGE, p->name);
+
+	free(p->name);
+	free(p);
 
 	return PUBSUB_SUCCESS;
 }
