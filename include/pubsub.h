@@ -7,7 +7,7 @@ extern "C" {
 
 #include <stddef.h>
 
-#define PUBSUB_TOPIC_NAME_MAXLEN		16
+#define PUBSUB_TOPIC_NAME_MAXLEN		32
 
 typedef enum {
 	PUBSUB_SUCCESS				= 0,
