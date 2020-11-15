@@ -17,7 +17,7 @@ typedef struct {
 	struct list subscriptions; // list head for subscriptions
 } topic_t;
 
-struct pubsub_subscribe {
+struct pubsub_subscribe_s {
 	topic_t *topic;
 	struct list subscription_node;
 	pubsub_callback_t callback;
@@ -130,7 +130,8 @@ pubsub_error_t pubsub_create(const char * const topic)
 		return PUBSUB_NO_MEMORY;
 	}
 
-	strlcpy(p->name, topic, topic_len + 1);
+	strncpy(p->name, topic, topic_len);
+	p->name[topic_len] = '\0';
 	initialize_subscriptions(p);
 	add_topic(p);
 

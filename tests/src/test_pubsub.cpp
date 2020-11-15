@@ -63,10 +63,12 @@ TEST(PubSub, create_ShouldReturnExist_WhenExistingTopicGiven) {
 TEST(PubSub, create_ShouldTruncateTopic_WhenLenthyTopicGiven) {
 	char fixed_topic[PUBSUB_TOPIC_NAME_MAXLEN+1];
 	char mytopic[PUBSUB_TOPIC_NAME_MAXLEN * 2];
+	const char *ctbl = "1234567890";
 	for (size_t i = 0; i < sizeof(mytopic); i++) {
-		mytopic[i] = (char)i % 10 + '0';
+		mytopic[i] = ctbl[i % 10];
 	}
-	strlcpy(fixed_topic, mytopic, sizeof(fixed_topic));
+	strncpy(fixed_topic, mytopic, sizeof(fixed_topic));
+	fixed_topic[sizeof(fixed_topic)-1] = '\0';
 
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(mytopic, "message", 7));
