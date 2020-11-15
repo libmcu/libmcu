@@ -20,7 +20,7 @@ typedef enum {
 } pubsub_error_t;
 
 typedef void (*pubsub_callback_t)(void *context, const void *msg, size_t msglen);
-typedef struct subscribe subscribe_t;
+typedef struct pubsub_subscribe pubsub_subscribe_t;
 
 pubsub_error_t pubsub_create(const char * const topic);
 pubsub_error_t pubsub_destroy(const char * const topic);
@@ -37,9 +37,9 @@ pubsub_error_t pubsub_destroy(const char * const topic);
  */
 pubsub_error_t pubsub_publish(const char * const topic,
 		const void * const msg, size_t msglen);
-subscribe_t *pubsub_subscribe(const char * const topic,
+pubsub_subscribe_t *pubsub_subscribe(const char * const topic,
 		pubsub_callback_t cb, void *context);
-pubsub_error_t pubsub_unsubscribe(subscribe_t *sub);
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub);
 int pubsub_count(const char * const topic);
 const char *pubsub_stringify_error(pubsub_error_t err);
 
