@@ -8,6 +8,8 @@
 #include "list.h"
 #include "logger.h"
 
+#define TOPIC_DESTROY_MESSAGE			"topic destroyed"
+
 typedef struct {
 	char name[PUBSUB_TOPIC_NAME_MAXLEN];
 	struct list pubsub_node; // list entry for the pubsub_list
@@ -52,8 +54,6 @@ static inline void initialize_subscriptions(topic_t *p)
 
 static inline void remove_subscriptions(topic_t *p)
 {
-	pubsub_publish(p->name, "topic destroyed", 15);
-
 	pthread_mutex_lock(&p->subscription_lock);
 	{
 		struct list *i, *j;
@@ -143,11 +143,13 @@ pubsub_error_t pubsub_destroy(const char * const topic)
 		return PUBSUB_TOPIC_NOT_EXIST;
 	}
 
+	pubsub_publish(p->name,
+			TOPIC_DESTROY_MESSAGE, sizeof(TOPIC_DESTROY_MESSAGE));
 	remove_subscriptions(p);
 	remove_topic(p);
 	free(p);
 
-	debug("%s topic destroyed", topic);
+	debug("%s " TOPIC_DESTROY_MESSAGE, topic);
 
 	return PUBSUB_SUCCESS;
 }
