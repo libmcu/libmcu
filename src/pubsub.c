@@ -188,10 +188,8 @@ pubsub_subscribe_t *pubsub_subscribe(const char * const topic,
 	return sub;
 }
 
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *handle)
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
 {
-	pubsub_subscribe_t *sub = (pubsub_subscribe_t *)handle;
-
 	if (!sub || !sub->topic) {
 		return PUBSUB_INVALID_PARAM;
 	}
