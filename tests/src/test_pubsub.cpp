@@ -39,9 +39,16 @@ TEST(PubSub, create_ShouldReturnInvaludParam_WhenNullTopicGiven) {
 	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_create(NULL));
 }
 
-TEST(PubSub, create_ShouldReturnNoMemory_WhenAllocationFail) {
+TEST(PubSub, create_ShouldReturnNoMemory_WhenAllocationFailForTopic) {
 	const char *mytopic = "mytopic";
 	cpputest_malloc_set_out_of_memory();
+	LONGS_EQUAL(PUBSUB_NO_MEMORY, pubsub_create(mytopic));
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(PubSub, create_ShouldReturnNoMemory_WhenAllocationFailForTopicName) {
+	const char *mytopic = "mytopic";
+	cpputest_malloc_set_out_of_memory_countdown(2);
 	LONGS_EQUAL(PUBSUB_NO_MEMORY, pubsub_create(mytopic));
 	cpputest_malloc_set_not_out_of_memory();
 }
@@ -50,6 +57,22 @@ TEST(PubSub, create_ShouldReturnExist_WhenExistingTopicGiven) {
 	const char *mytopic = "mytopic";
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
 	LONGS_EQUAL(PUBSUB_TOPIC_EXIST, pubsub_create(mytopic));
+	pubsub_destroy(mytopic);
+}
+
+TEST(PubSub, create_ShouldTruncateTopic_WhenLenthyTopicGiven) {
+	char fixed_topic[PUBSUB_TOPIC_NAME_MAXLEN+1];
+	char mytopic[PUBSUB_TOPIC_NAME_MAXLEN * 2];
+	const char *ctbl = "1234567890";
+	for (size_t i = 0; i < sizeof(mytopic); i++) {
+		mytopic[i] = ctbl[i % 10];
+	}
+	strncpy(fixed_topic, mytopic, sizeof(fixed_topic));
+	fixed_topic[sizeof(fixed_topic)-1] = '\0';
+
+	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
+	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(mytopic, "message", 7));
+	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(fixed_topic, "message", 7));
 	pubsub_destroy(mytopic);
 }
 
@@ -78,7 +101,7 @@ TEST(PubSub, destroy_ShouldRemoveAndDestroySubscriptionsRegisterd) {
 }
 
 TEST(PubSub, subscribe_ShouldReturnHandler) {
-	subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
 	CHECK(sub != NULL);
 	LONGS_EQUAL(1, pubsub_count(topic));
 	pubsub_unsubscribe(sub);
@@ -90,7 +113,7 @@ TEST(PubSub, subscribe_ShouldReturnNull_WhenNullParamsGiven) {
 }
 
 TEST(PubSub, unsubscribe_ShouldReturnSuccess) {
-	subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(sub));
 }
 
@@ -109,9 +132,9 @@ TEST(PubSub, publish_ShouldReturnInvaludParams_WhenNullParamsGiven) {
 }
 
 TEST(PubSub, publish_ShouldReturnSuccessAndCallCallback) {
-	subscribe_t *sub1 = pubsub_subscribe(topic, callback, NULL);
-	subscribe_t *sub2 = pubsub_subscribe(topic, callback, NULL);
-	subscribe_t *sub3 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t *sub1 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t *sub2 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t *sub3 = pubsub_subscribe(topic, callback, NULL);
 	LONGS_EQUAL(3, pubsub_count(topic));
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(topic, "message", 7));
 	LONGS_EQUAL(7, message_length_spy);

@@ -11,13 +11,13 @@
 #define TOPIC_DESTROY_MESSAGE			"topic destroyed"
 
 typedef struct {
-	char name[PUBSUB_TOPIC_NAME_MAXLEN];
+	char *name;
 	struct list pubsub_node; // list entry for the pubsub_list
 	pthread_mutex_t subscription_lock;
 	struct list subscriptions; // list head for subscriptions
 } topic_t;
 
-struct subscribe {
+struct pubsub_subscribe_s {
 	topic_t *topic;
 	struct list subscription_node;
 	pubsub_callback_t callback;
@@ -58,8 +58,8 @@ static inline void remove_subscriptions(topic_t *p)
 	{
 		struct list *i, *j;
 		list_for_each_safe(i, j, &p->subscriptions) {
-			struct subscribe *sub =
-				list_entry(i, struct subscribe, subscription_node);
+			pubsub_subscribe_t *sub = list_entry(i,
+					pubsub_subscribe_t, subscription_node);
 			list_del(&sub->subscription_node, &p->subscriptions);
 			free(sub);
 		}
@@ -92,7 +92,8 @@ static topic_t *find_topic(const char * const topic)
 		struct list *i;
 		list_for_each(i, &pubsub_list) {
 			p = list_entry(i, topic_t, pubsub_node);
-			if (strcmp(topic, p->name) == 0) {
+			if (strncmp(topic, p->name, PUBSUB_TOPIC_NAME_MAXLEN)
+					== 0) {
 				break;
 			} else {
 				p = NULL;
@@ -123,11 +124,18 @@ pubsub_error_t pubsub_create(const char * const topic)
 		return PUBSUB_NO_MEMORY;
 	}
 
-	strncpy(p->name, topic, PUBSUB_TOPIC_NAME_MAXLEN);
+	size_t topic_len = strnlen(topic, PUBSUB_TOPIC_NAME_MAXLEN);
+	if (!(p->name = (char *)calloc(1, topic_len + 1))) {
+		free(p);
+		return PUBSUB_NO_MEMORY;
+	}
+
+	strncpy(p->name, topic, topic_len);
+	p->name[topic_len] = '\0';
 	initialize_subscriptions(p);
 	add_topic(p);
 
-	debug("%s topic created", topic);
+	debug("%s topic created", p->name);
 
 	return PUBSUB_SUCCESS;
 }
@@ -147,21 +155,23 @@ pubsub_error_t pubsub_destroy(const char * const topic)
 			TOPIC_DESTROY_MESSAGE, sizeof(TOPIC_DESTROY_MESSAGE));
 	remove_subscriptions(p);
 	remove_topic(p);
-	free(p);
 
-	debug("%s " TOPIC_DESTROY_MESSAGE, topic);
+	debug("%s " TOPIC_DESTROY_MESSAGE, p->name);
+
+	free(p->name);
+	free(p);
 
 	return PUBSUB_SUCCESS;
 }
 
-subscribe_t *pubsub_subscribe(const char * const topic,
+pubsub_subscribe_t *pubsub_subscribe(const char * const topic,
 		pubsub_callback_t cb, void *context)
 {
 	topic_t *p;
-	struct subscribe *sub;
+	pubsub_subscribe_t *sub;
 
 	if (!topic || !cb || !(p = find_topic(topic)) ||
-			!(sub = (struct subscribe *)calloc(1, sizeof(*sub)))) {
+			!(sub = (pubsub_subscribe_t *)calloc(1, sizeof(*sub)))) {
 		return NULL;
 	}
 
@@ -178,10 +188,8 @@ subscribe_t *pubsub_subscribe(const char * const topic,
 	return sub;
 }
 
-pubsub_error_t pubsub_unsubscribe(subscribe_t *handle)
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
 {
-	struct subscribe *sub = (struct subscribe *)handle;
-
 	if (!sub || !sub->topic) {
 		return PUBSUB_INVALID_PARAM;
 	}
@@ -213,8 +221,8 @@ pubsub_error_t pubsub_publish(const char * const topic,
 	{
 		struct list *i;
 		list_for_each(i, &p->subscriptions) {
-			struct subscribe *sub =
-				list_entry(i, struct subscribe, subscription_node);
+			pubsub_subscribe_t *sub = list_entry(i,
+					pubsub_subscribe_t, subscription_node);
 			sub->callback(sub->context, msg, msglen);
 		}
 	}
