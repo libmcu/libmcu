@@ -36,7 +36,7 @@ TEST(bitmap, init_ShouldClearArray_WhenInitialValueIsZero) {
 }
 
 TEST(bitmap, init_ShouldSetArray_WhenInitialValueIsOne) {
-	bitmap_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)];
+	bitmap_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)] = { 0, };
 	memset(fixed_bitmap, -1, DEFAULT_BITMAP_LENGTH/CHAR_BIT);
 	for (int i = 0; i < DEFAULT_BITMAP_LENGTH % CHAR_BIT; i++) {
 		int pos = DEFAULT_BITMAP_LENGTH - i - 1;
