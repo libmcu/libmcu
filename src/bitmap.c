@@ -29,7 +29,7 @@ int bitmap_count(const bitmap_t * const bitmap, int n)
 
 	for (int i = 0; i < nword; i++) {
 		for (int j = 0; (bitmap[i] >> j) &&
-				(size_t)j < sizeof(bitmap[i]) * CHAR_BIT; j++) {
+				(j < (int)(sizeof(bitmap[i]) * CHAR_BIT)); j++) {
 			if ((bitmap[i] >> j) & 1U) {
 				cnt++;
 			}
