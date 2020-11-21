@@ -1,5 +1,5 @@
 #include "CppUTestExt/MockSupport.h"
-#include "semaphore.h"
+#include "libmcu/posix/semaphore.h"
 
 struct semaphore {
 	int count;

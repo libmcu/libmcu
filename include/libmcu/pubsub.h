@@ -1,5 +1,5 @@
-#ifndef PUBSUB_H
-#define PUBSUB_H 1
+#ifndef LIBMCU_PUBSUB_H
+#define LIBMCU_PUBSUB_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -47,4 +47,4 @@ const char *pubsub_stringify_error(pubsub_error_t err);
 }
 #endif
 
-#endif /* PUBSUB_H */
+#endif /* LIBMCU_PUBSUB_H */

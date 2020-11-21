@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 
 #include <pthread.h>
-#include "jobpool.h"
+#include "libmcu/jobpool.h"
 
 struct job_context {
 	bool is_callback_called;

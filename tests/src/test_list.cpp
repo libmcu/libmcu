@@ -1,6 +1,6 @@
 #include "CppUTest/TestHarness.h"
 
-#include "list.h"
+#include "libmcu/list.h"
 
 TEST_GROUP(SinglyLinkedList) {
 	struct list head;

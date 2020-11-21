@@ -1,6 +1,6 @@
 #include "CppUTest/TestHarness.h"
 
-#include "apptimer.h"
+#include "libmcu/apptimer.h"
 #include "apptimer_spy.h"
 
 TEST_GROUP(AppTimer) {

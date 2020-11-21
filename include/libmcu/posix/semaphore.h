@@ -1,5 +1,5 @@
-#ifndef MONONN_SEMAPHORE_H
-#define MONONN_SEMAPHORE_H 1
+#ifndef LIBMCU_SEMAPHORE_H
+#define LIBMCU_SEMAPHORE_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -22,4 +22,4 @@ int sem_getvalue(sem_t *sem, int *sval);
 }
 #endif
 
-#endif /* MONONN_SEMAPHORE_H */
+#endif /* LIBMCU_SEMAPHORE_H */

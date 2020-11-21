@@ -1,5 +1,5 @@
-#ifndef RUNMODE_H
-#define RUNMODE_H 1
+#ifndef LIBMCU_RUNMODE_H
+#define LIBMCU_RUNMODE_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -23,4 +23,4 @@ void mode_init(void);
 }
 #endif
 
-#endif /* RUNMODE_H */
+#endif /* LIBMCU_RUNMODE_H */

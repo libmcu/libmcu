@@ -1,5 +1,5 @@
-#ifndef KVSTORE_H
-#define KVSTORE_H 1
+#ifndef LIBMCU_KVSTORE_H
+#define LIBMCU_KVSTORE_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -30,4 +30,4 @@ static inline size_t kvstore_read(const kvstore_t *kvstore,
 }
 #endif
 
-#endif /* KVSTORE_H */
+#endif /* LIBMCU_KVSTORE_H */

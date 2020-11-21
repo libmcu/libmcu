@@ -1,13 +1,13 @@
-#include "jobpool.h"
+#include "libmcu/jobpool.h"
 
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
 
-#include "list.h"
+#include "libmcu/list.h"
+#include "libmcu/compiler.h"
 #include "logger.h"
-#include "compiler.h"
 
 #define DEFAULT_STACK_SIZE			3072
 #define DEFAULT_MIN_THREADS			1

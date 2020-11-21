@@ -1,5 +1,5 @@
 // maximum key and namespace string length is 15 bytes
-#include "nvs_kvstore.h"
+#include "libmcu/nvs_kvstore.h"
 
 #include <stdbool.h>
 #include <stddef.h>

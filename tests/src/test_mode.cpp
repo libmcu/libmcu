@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 
-#include "mode.h"
+#include "libmcu/mode.h"
 
 TEST_GROUP(RunMode) {
 	void setup(void) {

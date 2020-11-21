@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 
-#include "memory_kvstore.h"
+#include "libmcu/memory_kvstore.h"
 
 TEST_GROUP(MemoryKVStore) {
 	kvstore_t *storage;

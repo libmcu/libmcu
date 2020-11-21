@@ -2,7 +2,7 @@
 
 extern "C" {
 #include "nvs.h"
-#include "compiler.h"
+#include "libmcu/compiler.h"
 }
 
 extern "C" int nvs_set_blob(nvs_handle_t UNUSED c_handle,

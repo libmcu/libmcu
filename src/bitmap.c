@@ -1,4 +1,4 @@
-#include "bitmap.h"
+#include "libmcu/bitmap.h"
 
 bool bitmap_get(const bitmap_t * const bitmap, int pos)
 {

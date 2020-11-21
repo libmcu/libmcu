@@ -1,5 +1,5 @@
-#ifndef LINKED_LIST_H
-#define LINKED_LIST_H 1
+#ifndef LIBMCU_LINKED_LIST_H
+#define LIBMCU_LINKED_LIST_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -84,4 +84,4 @@ static inline int list_count(struct list *head)
 }
 #endif
 
-#endif /* LINKED_LIST_H */
+#endif /* LIBMCU_LINKED_LIST_H */

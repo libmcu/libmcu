@@ -1,5 +1,5 @@
-#ifndef SLEEP_H
-#define SLEEP_H 1
+#ifndef LIBMCU_SLEEP_H
+#define LIBMCU_SLEEP_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -11,4 +11,4 @@ void sleep_ms(unsigned long msec);
 }
 #endif
 
-#endif /* SLEEP_H */
+#endif /* LIBMCU_SLEEP_H */

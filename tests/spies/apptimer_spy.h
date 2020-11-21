@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include "apptimer.h"
+#include "libmcu/apptimer.h"
 
 enum {
 	TIMERSPY_CREATED		= 100,

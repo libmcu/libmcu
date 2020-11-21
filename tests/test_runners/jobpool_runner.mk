@@ -9,6 +9,6 @@ SRC_FILES = \
 TEST_SRC_FILES = \
 	src/test_jobpool.cpp
 
-INCLUDE_DIRS += stubs ../include/posix
+INCLUDE_DIRS += stubs ../include/libmcu/posix
 
 include test_runners/MakefileRunner.mk

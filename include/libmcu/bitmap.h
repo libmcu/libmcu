@@ -1,5 +1,5 @@
-#ifndef BITMAP_H
-#define BITMAP_H 1
+#ifndef LIBMCU_BITMAP_H
+#define LIBMCU_BITMAP_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -66,4 +66,4 @@ void bitmap_init(bitmap_t * const bitmap, int n, bool initial_value);
 }
 #endif
 
-#endif /* BITMAP_H */
+#endif /* LIBMCU_BITMAP_H */

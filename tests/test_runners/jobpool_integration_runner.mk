@@ -6,7 +6,7 @@ SRC_FILES = \
 TEST_SRC_FILES = \
 	src/test_jobpool_integration.cpp
 
-INCLUDE_DIRS += stubs ../include/posix
+INCLUDE_DIRS += stubs ../include/libmcu/posix
 CPPUTEST_LDFLAGS += -lpthread
 
 include test_runners/MakefileRunner.mk

@@ -3,7 +3,7 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include <string.h>
-#include "jobpool.h"
+#include "libmcu/jobpool.h"
 
 #define MAX_JOBS	10
 

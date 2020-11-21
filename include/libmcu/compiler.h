@@ -1,5 +1,5 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#ifndef LIBMCU_COMPILER_H
+#define LIBMCU_COMPILER_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -34,4 +34,4 @@ extern "C" {
 }
 #endif
 
-#endif /* COMPILER_H */
+#endif /* LIBMCU_COMPILER_H */

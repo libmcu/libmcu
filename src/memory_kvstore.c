@@ -1,7 +1,9 @@
-#include "memory_kvstore.h"
+#include "libmcu/memory_kvstore.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "list.h"
+
+#include "libmcu/list.h"
 
 #undef MIN
 #define MIN(x, y)			((x) > (y)? (y) : (x))

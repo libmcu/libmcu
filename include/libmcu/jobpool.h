@@ -1,5 +1,5 @@
-#ifndef JOBPOOL_H
-#define JOBPOOL_H 1
+#ifndef LIBMCU_JOBPOOL_H
+#define LIBMCU_JOBPOOL_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -51,4 +51,4 @@ const char *job_stringify_error(job_error_t error_code);
 }
 #endif
 
-#endif /* JOBPOOL_H */
+#endif /* LIBMCU_JOBPOOL_H */

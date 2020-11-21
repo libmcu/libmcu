@@ -1,5 +1,5 @@
-#ifndef DOUBLY_LINKED_LIST_H
-#define DOUBLY_LINKED_LIST_H 1
+#ifndef LIBMCU_DOUBLY_LINKED_LIST_H
+#define LIBMCU_DOUBLY_LINKED_LIST_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -96,4 +96,4 @@ static inline int llist_count(struct llist *ref)
 }
 #endif
 
-#endif /* DOUBLY_LINKED_LIST_H */
+#endif /* LIBMCU_DOUBLY_LINKED_LIST_H */

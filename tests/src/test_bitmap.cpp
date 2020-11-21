@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
-#include "bitmap.h"
-#include "compiler.h"
+#include "libmcu/bitmap.h"
+#include "libmcu/compiler.h"
 
 #define DEFAULT_BITMAP_LENGTH		100 // bits
 

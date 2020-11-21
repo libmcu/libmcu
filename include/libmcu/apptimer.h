@@ -1,5 +1,5 @@
-#ifndef APPTIMER_H
-#define APPTIMER_H 1
+#ifndef LIBMCU_APPTIMER_H
+#define LIBMCU_APPTIMER_H 1
 
 #if defined(__cplusplus)
 extern "C" {
@@ -39,4 +39,4 @@ int apptimer_stop(apptimer_t *timer);
 }
 #endif
 
-#endif /* APPTIMER_H */
+#endif /* LIBMCU_APPTIMER_H */

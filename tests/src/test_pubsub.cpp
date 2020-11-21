@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 #include <string.h>
-#include "pubsub.h"
+#include "libmcu/pubsub.h"
 
 static int callback_count;
 static uint8_t message_spy[128];

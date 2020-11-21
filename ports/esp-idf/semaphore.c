@@ -1,7 +1,7 @@
-#include "semaphore.h"
+#include "libmcu/posix/semaphore.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
-#include "compiler.h"
+#include "libmcu/compiler.h"
 
 struct semaphore {
 	SemaphoreHandle_t handle;

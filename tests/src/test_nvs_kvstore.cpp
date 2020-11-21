@@ -2,7 +2,7 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include <string.h>
-#include "nvs_kvstore.h"
+#include "libmcu/nvs_kvstore.h"
 
 TEST_GROUP(NVSKVStore) {
 	void setup(void) {

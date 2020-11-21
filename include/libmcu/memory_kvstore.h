@@ -1,11 +1,11 @@
-#ifndef MEMORY_KVSTORE_H
-#define MEMORY_KVSTORE_H 1
+#ifndef LIBMCU_MEMORY_KVSTORE_H
+#define LIBMCU_MEMORY_KVSTORE_H 1
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
-#include "kvstore.h"
+#include "libmcu/kvstore.h"
 
 int memory_kvstore_init(void);
 void memory_kvstore_delete(kvstore_t *kvstore);
@@ -15,4 +15,4 @@ kvstore_t *memory_kvstore_new(const char *ns);
 }
 #endif
 
-#endif /* MEMORY_KVSTORE_H */
+#endif /* LIBMCU_MEMORY_KVSTORE_H */
