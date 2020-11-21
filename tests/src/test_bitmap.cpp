@@ -1,4 +1,5 @@
 #include "CppUTest/TestHarness.h"
+#include <string.h>
 #include "bitmap.h"
 #include "compiler.h"
 
