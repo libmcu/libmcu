@@ -22,6 +22,14 @@ extern "C" {
 
 #define NO_OPTIMIZE			__attribute__((optimize("O0")))
 
+#define stringify(x)			#x
+#define def2str(x)			stringify(x)
+
+/** Align down */
+#define BASE(x, unit)			((x) & ~((typeof(x))(unit) - 1UL))
+/** Align up */
+#define ALIGN(x, unit)			BASE((x) + ((typeof(x))(unit) - 1UL), unit)
+
 #if defined(__cplusplus)
 }
 #endif
