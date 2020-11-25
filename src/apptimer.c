@@ -18,13 +18,11 @@
 #define MIN(x, y)			((x) > (y)? (y) : (x))
 #endif
 
-#define time_after(goal, chasing)	((int)(goal)    - (int)(chasing) < 0)
 #define time_before(goal, chasing)	((int)(chasing) - (int)(goal)    < 0)
 
 #define SLOTS_BITS			(fls(NR_SLOTS) - 1)
-#define SLOTS_MASK			((1 << SLOTS_BITS) - 1)
+#define SLOTS_MASK			((1UL << SLOTS_BITS) - 1)
 #define WHEELS_BITS			(SLOTS_BITS * NR_WHEELS)
-#define WHEELS_MASK			((1UL << WHEELS_BITS) - 1)
 #define MAX_WHEELS_TIMEOUT		(1UL << WHEELS_BITS)
 #define MAX_TIMEOUT			\
 	((1UL << (sizeof(apptimer_timeout_t) * CHAR_BIT - 1)) - 1)
@@ -52,8 +50,7 @@ static struct {
 static inline int get_wheel_index_from_timeout(apptimer_timeout_t timeout)
 {
 	assert(timeout != 0);
-	return MIN((apptimer_timeout_t)(WHEELS_BITS - 1),
-			(apptimer_timeout_t)(fls(timeout) - 1)) / SLOTS_BITS;
+	return MIN(WHEELS_BITS - 1, fls(timeout) - 1) / SLOTS_BITS;
 }
 
 static inline int get_slot_index_from_timeout(apptimer_timeout_t timeout,
@@ -243,11 +240,13 @@ apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
 	return timer;
 }
 
-apptimer_error_t apptimer_stop(const apptimer_t * const timer)
+apptimer_error_t apptimer_stop(apptimer_t * const timer)
 {
+	struct apptimer *p = (struct apptimer *)timer;
+
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		delete_timer_from_list(timer);
+		delete_timer_from_list(p);
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
@@ -256,10 +255,12 @@ apptimer_error_t apptimer_stop(const apptimer_t * const timer)
 
 apptimer_error_t apptimer_delete(apptimer_t *timer)
 {
+	struct apptimer *p = (struct apptimer *)timer;
+
 	// TODO: free if the timer created dynamically
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		delete_timer_from_list(timer);
+		delete_timer_from_list(p);
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
@@ -282,7 +283,7 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 	apptimer_timeout_t diff_time = current_time ^ previous_time;
 
 	int farmost_wheel = get_wheel_index_from_timeout(diff_time);
-	int slot = (diff_time >= MAX_WHEELS_TIMEOUT)? SLOTS_MASK :
+	int slot = (diff_time >= MAX_WHEELS_TIMEOUT)? (int)SLOTS_MASK :
 		get_slot_index_from_timeout(current_time, farmost_wheel);
 	debug("schedule %lx(%lx): wheel %d slot %d",
 			current_time, diff_time, farmost_wheel, slot);

@@ -1,7 +1,6 @@
 #include "CppUTest/TestHarness.h"
 
 #include "libmcu/apptimer.h"
-#include "logger.h"
 
 static int nr_called;
 
@@ -118,8 +117,8 @@ TEST(AppTimer, ShouldCallCallback_WhenTimedOut) {
 	}
 
 	LONGS_EQUAL(n, apptimer_count());
-	for (int i = 0, tout = 2; i < n; i++) {
-		debug("=> %lu:%lu #%lu", tout, elapsed, tout-elapsed);
+	tout = 2;
+	for (int i = 0; i < n; i++) {
 		apptimer_schedule(tout - elapsed);
 		LONGS_EQUAL(i+1, nr_called);
 		LONGS_EQUAL(n-i-1, apptimer_count());

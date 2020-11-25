@@ -39,7 +39,7 @@ apptimer_error_t apptimer_delete(apptimer_t *timer);
 
 apptimer_error_t apptimer_start(apptimer_t * const timer,
 		apptimer_timeout_t timeout, void *callback_context);
-apptimer_error_t apptimer_stop(const apptimer_t * const timer);
+apptimer_error_t apptimer_stop(apptimer_t * const timer);
 int apptimer_count(void);
 
 void apptimer_schedule(apptimer_timeout_t time_elapsed);

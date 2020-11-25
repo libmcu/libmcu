@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-static inline int fls(unsigned int x)
+static inline int fls(unsigned long x)
 {
-	return x? (int)sizeof(x) * 8 - __builtin_clz(x) : 0;
+	return x? (int)sizeof(x) * 8 - __builtin_clzl(x) : 0;
 }
 
 #if defined(__cplusplus)
