@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static inline int test_logger(const int type, void *pc, void *lr, ...)
+static int test_logger(const int type, void *pc, void *lr, ...)
 {
 	int len = 0;
 	va_list ap;

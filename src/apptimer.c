@@ -168,7 +168,7 @@ static void update_slots(int wheel, int slot, int n)
 
 static void update_whole_slots(int wheel)
 {
-	update_slots(wheel, NR_SLOTS, NR_SLOTS);
+	update_slots(wheel, NR_SLOTS-1, NR_SLOTS);
 }
 
 static void run_pending_timers(void)
