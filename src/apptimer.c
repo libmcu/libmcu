@@ -138,7 +138,7 @@ static inline void add_timer_into_wheel(struct apptimer * const timer)
 			timer->goaltime, current_time, wheel, slot);
 }
 
-// TODO: implement get_earliest_timer()
+// TODO: Implement `get_earliest_timer()`
 static inline const struct apptimer *get_earliest_timer(void)
 {
 	return NULL;
@@ -235,6 +235,12 @@ apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
 	llist_init(&p->list);
 
 	return timer;
+}
+
+// TODO: Implement `apptimer_create()`
+apptimer_t *apptimer_create(bool repeat, apptimer_callback_t callback)
+{
+	return NULL;
 }
 
 apptimer_error_t apptimer_stop(apptimer_t * const timer)

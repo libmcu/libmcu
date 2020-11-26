@@ -46,6 +46,11 @@ apptimer_error_t apptimer_start(apptimer_t * const timer,
 apptimer_error_t apptimer_stop(apptimer_t * const timer);
 int apptimer_count(void);
 
+/** Process expirations and bookkeepings
+ *
+ * It should not be called from the interrupt context as expiry processing gets
+ * done here.
+ */
 void apptimer_schedule(apptimer_timeout_t time_elapsed);
 
 #if defined(__cplusplus)
