@@ -12,7 +12,9 @@ every time wheel unit time passing, all the slots of lower wheels get updated,
 which is not cache friendly.
 
 Adjusting `NR_WHEELS` and `NR_SLOTS`, you might meet the requirements. e.g. it
-would be simple timing wheels when `NR_WHEELS=1` with timeout limitation.
+would be simple timing wheels when `NR_WHEELS=1` with timeout limitation. There
+is space-time tradeoff. The more slots the faster while the more slots the more
+memory.
 
 A timer takes 25 bytes on 32-bit system. 4 bytes more can be saved replacing
 doubly linked list with singly linked list.
