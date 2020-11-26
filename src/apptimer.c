@@ -79,7 +79,6 @@ static inline apptimer_timeout_t get_timeout_remained(const struct apptimer *
 
 static inline bool is_timer_expired(struct apptimer * const timer)
 {
-	debug("expired? %lu : %lu", timer->goaltime, m.time_counter);
 	return !time_before(timer->goaltime, m.time_counter);
 }
 
@@ -88,7 +87,7 @@ static inline bool is_timer_registered(const struct apptimer * const timer)
 	return !llist_empty(&timer->list);
 }
 
-static inline void delete_timer_from_list(struct apptimer * const timer)
+static inline void remove_timer_from_list(struct apptimer * const timer)
 {
 	if (llist_empty(&timer->list)) {
 		return;
@@ -100,28 +99,28 @@ static inline void delete_timer_from_list(struct apptimer * const timer)
 	llist_init(&timer->list);
 }
 
-static inline void delete_timer_from_wheel(struct apptimer * const timer)
+static inline void remove_timer_from_wheel(struct apptimer * const timer)
 {
-	delete_timer_from_list(timer);
+	remove_timer_from_list(timer);
 }
 
-static inline void delete_timer_from_pending(struct apptimer * const timer)
+static inline void remove_timer_from_pending(struct apptimer * const timer)
 {
-	delete_timer_from_list(timer);
+	remove_timer_from_list(timer);
 }
 
-static inline void add_timer_into_pending(struct apptimer * const timer)
+static inline void insert_timer_into_pending(struct apptimer * const timer)
 {
 	llist_add(&timer->list, &m.pending);
 }
 
-static inline void add_timer_into_wheel(struct apptimer * const timer)
+static inline void insert_timer_into_wheel(struct apptimer * const timer)
 {
 	m.active_timers++;
 
 	if (is_timer_expired(timer)) {
-		add_timer_into_pending(timer);
-		debug("%lx: Add timer in pending %d %d", get_current_time(),
+		insert_timer_into_pending(timer);
+		debug("%lx: Insert timer in pending %d %d", get_current_time(),
 				timer->goaltime, timer->interval);
 		return;
 	}
@@ -134,8 +133,8 @@ static inline void add_timer_into_wheel(struct apptimer * const timer)
 
 	llist_add(&timer->list, &m.wheels[wheel][slot]);
 
-	debug("%lu <- %lu: Add timer in wheel %d slot %d",
-			timer->goaltime, current_time, wheel, slot);
+	debug("%lu: Insert timer(%lu) in wheel %d slot %d",
+			current_time, timer->goaltime, wheel, slot);
 }
 
 // TODO: Implement `get_earliest_timer()`
@@ -159,7 +158,7 @@ static void update_slots(int wheel, int slot, int n)
 	llist_for_each_safe(p, t, &tmp_lists) {
 		llist_del(p);
 		m.active_timers--;
-		add_timer_into_wheel(llist_entry(p, struct apptimer, list));
+		insert_timer_into_wheel(llist_entry(p, struct apptimer, list));
 	}
 }
 
@@ -181,7 +180,7 @@ static void run_pending_timers(void)
 
 		if (timer->repeat) {
 			timer->goaltime = get_current_time() + timer->interval;
-			add_timer_into_wheel(timer);
+			insert_timer_into_wheel(timer);
 		}
 	}
 }
@@ -214,7 +213,7 @@ apptimer_error_t apptimer_start(apptimer_t * const timer,
 
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		add_timer_into_wheel(p);
+		insert_timer_into_wheel(p);
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
@@ -249,7 +248,7 @@ apptimer_error_t apptimer_stop(apptimer_t * const timer)
 
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		delete_timer_from_list(p);
+		remove_timer_from_list(p);
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
@@ -263,7 +262,7 @@ apptimer_error_t apptimer_delete(apptimer_t *timer)
 	// TODO: free if the timer created dynamically
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		delete_timer_from_list(p);
+		remove_timer_from_list(p);
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
