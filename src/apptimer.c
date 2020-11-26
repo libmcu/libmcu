@@ -1,6 +1,5 @@
 #include "libmcu/apptimer.h"
 
-#include <limits.h>
 #include <pthread.h>
 #include <assert.h>
 
@@ -24,8 +23,6 @@
 #define SLOTS_MASK			((1UL << SLOTS_BITS) - 1)
 #define WHEELS_BITS			(SLOTS_BITS * NR_WHEELS)
 #define MAX_WHEELS_TIMEOUT		(1UL << WHEELS_BITS)
-#define MAX_TIMEOUT			\
-	((1UL << (sizeof(apptimer_timeout_t) * CHAR_BIT - 1)) - 1)
 
 struct apptimer {
 	apptimer_timeout_t interval;
@@ -200,7 +197,7 @@ apptimer_error_t apptimer_start(apptimer_t * const timer,
 	if (is_timer_registered(p)) {
 		return APPTIMER_ALREADY_STARTED;
 	}
-	if (timeout > MAX_TIMEOUT) {
+	if (timeout > APPTIMER_MAX_TIMEOUT) {
 		return APPTIMER_TIME_LIMIT_EXCEEDED;
 	}
 
@@ -274,8 +271,9 @@ int apptimer_count(void)
 
 void apptimer_schedule(apptimer_timeout_t time_elapsed)
 {
-	if (time_elapsed > MAX_TIMEOUT) {
-		error("time overrun %lu / %lu", time_elapsed, MAX_TIMEOUT);
+	if (time_elapsed > APPTIMER_MAX_TIMEOUT) {
+		error("time overrun %lu / %lu",
+				time_elapsed, APPTIMER_MAX_TIMEOUT);
 	}
 
 	apptimer_timeout_t previous_time = get_current_time();
@@ -306,7 +304,7 @@ void apptimer_init(void (*set_hardware_event_counter)(apptimer_timeout_t
 			timeout))
 {
 	debug("slots bits %d, max timeout %lu, wheels bits %d:%lu", SLOTS_BITS,
-			MAX_TIMEOUT, WHEELS_BITS, MAX_WHEELS_TIMEOUT-1);
+			APPTIMER_MAX_TIMEOUT, WHEELS_BITS, MAX_WHEELS_TIMEOUT-1);
 
 	pthread_mutex_init(&m.wheels_lock, NULL);
 	m.set_hardware_event_counter = set_hardware_event_counter;

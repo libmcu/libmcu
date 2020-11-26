@@ -7,6 +7,10 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
+
+#define APPTIMER_MAX_TIMEOUT		\
+	((1UL << (sizeof(apptimer_timeout_t) * CHAR_BIT - 1)) - 1)
 
 typedef enum {
 	APPTIMER_SUCCESS		= 0,

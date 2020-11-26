@@ -46,6 +46,50 @@ TEST(AppTimer, start_ShouldReturnAlreadyStarted_WhenStartAgain) {
 	LONGS_EQUAL(1, apptimer_count());
 }
 
+TEST(AppTimer, start_ShouldReturnTimeLimitExceeded_WhenMoreThanMaxTimeoutGiven) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, false, callback);
+	LONGS_EQUAL(APPTIMER_TIME_LIMIT_EXCEEDED,
+			apptimer_start(&timer, APPTIMER_MAX_TIMEOUT+1, NULL));
+}
+
+TEST(AppTimer, start_ShouldRunTimerRecursively_WhenRepeatOptionGiven) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, true, callback);
+	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_start(&timer, 10, NULL));
+	for (int i = 0; i < 10; i++) {
+		LONGS_EQUAL(1, apptimer_count());
+		apptimer_schedule(10);
+		LONGS_EQUAL(i+1, nr_called);
+	}
+	apptimer_stop(&timer);
+	LONGS_EQUAL(0, apptimer_count());
+}
+
+TEST(AppTimer, stop_ShouldStopTimerStarted) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, false, callback);
+	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_start(&timer, 10, NULL));
+	LONGS_EQUAL(1, apptimer_count());
+	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_stop(&timer));
+	LONGS_EQUAL(0, apptimer_count());
+}
+
+IGNORE_TEST(AppTimer, stop_ShouldDoNothing_WhenAlreadStoppedTimerGiven) {
+}
+
+IGNORE_TEST(AppTimer, stop_ShouldDoNothing_WhenNotStartedTimerGiven) {
+}
+
+TEST(AppTimer, delete_ShouldDeleteTimerCreated) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, false, callback);
+	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_delete(&timer));
+}
+
+IGNORE_TEST(AppTimer, delete_ShouldDoNothing_WhenAlreadyDeletedTimerGiven) {
+}
+
 TEST(AppTimer, schedule_ShouldUpdateTimerWheels_WhenEverytimeCalled) {
 	apptimer_t timer;
 	apptimer_create_static(&timer, false, callback);
@@ -60,6 +104,52 @@ TEST(AppTimer, schedule_ShouldUpdateTimerWheels_WhenEverytimeCalled) {
 	apptimer_schedule(1);
 	apptimer_schedule(1);
 	apptimer_schedule(1);
+	LONGS_EQUAL(0, nr_called);
+	apptimer_schedule(1);
+	LONGS_EQUAL(1, nr_called);
+}
+
+TEST(AppTimer, schedule_ShouldNotCompensateTimerTimeout_WhenLatencyGiven) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, true, callback);
+	apptimer_start(&timer, 10, NULL);
+	apptimer_schedule(15);
+	LONGS_EQUAL(1, nr_called);
+	//apptimer_schedule(5);
+	apptimer_schedule(10);
+	LONGS_EQUAL(2, nr_called);
+}
+
+TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesWrapOver) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, true, callback);
+	apptimer_schedule(((apptimer_timeout_t)-1) - 5);
+	apptimer_start(&timer, 10, NULL);
+	apptimer_schedule(9);
+	LONGS_EQUAL(0, nr_called);
+	apptimer_schedule(1);
+	LONGS_EQUAL(1, nr_called);
+	apptimer_schedule(10);
+	LONGS_EQUAL(2, nr_called);
+	apptimer_schedule(13);
+	LONGS_EQUAL(3, nr_called);
+	apptimer_schedule(7);
+	// NOTE: it does not compensate the latency
+	// so even if timed out after 3ms delay, the next expiration will be
+	// after `current time` + timeout + 3ms delay
+	LONGS_EQUAL(3, nr_called);
+	apptimer_schedule(3);
+	LONGS_EQUAL(4, nr_called);
+}
+
+TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesOverSignBit) {
+	apptimer_t timer;
+	apptimer_create_static(&timer, false, callback);
+	// after APPTIMER_MAX_TIMEOUT+1, the sign bit of timer counter will be
+	// set
+	apptimer_schedule(APPTIMER_MAX_TIMEOUT - 5);
+	apptimer_start(&timer, 10, NULL);
+	apptimer_schedule(9);
 	LONGS_EQUAL(0, nr_called);
 	apptimer_schedule(1);
 	LONGS_EQUAL(1, nr_called);
