@@ -66,6 +66,7 @@ CFLAGS += -Wno-error=pedantic \
 	  -Wno-error=conversion \
 	  -Wno-error=deprecated-declarations \
 	  -Wno-error=unused-function \
+	  -Wno-error=strict-overflow \
 	  -Wno-main
 ifndef NDEBUG
 	CFLAGS += -g3

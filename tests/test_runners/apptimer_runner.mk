@@ -1,8 +1,7 @@
 COMPONENT_NAME = apptimer
 
 SRC_FILES = \
-	../ports/esp-idf/apptimer.c \
-	spies/apptimer_spy.c
+	../src/apptimer.c
 
 TEST_SRC_FILES = \
 	src/test_apptimer.cpp
