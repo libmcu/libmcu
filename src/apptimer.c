@@ -41,7 +41,7 @@ static struct {
 	struct llist pending;
 	apptimer_timeout_t time_counter;
 	int active_timers;
-	void (*set_hardware_event_counter)(apptimer_timeout_t timeout);
+	void (*update_alarm)(apptimer_timeout_t timeout);
 } m;
 
 static inline int get_wheel_index_from_timeout(apptimer_timeout_t timeout)
@@ -56,9 +56,14 @@ static inline int get_slot_index_from_timeout(apptimer_timeout_t timeout,
 	return (int)((timeout >> (SLOTS_BITS * wheel)) & SLOTS_MASK);
 }
 
-static inline apptimer_timeout_t get_current_time(void)
+static inline apptimer_timeout_t get_timer_counter(void)
 {
 	return m.time_counter;
+}
+
+static inline void set_timer_counter(apptimer_timeout_t t)
+{
+	m.time_counter = t;
 }
 
 static inline apptimer_timeout_t get_time_distance(apptimer_timeout_t a,
@@ -71,15 +76,9 @@ static inline apptimer_timeout_t get_time_distance(apptimer_timeout_t a,
 	return a - b;
 }
 
-static inline apptimer_timeout_t get_timeout_remained(const struct apptimer *
-		const timer)
-{
-	return get_time_distance(timer->goaltime, get_current_time());
-}
-
 static inline bool is_timer_expired(struct apptimer * const timer)
 {
-	return !time_before(timer->goaltime, m.time_counter);
+	return !time_before(timer->goaltime, get_timer_counter());
 }
 
 static inline bool is_timer_registered(const struct apptimer * const timer)
@@ -120,12 +119,12 @@ static inline void insert_timer_into_wheel(struct apptimer * const timer)
 
 	if (is_timer_expired(timer)) {
 		insert_timer_into_pending(timer);
-		debug("%lx: Insert timer in pending %d %d", get_current_time(),
+		debug("%lx: Insert timer in pending %d %d", get_timer_counter(),
 				timer->goaltime, timer->interval);
 		return;
 	}
 
-	apptimer_timeout_t current_time = get_current_time();
+	apptimer_timeout_t current_time = get_timer_counter();
 	apptimer_timeout_t delta = get_time_distance(timer->goaltime, current_time);
 	apptimer_timeout_t split = current_time & SLOTS_MASK;
 	int wheel = get_wheel_index_from_timeout(delta + split);
@@ -137,10 +136,22 @@ static inline void insert_timer_into_wheel(struct apptimer * const timer)
 			current_time, timer->goaltime, wheel, slot);
 }
 
-// TODO: Implement `get_earliest_timer()`
-static inline const struct apptimer *get_earliest_timer(void)
+static inline apptimer_timeout_t find_earliest_timer_wheel_timeout(void)
 {
-	return NULL;
+	if (m.active_timers <= 0) {
+		goto out;
+	}
+
+	for (int i = 0; i < NR_WHEELS; i++) {
+		for (int j = 0; j < NR_SLOTS; j++) {
+			struct llist *p;
+			llist_for_each(p, &m.wheels[i][j]) {
+				return 1UL << (i * SLOTS_BITS);
+			}
+		}
+	}
+out:
+	return MAX_WHEELS_TIMEOUT;
 }
 
 static void update_slots(int wheel, int slot, int n)
@@ -179,7 +190,7 @@ static void run_pending_timers(void)
 		timer->callback(timer->context);
 
 		if (timer->repeat) {
-			timer->goaltime = get_current_time() + timer->interval;
+			timer->goaltime = get_timer_counter() + timer->interval;
 			insert_timer_into_wheel(timer);
 		}
 	}
@@ -201,19 +212,16 @@ apptimer_error_t apptimer_start(apptimer_t * const timer,
 	}
 
 	p->interval = timeout;
-	p->goaltime = get_current_time() + p->interval;
+	p->goaltime = get_timer_counter() + p->interval;
 	p->context = callback_context;
-
-	const struct apptimer *earliest = get_earliest_timer();
-	if (!earliest || get_timeout_remained(earliest) > timeout) {
-		if (m.set_hardware_event_counter) {
-			m.set_hardware_event_counter(timeout);
-		}
-	}
 
 	pthread_mutex_lock(&m.wheels_lock);
 	{
 		insert_timer_into_wheel(p);
+
+		if (m.update_alarm) {
+			m.update_alarm(find_earliest_timer_wheel_timeout());
+		}
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 
@@ -281,7 +289,7 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 				time_elapsed, APPTIMER_MAX_TIMEOUT);
 	}
 
-	apptimer_timeout_t previous_time = get_current_time();
+	apptimer_timeout_t previous_time = get_timer_counter();
 	apptimer_timeout_t current_time = previous_time + time_elapsed;
 	apptimer_timeout_t diff_time = current_time ^ previous_time;
 
@@ -293,7 +301,7 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 
 	pthread_mutex_lock(&m.wheels_lock);
 	{
-		m.time_counter = current_time;
+		set_timer_counter(current_time);
 
 		for (int wheel = 0; wheel < farmost_wheel; wheel++) {
 			update_whole_slots(wheel);
@@ -301,18 +309,21 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 		update_slots(farmost_wheel, slot, (int)time_elapsed);
 
 		run_pending_timers();
+
+		if (m.update_alarm) {
+			m.update_alarm(find_earliest_timer_wheel_timeout());
+		}
 	}
 	pthread_mutex_unlock(&m.wheels_lock);
 }
 
-void apptimer_init(void (*set_hardware_event_counter)(apptimer_timeout_t
-			timeout))
+void apptimer_init(void (*update_alarm)(apptimer_timeout_t timeout))
 {
 	debug("slots bits %d, max timeout %lu, wheels bits %d:%lu", SLOTS_BITS,
 			APPTIMER_MAX_TIMEOUT, WHEELS_BITS, MAX_WHEELS_TIMEOUT-1);
 
 	pthread_mutex_init(&m.wheels_lock, NULL);
-	m.set_hardware_event_counter = set_hardware_event_counter;
+	m.update_alarm = update_alarm;
 	m.time_counter = 0;
 	m.active_timers = 0;
 	llist_init(&m.pending);

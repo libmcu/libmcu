@@ -32,8 +32,12 @@ typedef union {
 typedef void (*apptimer_callback_t)(void *context);
 typedef uintptr_t apptimer_timeout_t;
 
-void apptimer_init(void (*set_hardware_event_counter)(apptimer_timeout_t
-			timeout));
+/** Initialize apptimer
+ *
+ * @param update_alarm typically sets hardware timer counter to get notified at
+ * the timeout expiration.
+ */
+void apptimer_init(void (*update_alarm)(apptimer_timeout_t timeout));
 apptimer_error_t apptimer_deinit(void);
 
 apptimer_t *apptimer_create(bool repeat, apptimer_callback_t callback);

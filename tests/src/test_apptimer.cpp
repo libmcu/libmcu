@@ -33,6 +33,10 @@ TEST(AppTimer, create_ShouldReturnTheSamePointer_WhenTimerPointerGiven) {
 	POINTERS_EQUAL(&timer, apptimer_create_static(&timer, false, callback));
 }
 
+TEST(AppTimer, create_dynamic_ShouldReturnNull) {
+	POINTERS_EQUAL(NULL, apptimer_create(false, callback));
+}
+
 TEST(AppTimer, start_ShouldReturnInvalidParam_WhenNullTimerGiven) {
 	LONGS_EQUAL(APPTIMER_INVALID_PARAM, apptimer_start(NULL, 10, NULL));
 }
@@ -217,20 +221,38 @@ TEST(AppTimer, ShouldCallCallback_WhenTimedOut) {
 	}
 }
 
-static void hardware_timer_callback(apptimer_timeout_t t)
+static apptimer_timeout_t next_alarm;
+static void set_hardware_timer_alaram_counter(apptimer_timeout_t t)
 {
-	apptimer_schedule(t);
+	next_alarm = t;
 }
 
 TEST_GROUP(AppTimer_WithHardwareTimer) {
 	void setup(void) {
 		nr_called = 0;
-		apptimer_init(hardware_timer_callback);
+		next_alarm = 0;
+		apptimer_init(set_hardware_timer_alaram_counter);
 	}
 	void teardown(void) {
 		apptimer_deinit();
 	}
 };
 
-TEST(AppTimer_WithHardwareTimer, tmp) {
+TEST(AppTimer_WithHardwareTimer, first_timer_ShouldSetAlarm) {
+	apptimer_t timer1;
+	apptimer_t timer2;
+	apptimer_t timer3;
+	apptimer_create_static(&timer1, false, callback);
+	apptimer_create_static(&timer2, false, callback);
+	apptimer_create_static(&timer3, false, callback);
+	apptimer_start(&timer1, 18, NULL);
+	apptimer_start(&timer2, 9, NULL);
+	apptimer_start(&timer3, 8, NULL);
+	LONGS_EQUAL(8, next_alarm);
+	apptimer_schedule(8);
+	LONGS_EQUAL(1, next_alarm);
+	apptimer_schedule(1);
+	LONGS_EQUAL(8, next_alarm);
+	apptimer_schedule(10);
+	LONGS_EQUAL(0, apptimer_count());
 }
