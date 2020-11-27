@@ -4,6 +4,8 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=security_rating)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
 [![codecov](https://codecov.io/gh/onkwon/libmcu/branch/master/graph/badge.svg?token=KBLNIEKUF4)](https://codecov.io/gh/onkwon/libmcu)
 
+A useful library for firmware development.
+
 ## apptimer
 It implements hierarchical timing wheels. Insertion(`apptimer_start()`) and
 deletion(`apptimer_stop()`) is worst case O(1). Per-tick
