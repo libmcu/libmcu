@@ -66,14 +66,10 @@ static inline void set_timer_counter(apptimer_timeout_t t)
 	m.time_counter = t;
 }
 
-static inline apptimer_timeout_t get_time_distance(apptimer_timeout_t a,
-		apptimer_timeout_t b)
+static inline apptimer_timeout_t get_time_distance(apptimer_timeout_t goal,
+		apptimer_timeout_t chasing)
 {
-	if (a < b) {
-		return (apptimer_timeout_t)-1 - b + a;
-	}
-
-	return a - b;
+	return goal - chasing;
 }
 
 static inline bool is_timer_expired(struct apptimer * const timer)

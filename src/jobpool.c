@@ -87,11 +87,8 @@ static void *jobpool_task(void *e)
 {
 	while (jobpool_process(e));
 
-#if defined(UNITTEST)
-	return NULL;
-#else
 	pthread_exit(NULL);
-#endif
+	return NULL;
 }
 
 jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)

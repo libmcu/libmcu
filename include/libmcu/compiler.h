@@ -30,6 +30,9 @@ extern "C" {
 /** Align up */
 #define ALIGN(x, unit)			BASE((x) + ((typeof(x))(unit) - 1UL), unit)
 
+#define container_of(ptr, type, member) \
+	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
+
 #if defined(__cplusplus)
 }
 #endif

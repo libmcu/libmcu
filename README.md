@@ -68,6 +68,9 @@ pubsub_publish("mytopic", data, data_size);
 ```
 
 ## jobpool
+This is for a small job like to do it in another context in a callback while
+a thread or a task are too much to use.
+
 ## list
 Singly Linked List
 ## llist
