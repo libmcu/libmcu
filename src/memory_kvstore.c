@@ -6,7 +6,14 @@
 #include "libmcu/list.h"
 
 #undef MIN
-#define MIN(x, y)			((x) > (y)? (y) : (x))
+#define MIN(x, y)				((x) > (y)? (y) : (x))
+
+#if !defined(KVSTORE_MAX_KEY_LENGTH)
+#define KVSTORE_MAX_KEY_LENGTH			32
+#endif
+#if !defined(KVSTORE_MAX_NAMESPACE_LENGTH)
+#define KVSTORE_MAX_NAMESPACE_LENGTH		32
+#endif
 
 struct memory_kvstore {
 	kvstore_t ops;
@@ -30,7 +37,8 @@ static struct memory_kvstore *find_namespace(const char *namespace)
 	list_for_each(p, &namespace_list_head) {
 		struct memory_kvstore *obj =
 			list_entry(p, typeof(*obj), namespace_list);
-		if (!strcmp(obj->namespace, namespace)) {
+		if (!strncmp(obj->namespace, namespace,
+					KVSTORE_MAX_NAMESPACE_LENGTH)) {
 			return obj;
 		}
 	}
@@ -44,7 +52,7 @@ static struct memory_kvstore_entry *find_key(const struct memory_kvstore *obj,
 	list_for_each(p, &obj->keylist_head) {
 		struct memory_kvstore_entry *entry =
 			list_entry(p, typeof(*entry), list);
-		if (!strcmp(entry->key, key)) {
+		if (!strncmp(entry->key, key, KVSTORE_MAX_KEY_LENGTH)) {
 			return entry;
 		}
 	}
@@ -65,10 +73,12 @@ static size_t memory_kvstore_write(kvstore_t *kvstore,
 		free(entry->value);
 		entry->value = new_value;
 	} else {
+		size_t len = strnlen(key, KVSTORE_MAX_KEY_LENGTH);
+
 		if (!(entry = malloc(sizeof(*entry)))) {
 			goto err;
 		}
-		if (!(entry->key = malloc(strlen(key)+1))) {
+		if (!(entry->key = malloc(len+1))) {
 			goto err_free_entry;
 		}
 		if (!(entry->value = malloc(size))) {
@@ -76,6 +86,7 @@ static size_t memory_kvstore_write(kvstore_t *kvstore,
 		}
 
 		strcpy(entry->key, key);
+		entry->key[len] = '\0';
 		list_add(&entry->list, &obj->keylist_head);
 	}
 
@@ -133,10 +144,12 @@ kvstore_t *memory_kvstore_new(const char *ns)
 		return &p->ops;
 	}
 
+	size_t len = strnlen(ns, KVSTORE_MAX_NAMESPACE_LENGTH);
+
 	if (!(p = malloc(sizeof(*p)))) {
 		return NULL;
 	}
-	if (!(p->namespace = malloc(strlen(ns)+1))) {
+	if (!(p->namespace = malloc(len+1))) {
 		free(p);
 		return NULL;
 	}
@@ -145,6 +158,7 @@ kvstore_t *memory_kvstore_new(const char *ns)
 	p->ops.read = memory_kvstore_read;
 	list_init(&p->keylist_head);
 	strcpy(p->namespace, ns);
+	p->namespace[len] = '\0';
 	list_add(&p->namespace_list, &namespace_list_head);
 
 	return &p->ops;

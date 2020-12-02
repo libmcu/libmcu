@@ -19,7 +19,9 @@ is space-time tradeoff. The more slots the faster while the more slots the more
 memory.
 
 A timer takes 25 bytes on 32-bit system. 4 bytes more can be saved replacing
-doubly linked list with singly linked list.
+doubly linked list with singly linked list. There would be no performance
+penalty to use singly linked list instead as long as slots are big enough for
+timers to be well distributed.
 
 ## pubsub
 ### Usecase1
