@@ -47,7 +47,6 @@ IGNORE_TEST(JobPool_Integration,
 #else
 TEST(JobPool_Integration, stringify_ShouldReturnErrorString) {
 	STRCMP_EQUAL("success", job_stringify_error(JOB_SUCCESS));
-	STRCMP_EQUAL("retry", job_stringify_error(JOB_RETRY));
 	STRCMP_EQUAL("unknown error", job_stringify_error(JOB_ERROR));
 }
 
