@@ -51,6 +51,22 @@ static inline uint8_t job_count_internal(jobpool_t *pool)
 	return count;
 }
 
+static inline void job_delete_internal(jobpool_t *pool, struct job *job)
+{
+	if (job->state != JOB_STATE_SCHEDULED) {
+		return;
+	}
+
+	struct list *p;
+	list_for_each(p, &pool->job_list) {
+		if (p == &job->entry) {
+			list_del(p, &pool->job_list);
+			job->state = JOB_STATE_DELETED;
+			break;
+		}
+	}
+}
+
 static bool jobpool_process(jobpool_t *pool)
 {
 	bool busy = true;
@@ -91,6 +107,34 @@ static void *jobpool_task(void *e)
 	pthread_exit(NULL);
 #endif
 	return NULL;
+}
+
+static inline job_error_t job_schedule_internal(jobpool_t *pool, struct job *job)
+{
+	uint8_t nr_jobs = job_count_internal(pool);
+	if (nr_jobs >= pool->max_concurrent_jobs) {
+		return JOB_FULL;
+	}
+
+	if (job->state != JOB_STATE_SCHEDULED) {
+		list_add_tail(&job->entry, &pool->job_list);
+		job->state = JOB_STATE_SCHEDULED;
+		sem_post(&pool->job_queue);
+	}
+
+	if (nr_jobs >= pool->active_threads
+			&& pool->active_threads < pool->attr.max_threads) {
+		pthread_t thread;
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setstacksize(&attr, pool->attr.stack_size_bytes);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+		if (pthread_create(&thread, &attr, jobpool_task, pool) == 0) {
+			pool->active_threads++;
+		}
+	}
+
+	return JOB_SUCCESS;
 }
 
 jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
@@ -184,17 +228,7 @@ job_error_t job_delete(jobpool_t *pool, job_t *job)
 
 	pthread_mutex_lock(&pool->lock);
 	{
-		struct job *p = (struct job *)job;
-		if (p->state == JOB_STATE_SCHEDULED) {
-			struct list *plist;
-			list_for_each(plist, &pool->job_list) {
-				if (plist == &p->entry) {
-					list_del(plist, &pool->job_list);
-					p->state = JOB_STATE_DELETED;
-					break;
-				}
-			}
-		}
+		job_delete_internal(pool, (struct job *)job);
 	}
 	pthread_mutex_unlock(&pool->lock);
 
@@ -207,39 +241,12 @@ job_error_t job_schedule(jobpool_t *pool, job_t *job)
 		return JOB_INVALID_PARAM;
 	}
 
-	job_error_t err = JOB_SUCCESS;
+	job_error_t err;
 
 	pthread_mutex_lock(&pool->lock);
 	{
-		uint8_t nr_jobs = job_count_internal(pool);
-		if (nr_jobs >= pool->max_concurrent_jobs) {
-			err = JOB_FULL;
-			goto out;
-		}
-
-		struct job *p = (struct job *)job;
-		if (p->state != JOB_STATE_SCHEDULED) {
-			list_add_tail(&p->entry, &pool->job_list);
-			p->state = JOB_STATE_SCHEDULED;
-			sem_post(&pool->job_queue);
-		}
-
-		if (nr_jobs >= pool->active_threads
-				&& pool->active_threads < pool->attr.max_threads) {
-			pthread_t thread;
-			pthread_attr_t attr;
-			pthread_attr_init(&attr);
-			pthread_attr_setstacksize(&attr,
-					pool->attr.stack_size_bytes);
-			pthread_attr_setdetachstate(&attr,
-					PTHREAD_CREATE_DETACHED);
-			if (pthread_create(&thread, &attr, jobpool_task, pool)
-					== 0) {
-				pool->active_threads++;
-			}
-		}
+		err = job_schedule_internal(pool, (struct job *)job);
 	}
-out:
 	pthread_mutex_unlock(&pool->lock);
 
 	return err;
