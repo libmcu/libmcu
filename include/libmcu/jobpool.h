@@ -10,9 +10,9 @@ extern "C" {
 
 typedef enum {
 	JOB_SUCCESS				= 0,
-	JOB_RETRY,
-	JOB_ERROR,
 	JOB_INVALID_PARAM,
+	JOB_FULL,
+	JOB_ERROR,
 } job_error_t;
 
 typedef union {
