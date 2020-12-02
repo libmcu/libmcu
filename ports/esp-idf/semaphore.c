@@ -3,6 +3,8 @@
 #include "freertos/semphr.h"
 #include "libmcu/compiler.h"
 
+#define SEM_MAX				0x7FFFU
+
 struct semaphore {
 	SemaphoreHandle_t handle;
 };
@@ -11,7 +13,7 @@ int sem_init(sem_t *sem, int UNUSED pshared, unsigned int value)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
 
-	psem->handle = xSemaphoreCreateCounting(value, 0);
+	psem->handle = xSemaphoreCreateCounting(SEM_MAX, value);
 	if (psem->handle == NULL) {
 		return -1;
 	}

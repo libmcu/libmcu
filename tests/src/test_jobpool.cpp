@@ -19,7 +19,7 @@ TEST_GROUP(JobPool) {
 	void setup(void) {
 		mock().ignoreOtherCalls();
 
-		jobpool = jobpool_create(100);
+		jobpool = jobpool_create(MAX_JOBS);
 		jobpool_attr_t jobpool_attr = {
 			.stack_size_bytes = 1024,
 			.min_threads = -1, // to avoid infinite loop in jobpool_process()
@@ -38,15 +38,14 @@ TEST_GROUP(JobPool) {
 		mock().clear();
 	}
 
-	static job_error_t callback(job_context_t *context) {
+	static void callback(job_context_t *context) {
 		context->is_callback_called = true;
-		return JOB_SUCCESS;
 	}
 };
 
 TEST(JobPool, stringify_ShouldReturnErrorString) {
 	STRCMP_EQUAL("success", job_stringify_error(JOB_SUCCESS));
-	STRCMP_EQUAL("retry", job_stringify_error(JOB_RETRY));
+	STRCMP_EQUAL("no room for a new job", job_stringify_error(JOB_FULL));
 	STRCMP_EQUAL("invalid parameters", job_stringify_error(JOB_INVALID_PARAM));
 	STRCMP_EQUAL("unknown error", job_stringify_error(JOB_ERROR));
 }
@@ -77,6 +76,23 @@ TEST(JobPool, schedule_ShouldReturnSuccess) {
 
 	LONGS_EQUAL(JOB_SUCCESS, job_schedule(jobpool, &jobs[0]));
 	CHECK(jobctx[0].is_callback_called == true);
+}
+
+TEST(JobPool, schedule_ShouldReturnFull_WhenScheduleMoreThanMaxJobs) {
+	jobpool_attr_t myattr = {
+		.stack_size_bytes = 1024,
+		.min_threads = -1,
+		.max_threads = 0, // to not actually run the thread
+	};
+	jobpool_set_attr(jobpool, &myattr);
+	for (int i = 0; i < MAX_JOBS; i++) {
+		job_init(jobpool, &jobs[i], callback, &jobctx[i]);
+		LONGS_EQUAL(JOB_SUCCESS, job_schedule(jobpool, &jobs[i]));
+	}
+	job_t extra_job;
+	job_context_t extra_jobctx;
+	job_init(jobpool, &extra_job, callback, &extra_jobctx);
+	LONGS_EQUAL(JOB_FULL, job_schedule(jobpool, &extra_job));
 }
 
 TEST(JobPool, delete_ShouldReturnInvalidParam_WhenNullPointersGiven) {

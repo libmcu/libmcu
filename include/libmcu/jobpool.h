@@ -10,9 +10,9 @@ extern "C" {
 
 typedef enum {
 	JOB_SUCCESS				= 0,
-	JOB_RETRY,
-	JOB_ERROR,
 	JOB_INVALID_PARAM,
+	JOB_FULL,
+	JOB_ERROR,
 } job_error_t;
 
 typedef union {
@@ -34,7 +34,7 @@ typedef struct jobpool_attr {
 	int8_t priority;
 } jobpool_attr_t;
 
-typedef job_error_t (*job_callback_t)(job_context_t *context);
+typedef void (*job_callback_t)(job_context_t *context);
 
 jobpool_t *jobpool_create(unsigned int max_concurrent_jobs);
 job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr);

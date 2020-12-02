@@ -68,8 +68,9 @@ pubsub_publish("mytopic", data, data_size);
 ```
 
 ## jobpool
-This is for a small job like to do it in another context in a callback while
-a thread or a task are too much to use.
+A small job like calling a callback can be done using jobpool rather than
+creating a new thread or task which is too much for such a job since it takes
+quite a lot of resources.
 
 ## list
 Singly Linked List
