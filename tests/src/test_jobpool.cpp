@@ -38,9 +38,8 @@ TEST_GROUP(JobPool) {
 		mock().clear();
 	}
 
-	static job_error_t callback(job_context_t *context) {
+	static void callback(job_context_t *context) {
 		context->is_callback_called = true;
-		return JOB_SUCCESS;
 	}
 };
 

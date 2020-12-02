@@ -34,10 +34,9 @@ TEST_GROUP(JobPool_Integration) {
 		while (!ctx->is_callback_called);
 	}
 
-	static job_error_t callback(job_context_t *context) {
+	static void callback(job_context_t *context) {
 		context->is_callback_called = true;
 		context->thread = pthread_self();
-		return JOB_SUCCESS;
 	}
 };
 
