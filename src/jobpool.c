@@ -25,7 +25,7 @@ typedef enum {
 struct jobpool {
 	pthread_mutex_t lock;
 	struct list job_list;
-	sem_t sem;
+	sem_t job_queue;
 	jobpool_attr_t attr;
 	uint8_t active_threads;
 	unsigned int max_concurrent_jobs;
@@ -56,7 +56,7 @@ static bool jobpool_process(jobpool_t *pool)
 	bool busy = true;
 	struct job *job = NULL;
 
-	sem_wait(&pool->sem);
+	sem_wait(&pool->job_queue);
 
 	pthread_mutex_lock(&pool->lock);
 	{
@@ -100,7 +100,7 @@ jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
 	if (!(pool = calloc(1, sizeof(*pool)))) {
 		goto out_err;
 	}
-	if (sem_init(&pool->sem, 0, max_concurrent_jobs) != 0) {
+	if (sem_init(&pool->job_queue, 0, max_concurrent_jobs) != 0) {
 		goto out_free_pool;
 	}
 
@@ -150,7 +150,7 @@ job_error_t jobpool_destroy(jobpool_t *pool)
 
 	pthread_mutex_lock(&pool->lock);
 	{
-		sem_destroy(&pool->sem);
+		sem_destroy(&pool->job_queue);
 	}
 	pthread_mutex_unlock(&pool->lock);
 
@@ -221,7 +221,7 @@ job_error_t job_schedule(jobpool_t *pool, job_t *job)
 		if (p->state != JOB_STATE_SCHEDULED) {
 			list_add_tail(&p->entry, &pool->job_list);
 			p->state = JOB_STATE_SCHEDULED;
-			sem_post(&pool->sem);
+			sem_post(&pool->job_queue);
 		}
 
 		if (nr_jobs >= pool->active_threads
@@ -256,7 +256,7 @@ uint8_t job_count(jobpool_t *pool)
 	pthread_mutex_unlock(&pool->lock);
 
 	int semcnt = 0;
-	sem_getvalue(&pool->sem, &semcnt);
+	sem_getvalue(&pool->job_queue, &semcnt);
 	if (count != (uint8_t)semcnt) {
 		error("count doesn't match %d - %d", count, semcnt);
 	}
