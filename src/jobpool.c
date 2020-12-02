@@ -100,7 +100,7 @@ jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
 	if (!(pool = calloc(1, sizeof(*pool)))) {
 		goto out_err;
 	}
-	if (sem_init(&pool->job_queue, 0, max_concurrent_jobs) != 0) {
+	if (sem_init(&pool->job_queue, 0, 0) != 0) {
 		goto out_free_pool;
 	}
 
