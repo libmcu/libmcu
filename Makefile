@@ -1,7 +1,14 @@
 PROJECT := libmcu
-VERSION ?= $(shell git describe --dirty --always --tags)
 BASEDIR := $(shell pwd)
 BUILDIR := build
+SRCDIRS := src
+
+VERSION := $(shell git describe --long --tags --dirty --always)
+VERSION_LIST := $(subst -, , $(VERSION))
+VERSION_TAG := $(subst ., , $(subst v,, $(strip $(word 1, $(VERSION_LIST)))))
+VERSION_MAJOR := $(strip $(word 1, $(VERSION_TAG)))
+VERSION_MINOR := $(strip $(word 2, $(VERSION_TAG)))
+VERSION_BUILD := $(strip $(word 2, $(VERSION_LIST)))
 
 Q ?= @
 ifneq ($(Q),@)
@@ -84,9 +91,14 @@ ifdef LD_LIBRARY_PATH
 endif
 
 # Build options
-SRCDIRS = src
 APP_INCLUDES = include tests/stubs
-APP_DEFINES  =
+APP_DEFINES  = \
+	       BUILD_DATE=\""$(shell date)"\" \
+	       VERSION_MAJOR=$(VERSION_MAJOR) \
+	       VERSION_MINOR=$(VERSION_MINOR) \
+	       VERSION_BUILD=$(VERSION_BUILD) \
+	       VERSION=$(VERSION)
+
 SRCS = $(foreach dir, $(SRCDIRS), $(shell find $(dir) -type f -regex ".*\.c"))
 INCS = $(addprefix -I, $(APP_INCLUDES))
 DEFS = $(addprefix -D, $(APP_DEFINES))
