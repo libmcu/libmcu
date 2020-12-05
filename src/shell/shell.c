@@ -29,6 +29,9 @@ static void readline(char *buf, size_t bufsize, const shell_io_t *io)
 		if (ch == '\r' || ch == '\n') {
 			break;
 		}
+		if (ch == '\t') {
+			continue;
+		}
 
 		io->write(&ch, 1);
 

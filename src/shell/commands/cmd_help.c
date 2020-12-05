@@ -17,7 +17,7 @@ static shell_cmd_error_t cmd_help(int argc, const char *argv[], const void *env)
 		io->write(cmd->name, strlen(cmd->name));
 		io->write("\t: ", 3);
 		io->write(cmd->desc, strlen(cmd->desc));
-		io->write("\n", 1);
+		io->write("\r\n", 2);
 	}
 
 	return SHELL_CMD_SUCCESS;
