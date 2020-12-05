@@ -89,3 +89,5 @@ Key-Value Store
 ## semaphore
 ## queue
 ## bitmap
+## shell
+A tiny CLI shell.

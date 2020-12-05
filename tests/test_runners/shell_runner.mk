@@ -7,7 +7,7 @@ SRC_FILES = \
 	../src/shell/commands/cmd_help.c
 
 TEST_SRC_FILES = \
-	src/test_shell.cpp
+	src/shell/test_shell.cpp
 
 INCLUDE_DIRS += \
 	../src/shell
