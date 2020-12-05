@@ -3,7 +3,6 @@
 #include "libmcu/shell.h"
 
 extern "C" {
-#include "logger.h"
 	static char writebuf[256];
 	static char readbuf[256];
 	static size_t write_index;

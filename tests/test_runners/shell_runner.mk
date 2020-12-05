@@ -10,7 +10,6 @@ TEST_SRC_FILES = \
 	src/test_shell.cpp
 
 INCLUDE_DIRS += \
-	../src/shell \
-	stubs
+	../src/shell
 
 include test_runners/MakefileRunner.mk
