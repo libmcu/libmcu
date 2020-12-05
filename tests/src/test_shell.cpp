@@ -91,5 +91,4 @@ TEST(shell, shell_ShouldIgnoreTab) {
 	given("hel\tp\nexit\n");
 	shell_run(&io);
 	then("$ help\r\n");
-	debug("=> %s", readbuf);
 }
