@@ -1,14 +1,14 @@
 #include "commands.h"
 #include <stddef.h>
 
-static const shell_cmd_t *commands[] = {
-	&g_cmd_exit,
-	&g_cmd_help,
-	&g_cmd_info,
-	NULL,
+static const shell_cmd_t commands[] = {
+	{"exit", shell_cmd_exit, "Exit the shell" },
+	{"help", shell_cmd_help, "List available commands" },
+	{"info", shell_cmd_info, "Get device info" },
+	{ NULL, NULL, NULL },
 };
 
-const shell_cmd_t **shell_get_command_list(void)
+const shell_cmd_t *shell_get_command_list(void)
 {
-	return (const shell_cmd_t **)commands;
+	return commands;
 }

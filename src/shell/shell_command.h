@@ -23,7 +23,7 @@ typedef struct {
 	const char *desc;
 } shell_cmd_t;
 
-const shell_cmd_t **shell_get_command_list(void);
+const shell_cmd_t *shell_get_command_list(void);
 
 #if defined(__cplusplus)
 }

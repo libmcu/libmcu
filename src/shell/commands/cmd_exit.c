@@ -1,7 +1,7 @@
 #include "commands.h"
 #include "libmcu/compiler.h"
 
-static shell_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
+shell_cmd_error_t shell_cmd_exit(int argc, const char *argv[], const void *env)
 {
 	unused(argc);
 	unused(argv);
@@ -9,9 +9,3 @@ static shell_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 
 	return SHELL_CMD_EXIT;
 }
-
-const shell_cmd_t g_cmd_exit = {
-	.name = "exit",
-	.run = cmd_exit,
-	.desc = "Exit the shell",
-};

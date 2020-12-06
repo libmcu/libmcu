@@ -1,7 +1,11 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
-#include "libmcu/shell.h"
 #include "commands/commands.h"
+
+const shell_cmd_t *shell_get_command_list(void)
+{
+	return NULL;
+}
 
 TEST_GROUP(shell_commands) {
 	void setup(void) {
@@ -11,5 +15,5 @@ TEST_GROUP(shell_commands) {
 };
 
 TEST(shell_commands, exit_ShouldReturnShellCmdExit) {
-	LONGS_EQUAL(SHELL_CMD_EXIT, g_cmd_exit.run(1, NULL, NULL));
+	LONGS_EQUAL(SHELL_CMD_EXIT, shell_cmd_exit(1, NULL, NULL));
 }

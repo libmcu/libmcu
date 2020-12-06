@@ -1,17 +1,12 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
 #include "libmcu/shell.h"
-#include "../src/shell/shell_command.h"
+#include "shell_command.h"
 
 static shell_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 {
 	return SHELL_CMD_EXIT;
 }
-const shell_cmd_t g_cmd_exit = {
-	.name = "exit",
-	.run = cmd_exit,
-	.desc = "Exit the shell",
-};
 static shell_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 {
 	const shell_io_t *io = (const shell_io_t *)env;
@@ -24,40 +19,25 @@ static shell_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 	io->write(buf, (size_t)len);
 	return SHELL_CMD_SUCCESS;
 }
-const shell_cmd_t g_cmd_args = {
-	.name = "args",
-	.run = cmd_args,
-	.desc = "",
-};
 static shell_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
 {
 	return SHELL_CMD_ERROR;
 }
-const shell_cmd_t g_cmd_error = {
-	.name = "error",
-	.run = cmd_error,
-	.desc = NULL,
-};
 static shell_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env)
 {
 	return SHELL_CMD_INVALID_PARAM;
 }
-const shell_cmd_t g_cmd_invalid = {
-	.name = "invalid",
-	.run = cmd_invalid,
-	.desc = "desc",
-};
 
-static const shell_cmd_t *commands[] = {
-	&g_cmd_exit,
-	&g_cmd_args,
-	&g_cmd_error,
-	&g_cmd_invalid,
-	NULL,
+static const shell_cmd_t commands[] = {
+	{ "exit", cmd_exit, "Exit the shell" },
+	{ "args", cmd_args, "" },
+	{ "error", cmd_error, NULL },
+	{ "invalid", cmd_invalid, "desc" },
+	{ NULL, NULL, NULL },
 };
-const shell_cmd_t **shell_get_command_list(void)
+const shell_cmd_t *shell_get_command_list(void)
 {
-	return (const shell_cmd_t **)commands;
+	return commands;
 }
 
 static char writebuf[256];
