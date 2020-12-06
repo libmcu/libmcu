@@ -15,8 +15,10 @@ static shell_cmd_error_t cmd_help(int argc, const char *argv[], const void *env)
 
 	for (int i = 0; (cmd = commands[i]) != NULL; i++) {
 		io->write(cmd->name, strlen(cmd->name));
-		io->write("\t: ", 3);
-		io->write(cmd->desc, strlen(cmd->desc));
+		if (cmd->desc) {
+			io->write("\t: ", 3);
+			io->write(cmd->desc, strlen(cmd->desc));
+		}
 		io->write("\r\n", 2);
 	}
 
