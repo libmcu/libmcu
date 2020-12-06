@@ -30,7 +30,9 @@ export CPPUTEST_WARNINGFLAGS = \
 	-Wno-packed \
 	-Wno-unused-parameter \
 	\
-	-Werror
+	-Werror \
+	\
+	-Wno-error=switch-enum
 
 ifeq ($(shell uname), Darwin)
 CPPUTEST_WARNINGFLAGS += \
@@ -40,8 +42,7 @@ CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=covered-switch-default \
 	-Wno-error=format-nonliteral \
 	-Wno-error=pedantic \
-	-Wno-error=unused-function \
-	-Wno-error=switch-enum
+	-Wno-error=unused-function
 else
 #TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
 endif

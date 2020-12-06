@@ -26,5 +26,5 @@ static shell_cmd_error_t cmd_help(int argc, const char *argv[], const void *env)
 const shell_cmd_t g_cmd_help = {
 	.name = "help",
 	.run = cmd_help,
-	.desc = "Display available commands",
+	.desc = "List available commands",
 };

@@ -4,6 +4,7 @@
 static const shell_cmd_t *commands[] = {
 	&g_cmd_exit,
 	&g_cmd_help,
+	&g_cmd_version,
 	NULL,
 };
 
