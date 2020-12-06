@@ -73,7 +73,7 @@ static apptimer_timeout_t get_time_distance(apptimer_timeout_t goal,
 	return goal - chasing;
 }
 
-static bool is_timer_expired(struct apptimer * const timer)
+static bool is_timer_expired(const struct apptimer * const timer)
 {
 	return !time_before(timer->goaltime, get_timer_counter());
 }
@@ -146,8 +146,8 @@ static void update_slots(int wheel, int slot, int n)
 	DEFINE_LLIST_HEAD(tmp_lists);
 	struct llist *p, *t;
 
-	for (int i = slot; i >= 0 && n; i--, n--) {
-		llist_for_each_safe(p, t, &m.wheels[wheel][i]) {
+	for (unsigned int i = (unsigned int)slot+1; i > 0 && n; i--, n--) {
+		llist_for_each_safe(p, t, &m.wheels[wheel][i-1]) {
 			llist_del(p);
 			llist_add(p, &tmp_lists);
 		}
