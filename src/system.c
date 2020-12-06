@@ -26,7 +26,7 @@ void WEAK system_reset_factory(void)
 {
 }
 
-void WEAK system_reboot(void)
+void WEAK NORETURN system_reboot(void)
 {
 	assert(0);
 }
