@@ -98,10 +98,10 @@ static shell_cmd_error_t process(int argc, const char *argv[],
 	}
 
 	shell_cmd_error_t rc = SHELL_CMD_NOT_FOUND;
-	const shell_cmd_t **commands = shell_get_command_list();
+	const shell_cmd_t *commands = shell_get_command_list();
 	const shell_cmd_t *cmd;
 
-	for (int i = 0; (cmd = commands[i]) != NULL; i++) {
+	for (int i = 0; (cmd = &commands[i]) && cmd->name; i++) {
 		if (strcmp(cmd->name, argv[0]) == 0) {
 			rc = cmd->run(argc, argv, io);
 			break;
