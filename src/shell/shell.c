@@ -101,7 +101,6 @@ static shell_cmd_error_t process(int argc, const char *argv[],
 		io->write(SHELL_PROMPT_ERROR, strlen(SHELL_PROMPT_ERROR));
 		break;
 	default:
-	case SHELL_CMD_BLANK: // for compiler to not complain
 		break;
 	}
 

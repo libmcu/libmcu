@@ -40,7 +40,8 @@ CPPUTEST_WARNINGFLAGS += \
 	-Wno-error=covered-switch-default \
 	-Wno-error=format-nonliteral \
 	-Wno-error=pedantic \
-	-Wno-error=unused-function
+	-Wno-error=unused-function \
+	-Wno-error=switch-enum
 else
 #TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
 endif
