@@ -14,9 +14,9 @@
 
 static void print_addr(const shell_io_t *io, uintptr_t addr)
 {
-	char buf[BUFSIZE];
-	sprintf(buf, "%16lx:", addr);
-	io->write(buf, strlen(buf));
+	char buf[BUFSIZE] = { 0, };
+	snprintf(buf, BUFSIZE-1, "%16lx:", addr);
+	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
 static void print_space(const shell_io_t *io, int n)
@@ -28,18 +28,18 @@ static void print_space(const shell_io_t *io, int n)
 
 static void print_hex(const shell_io_t *io, uint8_t val)
 {
-	char buf[BUFSIZE];
-	sprintf(buf, " %02x", val);
-	io->write(buf, strlen(buf));
+	char buf[BUFSIZE] = { 0, };
+	snprintf(buf, BUFSIZE-1, " %02x", val);
+	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
 static void print_ascii(const shell_io_t *io, uint8_t val)
 {
-	char buf[BUFSIZE];
+	char buf[BUFSIZE] = { 0, };
 
 	if (val >= 0x20 && val < 0x7F) {
-		sprintf(buf, "%c", val);
-		io->write(buf, strlen(buf));
+		snprintf(buf, BUFSIZE-1, "%c", val);
+		io->write(buf, strnlen(buf, BUFSIZE));
 	} else {
 		io->write(".", 1);
 	}
@@ -54,7 +54,7 @@ static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io
 {
 	print_addr(io, addr);
 
-	uint8_t *p = (uint8_t *)addr;
+	const uint8_t *p = (uint8_t *)addr;
 
 	for (int i = 0; i < width; i++) {
 		if ((i % 8) == 0) {
@@ -71,7 +71,7 @@ static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io
 
 static void memdump_ascii(uintptr_t addr, int len, const shell_io_t *io)
 {
-	uint8_t *p = (uint8_t *)addr;
+	const uint8_t *p = (uint8_t *)addr;
 
 	for (int j = 0; j < len; j++) {
 		print_ascii(io, p[j]);
@@ -95,7 +95,7 @@ static void memdump(uintptr_t addr, int len, int width, const shell_io_t *io)
 
 shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *env)
 {
-	static uintptr_t addr;
+	static uintptr_t addr = (uintptr_t)shell_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
 	const shell_io_t *io = env;
