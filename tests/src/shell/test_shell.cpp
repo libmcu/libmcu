@@ -29,10 +29,30 @@ const shell_cmd_t g_cmd_args = {
 	.run = cmd_args,
 	.desc = "",
 };
+static shell_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
+{
+	return SHELL_CMD_ERROR;
+}
+const shell_cmd_t g_cmd_error = {
+	.name = "error",
+	.run = cmd_error,
+	.desc = NULL,
+};
+static shell_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env)
+{
+	return SHELL_CMD_INVALID_PARAM;
+}
+const shell_cmd_t g_cmd_invalid = {
+	.name = "invalid",
+	.run = cmd_invalid,
+	.desc = "desc",
+};
 
 static const shell_cmd_t *commands[] = {
 	&g_cmd_exit,
 	&g_cmd_args,
+	&g_cmd_error,
+	&g_cmd_invalid,
 	NULL,
 };
 const shell_cmd_t **shell_get_command_list(void)
@@ -122,8 +142,20 @@ TEST(shell, shell_ShouldIgnoreTab) {
 	then("$ help\r\n");
 }
 
-TEST(shell, shell_test) {
+TEST(shell, shell_ShouldParseArgs_WhenMultipleArgsGiven) {
 	given("args 1 2 3 4\nexit\n");
 	shell_run(&io);
 	then("$ args 1 2 3 4\r\n1: args\n2: 1\n3: 2\n4: 3\n5: 4\n");
+}
+
+TEST(shell, shell_ShouldReturnError_WhenErrorGiven) {
+	given("error\nexit\n");
+	shell_run(&io);
+	then("$ error\r\nERROR\r\n");
+}
+
+TEST(shell, shell_ShouldReturnDesc_WhenCommandUsageInvalid) {
+	given("invalid\nexit\n");
+	shell_run(&io);
+	then("$ invalid\r\ndesc\r\n");
 }

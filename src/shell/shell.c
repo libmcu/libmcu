@@ -74,7 +74,10 @@ static void report_result(const shell_io_t *io, shell_cmd_error_t err,
 		io->write(SHELL_PROMPT_OK, strlen(SHELL_PROMPT_OK));
 		break;
 	case SHELL_CMD_INVALID_PARAM:
-		io->write(cmd->desc, strlen(cmd->desc));
+		if (cmd->desc) {
+			io->write(cmd->desc, strlen(cmd->desc));
+			io->write("\r\n", 2);
+		}
 		break;
 	case SHELL_CMD_NOT_FOUND:
 		io->write(SHELL_PROMPT_NOT_FOUND, strlen(SHELL_PROMPT_NOT_FOUND));
