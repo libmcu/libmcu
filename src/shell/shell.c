@@ -1,5 +1,6 @@
 #include "libmcu/shell.h"
 #include <string.h>
+#include <assert.h>
 #include "shell_command.h"
 #include "commands/commands.h"
 
@@ -12,8 +13,10 @@
 #define SHELL_PROMPT				"$ "
 #define SHELL_PROMPT_OK				""
 #define SHELL_PROMPT_ERROR			"ERROR\r\n"
-#define SHELL_PROMPT_EXIT			"EXIT\r\n"
 #define SHELL_PROMPT_NOT_FOUND			"command not found\r\n"
+#define SHELL_PROMPT_START_MESSAGE		\
+	"\r\n\r\nType 'help' to get a list of available commands.\r\n"
+#define SHELL_PROMPT_EXIT_MESSAGE		"EXIT\r\n"
 
 static void readline(char *buf, size_t bufsize, const shell_io_t *io)
 {
@@ -44,10 +47,7 @@ static void readline(char *buf, size_t bufsize, const shell_io_t *io)
 		index++;
 	}
 
-	ch = '\r';
-	io->write(&ch, 1);
-	ch = '\n';
-	io->write(&ch, 1);
+	io->write("\r\n", 2);
 
 	buf[index] = '\n';
 	buf[index+1] = '\0';
@@ -64,6 +64,27 @@ static int parse(char *str, const char *argv[])
 	}
 
 	return argc;
+}
+
+static void report_result(const shell_io_t *io, shell_cmd_error_t err,
+		const shell_cmd_t *cmd)
+{
+	switch (err) {
+	case SHELL_CMD_SUCCESS:
+		io->write(SHELL_PROMPT_OK, strlen(SHELL_PROMPT_OK));
+		break;
+	case SHELL_CMD_INVALID_PARAM:
+		io->write(cmd->desc, strlen(cmd->desc));
+		break;
+	case SHELL_CMD_NOT_FOUND:
+		io->write(SHELL_PROMPT_NOT_FOUND, strlen(SHELL_PROMPT_NOT_FOUND));
+		break;
+	case SHELL_CMD_ERROR:
+		io->write(SHELL_PROMPT_ERROR, strlen(SHELL_PROMPT_ERROR));
+		break;
+	default:
+		break;
+	}
 }
 
 static shell_cmd_error_t process(int argc, const char *argv[],
@@ -84,40 +105,28 @@ static shell_cmd_error_t process(int argc, const char *argv[],
 		}
 	}
 
-	switch (rc) {
-	case SHELL_CMD_SUCCESS:
-		io->write(SHELL_PROMPT_OK, strlen(SHELL_PROMPT_OK));
-		break;
-	case SHELL_CMD_INVALID_PARAM:
-		io->write(cmd->desc, strlen(cmd->desc));
-		break;
-	case SHELL_CMD_NOT_FOUND:
-		io->write(SHELL_PROMPT_NOT_FOUND, strlen(SHELL_PROMPT_NOT_FOUND));
-		break;
-	case SHELL_CMD_EXIT:
-		io->write(SHELL_PROMPT_EXIT, strlen(SHELL_PROMPT_EXIT));
-		break;
-	case SHELL_CMD_ERROR:
-		io->write(SHELL_PROMPT_ERROR, strlen(SHELL_PROMPT_ERROR));
-		break;
-	default:
-		break;
-	}
+	report_result(io, rc, cmd);
 
 	return rc;
 }
 
 void shell_run(const shell_io_t *io)
 {
+	assert(io != NULL);
+
 	char readbuf[SHELL_COMMAND_MAXLEN + 1];
 	shell_cmd_error_t rc;
 
 	int argc;
 	const char *argv[SHELL_ARGS_MAXLEN];
 
+	io->write(SHELL_PROMPT_START_MESSAGE, strlen(SHELL_PROMPT_START_MESSAGE));
+
 	do {
 		readline(readbuf, sizeof(readbuf), io);
 		argc = parse(readbuf, argv);
 		rc = process(argc, argv, io);
 	} while (rc != SHELL_CMD_EXIT);
+
+	io->write(SHELL_PROMPT_EXIT_MESSAGE, strlen(SHELL_PROMPT_EXIT_MESSAGE));
 }

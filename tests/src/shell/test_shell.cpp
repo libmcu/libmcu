@@ -40,7 +40,7 @@ TEST_GROUP(shell) {
 		set_write_data(s);
 	}
 	void then(const char *s) {
-		STRNCMP_EQUAL(s, readbuf, strlen(s));
+		STRNCMP_EQUAL(s, &readbuf[54], strlen(s));
 	}
 };
 
