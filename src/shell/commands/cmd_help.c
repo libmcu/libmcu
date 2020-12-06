@@ -23,7 +23,7 @@ static shell_cmd_error_t cmd_help(int argc, const char *argv[], const void *env)
 	return SHELL_CMD_SUCCESS;
 }
 
-shell_cmd_t g_cmd_help = {
+const shell_cmd_t g_cmd_help = {
 	.name = "help",
 	.run = cmd_help,
 	.desc = "Display available commands",
