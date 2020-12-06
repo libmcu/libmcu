@@ -4,6 +4,7 @@
 #include "libmcu/system.h"
 
 typedef enum {
+	CMD_OPT_NONE			= 0x00,
 	CMD_OPT_VERSION			= 0x01,
 	CMD_OPT_BUILD_DATE		= 0x02,
 	CMD_OPT_SERIAL_NUMBER		= 0x04,
@@ -17,6 +18,8 @@ static cmd_opt_t get_command_option(int argc, const char *opt)
 {
 	if (argc == 1) {
 		return CMD_OPT_ALL;
+	} else if (opt == NULL) {
+		return CMD_OPT_NONE;
 	} else if (strcmp(opt, "version") == 0) {
 		return CMD_OPT_VERSION;
 	} else if (strcmp(opt, "sn") == 0) {
