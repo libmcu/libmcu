@@ -5,6 +5,7 @@
 
 #include "libmcu/llist.h"
 #include "libmcu/bitops.h"
+#include "libmcu/compiler.h"
 #include "logger.h"
 
 #if !defined(APPTIMER_NR_WHEELS)
@@ -44,45 +45,45 @@ static struct {
 	void (*update_alarm)(apptimer_timeout_t timeout);
 } m;
 
-static inline int get_wheel_index_from_timeout(apptimer_timeout_t timeout)
+static int get_wheel_index_from_timeout(apptimer_timeout_t timeout)
 {
 	assert(timeout != 0);
 	return MIN(WHEELS_BITS - 1, fls(timeout) - 1) / SLOTS_BITS;
 }
 
-static inline int get_slot_index_from_timeout(apptimer_timeout_t timeout,
+static int get_slot_index_from_timeout(apptimer_timeout_t timeout,
 		int wheel)
 {
 	return (int)((timeout >> (SLOTS_BITS * wheel)) & SLOTS_MASK);
 }
 
-static inline apptimer_timeout_t get_timer_counter(void)
+static apptimer_timeout_t get_timer_counter(void)
 {
 	return m.time_counter;
 }
 
-static inline void set_timer_counter(apptimer_timeout_t t)
+static void set_timer_counter(apptimer_timeout_t t)
 {
 	m.time_counter = t;
 }
 
-static inline apptimer_timeout_t get_time_distance(apptimer_timeout_t goal,
+static apptimer_timeout_t get_time_distance(apptimer_timeout_t goal,
 		apptimer_timeout_t chasing)
 {
 	return goal - chasing;
 }
 
-static inline bool is_timer_expired(struct apptimer * const timer)
+static bool is_timer_expired(struct apptimer * const timer)
 {
 	return !time_before(timer->goaltime, get_timer_counter());
 }
 
-static inline bool is_timer_registered(const struct apptimer * const timer)
+static bool is_timer_registered(const struct apptimer * const timer)
 {
 	return !llist_empty(&timer->list);
 }
 
-static inline void remove_timer_from_list(struct apptimer * const timer)
+static void remove_timer_from_list(struct apptimer * const timer)
 {
 	if (llist_empty(&timer->list)) {
 		return;
@@ -94,22 +95,12 @@ static inline void remove_timer_from_list(struct apptimer * const timer)
 	llist_init(&timer->list);
 }
 
-static inline void remove_timer_from_wheel(struct apptimer * const timer)
-{
-	remove_timer_from_list(timer);
-}
-
-static inline void remove_timer_from_pending(struct apptimer * const timer)
-{
-	remove_timer_from_list(timer);
-}
-
-static inline void insert_timer_into_pending(struct apptimer * const timer)
+static void insert_timer_into_pending(struct apptimer * const timer)
 {
 	llist_add(&timer->list, &m.pending);
 }
 
-static inline void insert_timer_into_wheel(struct apptimer * const timer)
+static void insert_timer_into_wheel(struct apptimer * const timer)
 {
 	m.active_timers++;
 
@@ -132,7 +123,7 @@ static inline void insert_timer_into_wheel(struct apptimer * const timer)
 			current_time, timer->goaltime, wheel, slot);
 }
 
-static inline apptimer_timeout_t find_earliest_timer_wheel_timeout(void)
+static apptimer_timeout_t find_earliest_timer_wheel_timeout(void)
 {
 	if (m.active_timers <= 0) {
 		goto out;
@@ -243,6 +234,8 @@ apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
 // TODO: Implement `apptimer_create()`
 apptimer_t *apptimer_create(bool repeat, apptimer_callback_t callback)
 {
+	unused(repeat);
+	unused(callback);
 	return NULL;
 }
 

@@ -9,6 +9,8 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "libmcu/compiler.h"
+
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; pos != (head); pos = pos->next)
 #define list_for_each_safe(pos, tmp, head) \
@@ -23,18 +25,19 @@ struct list {
 	struct list *next;
 };
 
-static inline void list_init(struct list *head)
+static inline ALWAYS_INLINE void list_init(struct list *head)
 {
 	head->next = head;
 }
 
-static inline void list_add(struct list *node, struct list *head)
+static inline ALWAYS_INLINE void list_add(struct list *node, struct list *head)
 {
 	node->next = head->next;
 	head->next = node;
 }
 
-static inline void list_add_tail(struct list *node, struct list *head)
+static inline ALWAYS_INLINE void list_add_tail(struct list *node,
+		struct list *head)
 {
 	struct list **ref = &head;
 
@@ -46,7 +49,8 @@ static inline void list_add_tail(struct list *node, struct list *head)
 	(*ref)->next = node;
 }
 
-static inline int list_del(const struct list *node, struct list *head)
+static inline ALWAYS_INLINE int list_del(const struct list *node,
+		struct list *head)
 {
 	struct list **ref = &head;
 
@@ -62,7 +66,7 @@ static inline int list_del(const struct list *node, struct list *head)
 	return 0;
 }
 
-static inline bool list_empty(const struct list *head)
+static inline ALWAYS_INLINE bool list_empty(const struct list *head)
 {
 	if (head->next == head) {
 		return true;
@@ -70,7 +74,7 @@ static inline bool list_empty(const struct list *head)
 	return false;
 }
 
-static inline int list_count(struct list *head)
+static inline ALWAYS_INLINE int list_count(struct list *head)
 {
 	struct list *p;
 	int n = 0;
