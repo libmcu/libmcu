@@ -2,7 +2,8 @@ COMPONENT_NAME = shell_commands
 
 SRC_FILES = \
 	../src/shell/commands/cmd_exit.c \
-	../src/shell/commands/cmd_info.c
+	../src/shell/commands/cmd_info.c \
+	../src/shell/commands/cmd_memdump.c
 
 TEST_SRC_FILES = \
 	src/shell/test_shell_commands.cpp
