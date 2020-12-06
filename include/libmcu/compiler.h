@@ -16,6 +16,7 @@ extern "C" {
 #define unused(x)			(void)(x)
 
 #define ALWAYS_INLINE			__attribute__((always_inline))
+#define WEAK				__attribute__((weak))
 
 #define barrier()			__asm__ __volatile__("" ::: "memory")
 #define ACCESS_ONCE(x)			(*(volatile typeof(x) *)&(x))

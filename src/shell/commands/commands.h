@@ -10,6 +10,7 @@ extern "C" {
 shell_cmd_error_t shell_cmd_exit(int argc, const char *argv[], const void *env);
 shell_cmd_error_t shell_cmd_help(int argc, const char *argv[], const void *env);
 shell_cmd_error_t shell_cmd_info(int argc, const char *argv[], const void *env);
+shell_cmd_error_t shell_cmd_reboot(int argc, const char *argv[], const void *env);
 
 #if defined(__cplusplus)
 }
