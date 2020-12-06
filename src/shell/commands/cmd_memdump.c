@@ -95,7 +95,7 @@ static void memdump(uintptr_t addr, int len, int width, const shell_io_t *io)
 
 shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *env)
 {
-	static uintptr_t addr = (uintptr_t)shell_cmd_memdump;
+	static uintptr_t addr = (uintptr_t)&shell_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
 	const shell_io_t *io = env;
