@@ -78,7 +78,7 @@ TEST_GROUP(memdump) {
 	void setup(void) {
 		write_spy_buffer_index = 0;
 		for (int i = 0; i < (int)sizeof(memsrc); i++) {
-			memsrc[i] = (uint8_t)i + 20;
+			memsrc[i] = (uint8_t)(i + 20);
 		}
 		sprintf(addr, "%p", memsrc);
 	}
