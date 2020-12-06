@@ -30,7 +30,9 @@ export CPPUTEST_WARNINGFLAGS = \
 	-Wno-packed \
 	-Wno-unused-parameter \
 	\
-	-Werror
+	-Werror \
+	\
+	-Wno-error=switch-enum
 
 ifeq ($(shell uname), Darwin)
 CPPUTEST_WARNINGFLAGS += \

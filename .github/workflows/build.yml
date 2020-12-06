@@ -25,7 +25,8 @@ jobs:
           echo $(pwd)
           mkdir -p coverage_report
           cd coverage_report
-          gcov -abcfu ../src/* -o ../tests/build/src/
+          gcov -abcfup ../src/* -o ../tests/build/src/
+          gcov -abcfup ../src/* -o ../tests/build/src/shell
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
         with:
@@ -61,7 +62,7 @@ jobs:
               -Dsonar.projectKey=onkwon_libmcu \
               -Dsonar.sources=src,include,ports \
               -Dsonar.tests=tests \
-              -Dsonar.test.inclusions=**/test_*.c \
+              -Dsonar.test.inclusions=**/test_*.cpp \
               -Dsonar.cfamily.gcov.reportsPath=coverage_report \
               -Dsonar.cfamily.build-wrapper-output=bw-output \
               -Dsonar.host.url=https://sonarcloud.io \

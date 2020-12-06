@@ -9,6 +9,8 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "libmcu/compiler.h"
+
 #define LLIST_POISON_NEXT		((struct llist *)0xfeedbac0)
 #define LLIST_POISON_PREV		((struct llist *)0xfeedbac1)
 
@@ -30,13 +32,14 @@ struct llist {
 	struct llist *prev;
 };
 
-static inline void llist_init(struct llist *head)
+static inline ALWAYS_INLINE void llist_init(struct llist *head)
 {
 	head->next = head;
 	head->prev = head;
 }
 
-static inline void llist_add(struct llist *node, struct llist *ref)
+static inline ALWAYS_INLINE void llist_add(struct llist *node,
+		struct llist *ref)
 {
 	if (!node || !ref) {
 		return;
@@ -48,7 +51,8 @@ static inline void llist_add(struct llist *node, struct llist *ref)
 	ref->next = node;
 }
 
-static inline void llist_add_tail(struct llist *node, struct llist *ref)
+static inline ALWAYS_INLINE void llist_add_tail(struct llist *node,
+		struct llist *ref)
 {
 	if (!node || !ref) {
 		return;
@@ -60,7 +64,7 @@ static inline void llist_add_tail(struct llist *node, struct llist *ref)
 	ref->prev = node;
 }
 
-static inline void llist_del(struct llist *node)
+static inline ALWAYS_INLINE void llist_del(struct llist *node)
 {
 	if (!node) {
 		return;
@@ -73,7 +77,7 @@ static inline void llist_del(struct llist *node)
 	node->prev = LLIST_POISON_PREV;
 }
 
-static inline bool llist_empty(const struct llist *ref)
+static inline ALWAYS_INLINE bool llist_empty(const struct llist *ref)
 {
 	if (ref && ref->next == ref && ref->prev == ref) {
 		return true;
@@ -81,7 +85,7 @@ static inline bool llist_empty(const struct llist *ref)
 	return false;
 }
 
-static inline int llist_count(struct llist *ref)
+static inline ALWAYS_INLINE int llist_count(struct llist *ref)
 {
 	int n = 0;
 	struct llist *p;
