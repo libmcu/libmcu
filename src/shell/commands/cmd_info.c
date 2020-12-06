@@ -7,21 +7,21 @@ typedef enum {
 	CMD_OPT_VERSION			= 0x01,
 	CMD_OPT_BUILD_DATE		= 0x02,
 	CMD_OPT_SERIAL_NUMBER		= 0x04,
-	CMD_OPT_ALL			=
-		(CMD_OPT_VERSION |
-		 CMD_OPT_BUILD_DATE |
-		 CMD_OPT_SERIAL_NUMBER),
+	CMD_OPT_ALL			= (
+			CMD_OPT_VERSION |
+			CMD_OPT_BUILD_DATE |
+			CMD_OPT_SERIAL_NUMBER),
 } cmd_opt_t;
 
 static cmd_opt_t get_command_option(int argc, const char *opt)
 {
 	if (argc == 1) {
 		return CMD_OPT_ALL;
-	} else if (strcmp(opt, "version")) {
+	} else if (strcmp(opt, "version") == 0) {
 		return CMD_OPT_VERSION;
-	} else if (strcmp(opt, "sn")) {
+	} else if (strcmp(opt, "sn") == 0) {
 		return CMD_OPT_SERIAL_NUMBER;
-	} else if (strcmp(opt, "build")) {
+	} else if (strcmp(opt, "build") == 0) {
 		return CMD_OPT_BUILD_DATE;
 	}
 
@@ -54,7 +54,7 @@ shell_cmd_error_t shell_cmd_info(int argc, const char *argv[], const void *env)
 
 	const shell_io_t *io = env;
 
-	cmd_opt_t options = get_command_option(argc, argv[1]);
+	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 
 	if (options & CMD_OPT_VERSION) {
 		print_version(io);
