@@ -113,7 +113,7 @@ TEST(shell, shell_ShouldReturnBLANK_WhenNoCommandGiven) {
 TEST(shell, shell_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
 	given("help\bq\nexit\n");
 	shell_run(&io);
-	then("$ help\bq\r\ncommand not found");
+	then("$ help\b \bq\r\ncommand not found");
 }
 
 TEST(shell, shell_ShouldIgnoreTab) {

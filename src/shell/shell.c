@@ -35,16 +35,18 @@ static void readline(char *buf, size_t bufsize, const shell_io_t *io)
 		if (ch == '\t') {
 			continue;
 		}
-
-		io->write(&ch, 1);
-
-		if (index && ch == '\b') {
-			index--;
+		if (ch == '\b') {
+			if (index > 0) {
+				index--;
+				io->write("\b \b", 3);
+			}
 			continue;
 		}
 
 		buf[index] = ch;
 		index++;
+
+		io->write(&ch, 1);
 	}
 
 	io->write("\r\n", 2);
