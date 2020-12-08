@@ -15,7 +15,6 @@
 typedef struct {
 	char *name;
 	struct list pubsub_node; // list entry for the pubsub_list
-	pthread_mutex_t subscription_lock;
 	struct list subscriptions; // list head for subscriptions
 } topic_t;
 
@@ -43,7 +42,6 @@ static inline void remove_topic(topic_t *topic)
 static inline void initialize_subscriptions(topic_t *topic)
 {
 	list_init(&topic->subscriptions);
-	pthread_mutex_init(&topic->subscription_lock, NULL);
 }
 
 static inline void remove_subscriptions(topic_t *topic)
@@ -155,6 +153,10 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			remove_topic(topic);
+
+			publish_internal(topic, PUBSUB_TOPIC_DESTROY_MESSAGE,
+					sizeof(PUBSUB_TOPIC_DESTROY_MESSAGE));
+			remove_subscriptions(topic);
 		}
 	}
 	pthread_mutex_unlock(&pubsub_list_lock);
@@ -162,14 +164,6 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 	if (topic == NULL) {
 		return PUBSUB_TOPIC_NOT_EXIST;
 	}
-
-	pthread_mutex_lock(&topic->subscription_lock);
-	{
-		publish_internal(topic, PUBSUB_TOPIC_DESTROY_MESSAGE,
-				sizeof(PUBSUB_TOPIC_DESTROY_MESSAGE));
-		remove_subscriptions(topic);
-	}
-	pthread_mutex_unlock(&topic->subscription_lock);
 
 	debug("%s " PUBSUB_TOPIC_DESTROY_MESSAGE, topic->name);
 
@@ -199,13 +193,7 @@ pubsub_subscribe_t *pubsub_subscribe(const char * const topic_name,
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			sub->topic = topic;
-
-			pthread_mutex_lock(&topic->subscription_lock);
-			{
-				list_add(&sub->subscription_node,
-						&topic->subscriptions);
-			}
-			pthread_mutex_unlock(&topic->subscription_lock);
+			list_add(&sub->subscription_node, &topic->subscriptions);
 		}
 	}
 	pthread_mutex_unlock(&pubsub_list_lock);
@@ -224,11 +212,11 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
 		return PUBSUB_INVALID_PARAM;
 	}
 
-	pthread_mutex_lock(&sub->topic->subscription_lock);
+	pthread_mutex_lock(&pubsub_list_lock);
 	{
 		list_del(&sub->subscription_node, &sub->topic->subscriptions);
 	}
-	pthread_mutex_unlock(&sub->topic->subscription_lock);
+	pthread_mutex_unlock(&pubsub_list_lock);
 
 	free(sub);
 
@@ -247,11 +235,7 @@ pubsub_error_t pubsub_publish(const char * const topic_name,
 	pthread_mutex_lock(&pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
-			pthread_mutex_lock(&topic->subscription_lock);
-			{
-				publish_internal(topic, msg, msglen);
-			}
-			pthread_mutex_unlock(&topic->subscription_lock);
+			publish_internal(topic, msg, msglen);
 		}
 	}
 	pthread_mutex_unlock(&pubsub_list_lock);
@@ -275,11 +259,7 @@ int pubsub_count(const char * const topic_name)
 	pthread_mutex_lock(&pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
-			pthread_mutex_lock(&topic->subscription_lock);
-			{
-				count = count_subscribers(topic);
-			}
-			pthread_mutex_unlock(&topic->subscription_lock);
+			count = count_subscribers(topic);
 		}
 	}
 	pthread_mutex_unlock(&pubsub_list_lock);
