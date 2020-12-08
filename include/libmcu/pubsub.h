@@ -22,8 +22,8 @@ typedef enum {
 typedef void (*pubsub_callback_t)(void *context, const void *msg, size_t msglen);
 typedef struct pubsub_subscribe_s pubsub_subscribe_t;
 
-pubsub_error_t pubsub_create(const char * const topic);
-pubsub_error_t pubsub_destroy(const char * const topic);
+pubsub_error_t pubsub_create(const char * const topic_name);
+pubsub_error_t pubsub_destroy(const char * const topic_name);
 /** Publish a message to a topic
  *
  * It delivers the message for all subscribers in the context of the caller.
@@ -31,16 +31,16 @@ pubsub_error_t pubsub_destroy(const char * const topic);
  * registered in subscriptions. You may want some kind of signal to make it to
  * run in another context such as jobpool.
  *
- * @param topic is where the message gets publshed to
+ * @param topic_name is where the message gets publshed to
  * @param msg A message to publish
  * @param msglen The length of the message
  */
-pubsub_error_t pubsub_publish(const char * const topic,
+pubsub_error_t pubsub_publish(const char * const topic_name,
 		const void * const msg, size_t msglen);
-pubsub_subscribe_t *pubsub_subscribe(const char * const topic,
+pubsub_subscribe_t *pubsub_subscribe(const char * const topic_name,
 		pubsub_callback_t cb, void *context);
 pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub);
-int pubsub_count(const char * const topic);
+int pubsub_count(const char * const topic_name);
 const char *pubsub_stringify_error(pubsub_error_t err);
 
 #if defined(__cplusplus)
