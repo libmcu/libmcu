@@ -100,7 +100,6 @@ pubsub_error_t pubsub_create(const char * const topic_name)
 {
 	pubsub_error_t err = PUBSUB_TOPIC_EXIST;
 	topic_t *new_topic;
-	topic_t *p;
 	size_t topic_len;
 
 	if (!m.initialized) {
@@ -124,6 +123,8 @@ pubsub_error_t pubsub_create(const char * const topic_name)
 	strncpy(new_topic->name, topic_name, topic_len);
 	new_topic->name[topic_len] = '\0';
 	initialize_subscriptions(new_topic);
+
+	const topic_t *p;
 
 	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
@@ -229,7 +230,7 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
 pubsub_error_t pubsub_publish(const char * const topic_name,
 		const void * const msg, size_t msglen)
 {
-	topic_t *topic;
+	const topic_t *topic;
 
 	if (!topic_name || !msg || !msglen) {
 		return PUBSUB_INVALID_PARAM;
