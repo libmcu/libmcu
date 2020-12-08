@@ -31,39 +31,41 @@ static struct {
 	volatile bool initialized;
 } m;
 
-static inline void add_topic(topic_t *topic)
+static void add_topic(topic_t *topic)
 {
 	list_add(&topic->pubsub_node, &m.pubsub_list);
 }
 
-static inline void remove_topic(topic_t *topic)
+static void remove_topic(topic_t *topic)
 {
 	list_del(&topic->pubsub_node, &m.pubsub_list);
 }
 
-static inline void initialize_subscriptions(topic_t *topic)
+static void initialize_subscriptions(topic_t *topic)
 {
 	list_init(&topic->subscriptions);
 }
 
-static inline void remove_subscriptions(topic_t *topic)
+static void remove_subscriptions(topic_t *topic)
 {
 	struct list *i, *j;
 	list_for_each_safe(i, j, &topic->subscriptions) {
-		pubsub_subscribe_t *sub = list_entry(i,
-				pubsub_subscribe_t, subscription_node);
+		pubsub_subscribe_t *sub =
+			list_entry(i, pubsub_subscribe_t, subscription_node);
 		list_del(&sub->subscription_node, &topic->subscriptions);
 		free(sub);
 	}
 }
 
-static inline int count_subscribers(topic_t *topic)
+static int count_subscribers(topic_t *topic)
 {
 	int count = 0;
+
 	struct list *i;
 	list_for_each(i, &topic->subscriptions) {
 		count++;
 	}
+
 	return count;
 }
 
@@ -90,8 +92,8 @@ static void publish_internal(const topic_t * const topic,
 {
 	struct list *i;
 	list_for_each(i, &topic->subscriptions) {
-		pubsub_subscribe_t *sub = list_entry(i,
-				pubsub_subscribe_t, subscription_node);
+		pubsub_subscribe_t *sub =
+			list_entry(i, pubsub_subscribe_t, subscription_node);
 		sub->callback(sub->context, msg, msglen);
 	}
 }
