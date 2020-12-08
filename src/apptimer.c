@@ -33,7 +33,7 @@ struct apptimer {
 	void *context;
 	struct llist list;
 };
-_Static_assert(sizeof(struct apptimer) == sizeof(apptimer_t),
+LIBMCU_STATIC_ASSERT(sizeof(struct apptimer) == sizeof(apptimer_t),
 		"apptimer_t must be larger or equal to struct apptimer.");
 
 static struct {

@@ -19,6 +19,8 @@ extern "C" {
 #define WEAK				__attribute__((weak))
 #define NORETURN			__attribute__((noreturn))
 
+#define LIBMCU_STATIC_ASSERT(exp, msg)	_Static_assert(exp, msg)
+
 #define barrier()			__asm__ __volatile__("" ::: "memory")
 #define ACCESS_ONCE(x)			(*(volatile typeof(x) *)&(x))
 #define WRITE_ONCE(ptr, val)
