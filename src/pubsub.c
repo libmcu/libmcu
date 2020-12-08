@@ -25,18 +25,20 @@ struct pubsub_subscribe_s {
 	void *context;
 };
 
-static DEFINE_LIST_HEAD(pubsub_list);
-static pthread_mutex_t pubsub_list_lock;
-static volatile bool initialized;
+static struct {
+	struct list pubsub_list;
+	pthread_mutex_t pubsub_list_lock;
+	volatile bool initialized;
+} m;
 
 static inline void add_topic(topic_t *topic)
 {
-	list_add(&topic->pubsub_node, &pubsub_list);
+	list_add(&topic->pubsub_node, &m.pubsub_list);
 }
 
 static inline void remove_topic(topic_t *topic)
 {
-	list_del(&topic->pubsub_node, &pubsub_list);
+	list_del(&topic->pubsub_node, &m.pubsub_list);
 }
 
 static inline void initialize_subscriptions(topic_t *topic)
@@ -70,7 +72,7 @@ static topic_t *find_topic(const char * const topic_name)
 	topic_t *topic = NULL;
 
 	struct list *i;
-	list_for_each(i, &pubsub_list) {
+	list_for_each(i, &m.pubsub_list) {
 		topic = list_entry(i, topic_t, pubsub_node);
 		if (strncmp(topic_name, topic->name,
 					PUBSUB_TOPIC_NAME_MAXLEN) == 0) {
@@ -101,9 +103,10 @@ pubsub_error_t pubsub_create(const char * const topic_name)
 	topic_t *p;
 	size_t topic_len;
 
-	if (!initialized) {
-		pthread_mutex_init(&pubsub_list_lock, NULL);
-		initialized = true;
+	if (!m.initialized) {
+		list_init(&m.pubsub_list);
+		pthread_mutex_init(&m.pubsub_list_lock, NULL);
+		m.initialized = true;
 	}
 
 	if (topic_name == NULL) {
@@ -122,13 +125,13 @@ pubsub_error_t pubsub_create(const char * const topic_name)
 	new_topic->name[topic_len] = '\0';
 	initialize_subscriptions(new_topic);
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		if ((p = find_topic(topic_name)) == NULL) {
 			add_topic(new_topic);
 		}
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	if (p == NULL) {
 		debug("%s topic created", new_topic->name);
@@ -149,7 +152,7 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 
 	topic_t *topic;
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			remove_topic(topic);
@@ -159,7 +162,7 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 			remove_subscriptions(topic);
 		}
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	if (topic == NULL) {
 		return PUBSUB_TOPIC_NOT_EXIST;
@@ -189,14 +192,14 @@ pubsub_subscribe_t *pubsub_subscribe(const char * const topic_name,
 	sub->callback = cb;
 	sub->context = context;
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			sub->topic = topic;
 			list_add(&sub->subscription_node, &topic->subscriptions);
 		}
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	if (topic == NULL) {
 		free(sub);
@@ -212,11 +215,11 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
 		return PUBSUB_INVALID_PARAM;
 	}
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		list_del(&sub->subscription_node, &sub->topic->subscriptions);
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	free(sub);
 
@@ -232,13 +235,13 @@ pubsub_error_t pubsub_publish(const char * const topic_name,
 		return PUBSUB_INVALID_PARAM;
 	}
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			publish_internal(topic, msg, msglen);
 		}
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	if (topic == NULL) {
 		return PUBSUB_TOPIC_NOT_EXIST;
@@ -256,13 +259,13 @@ int pubsub_count(const char * const topic_name)
 		return PUBSUB_INVALID_PARAM;
 	}
 
-	pthread_mutex_lock(&pubsub_list_lock);
+	pthread_mutex_lock(&m.pubsub_list_lock);
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
 			count = count_subscribers(topic);
 		}
 	}
-	pthread_mutex_unlock(&pubsub_list_lock);
+	pthread_mutex_unlock(&m.pubsub_list_lock);
 
 	if (topic == NULL) {
 		return PUBSUB_TOPIC_NOT_EXIST;
