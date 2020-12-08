@@ -112,6 +112,16 @@ TEST(PubSub, subscribe_ShouldReturnNull_WhenNullParamsGiven) {
 	POINTERS_EQUAL(NULL, pubsub_subscribe(topic, NULL, NULL));
 }
 
+TEST(PubSub, subscribe_ShouldReturnNull_WhenAllocationFail) {
+	cpputest_malloc_set_out_of_memory();
+	POINTERS_EQUAL(NULL, pubsub_subscribe(topic, callback, NULL));
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(PubSub, subscribe_ShouldReturnNull_WhenNoMatchingTopicFound) {
+	POINTERS_EQUAL(NULL, pubsub_subscribe("unknown topic", callback, NULL));
+}
+
 TEST(PubSub, unsubscribe_ShouldReturnSuccess) {
 	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(sub));
