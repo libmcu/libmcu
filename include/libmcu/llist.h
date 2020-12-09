@@ -1,5 +1,5 @@
 #ifndef LIBMCU_DOUBLY_LINKED_LIST_H
-#define LIBMCU_DOUBLY_LINKED_LIST_H 1
+#define LIBMCU_DOUBLY_LINKED_LIST_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

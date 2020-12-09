@@ -1,5 +1,5 @@
 #ifndef LIBMCU_SLEEP_H
-#define LIBMCU_SLEEP_H 1
+#define LIBMCU_SLEEP_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

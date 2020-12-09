@@ -91,8 +91,9 @@ ifdef LD_LIBRARY_PATH
 endif
 
 # Build options
-APP_INCLUDES = include tests/stubs
+APP_INCLUDES = include include/libmcu/posix tests/stubs
 APP_DEFINES  = \
+	       _POSIX_THREADS \
 	       BUILD_DATE=\""$(shell date)"\" \
 	       VERSION_MAJOR=$(VERSION_MAJOR) \
 	       VERSION_MINOR=$(VERSION_MINOR) \

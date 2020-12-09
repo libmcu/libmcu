@@ -1,5 +1,5 @@
 #ifndef LIBMCU_SEMAPHORE_H
-#define LIBMCU_SEMAPHORE_H 1
+#define LIBMCU_SEMAPHORE_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

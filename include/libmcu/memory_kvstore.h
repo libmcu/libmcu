@@ -1,5 +1,5 @@
 #ifndef LIBMCU_MEMORY_KVSTORE_H
-#define LIBMCU_MEMORY_KVSTORE_H 1
+#define LIBMCU_MEMORY_KVSTORE_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

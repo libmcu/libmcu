@@ -1,5 +1,5 @@
 #ifndef LIBMCU_NVS_KVSTORE_H
-#define LIBMCU_NVS_KVSTORE_H
+#define LIBMCU_NVS_KVSTORE_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {
