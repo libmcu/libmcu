@@ -16,6 +16,10 @@ jobs:
         uses: actions/checkout@v1
         with:
           submodules: 'recursive'
+      - name: Host Compile
+        run: make
+      - name: Cross Compile
+        run: CROSS_COMPILE=arm-none-eabi make
       - name: Install test framework
         run: make -C tests install
       - name: Test
