@@ -17,9 +17,9 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Host Compile
-        run: make
+        run: make clean all
       - name: Cross Compile
-        run: CROSS_COMPILE=arm-none-eabi make
+        run: CROSS_COMPILE=arm-none-eabi make clean all
       - name: Install test framework
         run: make -C tests install
       - name: Test
