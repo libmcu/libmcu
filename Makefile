@@ -27,19 +27,21 @@ OC := $(CROSS_COMPILE_PREFIX)objcopy
 OD := $(CROSS_COMPILE_PREFIX)objdump
 
 # Compiler options
-CFLAGS += -std=gnu99 \
+CFLAGS += \
+	  -std=gnu99 \
 	  -fno-builtin \
 	  -fno-common \
 	  -ffunction-sections \
 	  -fdata-sections \
 	  -Os
-#CFLAGS += -fno-short-enums -fstack-usage
+#CFLAGS += -fstack-usage # generates .su files per each objects
+#CFLAGS += -fno-short-enums
 #CFLAGS += -flto # it increases stack usage and removes some debug info
 
 ## Compiler warnings
-CFLAGS += -Wall \
+CFLAGS += \
+	  -Wall \
 	  -Wextra \
-	  -Werror \
 	  -Wformat=2 \
 	  -Wmissing-prototypes \
 	  -Wstrict-prototypes \
@@ -61,26 +63,24 @@ CFLAGS += -Wall \
 	  -Waggregate-return \
 	  -Wredundant-decls \
 	  -Wconversion \
-	  -Wstrict-overflow=5
- #-Wformat-truncation=2 -Wformat-overflow -Wabi=11 -Wlogical-op -Wstack-usage=$(STACK_LIMIT)
+	  -Wstrict-overflow=5 \
+	  -Werror
+#-Wformat-truncation=2
+#-Wformat-overflow
+#-Wabi=11 -Wlogical-op -Wstack-usage=$(STACK_LIMIT)
 
 ## Compiler errors
-CFLAGS += -Wno-error=pedantic \
-	  -Wno-error=inline \
-	  -Wno-error=sign-conversion \
-	  -Wno-error=aggregate-return \
-	  -Wno-error=unused-parameter \
-	  -Wno-error=conversion \
-	  -Wno-error=deprecated-declarations \
-	  -Wno-error=unused-function \
-	  -Wno-error=strict-overflow \
-	  -Wno-main
+CFLAGS += -Wno-error=format-nonliteral
+
 ifndef NDEBUG
 	CFLAGS += -g3
 	#CFLAGS += -fsanitize=address
 endif
 
 # Linker options
+LDFLAGS += \
+	   --gc-sections \
+	   --print-gc-sections
 LIBS =
 LD_SCRIPT =
 ifneq ($(LD_SCRIPT),)

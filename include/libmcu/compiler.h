@@ -22,7 +22,7 @@ extern "C" {
 #define LIBMCU_STATIC_ASSERT(exp, msg)	_Static_assert(exp, msg)
 
 #define barrier()			__asm__ __volatile__("" ::: "memory")
-#define ACCESS_ONCE(x)			(*(volatile typeof(x) *)&(x))
+#define ACCESS_ONCE(x)			(*(volatile __typeof__(x) *)&(x))
 #define WRITE_ONCE(ptr, val)
 #define READ_ONCE(x)
 
@@ -32,9 +32,9 @@ extern "C" {
 #define def2str(x)			stringify(x)
 
 /** Align down */
-#define BASE(x, unit)			((x) & ~((typeof(x))(unit) - 1UL))
+#define BASE(x, unit)			((x) & ~((__typeof__(x))(unit) - 1UL))
 /** Align up */
-#define ALIGN(x, unit)			BASE((x) + ((typeof(x))(unit) - 1UL), unit)
+#define ALIGN(x, unit)			BASE((x) + ((__typeof__(x))(unit) - 1UL), unit)
 
 #define container_of(ptr, type, member) \
 	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
