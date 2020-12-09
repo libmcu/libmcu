@@ -1,5 +1,5 @@
 #ifndef LIBMCU_JOBPOOL_H
-#define LIBMCU_JOBPOOL_H 1
+#define LIBMCU_JOBPOOL_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

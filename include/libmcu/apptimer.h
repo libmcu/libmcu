@@ -1,5 +1,5 @@
 #ifndef LIBMCU_APPTIMER_H
-#define LIBMCU_APPTIMER_H 1
+#define LIBMCU_APPTIMER_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

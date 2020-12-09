@@ -1,5 +1,5 @@
 #ifndef LIBMCU_PUBSUB_H
-#define LIBMCU_PUBSUB_H 1
+#define LIBMCU_PUBSUB_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

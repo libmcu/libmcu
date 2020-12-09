@@ -1,5 +1,5 @@
 #ifndef LIBMCU_BITOPS_H
-#define LIBMCU_BITOPS_H 1
+#define LIBMCU_BITOPS_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {

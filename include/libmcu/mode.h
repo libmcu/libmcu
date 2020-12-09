@@ -1,5 +1,5 @@
 #ifndef LIBMCU_RUNMODE_H
-#define LIBMCU_RUNMODE_H 1
+#define LIBMCU_RUNMODE_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {
