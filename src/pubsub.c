@@ -12,18 +12,29 @@
 #define PUBSUB_TOPIC_DESTROY_MESSAGE		"topic destroyed"
 #endif
 
+/* NOTE: It sets the least significant bit of `subscriber->context` to
+ * differentiate static subscriber from one created dynamically. */
+#define GET_SUBSCRIBER_CONTEXT(obj)		\
+	(void *)((uintptr_t)(obj)->context & ~1UL)
+#define IS_SUBSCRIBER_STATIC(obj)		\
+	((uintptr_t)(obj)->context & 1UL)
+#define GET_CONTEXT_STATIC(ctx)			\
+	(void *)((uintptr_t)(ctx) | 1UL)
+
 typedef struct {
 	char *name;
 	struct list pubsub_node; // list entry for the pubsub_list
 	struct list subscriptions; // list head for subscriptions
 } topic_t;
 
-struct pubsub_subscribe_s {
+typedef struct {
 	topic_t *topic;
 	struct list subscription_node;
 	pubsub_callback_t callback;
 	void *context;
-};
+} subscribe_t;
+LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_t),
+	"The size of public and private subscribe data type must be the same.");
 
 static struct {
 	struct list pubsub_list;
@@ -50,10 +61,12 @@ static void remove_subscriptions(topic_t *topic)
 {
 	struct list *i, *j;
 	list_for_each_safe(i, j, &topic->subscriptions) {
-		pubsub_subscribe_t *sub =
-			list_entry(i, pubsub_subscribe_t, subscription_node);
+		subscribe_t *sub =
+			list_entry(i, subscribe_t, subscription_node);
 		list_del(&sub->subscription_node, &topic->subscriptions);
-		free(sub);
+		if (!IS_SUBSCRIBER_STATIC(sub)) {
+			free(sub);
+		}
 	}
 }
 
@@ -69,7 +82,7 @@ static int count_subscribers(topic_t *topic)
 	return count;
 }
 
-static topic_t *find_topic(const char * const topic_name)
+static topic_t *find_topic(const char *topic_name)
 {
 	topic_t *topic = NULL;
 
@@ -87,14 +100,14 @@ static topic_t *find_topic(const char * const topic_name)
 	return topic;
 }
 
-static void publish_internal(const topic_t * const topic,
-		const void * const msg, size_t msglen)
+static void publish_internal(const topic_t *topic,
+		const void *msg, size_t msglen)
 {
 	struct list *i;
 	list_for_each(i, &topic->subscriptions) {
-		pubsub_subscribe_t *sub =
-			list_entry(i, pubsub_subscribe_t, subscription_node);
-		sub->callback(sub->context, msg, msglen);
+		subscribe_t *sub =
+			list_entry(i, subscribe_t, subscription_node);
+		sub->callback(GET_SUBSCRIBER_CONTEXT(sub), msg, msglen);
 	}
 }
 
@@ -120,7 +133,37 @@ static void pubsub_init(void)
 	m.initialized = true;
 }
 
-pubsub_error_t pubsub_create(const char * const topic_name)
+static subscribe_t *subscribe_core(subscribe_t *obj,
+		const char *topic_name, pubsub_callback_t cb, void *context)
+{
+	topic_t *topic;
+
+	if ((topic_name == NULL) || (cb == NULL)) {
+		return NULL;
+	}
+
+	pubsub_lock();
+	{
+		if ((topic = find_topic(topic_name)) != NULL) {
+			obj->topic = topic;
+			list_add(&obj->subscription_node, &topic->subscriptions);
+		}
+	}
+	pubsub_unlock();
+
+	if (topic == NULL) {
+		return NULL;
+	}
+
+	obj->callback = cb;
+	obj->context = context;
+
+	debug("Subscribe to %s", topic_name);
+
+	return obj;
+}
+
+pubsub_error_t pubsub_create(const char *topic_name)
 {
 	if (!pubsub_ready()) {
 		pubsub_init();
@@ -155,7 +198,7 @@ pubsub_error_t pubsub_create(const char * const topic_name)
 	pubsub_unlock();
 
 	if (duplicated == NULL) {
-		debug("%s topic created", topic->name);
+		info("%s topic created", topic->name);
 		return PUBSUB_SUCCESS;
 	}
 
@@ -165,7 +208,7 @@ out_free:
 	return err;
 }
 
-pubsub_error_t pubsub_destroy(const char * const topic_name)
+pubsub_error_t pubsub_destroy(const char *topic_name)
 {
 	if (!topic_name) {
 		return PUBSUB_INVALID_PARAM;
@@ -189,7 +232,7 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 		return PUBSUB_TOPIC_NOT_EXIST;
 	}
 
-	debug("%s " PUBSUB_TOPIC_DESTROY_MESSAGE, topic->name);
+	info("%s " PUBSUB_TOPIC_DESTROY_MESSAGE, topic->name);
 
 	free(topic->name);
 	free(topic);
@@ -197,58 +240,8 @@ pubsub_error_t pubsub_destroy(const char * const topic_name)
 	return PUBSUB_SUCCESS;
 }
 
-pubsub_subscribe_t *pubsub_subscribe(const char * const topic_name,
-		pubsub_callback_t cb, void *context)
-{
-	pubsub_subscribe_t *sub;
-	topic_t *topic;
-
-	if ((topic_name == NULL) || (cb == NULL)) {
-		return NULL;
-	}
-	if ((sub = (pubsub_subscribe_t *)calloc(1, sizeof(*sub))) == NULL) {
-		return NULL;
-	}
-
-	sub->callback = cb;
-	sub->context = context;
-
-	pubsub_lock();
-	{
-		if ((topic = find_topic(topic_name)) != NULL) {
-			sub->topic = topic;
-			list_add(&sub->subscription_node, &topic->subscriptions);
-		}
-	}
-	pubsub_unlock();
-
-	if (topic == NULL) {
-		free(sub);
-		return NULL;
-	}
-
-	return sub;
-}
-
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *sub)
-{
-	if (!sub || !sub->topic) {
-		return PUBSUB_INVALID_PARAM;
-	}
-
-	pubsub_lock();
-	{
-		list_del(&sub->subscription_node, &sub->topic->subscriptions);
-	}
-	pubsub_unlock();
-
-	free(sub);
-
-	return PUBSUB_SUCCESS;
-}
-
-pubsub_error_t pubsub_publish(const char * const topic_name,
-		const void * const msg, size_t msglen)
+pubsub_error_t pubsub_publish(const char *topic_name,
+		const void *msg, size_t msglen)
 {
 	const topic_t *topic;
 
@@ -268,10 +261,60 @@ pubsub_error_t pubsub_publish(const char * const topic_name,
 		return PUBSUB_TOPIC_NOT_EXIST;
 	}
 
+	debug("Publish to %s", topic->name);
+
 	return PUBSUB_SUCCESS;
 }
 
-int pubsub_count(const char * const topic_name)
+pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
+		const char *topic_name, pubsub_callback_t cb, void *context)
+{
+	return (pubsub_subscribe_t *)
+		subscribe_core((subscribe_t *)obj, topic_name, cb,
+				GET_CONTEXT_STATIC(context));
+}
+
+pubsub_subscribe_t *pubsub_subscribe(const char *topic_name,
+		pubsub_callback_t cb, void *context)
+{
+	subscribe_t *obj = (subscribe_t *)calloc(1, sizeof(*obj));
+
+	if (obj == NULL) {
+		return NULL;
+	}
+
+	if (subscribe_core(obj, topic_name, cb, context) == NULL) {
+		free(obj);
+		return NULL;
+	}
+
+	return (pubsub_subscribe_t *)obj;
+}
+
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
+{
+	subscribe_t *p = (subscribe_t *)obj;
+
+	if (!p || !p->topic) {
+		return PUBSUB_INVALID_PARAM;
+	}
+
+	debug("Unsubscribe from %s", p->topic->name);
+
+	pubsub_lock();
+	{
+		list_del(&p->subscription_node, &p->topic->subscriptions);
+	}
+	pubsub_unlock();
+
+	if (!IS_SUBSCRIBER_STATIC(p)) {
+		free(p);
+	}
+
+	return PUBSUB_SUCCESS;
+}
+
+int pubsub_count(const char *topic_name)
 {
 	topic_t *topic;
 	int count = 0;
