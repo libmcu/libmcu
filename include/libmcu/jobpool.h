@@ -16,9 +16,10 @@ typedef enum {
 } job_error_t;
 
 typedef union {
-#if defined(__WORDSIZE) && __WORDSIZE == 64
+#if defined(__amd64__) || defined(__x86_64__) || defined(__aarch64__) \
+	|| defined(__ia64__) || defined(__ppc64__)
 	char _size[48];
-#else
+#else // 32-bit
 	char _size[24];
 #endif
 	long _align;

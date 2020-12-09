@@ -20,10 +20,11 @@ typedef enum {
 } pubsub_error_t;
 
 typedef union {
-#if defined(__WORDSIZE) && __WORDSIZE == 32
-	char _size[16];
-#else // 64-bit
+#if defined(__amd64__) || defined(__x86_64__) || defined(__aarch64__) \
+	|| defined(__ia64__) || defined(__ppc64__)
 	char _size[32];
+#else // 32-bit
+	char _size[16];
 #endif
 	long _align;
 } pubsub_subscribe_t;
