@@ -100,7 +100,7 @@ TEST(PubSub, destroy_ShouldRemoveAndDestroySubscriptionsRegisterd) {
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_destroy(mytopic));
 }
 
-TEST(PubSub, subscribe_ShouldReturnHandler) {
+TEST(PubSub, subscribe_ShouldReturnSubscriptionHandle) {
 	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
 	CHECK(sub != NULL);
 	LONGS_EQUAL(1, pubsub_count(topic));
@@ -120,6 +120,35 @@ TEST(PubSub, subscribe_ShouldReturnNull_WhenAllocationFail) {
 
 TEST(PubSub, subscribe_ShouldReturnNull_WhenNoMatchingTopicFound) {
 	POINTERS_EQUAL(NULL, pubsub_subscribe("unknown topic", callback, NULL));
+}
+
+TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNullParamsGiven) {
+	pubsub_subscribe_t sub;
+	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub, NULL, callback, NULL));
+	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub, topic, NULL, NULL));
+}
+
+TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNoMatchingTopicFound) {
+	pubsub_subscribe_t sub;
+	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub,
+				"unknown topic", callback, NULL));
+}
+
+TEST(PubSub, subscribe_static_ShouldReturnSubscriptionHandle) {
+	pubsub_subscribe_t sub;
+	pubsub_subscribe_t *p =
+		pubsub_subscribe_static(&sub, topic, callback, NULL);
+	CHECK(p != NULL);
+	LONGS_EQUAL(1, pubsub_count(topic));
+	pubsub_unsubscribe(p);
+}
+
+TEST(PubSub, unsubscribe_static_ShouldReturnSuccess) {
+	pubsub_subscribe_t sub;
+	pubsub_subscribe_static(&sub, topic, callback, NULL);
+	LONGS_EQUAL(1, pubsub_count(topic));
+	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(&sub));
+	LONGS_EQUAL(0, pubsub_count(topic));
 }
 
 TEST(PubSub, unsubscribe_ShouldReturnSuccess) {
