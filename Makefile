@@ -10,9 +10,11 @@ VERSION_MAJOR := $(strip $(word 1, $(VERSION_TAG)))
 VERSION_MINOR := $(strip $(word 2, $(VERSION_TAG)))
 VERSION_BUILD := $(strip $(word 2, $(VERSION_LIST)))
 
-Q ?= @
-ifneq ($(Q),@)
-	override undefine Q
+V ?= 0
+ifeq ($(V), 0)
+	Q = @
+else
+	Q =
 endif
 
 # Toolchains
@@ -29,6 +31,8 @@ OD := $(CROSS_COMPILE_PREFIX)objdump
 # Compiler options
 CFLAGS += \
 	  -std=gnu99 \
+	  -static \
+	  -nostdlib \
 	  -fno-builtin \
 	  -fno-common \
 	  -ffunction-sections \
@@ -108,13 +112,12 @@ DEPS = $(OBJS:.o=.d)
 
 .DEFAULT_GOAL :=
 all: $(OBJS)
-	@printf "\n"
-	@printf "  $(PROJECT)_$(VERSION)\n"
+	@echo "\n  $(PROJECT)_$(VERSION)"
 
 $(OBJS): $(BUILDIR)/%.o: %.c Makefile $(LD_SCRIPT)
-	@printf "  CC       $<\n"
+	@echo "  CC       $*.c"
 	@mkdir -p $(@D)
-	$(Q)$(CC) -o $@ -c $< -MMD $(DEFS) $(INCS) $(CFLAGS)
+	$(Q)$(CC) -o $@ -c $*.c -MMD $(DEFS) $(INCS) $(CFLAGS)
 
 ifneq ($(MAKECMDGOALS), clean)
 ifneq ($(MAKECMDGOALS), depend)
