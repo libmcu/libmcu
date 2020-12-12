@@ -64,12 +64,12 @@ TEST(logging, get_level_ShouldReturnDebug_WhenInitialized) {
 	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level());
 }
 
-TEST(logging, get_level_ShouldReturnSameLevel_WhenSet) {
+TEST(logging, get_level_ShouldReturnCurrentLogLevel) {
 	logging_set_level(LOGGING_TYPE_ERROR);
 	LONGS_EQUAL(LOGGING_TYPE_ERROR, logging_get_level());
 }
 
-TEST(logging, get_level_ShouldKeepLevel_WhenSetInvalidLevel) {
+TEST(logging, set_level_ShouldIgnore_WhenInvalidLevelGiven) {
 	logging_set_level(LOGGING_TYPE_MAX);
 	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level());
 
@@ -81,30 +81,30 @@ TEST(logging, count_ShouldReturnZero_WhenNologsSaved) {
 	LONGS_EQUAL(0, logging_count());
 }
 
-TEST(logging, has_log_ShouldReturnNumberOfLogs_WhenLogsExists) {
-	write_log_with_string(LOGGING_TYPE_INFO, "Very first log");
+TEST(logging, count_ShouldReturnNumberOfLogs) {
+	write_empty_log(LOGGING_TYPE_INFO);
 	LONGS_EQUAL(1, logging_count());
-	write_log_with_string(LOGGING_TYPE_INFO, "Very first log");
+	write_empty_log(LOGGING_TYPE_INFO);
 	LONGS_EQUAL(2, logging_count());
-	write_log_with_string(LOGGING_TYPE_INFO, "Very first log");
+	write_empty_log(LOGGING_TYPE_INFO);
 	LONGS_EQUAL(3, logging_count());
 
 	uint8_t buf[LOGBUF_SIZE];
-	size_t bytes_read = logging_peek(buf, sizeof(buf));
-	LONGS_EQUAL(3, logging_count());
-	LONGS_EQUAL(bytes_read, logging_read(buf, sizeof(buf)));
+	logging_read(buf, sizeof(buf));
 	LONGS_EQUAL(2, logging_count());
+	logging_read(buf, sizeof(buf));
+	LONGS_EQUAL(1, logging_count());
+	logging_read(buf, sizeof(buf));
+	LONGS_EQUAL(0, logging_count());
 }
 
 TEST(logging, write_ShouldReturnZero_WhenLogLevelIsLowerThanMinSaveLevel) {
 	logging_set_level(LOGGING_TYPE_ERROR);
-	size_t written = write_empty_log(LOGGING_TYPE_DEBUG);
-	CHECK(written == 0);
+	LONGS_EQUAL(0, write_empty_log(LOGGING_TYPE_DEBUG));
 }
 
 TEST(logging, write_ShouldReturnZero_WhenLogLevelIsInvalid) {
-	size_t written = write_empty_log(LOGGING_TYPE_MAX);
-	CHECK(written == 0);
+	LONGS_EQUAL(0, write_empty_log(LOGGING_TYPE_MAX));
 }
 
 TEST(logging, write_ShouldReturnWrittenSize) {
@@ -120,7 +120,7 @@ TEST(logging, write_ShouldReturnZero_WhenStorageFull) {
 		written_total += written;
 	}
 
-	CHECK(written == 0);
+	LONGS_EQUAL(0, written);
 	CHECK(written_total <= sizeof(logbuf));
 }
 
@@ -146,31 +146,28 @@ TEST(logging, write_ShouldSaveCurrentTime) {
 }
 
 TEST(logging, read_ShouldReturnZero_WhenBufIsNull) {
-	size_t bytes_read = logging_read(NULL, 100);
-	LONGS_EQUAL(0, bytes_read);
+	LONGS_EQUAL(0, logging_read(NULL, 100));
 }
 
 TEST(logging, read_ShouldReturnZero_WhenBufSizeNotEnough) {
 	uint8_t buf[1];
 	write_empty_log(LOGGING_TYPE_DEBUG);
-	size_t bytes_read = logging_read(buf, sizeof(buf));
-	LONGS_EQUAL(0, bytes_read);
+	LONGS_EQUAL(0, logging_read(buf, sizeof(buf)));
 }
 
 TEST(logging, read_ShouldReturnZero_WhenNoLogs) {
 	uint8_t buf[LOGBUF_SIZE];
-	size_t bytes_read = logging_read(buf, sizeof(buf));
-	LONGS_EQUAL(0, bytes_read);
+	LONGS_EQUAL(0, logging_read(buf, sizeof(buf)));
 }
 
-TEST(logging, read_ShouldReturnLogSize_WhenLogExists) {
+TEST(logging, read_ShouldReturnLogSize) {
 	uint8_t buf[LOGBUF_SIZE];
 	size_t bytes_written = write_empty_log(LOGGING_TYPE_DEBUG);
 	size_t bytes_read = logging_read(buf, sizeof(buf));
 	LONGS_EQUAL(bytes_written, bytes_read);
 }
 
-TEST(logging, read_ShouldMatchTime) {
+TEST(logging, write_ShouldWriteTime) {
 	uint8_t buf[LOGBUF_SIZE];
 	uint32_t expected_time = 12345;
 	mock().expectOneCall("time").andReturnValue(expected_time);
@@ -180,7 +177,7 @@ TEST(logging, read_ShouldMatchTime) {
 	LONGS_EQUAL(expected_time, actual_time);
 }
 
-TEST(logging, write_read_ShouldMatch_WhenRepeatOver) {
+TEST(logging, write_read_RepeatOver) {
 	uint8_t buf[LOGBUF_SIZE];
 	size_t bytes_written, bytes_read;
 	uint32_t actual_time;
