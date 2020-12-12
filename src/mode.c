@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "libmcu/list.h"
-#include "logger.h"
+#include "libmcu/logging.h"
 
 struct callback_obj {
 	mode_transition_callback_t callback;

@@ -4,7 +4,8 @@ SRC_FILES = \
 	../src/jobpool.c \
 	fakes/fake_pthread_mutex.c \
 	mocks/mock_semaphore.c \
-	mocks/mock_pthread.cpp
+	mocks/mock_pthread.cpp \
+	stubs/logging.c
 
 TEST_SRC_FILES = \
 	src/test_jobpool.cpp

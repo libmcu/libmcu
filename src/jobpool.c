@@ -7,7 +7,7 @@
 
 #include "libmcu/list.h"
 #include "libmcu/compiler.h"
-#include "logger.h"
+#include "libmcu/logging.h"
 
 #define DEFAULT_STACK_SIZE			3072
 #define DEFAULT_MIN_THREADS			1

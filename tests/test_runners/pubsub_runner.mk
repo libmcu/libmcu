@@ -1,7 +1,8 @@
 COMPONENT_NAME = pubsub
 
 SRC_FILES = \
-	    ../src/pubsub.c
+	    ../src/pubsub.c \
+	    stubs/logging.c
 
 TEST_SRC_FILES = \
 	    src/test_pubsub.cpp
