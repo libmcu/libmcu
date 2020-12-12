@@ -2,7 +2,7 @@ export CPPUTEST_HOME = ../external/cpputest
 export BUILDIR ?= build
 export INCLUDE_DIRS += $(CPPUTEST_HOME)/include ../include .
 
-TESTS := $(wildcard test_runners/*_runner.mk)
+TESTS := $(shell find test_runners -type f -regex ".*_runner\.mk")
 
 .PHONY: all
 all: test
