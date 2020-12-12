@@ -68,6 +68,28 @@ pubsub_subscribe("mytopic", event_callback, event_queueN);
 pubsub_publish("mytopic", data, data_size);
 ```
 
+## logging
+![logging class diagram](docs/images/logging.png)
+
+On ARM Cortex-M cores, it uses 128 bytes stack at most while no dynamic
+allocation at all. And a log size is 16 bytes excluding user messages.
+
+An example for storage implementation can be found
+[examples/memory_storage.c](examples/memory_storage.c). And a simple server-side
+script is [scripts/translate_log.py](scripts/translate_log.py).
+
+Writing a log in a structured way would help you see and trace easier on the
+server side, something like:
+
+```c
+info("#battery %d%%", battery");
+info("rssi %d", rssi); // #wifi unit:dBm
+error("#i2c timeout");
+```
+
+## shell
+A tiny CLI shell.
+
 ## jobpool
 A small job like calling a callback can be done using jobpool rather than
 creating a new thread or task which is too much for such a job since it takes
@@ -88,5 +110,3 @@ Key-Value Store
 ## semaphore
 ## queue
 ## bitmap
-## shell
-A tiny CLI shell.

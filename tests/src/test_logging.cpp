@@ -2,7 +2,7 @@
 #include "CppUTestExt/MockSupport.h"
 #include <string.h>
 #include "libmcu/logging.h"
-#include "stubs/memory_storage.h"
+#include "../examples/memory_storage.h"
 
 static time_t fake_time;
 time_t time(time_t *ptr) {
