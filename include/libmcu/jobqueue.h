@@ -1,5 +1,5 @@
-#ifndef LIBMCU_JOBPOOL_H
-#define LIBMCU_JOBPOOL_H 202012L
+#ifndef LIBMCU_JOBQUEUE_H
+#define LIBMCU_JOBQUEUE_H 202012L
 
 #if defined(__cplusplus)
 extern "C" {
@@ -27,29 +27,30 @@ typedef union {
 
 typedef struct job_context job_context_t;
 
-typedef struct jobpool jobpool_t;
-typedef struct jobpool_attr {
+typedef struct jobqueue jobqueue_t;
+typedef struct jobqueue_attr {
 	size_t stack_size_bytes;
 	int8_t min_threads;
 	uint8_t max_threads;
 	int8_t priority;
-} jobpool_attr_t;
+} jobqueue_attr_t;
 
 typedef void (*job_callback_t)(job_context_t *context);
 
-jobpool_t *jobpool_create(unsigned int max_concurrent_jobs);
-job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr);
-job_error_t jobpool_destroy(jobpool_t *pool);
+jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs);
+job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr);
+job_error_t jobqueue_destroy(jobqueue_t *pool);
 
-job_error_t job_init(jobpool_t *pool, job_t *job, job_callback_t callback, job_context_t *context);
-job_error_t job_schedule(jobpool_t *pool, job_t *job);
-job_error_t job_delete(jobpool_t *pool, job_t *job);
+job_error_t job_init(jobqueue_t *pool,
+		job_t *job, job_callback_t callback, job_context_t *context);
+job_error_t job_schedule(jobqueue_t *pool, job_t *job);
+job_error_t job_delete(jobqueue_t *pool, job_t *job);
 
-uint8_t job_count(jobpool_t *pool);
+uint8_t job_count(jobqueue_t *pool);
 const char *job_stringify_error(job_error_t error_code);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* LIBMCU_JOBPOOL_H */
+#endif /* LIBMCU_JOBQUEUE_H */
