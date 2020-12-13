@@ -81,6 +81,8 @@ ifndef NDEBUG
 	#CFLAGS += -fsanitize=address
 endif
 
+ARFLAGS = crsu
+
 # Linker options
 LDFLAGS += \
 	   --gc-sections \
@@ -110,10 +112,23 @@ DEFS = $(addprefix -D, $(APP_DEFINES))
 OBJS = $(addprefix $(BUILDIR)/, $(SRCS:.c=.o))
 DEPS = $(OBJS:.o=.d)
 
-.DEFAULT_GOAL :=
-all: $(OBJS)
-	@echo "\n  $(PROJECT)_$(VERSION)"
+PROJECT_OBJ := $(BUILDIR)/$(PROJECT)_$(VERSION)
 
+.DEFAULT_GOAL :=
+all: $(PROJECT_OBJ).tgz
+	@echo "\n  $(notdir $(PROJECT_OBJ))"
+	@echo "  $(shell cat $(PROJECT_OBJ).sha256)"
+
+$(PROJECT_OBJ).tgz: $(PROJECT_OBJ).sha256
+	@echo "  TAR      $@"
+	$(Q)rm -f $@
+	$(Q)tar -zcf $@ $(basename $<).*
+$(PROJECT_OBJ).sha256: $(PROJECT_OBJ).a
+	@echo "  HASH     $@"
+	$(Q)openssl dgst -sha256 $< > $@
+$(PROJECT_OBJ).a: $(OBJS)
+	@echo "  AR       $@"
+	$(Q)$(AR) $(ARFLAGS) $@ $^ 1> /dev/null 2>&1
 $(OBJS): $(BUILDIR)/%.o: %.c Makefile $(LD_SCRIPT)
 	@echo "  CC       $*.c"
 	@mkdir -p $(@D)
