@@ -1,14 +1,14 @@
-COMPONENT_NAME = jobpool
+COMPONENT_NAME = jobqueue
 
 SRC_FILES = \
-	../src/jobpool.c \
+	../src/jobqueue.c \
 	fakes/fake_pthread_mutex.c \
 	mocks/mock_semaphore.c \
 	mocks/mock_pthread.cpp \
 	stubs/logging.c
 
 TEST_SRC_FILES = \
-	src/test_jobpool.cpp
+	src/test_jobqueue.cpp
 
 INCLUDE_DIRS += stubs ../include/libmcu/posix
 

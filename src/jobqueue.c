@@ -1,4 +1,4 @@
-#include "libmcu/jobpool.h"
+#include "libmcu/jobqueue.h"
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -22,11 +22,11 @@ typedef enum {
 	JOB_STATE_UNKNOWN,
 } job_state_t;
 
-struct jobpool {
+struct jobqueue {
 	pthread_mutex_t lock;
 	struct list job_list;
 	sem_t job_queue;
-	jobpool_attr_t attr;
+	jobqueue_attr_t attr;
 	uint8_t active_threads;
 	unsigned int max_concurrent_jobs;
 };
@@ -39,7 +39,7 @@ struct job {
 	job_context_t *context;
 };
 
-static inline uint8_t job_count_internal(jobpool_t *pool)
+static inline uint8_t job_count_internal(jobqueue_t *pool)
 {
 	uint8_t count = 0;
 	struct list *p;
@@ -51,7 +51,7 @@ static inline uint8_t job_count_internal(jobpool_t *pool)
 	return count;
 }
 
-static inline void job_delete_internal(jobpool_t *pool, struct job *job)
+static inline void job_delete_internal(jobqueue_t *pool, struct job *job)
 {
 	if (job->state != JOB_STATE_SCHEDULED) {
 		return;
@@ -67,7 +67,7 @@ static inline void job_delete_internal(jobpool_t *pool, struct job *job)
 	}
 }
 
-static bool jobpool_process(jobpool_t *pool)
+static bool jobqueue_process(jobqueue_t *pool)
 {
 	bool busy = true;
 	struct job *job = NULL;
@@ -99,9 +99,9 @@ static bool jobpool_process(jobpool_t *pool)
 	return busy;
 }
 
-static void *jobpool_task(void *e)
+static void *jobqueue_task(void *e)
 {
-	while (jobpool_process(e));
+	while (jobqueue_process(e));
 
 #if !defined(UNITTEST)
 	pthread_exit(NULL);
@@ -109,7 +109,7 @@ static void *jobpool_task(void *e)
 	return NULL;
 }
 
-static inline job_error_t job_schedule_internal(jobpool_t *pool, struct job *job)
+static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *job)
 {
 	uint8_t nr_jobs = job_count_internal(pool);
 	if (nr_jobs >= pool->max_concurrent_jobs) {
@@ -129,7 +129,7 @@ static inline job_error_t job_schedule_internal(jobpool_t *pool, struct job *job
 		pthread_attr_init(&attr);
 		pthread_attr_setstacksize(&attr, pool->attr.stack_size_bytes);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		if (pthread_create(&thread, &attr, jobpool_task, pool) == 0) {
+		if (pthread_create(&thread, &attr, jobqueue_task, pool) == 0) {
 			pool->active_threads++;
 		}
 	}
@@ -137,9 +137,9 @@ static inline job_error_t job_schedule_internal(jobpool_t *pool, struct job *job
 	return JOB_SUCCESS;
 }
 
-jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
+jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
 {
-	jobpool_t *pool;
+	jobqueue_t *pool;
 
 	if (!(pool = calloc(1, sizeof(*pool)))) {
 		goto out_err;
@@ -152,7 +152,7 @@ jobpool_t *jobpool_create(unsigned int max_concurrent_jobs)
 	pthread_mutex_init(&pool->lock, NULL);
 	pool->active_threads = 0;
 	pool->max_concurrent_jobs = max_concurrent_jobs;
-	pool->attr = (jobpool_attr_t) {
+	pool->attr = (jobqueue_attr_t) {
 		.stack_size_bytes = DEFAULT_STACK_SIZE,
 		.min_threads = DEFAULT_MIN_THREADS,
 		.max_threads = DEFAULT_MAX_THREADS,
@@ -166,7 +166,7 @@ out_err:
 	return NULL;
 }
 
-job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr)
+job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr)
 {
 	if (!pool || !attr) {
 		return JOB_INVALID_PARAM;
@@ -181,7 +181,7 @@ job_error_t jobpool_set_attr(jobpool_t *pool, const jobpool_attr_t *attr)
 	return JOB_SUCCESS;
 }
 
-job_error_t jobpool_destroy(jobpool_t *pool)
+job_error_t jobqueue_destroy(jobqueue_t *pool)
 {
 	if (!pool) {
 		return JOB_INVALID_PARAM;
@@ -203,7 +203,7 @@ job_error_t jobpool_destroy(jobpool_t *pool)
 	return JOB_SUCCESS;
 }
 
-job_error_t job_init(jobpool_t *pool, job_t *job,
+job_error_t job_init(jobqueue_t *pool, job_t *job,
 		job_callback_t callback, job_context_t *context)
 {
 	if (!pool || !job) {
@@ -220,7 +220,7 @@ job_error_t job_init(jobpool_t *pool, job_t *job,
 	return JOB_SUCCESS;
 }
 
-job_error_t job_delete(jobpool_t *pool, job_t *job)
+job_error_t job_delete(jobqueue_t *pool, job_t *job)
 {
 	if (!pool || !job) {
 		return JOB_INVALID_PARAM;
@@ -235,7 +235,7 @@ job_error_t job_delete(jobpool_t *pool, job_t *job)
 	return JOB_SUCCESS;
 }
 
-job_error_t job_schedule(jobpool_t *pool, job_t *job)
+job_error_t job_schedule(jobqueue_t *pool, job_t *job)
 {
 	if (!pool || !job) {
 		return JOB_INVALID_PARAM;
@@ -252,7 +252,7 @@ job_error_t job_schedule(jobpool_t *pool, job_t *job)
 	return err;
 }
 
-uint8_t job_count(jobpool_t *pool)
+uint8_t job_count(jobqueue_t *pool)
 {
 	uint8_t count;
 

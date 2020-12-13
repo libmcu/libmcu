@@ -23,7 +23,10 @@ penalty to use singly linked list instead as long as slots are big enough for
 timers to be well distributed.
 
 ## pubsub
-### Usecase1
+### Simple usecase
+The callback should be as simple and fast as possible since it runs in the
+context of a caller(publisher) in sequence. one by one.
+
 ![pubsub simple usecase](docs/images/pubsub_simple.png)
 
 ```c
@@ -34,10 +37,10 @@ pubsub_subscribe("mytopic", hello_callback, NULL);
 pubsub_publish("mytopic", "Hello, World!", strlen("Hello, World!"));
 ```
 
-`hello_callback()` should be as simple and fast as possible as it runs in the
-context of caller(publisher).
+### Usecase with queue
+Each subscriber runs concurrently as a job while publisher has the
+responsiblility to publish a message for jobs to each queues.
 
-### Usecase2
 ![pubsub usecase](docs/images/pubsub_queue.png)
 
 ```c
@@ -68,15 +71,21 @@ pubsub_subscribe("mytopic", event_callback, event_queueN);
 pubsub_publish("mytopic", data, data_size);
 ```
 
+### Usecase with Jobqueue as broker
+Jobqueue is used as a broker. Both of publishing and subscribing can be done
+concurrently in another context.
+
+![pubsub usecase](docs/images/pubsub_jobqueue.png)
+
 ## logging
 ![logging class diagram](docs/images/logging.png)
 
-On ARM Cortex-M cores, it uses 128 bytes stack at most while no dynamic
+On ARM Cortex-M cores, it uses 128 bytes stack at most with no dynamic
 allocation at all. And a log size is 16 bytes excluding user messages.
 
 An example for storage implementation can be found
-[examples/memory_storage.c](examples/memory_storage.c). And a simple server-side
-script is [scripts/translate_log.py](scripts/translate_log.py).
+[examples/memory_storage.c](examples/memory_storage.c) and a simple server-side
+script [scripts/translate_log.py](scripts/translate_log.py).
 
 Writing a log in a structured way would help you see and trace easier on the
 server side, something like:
@@ -90,8 +99,8 @@ error("#i2c timeout");
 ## shell
 A tiny CLI shell.
 
-## jobpool
-A small job like calling a callback can be done using jobpool rather than
+## jobqueue
+A small job like calling a callback can be done using jobqueue rather than
 creating a new thread or task which is too much for such a job since it takes
 quite a lot of resources.
 
