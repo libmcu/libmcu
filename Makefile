@@ -3,7 +3,7 @@ BASEDIR := $(shell pwd)
 BUILDIR := build
 SRCDIRS := src
 
-VERSION := $(shell git describe --long --tags --dirty --always)
+VERSION ?= $(shell git describe --long --tags --dirty --always)
 VERSION_LIST := $(subst -, , $(VERSION))
 VERSION_TAG := $(subst ., , $(subst v,, $(strip $(word 1, $(VERSION_LIST)))))
 VERSION_MAJOR := $(strip $(word 1, $(VERSION_TAG)))
