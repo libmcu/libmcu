@@ -72,8 +72,8 @@ pubsub_publish("mytopic", data, data_size);
 ```
 
 ### Usecase with Jobqueue as broker
-Jobqueue is used as a broker. Both of publishing and subscribing can be done in
-another context concurrently.
+Jobqueue is used as a broker. Both of publishing and subscribing can be done
+concurrently in another context.
 
 ![pubsub usecase](docs/images/pubsub_jobqueue.png)
 
