@@ -1,7 +1,8 @@
 COMPONENT_NAME = mode
 
 SRC_FILES = \
-	../src/mode.c
+	../src/mode.c \
+	stubs/logging.c
 
 TEST_SRC_FILES = \
 	src/test_mode.cpp

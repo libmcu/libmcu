@@ -1,7 +1,8 @@
 COMPONENT_NAME = apptimer
 
 SRC_FILES = \
-	../src/apptimer.c
+	../src/apptimer.c \
+	stubs/logging.c
 
 TEST_SRC_FILES = \
 	src/test_apptimer.cpp

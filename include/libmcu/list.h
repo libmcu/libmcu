@@ -25,18 +25,19 @@ struct list {
 	struct list *next;
 };
 
-static inline ALWAYS_INLINE void list_init(struct list *head)
+static inline LIBMCU_ALWAYS_INLINE void list_init(struct list *head)
 {
 	head->next = head;
 }
 
-static inline ALWAYS_INLINE void list_add(struct list *node, struct list *head)
+static inline LIBMCU_ALWAYS_INLINE void list_add(struct list *node,
+		struct list *head)
 {
 	node->next = head->next;
 	head->next = node;
 }
 
-static inline ALWAYS_INLINE void list_add_tail(struct list *node,
+static inline LIBMCU_ALWAYS_INLINE void list_add_tail(struct list *node,
 		struct list *head)
 {
 	struct list **ref = &head;
@@ -49,7 +50,7 @@ static inline ALWAYS_INLINE void list_add_tail(struct list *node,
 	(*ref)->next = node;
 }
 
-static inline ALWAYS_INLINE int list_del(const struct list *node,
+static inline LIBMCU_ALWAYS_INLINE int list_del(const struct list *node,
 		struct list *head)
 {
 	struct list **ref = &head;
@@ -66,7 +67,7 @@ static inline ALWAYS_INLINE int list_del(const struct list *node,
 	return 0;
 }
 
-static inline ALWAYS_INLINE bool list_empty(const struct list *head)
+static inline LIBMCU_ALWAYS_INLINE bool list_empty(const struct list *head)
 {
 	if (head->next == head) {
 		return true;
@@ -74,7 +75,7 @@ static inline ALWAYS_INLINE bool list_empty(const struct list *head)
 	return false;
 }
 
-static inline ALWAYS_INLINE int list_count(struct list *head)
+static inline LIBMCU_ALWAYS_INLINE int list_count(struct list *head)
 {
 	struct list *p;
 	int n = 0;

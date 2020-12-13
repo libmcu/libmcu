@@ -6,7 +6,7 @@
 #include <pthread.h>
 
 #include "libmcu/list.h"
-#include "logger.h"
+#include "libmcu/logging.h"
 
 #if !defined(PUBSUB_TOPIC_DESTROY_MESSAGE)
 #define PUBSUB_TOPIC_DESTROY_MESSAGE		"topic destroyed"

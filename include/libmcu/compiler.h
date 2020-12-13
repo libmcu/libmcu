@@ -11,13 +11,14 @@ extern "C" {
 #define STATIC				static
 #endif
 
-#define USED				__attribute__((used))
-#define UNUSED				__attribute__((unused))
 #define unused(x)			(void)(x)
 
-#define ALWAYS_INLINE			__attribute__((always_inline))
-#define WEAK				__attribute__((weak))
-#define NORETURN			__attribute__((noreturn))
+#define LIBMCU_UNUSED			__attribute__((unused))
+#define LIBMCU_USED			__attribute__((used))
+#define LIBMCU_ALWAYS_INLINE		__attribute__((always_inline))
+#define LIBMCU_WEAK			__attribute__((weak))
+#define LIBMCU_NORETURN			__attribute__((noreturn))
+#define LIBMCU_PACKED			__attribute__((packed))
 
 #define LIBMCU_STATIC_ASSERT(exp, msg)	_Static_assert(exp, msg)
 
