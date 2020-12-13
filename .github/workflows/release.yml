@@ -45,6 +45,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/libmcu_${{ steps.get_version.outputs.VERSION }}.tgz
+          asset_path: ./build/libmcu_*.tgz
           asset_name: libmcu_${{ steps.get_version.outputs.VERSION }}.tgz
           asset_content_type: application/zip

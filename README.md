@@ -6,23 +6,39 @@
 
 A toolkit for firmware development.
 
-## apptimer
-It implements hierarchical timing wheels. Insertion and deletion is worst case
-O(1). Per-tick bookkeeping is also O(1), but is a little tricky because every
-time wheel unit time passing, all the slots of lower wheels get updated, which
-is not cache friendly.
+## Data Structure
+### list
+Singly Linked List
+### llist
+Doubly Linked List
+### queue
+### bitmap
 
-Adjusting the number of wheels and slots, you might meet the requirements. e.g.
-it would be simple timing wheels when `NR_WHEELS=1` with timeout limitation.
-There is space-time tradeoff. The more slots the faster while the more slots the
-more memory.
+## Logging
+![logging class diagram](docs/images/logging.png)
 
-A timer takes 25 bytes on 32-bit system. 4 bytes more can be saved replacing
-doubly linked list with singly linked list. There would be no performance
-penalty to use singly linked list instead as long as slots are big enough for
-timers to be well distributed.
+On ARM Cortex-M cores, it uses 128 bytes stack at most with no dynamic
+allocation at all. And a log size is 16 bytes excluding user messages.
 
-## pubsub
+An example for storage implementation can be found
+[examples/memory_storage.c](examples/memory_storage.c) and a simple server-side
+script [scripts/translate_log.py](scripts/translate_log.py).
+
+Writing a log in a structured way would help you see and trace easier on the
+server side, something like:
+
+```c
+info("#battery %d%%", battery");
+info("rssi %d", rssi); // #wifi unit:dBm
+error("#i2c timeout");
+```
+
+## jobqueue
+A small job like calling a callback can be done using jobqueue rather than
+creating a new thread or task which is too much for such a job since it takes
+quite a lot of resources.
+
+## PubSub
 ### Simple usecase
 The callback should be as simple and fast as possible since it runs in the
 context of a caller(publisher) in sequence. one by one.
@@ -77,37 +93,25 @@ concurrently in another context.
 
 ![pubsub usecase](docs/images/pubsub_jobqueue.png)
 
-## logging
-![logging class diagram](docs/images/logging.png)
+## Apptimer
+It implements hierarchical timing wheels. Insertion and deletion is worst case
+O(1). Per-tick bookkeeping is also O(1), but is a little tricky because every
+time wheel unit time passing, all the slots of lower wheels get updated, which
+is not cache friendly.
 
-On ARM Cortex-M cores, it uses 128 bytes stack at most with no dynamic
-allocation at all. And a log size is 16 bytes excluding user messages.
+Adjusting the number of wheels and slots, you might meet the requirements. e.g.
+it would be simple timing wheels when `NR_WHEELS=1` with timeout limitation.
+There is space-time tradeoff. The more slots the faster while the more slots the
+more memory.
 
-An example for storage implementation can be found
-[examples/memory_storage.c](examples/memory_storage.c) and a simple server-side
-script [scripts/translate_log.py](scripts/translate_log.py).
-
-Writing a log in a structured way would help you see and trace easier on the
-server side, something like:
-
-```c
-info("#battery %d%%", battery");
-info("rssi %d", rssi); // #wifi unit:dBm
-error("#i2c timeout");
-```
+A timer takes 25 bytes on 32-bit system. 4 bytes more can be saved replacing
+doubly linked list with singly linked list. There would be no performance
+penalty to use singly linked list instead as long as slots are big enough for
+timers to be well distributed.
 
 ## shell
 A tiny CLI shell.
 
-## jobqueue
-A small job like calling a callback can be done using jobqueue rather than
-creating a new thread or task which is too much for such a job since it takes
-quite a lot of resources.
-
-## list
-Singly Linked List
-## llist
-Doubly Linked List
 ## kvstore
 Key-Value Store
 ### memory kvstore
@@ -117,5 +121,3 @@ Key-Value Store
 ### mode
 ## compiler
 ## semaphore
-## queue
-## bitmap
