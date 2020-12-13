@@ -40,8 +40,8 @@ quite a lot of resources.
 
 ## PubSub
 ### Simple usecase
-The callback should be as simple and fast as possible since it runs in the
-context of a caller(publisher) in sequence. one by one.
+The callback function should be as simple and fast as possible since it runs in
+the context of a caller(publisher) in sequence, one by one.
 
 ![pubsub simple usecase](docs/images/pubsub_simple.png)
 
@@ -54,7 +54,7 @@ pubsub_publish("mytopic", "Hello, World!", strlen("Hello, World!"));
 ```
 
 ### Usecase with queue
-Each subscriber runs concurrently as a job while publisher has the
+Each subscriber runs concurrently as a job while a publisher has the
 responsiblility to publish a message for jobs to each queues.
 
 ![pubsub usecase](docs/images/pubsub_queue.png)
