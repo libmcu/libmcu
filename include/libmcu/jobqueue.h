@@ -25,8 +25,6 @@ typedef union {
 	long _align;
 } job_t;
 
-typedef struct job_context job_context_t;
-
 typedef struct jobqueue jobqueue_t;
 typedef struct jobqueue_attr {
 	size_t stack_size_bytes;
@@ -35,14 +33,14 @@ typedef struct jobqueue_attr {
 	int8_t priority;
 } jobqueue_attr_t;
 
-typedef void (*job_callback_t)(job_context_t *context);
+typedef void (*job_callback_t)(void *context);
 
 jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs);
 job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr);
 job_error_t jobqueue_destroy(jobqueue_t *pool);
 
 job_error_t job_init(jobqueue_t *pool,
-		job_t *job, job_callback_t callback, job_context_t *context);
+		job_t *job, job_callback_t callback, void *context);
 job_error_t job_schedule(jobqueue_t *pool, job_t *job);
 job_error_t job_delete(jobqueue_t *pool, job_t *job);
 

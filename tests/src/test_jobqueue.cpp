@@ -7,9 +7,9 @@
 
 #define MAX_JOBS	10
 
-struct job_context {
+typedef struct job_context {
 	bool is_callback_called;
-};
+} job_context_t;
 
 TEST_GROUP(JobPool) {
 	jobqueue_t *jobqueue;
@@ -38,8 +38,9 @@ TEST_GROUP(JobPool) {
 		mock().clear();
 	}
 
-	static void callback(job_context_t *context) {
-		context->is_callback_called = true;
+	static void callback(void *context) {
+		job_context_t *p = (job_context_t *)context;
+		p->is_callback_called = true;
 	}
 };
 

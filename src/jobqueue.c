@@ -36,7 +36,7 @@ struct job {
 	struct list *pool;
 	job_state_t state;
 	job_callback_t callback;
-	job_context_t *context;
+	void *context;
 };
 
 static inline uint8_t job_count_internal(jobqueue_t *pool)
@@ -204,7 +204,7 @@ job_error_t jobqueue_destroy(jobqueue_t *pool)
 }
 
 job_error_t job_init(jobqueue_t *pool, job_t *job,
-		job_callback_t callback, job_context_t *context)
+		job_callback_t callback, void *context)
 {
 	if (!pool || !job) {
 		return JOB_INVALID_PARAM;

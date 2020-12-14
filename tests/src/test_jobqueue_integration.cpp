@@ -3,10 +3,10 @@
 #include <pthread.h>
 #include "libmcu/jobqueue.h"
 
-struct job_context {
+typedef struct job_context {
 	bool is_callback_called;
 	pthread_t thread;
-};
+} job_context_t;
 
 TEST_GROUP(JobPool_Integration) {
 	jobqueue_t *jobqueue;
@@ -34,9 +34,10 @@ TEST_GROUP(JobPool_Integration) {
 		while (!ctx->is_callback_called);
 	}
 
-	static void callback(job_context_t *context) {
-		context->is_callback_called = true;
-		context->thread = pthread_self();
+	static void callback(void *context) {
+		job_context_t *p = (job_context_t *)context;
+		p->is_callback_called = true;
+		p->thread = pthread_self();
 	}
 };
 
