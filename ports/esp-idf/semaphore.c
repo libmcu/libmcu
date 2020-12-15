@@ -9,7 +9,7 @@ struct semaphore {
 	SemaphoreHandle_t handle;
 };
 
-int sem_init(sem_t *sem, int UNUSED pshared, unsigned int value)
+int sem_init(sem_t *sem, int LIBMCU_UNUSED pshared, unsigned int value)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
 
