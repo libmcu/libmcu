@@ -1,6 +1,6 @@
 COMPONENT_NAME = ringbuf
 
-SRC_FILES = ../examples/ringbuf.c
+SRC_FILES = ../src/ringbuf.c
 
 TEST_SRC_FILES = src/test_ringbuf.cpp
 

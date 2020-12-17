@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <assert.h>
-#include "ringbuf.h"
+#include "libmcu/ringbuf.h"
 
 static size_t memory_write(const void *data, size_t size);
 static size_t memory_read(void *buf, size_t bufsize);
