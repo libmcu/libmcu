@@ -20,10 +20,10 @@ TEST_GROUP(retry) {
 	void setup(void) {
 		nr_sleep_called = 0;
 		retry = (retry_t) {
-			.max_attempts = 5,
 			.max_backoff_ms = 300000,
 			.min_backoff_ms = 5000,
 			.max_jitter_ms = 5000,
+			.max_attempts = 5,
 			.sleep = fake_sleep,
 		};
 		srand((unsigned int)time(0));
