@@ -9,13 +9,21 @@
 #include "libmcu/compiler.h"
 #include "libmcu/logging.h"
 
-#define DEFAULT_STACK_SIZE			3072
-#define DEFAULT_MIN_THREADS			1
-#define DEFAULT_MAX_THREADS			1
-#define DEFAULT_PRIORITY			5
+#if !defined(JOBQUEUE_DEFAULT_STACK_SIZE)
+#define JOBQUEUE_DEFAULT_STACK_SIZE		3072
+#endif
+#if !defined(JOBQUEUE_DEFAULT_MIN_THREADS)
+#define JOBQUEUE_DEFAULT_MIN_THREADS		1
+#endif
+#if !defined(JOBQUEUE_DEFAULT_MAX_THREADS)
+#define JOBQUEUE_DEFAULT_MAX_THREADS		1
+#endif
+#if !defined(JOBQUEUE_DEFAULT_PRIORITY)
+#define JOBQUEUE_DEFAULT_PRIORITY		5
+#endif
 
 typedef enum {
-	JOB_STATE_INITIALIZED = 0,
+	JOB_STATE_INITIALIZED			= 0,
 	JOB_STATE_SCHEDULED,
 	JOB_STATE_COMPLETED,
 	JOB_STATE_DELETED,
@@ -153,10 +161,10 @@ jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
 	pool->active_threads = 0;
 	pool->max_concurrent_jobs = max_concurrent_jobs;
 	pool->attr = (jobqueue_attr_t) {
-		.stack_size_bytes = DEFAULT_STACK_SIZE,
-		.min_threads = DEFAULT_MIN_THREADS,
-		.max_threads = DEFAULT_MAX_THREADS,
-		.priority = DEFAULT_PRIORITY,
+		.stack_size_bytes = JOBQUEUE_DEFAULT_STACK_SIZE,
+		.min_threads = JOBQUEUE_DEFAULT_MIN_THREADS,
+		.max_threads = JOBQUEUE_DEFAULT_MAX_THREADS,
+		.priority = JOBQUEUE_DEFAULT_PRIORITY,
 	};
 
 	return pool;
