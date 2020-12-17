@@ -36,6 +36,29 @@ static struct {
 	logging_t min_save_level;
 } m;
 
+static inline const char *stringify_type(logging_t type)
+{
+	switch (type) {
+	case LOGGING_TYPE_VERBOSE:
+		return "VERBOSE";
+	case LOGGING_TYPE_DEBUG:
+		return "DEBUG";
+	case LOGGING_TYPE_INFO:
+		return "INFO";
+	case LOGGING_TYPE_NOTICE:
+		return "NOTICE";
+	case LOGGING_TYPE_WARN:
+		return "WARN";
+	case LOGGING_TYPE_ERROR:
+		return "ERROR";
+	case LOGGING_TYPE_ALERT:
+		return "ALERT";
+	default:
+		break;
+	}
+	return "UNKNOWN";
+}
+
 static inline logging_magic_t compute_magic(const logging_data_t *entry)
 {
 	return (logging_magic_t)(entry->pc ^ entry->lr ^ LOGGING_MAGIC);
@@ -184,6 +207,24 @@ void logging_set_level(logging_t min_log_level)
 logging_t logging_get_level(void)
 {
 	return m.min_save_level;
+}
+
+const char *logging_stringify(char *buf, size_t bufsize, const void *log)
+{
+	const logging_data_t *p = (const logging_data_t *)log;
+	int len = snprintf(buf, bufsize-1, "%lu: [%s] <%p,%p> ",
+			(unsigned long)p->timestamp, stringify_type(p->type),
+			(void *)p->pc, (void *)p->lr);
+	buf[bufsize] = '\0';
+
+	if (len > 0) {
+		size_t msglen = (bufsize - (size_t)len - 1) < p->message_length?
+			(bufsize - (size_t)len - 1) : p->message_length;
+		memcpy(&buf[len], p->message, msglen);
+		buf[msglen + (size_t)len] = '\0';
+	}
+
+	return buf;
 }
 
 void logging_init(const logging_storage_t *ops)
