@@ -6,6 +6,10 @@
 
 A toolkit for firmware development.
 
+Some of components have dependency on [libmcu/logging](#logging). You can get
+rid of the dependency by defining an empty `logging_save()` in case you're not
+using it. Please refer to [tests/stubs/logging.c](tests/stubs/logging.c).
+
 ## Data Structure
 ### list
 Singly Linked List
@@ -120,5 +124,14 @@ Key-Value Store
 ## utils
 ### sleep
 ### mode
+### retry
+```c
+retry_t retry = { .sleep = sleep_ms, };
+do {
+	if (do_something() == true) {
+		break;
+	}
+} while (retry_backoff(&retry) != RETRY_EXHAUSTED);
+```
 ## compiler
 ## semaphore
