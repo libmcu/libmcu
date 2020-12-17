@@ -23,7 +23,7 @@ static void reset_backoff(retry_t *param)
 	param->previous_backoff_ms = 0;
 }
 
-static unsigned int get_backoff_time(retry_t *param)
+static unsigned int get_backoff_time(const retry_t *param)
 {
 	uint16_t jitter = get_jitter(param->max_jitter_ms);
 
