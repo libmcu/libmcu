@@ -38,6 +38,8 @@ static size_t memory_write(const void *data, size_t size)
 	}
 	pthread_mutex_unlock(&memory_storage.storage_lock);
 
+	memory_storage_write_hook(data, size);
+
 	return written;
 }
 
@@ -96,4 +98,11 @@ memory_storage_init(void *storage, size_t storage_size)
 void __attribute__((weak)) memory_storage_deinit(void)
 {
 	pthread_mutex_destroy(&memory_storage.storage_lock);
+}
+
+#include "libmcu/compiler.h"
+void LIBMCU_WEAK memory_storage_write_hook(const void *data, size_t size)
+{
+	unused(data);
+	unused(size);
 }

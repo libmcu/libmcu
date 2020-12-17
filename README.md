@@ -13,6 +13,7 @@ Singly Linked List
 Doubly Linked List
 ### queue
 ### bitmap
+### ringbuf
 
 ## Logging
 ![logging class diagram](docs/images/logging.png)
@@ -116,8 +117,6 @@ A tiny CLI shell.
 
 ## kvstore
 Key-Value Store
-### memory kvstore
-### nvs kvstore
 ## utils
 ### sleep
 ### mode
