@@ -1,4 +1,4 @@
-#include "libmcu/memory_kvstore.h"
+#include "memory_kvstore.h"
 
 #include <stdlib.h>
 #include <string.h>
