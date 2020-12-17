@@ -18,6 +18,7 @@ TEST_GROUP(logging) {
 	void setup(void) {
 		mock().ignoreOtherCalls();
 		memset(logbuf, 0, sizeof(logbuf));
+		fake_time = 0;
 		logging_init(memory_storage_init(logbuf, sizeof(logbuf)));
 	}
 	void teardown() {
@@ -244,4 +245,42 @@ TEST(logging, ShouldTakeCareOfNullPointer_WhenNullMessageDelivered) {
 	uint8_t buf[LOGBUF_SIZE];
 	size_t bytes_read = logging_read(buf, sizeof(buf));
 	LONGS_EQUAL(written, bytes_read);
+}
+
+TEST(logging, stringify_ShouldReturnPrintableString_WhenLogGivenWithInfoLevel) {
+	const char *fixed_message = "Hello";
+	uint8_t log[LOGBUF_SIZE];
+	char strbuf[LOGBUF_SIZE];
+	logging_save(LOGGING_TYPE_INFO, (void *)0x11223344, (void *)0xdeadbeef, fixed_message);
+	logging_read(log, sizeof(log));
+	STRCMP_EQUAL("0: [INFO] <0x11223344,0xdeadbeef> Hello",
+			logging_stringify(strbuf, sizeof(strbuf), log));
+}
+
+TEST(logging, stringify_ShouldReturnPrintableString_WhenLogGivenWithDebugLevel) {
+	uint8_t log[LOGBUF_SIZE];
+	char strbuf[LOGBUF_SIZE];
+	logging_save(LOGGING_TYPE_DEBUG, (void *)0x11223344, (void *)0xdeadbeef, "");
+	logging_read(log, sizeof(log));
+	STRCMP_EQUAL("0: [DEBUG] <0x11223344,0xdeadbeef> ",
+			logging_stringify(strbuf, sizeof(strbuf), log));
+}
+
+TEST(logging, stringify_ShouldReturnPrintableString_WhenLogGivenWithVerboseLevel) {
+	uint8_t log[LOGBUF_SIZE];
+	char strbuf[LOGBUF_SIZE];
+	logging_set_level(LOGGING_TYPE_VERBOSE);
+	logging_save(LOGGING_TYPE_VERBOSE, (void *)0x11223344, (void *)0xdeadbeef, "");
+	logging_read(log, sizeof(log));
+	STRCMP_EQUAL("0: [VERBOSE] <0x11223344,0xdeadbeef> ",
+			logging_stringify(strbuf, sizeof(strbuf), log));
+}
+
+TEST(logging, stringify_ShouldReturnPrintableString_WhenLogGivenWithErrorLevel) {
+	uint8_t log[LOGBUF_SIZE];
+	char strbuf[LOGBUF_SIZE];
+	logging_save(LOGGING_TYPE_ERROR, (void *)0x11223344, (void *)0xdeadbeef, "");
+	logging_read(log, sizeof(log));
+	STRCMP_EQUAL("0: [ERROR] <0x11223344,0xdeadbeef> ",
+			logging_stringify(strbuf, sizeof(strbuf), log));
 }
