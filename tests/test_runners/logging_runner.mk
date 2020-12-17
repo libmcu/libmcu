@@ -2,8 +2,8 @@ COMPONENT_NAME = logging
 
 SRC_FILES = \
 	../src/logging.c \
-	../examples/logging/memory_storage.c \
-	../examples/ringbuf.c
+	../src/ringbuf.c \
+	../examples/logging/memory_storage.c
 
 TEST_SRC_FILES = \
 	src/test_logging.cpp
