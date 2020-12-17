@@ -33,6 +33,7 @@ size_t logging_read(void *buf, size_t bufsize);
 size_t logging_peek(void *buf, size_t bufsize);
 size_t logging_consume(size_t size);
 size_t logging_count(void);
+const char *logging_stringify(char *buf, size_t bufsize, const void *log);
 /** Change the minimum log level to be saved in the storage
  *
  * `LOGGING_TYPE_DEBUG` by default.
