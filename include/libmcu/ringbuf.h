@@ -19,10 +19,11 @@ typedef struct {
 bool ringbuf_init(ringbuf_t *self, void *space, size_t space_size);
 size_t ringbuf_write(ringbuf_t *self, const void *data, size_t data_size);
 size_t ringbuf_write_cancel(ringbuf_t *self, size_t size);
-size_t ringbuf_read(ringbuf_t *self, size_t offset, void *buf, size_t data_size);
+size_t ringbuf_read(const ringbuf_t *self,
+		size_t offset, void *buf, size_t data_size);
 bool ringbuf_consume(ringbuf_t *self, size_t consume_size);
-size_t ringbuf_used(ringbuf_t *self);
-size_t ringbuf_left(ringbuf_t *self);
+size_t ringbuf_used(const ringbuf_t *self);
+size_t ringbuf_left(const ringbuf_t *self);
 
 ringbuf_t *ringbuf_new(size_t space_size);
 void ringbuf_delete(ringbuf_t *self);

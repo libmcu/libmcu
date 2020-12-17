@@ -47,7 +47,8 @@ size_t ringbuf_write_cancel(ringbuf_t *self, size_t size)
 	return size;
 }
 
-size_t ringbuf_read(ringbuf_t *self, size_t offset, void *buf, size_t data_size)
+size_t ringbuf_read(const ringbuf_t *self,
+		size_t offset, void *buf, size_t data_size)
 {
 	if (self->space_used < data_size + offset) {
 		return 0;
@@ -78,12 +79,12 @@ bool ringbuf_consume(ringbuf_t *self, size_t consume_size)
 	return true;
 }
 
-size_t ringbuf_used(ringbuf_t *self)
+size_t ringbuf_used(const ringbuf_t *self)
 {
 	return space_used(self);
 }
 
-size_t ringbuf_left(ringbuf_t *self)
+size_t ringbuf_left(const ringbuf_t *self)
 {
 	return space_available(self);
 }
