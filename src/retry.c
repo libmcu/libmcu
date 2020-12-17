@@ -14,7 +14,7 @@
 
 static uint16_t get_jitter(uint16_t max_jitter_ms)
 {
-	return (uint16_t)(system_random() % max_jitter_ms);
+	return (uint16_t)system_random() % max_jitter_ms;
 }
 
 static void reset_backoff(retry_t *param)
