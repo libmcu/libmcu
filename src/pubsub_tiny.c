@@ -47,7 +47,7 @@ static void add_topic(topic_t *topic)
 	list_add(&topic->pubsub_node, &m.pubsub_list);
 }
 
-static void remove_topic(topic_t *topic)
+static void remove_topic(const topic_t *topic)
 {
 	list_del(&topic->pubsub_node, &m.pubsub_list);
 }
