@@ -14,17 +14,18 @@ static void callback(void *context, const void *msg, size_t msglen)
 }
 
 TEST_GROUP(PubSub) {
-	const char *topic = "default/name";
+	const char *topic = "group/user/id";
+	pubsub_subscribe_t subs[PUBSUB_MIN_SUBSCRIPTION_CAPACITY];
 
 	void setup(void) {
-		pubsub_create(topic);
-
 		callback_count = 0;
 		message_length_spy = 0;
 		memset(message_spy, 0, sizeof(message_spy));
+
+		pubsub_init();
 	}
 	void teardown() {
-		pubsub_destroy(topic);
+		pubsub_deinit();
 	}
 };
 
@@ -35,68 +36,9 @@ TEST(PubSub, create_ShouldReturnSuccess) {
 	pubsub_destroy(mytopic);
 }
 
-TEST(PubSub, create_ShouldReturnInvaludParam_WhenNullTopicGiven) {
-	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_create(NULL));
-}
-
-TEST(PubSub, create_ShouldReturnNoMemory_WhenAllocationFailForTopic) {
-	const char *mytopic = "mytopic";
-	cpputest_malloc_set_out_of_memory();
-	LONGS_EQUAL(PUBSUB_NO_MEMORY, pubsub_create(mytopic));
-	cpputest_malloc_set_not_out_of_memory();
-}
-
-TEST(PubSub, create_ShouldReturnNoMemory_WhenAllocationFailForTopicName) {
-	const char *mytopic = "mytopic";
-	cpputest_malloc_set_out_of_memory_countdown(2);
-	LONGS_EQUAL(PUBSUB_NO_MEMORY, pubsub_create(mytopic));
-	cpputest_malloc_set_not_out_of_memory();
-}
-
-TEST(PubSub, create_ShouldReturnExist_WhenExistingTopicGiven) {
-	const char *mytopic = "mytopic";
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
-	LONGS_EQUAL(PUBSUB_TOPIC_EXIST, pubsub_create(mytopic));
-	pubsub_destroy(mytopic);
-}
-
-TEST(PubSub, create_ShouldTruncateTopic_WhenLenthyTopicGiven) {
-	char fixed_topic[PUBSUB_TOPIC_NAME_MAXLEN+1];
-	char mytopic[PUBSUB_TOPIC_NAME_MAXLEN * 2];
-	const char *ctbl = "1234567890";
-	for (size_t i = 0; i < sizeof(mytopic); i++) {
-		mytopic[i] = ctbl[i % 10];
-	}
-	strncpy(fixed_topic, mytopic, sizeof(fixed_topic));
-	fixed_topic[sizeof(fixed_topic)-1] = '\0';
-
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(mytopic, "message", 7));
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(fixed_topic, "message", 7));
-	pubsub_destroy(mytopic);
-}
-
 TEST(PubSub, destroy_ShouldReturnSuccess) {
 	const char *mytopic = "mytopic";
 	pubsub_create(mytopic);
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_destroy(mytopic));
-}
-
-TEST(PubSub, destroy_ShouldReturnInvaludParam_WhenNullTopicGiven) {
-	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_destroy(NULL));
-}
-
-TEST(PubSub, destroy_ShouldReturnTopicNotExist_WhenNoMatchingTopicFound) {
-	LONGS_EQUAL(PUBSUB_TOPIC_NOT_EXIST, pubsub_destroy("mytopic"));
-}
-
-TEST(PubSub, destroy_ShouldRemoveAndDestroySubscriptionsRegisterd) {
-	const char *mytopic = "mytopic";
-	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
-	pubsub_subscribe(mytopic, callback, NULL);
-	pubsub_subscribe(mytopic, callback, NULL);
-	pubsub_subscribe(mytopic, callback, NULL);
-	LONGS_EQUAL(3, pubsub_count(mytopic));
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_destroy(mytopic));
 }
 
@@ -118,8 +60,8 @@ TEST(PubSub, subscribe_ShouldReturnNull_WhenAllocationFail) {
 	cpputest_malloc_set_not_out_of_memory();
 }
 
-TEST(PubSub, subscribe_ShouldReturnNull_WhenNoMatchingTopicFound) {
-	POINTERS_EQUAL(NULL, pubsub_subscribe("unknown topic", callback, NULL));
+TEST(PubSub, subscribe_ShouldReturnSubsHandle_WhenNoMatchingTopicYetFound) {
+	CHECK(pubsub_subscribe("unknown topic", callback, NULL) != NULL);
 }
 
 TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNullParamsGiven) {
@@ -128,10 +70,11 @@ TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNullParamsGiven) {
 	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub, topic, NULL, NULL));
 }
 
-TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNoMatchingTopicFound) {
+TEST(PubSub, subscribe_static_ShouldReturnSubsHandle_WhenNoMatchingTopicYetFound) {
 	pubsub_subscribe_t sub;
-	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub,
-				"unknown topic", callback, NULL));
+	CHECK(pubsub_subscribe_static(&sub, "unknown topic", callback, NULL)
+			!= NULL);
+	pubsub_unsubscribe(&sub);
 }
 
 TEST(PubSub, subscribe_static_ShouldReturnSubscriptionHandle) {
@@ -184,24 +127,162 @@ TEST(PubSub, publish_ShouldReturnSuccessAndCallCallback) {
 	pubsub_unsubscribe(sub3);
 }
 
-TEST(PubSub, publish_ShouldReturnTopicNotExist_WhenNotRegisteredTopicGiven) {
-	LONGS_EQUAL(PUBSUB_TOPIC_NOT_EXIST, pubsub_publish("tmp", "message", 7));
-}
-
 TEST(PubSub, count_ShouldReturnInvalidParam_WhenNullTopicGiven) {
 	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_count(NULL));
 }
 
-TEST(PubSub, count_ShouldReturnTopicNotExist_WhenNotRegisteredTopicGiven) {
-	LONGS_EQUAL(PUBSUB_TOPIC_NOT_EXIST, pubsub_count("tmp"));
+TEST(PubSub, subscribe_ShouldExpandCapacity_WhenSubscriptionsFull) {
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		CHECK(pubsub_subscribe(topic, callback, NULL) != NULL);
+	}
+	CHECK(pubsub_subscribe(topic, callback, NULL) != NULL);
+}
+
+TEST(PubSub, subscribe_ShouldReturnNull_WhenExpansionFailDueToOOM) {
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		CHECK(pubsub_subscribe(topic, callback, NULL) != NULL);
+	}
+	cpputest_malloc_set_out_of_memory_countdown(2);
+	POINTERS_EQUAL(NULL, pubsub_subscribe(topic, callback, NULL));
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(PubSub, subscribe_static_ShouldExpandCapacity_WhenSubscriptionsFull) {
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		CHECK(pubsub_subscribe_static(&subs[i], topic, callback, NULL)
+				!= NULL);
+	}
+	pubsub_subscribe_t extra_sub;
+	CHECK(pubsub_subscribe_static(&extra_sub, topic, callback, NULL) != NULL);
+	pubsub_unsubscribe(&extra_sub);
+}
+
+TEST(PubSub, subscribe_static_ShouldReturnNull_WhenExpansionFailDueToOOM) {
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		CHECK(pubsub_subscribe_static(&subs[i], topic, callback, NULL)
+				!= NULL);
+	}
+	pubsub_subscribe_t extra_sub;
+	cpputest_malloc_set_out_of_memory();
+	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&extra_sub,
+				topic, callback, NULL));
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(PubSub, unsubscribe_ShouldReturnNoExist_WhenNotRegisteredSubGiven) {
+	pubsub_subscribe_static(&subs[0], "#", callback, NULL);
+	pubsub_unsubscribe(&subs[0]);
+	LONGS_EQUAL(PUBSUB_NO_EXIST_SUBSCRIBER, pubsub_unsubscribe(&subs[0]));
+}
+
+TEST(PubSub, unsubscribe_ShouldReturnSuccess_WhenShrinkFailDueToOOM) {
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		pubsub_subscribe_static(&subs[i], topic, callback, NULL);
+	}
+	pubsub_subscribe_t extra_sub;
+	pubsub_subscribe_static(&extra_sub, topic, callback, NULL);
+	pubsub_unsubscribe(&extra_sub);
+
+	cpputest_malloc_set_out_of_memory();
+	for (int i = 0; i < PUBSUB_MIN_SUBSCRIPTION_CAPACITY; i++) {
+		LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(&subs[i]));
+	}
+	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(PubSub, publish_ShouldPublish_WhenMultiLevelWildcardSubsGiven) {
+	pubsub_subscribe_t *sub1 = pubsub_subscribe("#", callback, NULL);
+	pubsub_subscribe_t *sub2 = pubsub_subscribe("group/#", callback, NULL);
+	pubsub_subscribe_t *sub3 =
+		pubsub_subscribe("group/user/#", callback, NULL);
+
+	LONGS_EQUAL(3, pubsub_count(topic));
+	pubsub_publish(topic, "message", 7);
+	LONGS_EQUAL(7, message_length_spy);
+	MEMCMP_EQUAL("message", message_spy, message_length_spy);
+	LONGS_EQUAL(3, callback_count);
+
+	pubsub_unsubscribe(sub1);
+	pubsub_unsubscribe(sub2);
+	pubsub_unsubscribe(sub3);
+}
+
+TEST(PubSub, publish_ShouldNotPublish_WhenWrongMultiLevelWildcardSubsGiven) {
+	pubsub_subscribe_t *sub1 =
+		pubsub_subscribe("group/user/id/#", callback, NULL);
+	pubsub_subscribe_t *sub2 =
+		pubsub_subscribe("group/user/id/a", callback, NULL);
+	pubsub_subscribe_t *sub3 =
+		pubsub_subscribe("group/admin/#", callback, NULL);
+	pubsub_subscribe_t *sub4 =
+		pubsub_subscribe("group", callback, NULL);
+
+	LONGS_EQUAL(0, pubsub_count(topic));
+
+	pubsub_unsubscribe(sub1);
+	pubsub_unsubscribe(sub2);
+	pubsub_unsubscribe(sub3);
+	pubsub_unsubscribe(sub4);
+}
+
+TEST(PubSub, publish_ShouldPublish_WhenSingleLevelWildcardSubsGiven) {
+	pubsub_subscribe_t *sub1 =
+		pubsub_subscribe("+/user/id", callback, NULL);
+	pubsub_subscribe_t *sub2 =
+		pubsub_subscribe("group/+/id", callback, NULL);
+	pubsub_subscribe_t *sub3 =
+		pubsub_subscribe("+/#", callback, NULL);
+	pubsub_subscribe_t *sub4 =
+		pubsub_subscribe("+/user/#", callback, NULL);
+
+	LONGS_EQUAL(4, pubsub_count(topic));
+
+	pubsub_unsubscribe(sub1);
+	pubsub_unsubscribe(sub2);
+	pubsub_unsubscribe(sub3);
+	pubsub_unsubscribe(sub4);
+}
+
+TEST(PubSub, publish_ShouldNotPublish_WhenWrongSingleLevelWildcardSubsGiven) {
+	pubsub_subscribe_t *sub1 =
+		pubsub_subscribe("+", callback, NULL);
+	pubsub_subscribe_t *sub2 =
+		pubsub_subscribe("group/+", callback, NULL);
+	pubsub_subscribe_t *sub3 =
+		pubsub_subscribe("+/user", callback, NULL);
+	pubsub_subscribe_t *sub4 =
+		pubsub_subscribe("group/user/+", callback, NULL);
+
+	LONGS_EQUAL(0, pubsub_count(topic));
+
+	pubsub_unsubscribe(sub1);
+	pubsub_unsubscribe(sub2);
+	pubsub_unsubscribe(sub3);
+	pubsub_unsubscribe(sub4);
+}
+
+TEST(PubSub, publish_ShouldPublish_WhenWildcardSubsGiven) {
+	pubsub_subscribe_t *sub = pubsub_subscribe("group/+/user", callback, NULL);
+	pubsub_publish("group/a/user", "message", 7);
+	pubsub_publish("group/b/user", "message", 7);
+	pubsub_publish("group/c/user", "message", 7);
+
+	LONGS_EQUAL(3, callback_count);
+
+	pubsub_unsubscribe(sub);
 }
 
 TEST(PubSub, stringify_ShouldReturnStrings_WhenErrorCodeGiven) {
 	STRCMP_EQUAL("success", pubsub_stringify_error(PUBSUB_SUCCESS));
 	STRCMP_EQUAL("error", pubsub_stringify_error(PUBSUB_ERROR));
-	STRCMP_EQUAL("topic already exist", pubsub_stringify_error(PUBSUB_TOPIC_EXIST));
-	STRCMP_EQUAL("topic not exist", pubsub_stringify_error(PUBSUB_TOPIC_NOT_EXIST));
+	STRCMP_EQUAL("exist topic", pubsub_stringify_error(PUBSUB_EXIST_TOPIC));
+	STRCMP_EQUAL("no exist topic",
+			pubsub_stringify_error(PUBSUB_NO_EXIST_TOPIC));
 	STRCMP_EQUAL("no memory", pubsub_stringify_error(PUBSUB_NO_MEMORY));
-	STRCMP_EQUAL("invalid parameters", pubsub_stringify_error(PUBSUB_INVALID_PARAM));
-	STRCMP_EQUAL("subscriber already exist", pubsub_stringify_error(PUBSUB_SUBSCRIBERS_EXIST));
+	STRCMP_EQUAL("invalid parameters",
+			pubsub_stringify_error(PUBSUB_INVALID_PARAM));
+	STRCMP_EQUAL("exist subscriber",
+			pubsub_stringify_error(PUBSUB_EXIST_SUBSCRIBER));
+	STRCMP_EQUAL("no exist subscriber",
+			pubsub_stringify_error(PUBSUB_NO_EXIST_SUBSCRIBER));
 }

@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 #include "libmcu/list.h"
-#include "libmcu/compiler.h"
 #include "libmcu/logging.h"
 
 #if !defined(JOBQUEUE_DEFAULT_STACK_SIZE)
