@@ -138,7 +138,7 @@ static bool expand_subscription_capacity(void)
 	m.subscriptions = new_subs;
 	free(old_subs);
 
-	debug("Expanded from %u to %u", capacity, new_capacity);
+	info("Expanded from %u to %u", capacity, new_capacity);
 	return true;
 }
 
@@ -170,7 +170,7 @@ static void shrink_subscription_capacity(void)
 	m.subscriptions = new_subs;
 	free(old_subs);
 
-	debug("Shrunken from %u to %u", capacity, new_capacity);
+	info("Shrunken from %u to %u", capacity, new_capacity);
 }
 
 static bool register_subscription(const subscribe_t *sub)
@@ -331,6 +331,8 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
 	if (!result) {
 		return PUBSUB_NO_EXIST_SUBSCRIBER;
 	}
+
+	info("Unsubscribe from \"%s\"", sub->topic_filter);
 
 	if (!IS_SUBSCRIBER_STATIC(sub)) {
 		free(sub);

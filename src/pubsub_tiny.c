@@ -274,13 +274,13 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
 		return PUBSUB_INVALID_PARAM;
 	}
 
-	info("Unsubscribe from %s", p->topic->name);
-
 	pubsub_lock();
 	{
 		list_del(&p->subscription_node, &p->topic->subscriptions);
 	}
 	pubsub_unlock();
+
+	info("Unsubscribe from %s", p->topic->name);
 
 	if (!IS_SUBSCRIBER_STATIC(p)) {
 		free(p);
