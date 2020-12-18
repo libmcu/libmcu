@@ -48,8 +48,8 @@ pubsub_error_t pubsub_publish(const char *topic_name,
 		const void *msg, size_t msglen);
 
 pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
-		const char *topic_name, pubsub_callback_t cb, void *context);
-pubsub_subscribe_t *pubsub_subscribe(const char *topic_name,
+		const char *topic_filter, pubsub_callback_t cb, void *context);
+pubsub_subscribe_t *pubsub_subscribe(const char *topic_filter,
 		pubsub_callback_t cb, void *context);
 pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj);
 
