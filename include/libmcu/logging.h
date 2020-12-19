@@ -43,7 +43,7 @@ const char *logging_stringify(char *buf, size_t bufsize, const void *log);
 void logging_set_level(logging_t min_log_level);
 logging_t logging_get_level(void);
 
-/* Wrappers are below for convenience */
+/* Wrappers for convenience */
 #if !defined(get_program_counter)
 	#if defined(__GNUC__)
 	#define get_program_counter()		({__label__ l; l: &&l; })

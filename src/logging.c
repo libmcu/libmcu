@@ -80,22 +80,6 @@ static inline bool is_logging_type_valid(const logging_t type)
 	return true;
 }
 
-#if 0
-static inline bool is_log_valid(const logging_data_t *entry)
-{
-	if (compute_magic(entry) != entry->magic) {
-		return false;
-	}
-	if (!is_logging_type_valid(entry->type)) {
-		return false;
-	}
-	if (entry->message_length > LOGGING_MESSAGE_MAXLEN) {
-		return false;
-	}
-	return true;
-}
-#endif
-
 static inline size_t get_log_size(const logging_data_t *entry)
 {
 	size_t size = sizeof(*entry);
@@ -155,13 +139,12 @@ static inline void pack_log(logging_data_t *entry, logging_t type,
 
 size_t logging_save(logging_t type, const void *pc, const void *lr, ...)
 {
-	size_t bytes_written = 0;
 
 	if (!is_logging_type_valid(type)) {
-		goto out; // ERROR_NOT_SUPPORTED_TYPE;
+		return 0;
 	}
 	if (!is_logging_type_enabled(type)) {
-		goto out; // ERROR_MIN_SAVE_LEVEL;
+		return 0;
 	}
 
 	uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
@@ -170,9 +153,7 @@ size_t logging_save(logging_t type, const void *pc, const void *lr, ...)
 	pack_message(log, lr);
 	// TODO: logging_encode(log)
 
-	bytes_written = m.storage->write(log, get_log_size(log));
-out:
-	return bytes_written;
+	return m.storage->write(log, get_log_size(log));
 }
 
 size_t logging_peek(void *buf, size_t bufsize)
