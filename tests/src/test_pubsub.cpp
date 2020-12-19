@@ -234,13 +234,16 @@ TEST(PubSub, publish_ShouldPublish_WhenSingleLevelWildcardSubsGiven) {
 		pubsub_subscribe("+/#", callback, NULL);
 	pubsub_subscribe_t *sub4 =
 		pubsub_subscribe("+/user/#", callback, NULL);
+	pubsub_subscribe_t *sub5 =
+		pubsub_subscribe("group/user/+", callback, NULL);
 
-	LONGS_EQUAL(4, pubsub_count(topic));
+	LONGS_EQUAL(5, pubsub_count(topic));
 
 	pubsub_unsubscribe(sub1);
 	pubsub_unsubscribe(sub2);
 	pubsub_unsubscribe(sub3);
 	pubsub_unsubscribe(sub4);
+	pubsub_unsubscribe(sub5);
 }
 
 TEST(PubSub, publish_ShouldNotPublish_WhenWrongSingleLevelWildcardSubsGiven) {
@@ -250,15 +253,12 @@ TEST(PubSub, publish_ShouldNotPublish_WhenWrongSingleLevelWildcardSubsGiven) {
 		pubsub_subscribe("group/+", callback, NULL);
 	pubsub_subscribe_t *sub3 =
 		pubsub_subscribe("+/user", callback, NULL);
-	pubsub_subscribe_t *sub4 =
-		pubsub_subscribe("group/user/+", callback, NULL);
 
 	LONGS_EQUAL(0, pubsub_count(topic));
 
 	pubsub_unsubscribe(sub1);
 	pubsub_unsubscribe(sub2);
 	pubsub_unsubscribe(sub3);
-	pubsub_unsubscribe(sub4);
 }
 
 TEST(PubSub, publish_ShouldPublish_WhenWildcardSubsGiven) {
@@ -268,6 +268,17 @@ TEST(PubSub, publish_ShouldPublish_WhenWildcardSubsGiven) {
 	pubsub_publish("group/c/user", "message", 7);
 
 	LONGS_EQUAL(3, callback_count);
+
+	pubsub_unsubscribe(sub);
+}
+
+TEST(PubSub, publish_wildcardExtraTest) {
+	pubsub_subscribe_t *sub = pubsub_subscribe("+", callback, NULL);
+
+	pubsub_publish("abc", "message", 7);
+	LONGS_EQUAL(1, callback_count);
+	pubsub_publish("a/b", "message", 7);
+	LONGS_EQUAL(1, callback_count);
 
 	pubsub_unsubscribe(sub);
 }
