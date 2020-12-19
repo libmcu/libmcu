@@ -40,51 +40,41 @@ static struct {
 	} subscription;
 } m;
 
-static bool is_filtering_done(const char * const filter, const char * const topic)
+static void get_next_topic_word(const char **s)
 {
-	if (*filter != '\0') {
-		return false;
+	while (**s != '/' && **s != '\0') {
+		(*s)++;
 	}
-	if (*topic != '\0' && *topic != '/') {
-		return false;
-	}
-	if (*topic != '\0' && topic[1] != '\0') {
-		return false;
-	}
-	return true;
 }
 
-static bool is_topic_matched_with(const char * const filter,
-		const char * const topic)
+static bool is_topic_matched_with(const char *filter, const char *topic)
 {
-	int i = 0;
-	int j = 0;
-
-	while (filter[i] != '\0' && topic[j] != '\0') {
-		if (filter[i] == '#') {
+	while (*filter != '\0' && *topic != '\0') {
+		if (*filter == '#') {
 			return true;
 		}
-		if (filter[i] == '+') {
-			while (filter[i] != '/') {
-				if (filter[i] == '\0') {
-					return false;
-				}
-				i++;
-			}
-			while (topic[j] != '\0' && topic[j] != '/') {
-				j++;
-			}
+		if (*filter == '+') {
+			get_next_topic_word(&filter);
+			get_next_topic_word(&topic);
+			continue;
 		}
 
-		if (filter[i] != topic[j]) {
+		if (*filter != *topic) {
 			return false;
 		}
 
-		i += 1;
-		j += 1;
+		filter++;
+		topic++;
 	}
 
-	return is_filtering_done(&filter[i], &topic[j]);
+	if (*filter != '\0') {
+		return false;
+	}
+	if (*topic == '\0') {
+		return true;
+	}
+
+	return false;
 }
 
 static unsigned int count_subscribers(const char *topic)
