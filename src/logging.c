@@ -141,10 +141,10 @@ size_t logging_save(logging_t type, const void *pc, const void *lr, ...)
 {
 
 	if (!is_logging_type_valid(type)) {
-		return 0; // ERROR_NOT_SUPPORTED_TYPE;
+		return 0;
 	}
 	if (!is_logging_type_enabled(type)) {
-		return 0; // ERROR_MIN_SAVE_LEVEL;
+		return 0;
 	}
 
 	uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
