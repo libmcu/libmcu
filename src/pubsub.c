@@ -26,16 +26,18 @@ typedef struct {
 	const char *topic_filter;
 	pubsub_callback_t callback;
 	void *context;
-	intptr_t _placeholder_for_compatibility;
+	intptr_t _placeholder_for_compatibility_to_tiny_pubsub;
 } subscribe_t;
 LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_t),
 	"The size of public and private subscribe data type must be the same.");
 
 static struct {
-	pthread_mutex_t subscriptions_lock;
-	const subscribe_t **subscriptions; // dynamically allocated array
-	uint8_t max_subscriptions;
-	uint8_t nr_subscriptions;
+	struct {
+		pthread_mutex_t lock;
+		const subscribe_t **pool; // dynamically allocated array
+		uint8_t capacity;
+		uint8_t length;
+	} subscription;
 } m;
 
 static bool is_filtering_done(const char * const filter, const char * const topic)
@@ -89,12 +91,10 @@ static unsigned int count_subscribers(const char *topic)
 {
 	uint8_t count = 0;
 
-	for (uint8_t i = 0; i < m.max_subscriptions; i++) {
-		const subscribe_t *sub = m.subscriptions[i];
-		if (sub == NULL) {
-			continue;
-		}
-		if (is_topic_matched_with(sub->topic_filter, topic)) {
+	for (uint8_t i = 0; i < m.subscription.capacity; i++) {
+		const subscribe_t *sub = m.subscription.pool[i];
+		if (sub != NULL &&
+				is_topic_matched_with(sub->topic_filter, topic)) {
 			count++;
 		}
 	}
@@ -118,7 +118,7 @@ static size_t copy_subscriptions(const subscribe_t **new_subs,
 
 static bool expand_subscription_capacity(void)
 {
-	uint8_t capacity = m.max_subscriptions;
+	uint8_t capacity = m.subscription.capacity;
 	uint8_t new_capacity = (uint8_t)(capacity * 2U);
 	assert((uint16_t)capacity * 2U < (1U << 8));
 
@@ -128,14 +128,14 @@ static bool expand_subscription_capacity(void)
 		return false;
 	}
 
-	const subscribe_t **old_subs = m.subscriptions;
+	const subscribe_t **old_subs = m.subscription.pool;
 	uint8_t count = (uint8_t)copy_subscriptions(new_subs, old_subs,
 			(size_t)capacity);
 	assert(count < new_capacity);
-	assert(count == m.nr_subscriptions);
+	assert(count == m.subscription.length);
 
-	m.max_subscriptions = new_capacity;
-	m.subscriptions = new_subs;
+	m.subscription.capacity = new_capacity;
+	m.subscription.pool = new_subs;
 	free(old_subs);
 
 	info("Expanded from %u to %u", capacity, new_capacity);
@@ -144,13 +144,13 @@ static bool expand_subscription_capacity(void)
 
 static void shrink_subscription_capacity(void)
 {
-	uint8_t capacity = m.max_subscriptions;
+	uint8_t capacity = m.subscription.capacity;
 	uint8_t new_capacity = capacity / 2U;
 
 	if (capacity <= PUBSUB_MIN_SUBSCRIPTION_CAPACITY) {
 		return;
 	}
-	if (m.nr_subscriptions * 2U >= capacity) {
+	if (m.subscription.length * 2U >= capacity) {
 		return;
 	}
 
@@ -160,14 +160,14 @@ static void shrink_subscription_capacity(void)
 		return;
 	}
 
-	const subscribe_t **old_subs = m.subscriptions;
+	const subscribe_t **old_subs = m.subscription.pool;
 	uint8_t count = (uint8_t)copy_subscriptions(new_subs, old_subs,
 			(size_t)capacity);
 	assert(count < new_capacity);
-	assert(count == m.nr_subscriptions);
+	assert(count == m.subscription.length);
 
-	m.max_subscriptions = new_capacity;
-	m.subscriptions = new_subs;
+	m.subscription.capacity = new_capacity;
+	m.subscription.pool = new_subs;
 	free(old_subs);
 
 	info("Shrunken from %u to %u", capacity, new_capacity);
@@ -175,17 +175,17 @@ static void shrink_subscription_capacity(void)
 
 static bool register_subscription(const subscribe_t *sub)
 {
-	if (m.nr_subscriptions >= m.max_subscriptions) {
+	if (m.subscription.length >= m.subscription.capacity) {
 		if (!expand_subscription_capacity()) {
 			error("can't expand");
 			return false;
 		}
 	}
 
-	for (uint8_t i = 0; i < m.max_subscriptions; i++) {
-		if (m.subscriptions[i] == NULL) {
-			m.subscriptions[i] = sub;
-			m.nr_subscriptions++;
+	for (uint8_t i = 0; i < m.subscription.capacity; i++) {
+		if (m.subscription.pool[i] == NULL) {
+			m.subscription.pool[i] = sub;
+			m.subscription.length++;
 			debug("%p added for \"%s\"", sub, sub->topic_filter);
 			return true;
 		}
@@ -196,10 +196,10 @@ static bool register_subscription(const subscribe_t *sub)
 
 static bool unregister_subscription(const subscribe_t *sub)
 {
-	for (uint8_t i = 0; i < m.max_subscriptions; i++) {
-		if (m.subscriptions[i] == sub) {
-			m.subscriptions[i] = NULL;
-			m.nr_subscriptions--;
+	for (uint8_t i = 0; i < m.subscription.capacity; i++) {
+		if (m.subscription.pool[i] == sub) {
+			m.subscription.pool[i] = NULL;
+			m.subscription.length--;
 			shrink_subscription_capacity();
 			debug("%p removed from \"%s\"", sub, sub->topic_filter);
 			return true;
@@ -212,8 +212,8 @@ static bool unregister_subscription(const subscribe_t *sub)
 
 static void publish_internal(const char *topic, const void *msg, size_t msglen)
 {
-	for (uint8_t i = 0; i < m.max_subscriptions; i++) {
-		const subscribe_t *sub = m.subscriptions[i];
+	for (uint8_t i = 0; i < m.subscription.capacity; i++) {
+		const subscribe_t *sub = m.subscription.pool[i];
 		if (sub == NULL) {
 			continue;
 		}
@@ -225,12 +225,12 @@ static void publish_internal(const char *topic, const void *msg, size_t msglen)
 
 static void subscriptions_lock(void)
 {
-	pthread_mutex_lock(&m.subscriptions_lock);
+	pthread_mutex_lock(&m.subscription.lock);
 }
 
 static void subscriptions_unlock(void)
 {
-	pthread_mutex_unlock(&m.subscriptions_lock);
+	pthread_mutex_unlock(&m.subscription.lock);
 }
 
 static subscribe_t *subscribe_core(subscribe_t *sub, const char *topic_filter,
@@ -359,19 +359,19 @@ int pubsub_count(const char *topic)
 
 void pubsub_init(void)
 {
-	pthread_mutex_init(&m.subscriptions_lock, NULL);
-	m.nr_subscriptions = 0;
-	m.max_subscriptions = PUBSUB_MIN_SUBSCRIPTION_CAPACITY;
-	m.subscriptions = (const subscribe_t **)calloc(m.max_subscriptions,
+	pthread_mutex_init(&m.subscription.lock, NULL);
+	m.subscription.length = 0;
+	m.subscription.capacity = PUBSUB_MIN_SUBSCRIPTION_CAPACITY;
+	m.subscription.pool = (const subscribe_t **)calloc(m.subscription.capacity,
 					sizeof(subscribe_t *));
-	assert(m.subscriptions != NULL);
+	assert(m.subscription.pool != NULL);
 }
 
 void pubsub_deinit(void)
 {
 	subscriptions_lock();
-	for (uint8_t i = 0; i < m.max_subscriptions; i++) {
-		const subscribe_t *sub = m.subscriptions[i];
+	for (uint8_t i = 0; i < m.subscription.capacity; i++) {
+		const subscribe_t *sub = m.subscription.pool[i];
 		if (sub == NULL) {
 			continue;
 		}
@@ -380,7 +380,7 @@ void pubsub_deinit(void)
 			free((void *)*p);
 		}
 	}
-	free(m.subscriptions);
+	free(m.subscription.pool);
 }
 
 const char *pubsub_stringify_error(pubsub_error_t err)
