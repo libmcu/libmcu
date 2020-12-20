@@ -8,6 +8,19 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#if !defined(JOBQUEUE_DEFAULT_STACK_SIZE)
+#define JOBQUEUE_DEFAULT_STACK_SIZE		3072
+#endif
+#if !defined(JOBQUEUE_DEFAULT_MIN_THREADS)
+#define JOBQUEUE_DEFAULT_MIN_THREADS		1
+#endif
+#if !defined(JOBQUEUE_DEFAULT_MAX_THREADS)
+#define JOBQUEUE_DEFAULT_MAX_THREADS		1
+#endif
+#if !defined(JOBQUEUE_DEFAULT_PRIORITY)
+#define JOBQUEUE_DEFAULT_PRIORITY		5
+#endif
+
 typedef enum {
 	JOB_SUCCESS				= 0,
 	JOB_INVALID_PARAM,
