@@ -42,3 +42,63 @@ TEST(base64, decode_overwrite_ShouldReturnLengthOfDecodedData) {
 	LONGS_EQUAL(strlen(fixed), len);
 	MEMCMP_EQUAL(fixed, source, len);
 }
+
+TEST(base64, encode_decode_a) {
+	const char *fixed = "YQ==";
+	const char *source = "a";
+	char buf[16];
+
+	size_t len = base64_encode(buf, source, strlen(source));
+
+	LONGS_EQUAL(strlen(fixed), len);
+	MEMCMP_EQUAL(fixed, buf, len);
+
+	len = base64_decode_overwrite(buf, len);
+	LONGS_EQUAL(strlen(source), len);
+	MEMCMP_EQUAL(source, buf, len);
+}
+
+TEST(base64, encode_decode_ab) {
+	const char *fixed = "YWI=";
+	const char *source = "ab";
+	char buf[16];
+
+	size_t len = base64_encode(buf, source, strlen(source));
+
+	LONGS_EQUAL(strlen(fixed), len);
+	MEMCMP_EQUAL(fixed, buf, len);
+
+	len = base64_decode_overwrite(buf, len);
+	LONGS_EQUAL(strlen(source), len);
+	MEMCMP_EQUAL(source, buf, len);
+}
+
+TEST(base64, encode_decode_abc) {
+	const char *fixed = "YWJj";
+	const char *source = "abc";
+	char buf[16];
+
+	size_t len = base64_encode(buf, source, strlen(source));
+
+	LONGS_EQUAL(strlen(fixed), len);
+	MEMCMP_EQUAL(fixed, buf, len);
+
+	len = base64_decode_overwrite(buf, len);
+	LONGS_EQUAL(strlen(source), len);
+	MEMCMP_EQUAL(source, buf, len);
+}
+
+TEST(base64, encode_decode_binary) {
+	const char *fixed = "+EXTRA/TESTa";
+	const uint8_t source[] = {
+		0xf8, 0x45, 0xd3, 0x44, 0x0f, 0xd3, 0x11, 0x24, 0xda, };
+	char buf[16];
+
+	size_t len = base64_encode(buf, source, sizeof(source));
+	LONGS_EQUAL(strlen(fixed), len);
+	MEMCMP_EQUAL(fixed, buf, len);
+
+	len = base64_decode_overwrite(buf, len);
+	LONGS_EQUAL(sizeof(source), len);
+	MEMCMP_EQUAL(source, buf, len);
+}
