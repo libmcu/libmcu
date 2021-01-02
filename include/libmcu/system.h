@@ -15,6 +15,7 @@ void system_reboot(void);
 void system_reset_factory(void);
 
 unsigned long system_get_free_heap_bytes(void);
+unsigned long system_get_total_heap_bytes(void);
 unsigned long system_get_heap_watermark(void);
 unsigned long system_get_current_stack_watermark(void);
 
