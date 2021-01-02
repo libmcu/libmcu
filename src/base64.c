@@ -7,7 +7,7 @@ static char to_base64(uint32_t word, int offset)
 {
 	const char *tbl =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	return tbl[(word >> (offset * 6)) & 0x3fu];
+	return tbl[(word >> (offset * 6)) & 0x3fU];
 }
 
 static uint8_t from_base64(char c)
@@ -28,7 +28,7 @@ static uint8_t from_base64(char c)
 
 static uint8_t from_word(uint32_t word, int offset)
 {
-	return (word >> (offset * 8)) & 0xffu;
+	return (word >> (offset * 8)) & 0xffU;
 }
 
 static size_t decode(uint8_t *out, const char *in, size_t insize)
