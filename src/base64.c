@@ -55,9 +55,9 @@ static size_t decode(uint8_t *out, const char *in, size_t insize)
 	return outdex;
 }
 
-size_t base64_decode(void *out, const char *in, size_t input_size)
+size_t base64_decode(void *buf, const char *str, size_t strsize)
 {
-	return decode((uint8_t *)out, in, input_size);
+	return decode((uint8_t *)buf, str, strsize);
 }
 
 size_t base64_decode_overwrite(char *inout, size_t input_size)
@@ -65,7 +65,7 @@ size_t base64_decode_overwrite(char *inout, size_t input_size)
 	return decode((uint8_t *)inout, inout, input_size);
 }
 
-size_t base64_encode(char *out, const void *data, size_t datasize)
+size_t base64_encode(char *buf, const void *data, size_t datasize)
 {
 	const uint8_t *in = (const uint8_t *)data;
 	size_t outdex = 0;
@@ -79,10 +79,10 @@ size_t base64_encode(char *out, const void *data, size_t datasize)
 		const uint32_t b3 = c2? in[i+2] : 0;
 		const uint32_t word = (b1 << 16) | (b2 << 8) | b3;
 
-		out[outdex++] = to_base64(word, 3);
-		out[outdex++] = to_base64(word, 2);
-		out[outdex++] = c1? to_base64(word, 1) : '=';
-		out[outdex++] = c2? to_base64(word, 0) : '=';
+		buf[outdex++] = to_base64(word, 3);
+		buf[outdex++] = to_base64(word, 2);
+		buf[outdex++] = c1? to_base64(word, 1) : '=';
+		buf[outdex++] = c2? to_base64(word, 0) : '=';
 	}
 
 	return outdex;
