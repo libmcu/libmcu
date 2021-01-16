@@ -26,8 +26,9 @@ const char * LIBMCU_WEAK system_get_reboot_reason_string(void)
 	return "N/A";
 }
 
-void LIBMCU_WEAK system_reset_factory(void)
+int LIBMCU_WEAK system_reset_factory(void)
 {
+	return 0;
 }
 
 void LIBMCU_WEAK LIBMCU_NORETURN system_reboot(void)
@@ -35,17 +36,17 @@ void LIBMCU_WEAK LIBMCU_NORETURN system_reboot(void)
 	assert(0);
 }
 
-unsigned long LIBMCU_WEAK system_get_free_heap_bytes(void)
+unsigned int LIBMCU_WEAK system_get_free_heap_bytes(void)
 {
 	return 0;
 }
 
-unsigned long LIBMCU_WEAK system_get_heap_watermark(void)
+unsigned int LIBMCU_WEAK system_get_heap_watermark(void)
 {
 	return 0;
 }
 
-unsigned long LIBMCU_WEAK system_get_current_stack_watermark(void)
+unsigned int LIBMCU_WEAK system_get_current_stack_watermark(void)
 {
 	return 0;
 }
