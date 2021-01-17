@@ -110,7 +110,6 @@ TEST(PubSub, publish_ShouldReturnSuccess) {
 TEST(PubSub, publish_ShouldReturnInvaludParams_WhenNullParamsGiven) {
 	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_publish(NULL, "message", 7));
 	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_publish(topic, NULL, 7));
-	LONGS_EQUAL(PUBSUB_INVALID_PARAM, pubsub_publish(topic, "message", 0));
 }
 
 TEST(PubSub, publish_ShouldReturnSuccessAndCallCallback) {
