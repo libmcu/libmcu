@@ -17,7 +17,7 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Host Compile
-        run: make clean all
+        run: STACK_LIMIT=512 make clean all
       - name: Cross Compile
         run: CROSS_COMPILE=arm-none-eabi make clean all
       - name: Install test framework

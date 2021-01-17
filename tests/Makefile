@@ -1,6 +1,10 @@
 export CPPUTEST_HOME = ../external/cpputest
 export BUILDIR ?= build
-export INCLUDE_DIRS += $(CPPUTEST_HOME)/include ../include .
+export INCLUDE_DIRS += \
+	../components/common/include/libmcu/posix \
+	../components/common/include \
+	. \
+	$(CPPUTEST_HOME)/include
 
 TESTS := $(shell find test_runners -type f -regex ".*_runner\.mk")
 
