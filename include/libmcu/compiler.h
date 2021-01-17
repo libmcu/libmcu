@@ -29,6 +29,9 @@ extern "C" {
 
 #define NO_OPTIMIZE			__attribute__((optimize("O0")))
 
+#define CONST_CAST(t, v)		\
+	(((union { const t cval; t val; }*)&(v))->val)
+
 #define stringify(x)			#x
 #define def2str(x)			stringify(x)
 

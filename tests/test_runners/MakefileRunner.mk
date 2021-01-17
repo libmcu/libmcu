@@ -67,4 +67,4 @@ else
 #TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
 endif
 
-include ../external/cpputest/build/MakefileWorker.mk
+include $(CPPUTEST_HOME)/build/MakefileWorker.mk
