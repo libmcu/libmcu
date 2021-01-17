@@ -263,7 +263,7 @@ pubsub_error_t pubsub_destroy(const char *topic)
 
 pubsub_error_t pubsub_publish(const char *topic, const void *msg, size_t msglen)
 {
-	if (!topic || !msg || !msglen) {
+	if ((topic == NULL) || (msg == NULL && msglen > 0)) {
 		return PUBSUB_INVALID_PARAM;
 	}
 
