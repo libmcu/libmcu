@@ -17,15 +17,10 @@ include projects/version.mk
 include projects/toolchain.mk
 
 LIBMCU_COMPONENTS ?= $(patsubst components/%, %, $(wildcard components/*))
-ifeq ($(filter common, $(LIBMCU_COMPONENTS)),)
-LIBMCU_COMPONENTS += common
-endif
+include projects/components.mk
 
-SRCS += $(foreach d, $(addprefix components/, $(LIBMCU_COMPONENTS)), \
-	$(shell find $(d)/src -type f -regex ".*\.c"))
-INCS += $(foreach d, $(LIBMCU_COMPONENTS), \
-	$(addprefix components/, $(d))/include)
-INCS += components/common/include/libmcu/posix
+SRCS += $(LIBMCU_COMPONENTS_SRCS)
+INCS += $(LIBMCU_COMPONENTS_INCS)
 DEFS += \
 	_POSIX_THREADS \
 	BUILD_DATE=\""$(shell date)"\" \

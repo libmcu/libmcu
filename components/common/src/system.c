@@ -2,12 +2,12 @@
 #include <assert.h>
 #include "libmcu/compiler.h"
 
-const char *system_get_version_string(void)
+const char * LIBMCU_WEAK system_get_version_string(void)
 {
 	return def2str(VERSION);
 }
 
-const char *system_get_build_date_string(void)
+const char * LIBMCU_WEAK system_get_build_date_string(void)
 {
 #if defined(BUILD_DATE)
 	return BUILD_DATE;
