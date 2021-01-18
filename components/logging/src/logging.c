@@ -91,20 +91,20 @@ static inline size_t get_log_size(const logging_data_t *entry)
 	return size;
 }
 
-static inline size_t logging_peek_internal(void *buf, size_t bufsize)
-{
-	if (!buf || bufsize < sizeof(logging_data_t)) {
-		return 0;
-	}
-	return m.storage->read(buf, bufsize);
-}
-
 static inline size_t logging_consume_internal(size_t size)
 {
 	if (!size) {
 		return 0;
 	}
 	return m.storage->consume(size);
+}
+
+static size_t logging_peek_internal(void *buf, size_t bufsize)
+{
+	if (!buf || bufsize < sizeof(logging_data_t)) {
+		return 0;
+	}
+	return m.storage->read(buf, bufsize);
 }
 
 #define pack_message(ptr, lr) do { \
