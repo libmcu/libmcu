@@ -190,6 +190,9 @@ logging_t logging_get_level(void)
 	return m.min_save_level;
 }
 
+#if !defined(MIN)
+#define MIN(a, b)			((a) > (b)? (b) : (a))
+#endif
 const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 {
 	const logging_data_t *p = (const logging_data_t *)log;
@@ -199,8 +202,7 @@ const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 	buf[bufsize] = '\0';
 
 	if (len > 0) {
-		size_t msglen = (bufsize - (size_t)len - 1) < p->message_length?
-			(bufsize - (size_t)len - 1) : p->message_length;
+		size_t msglen = MIN(bufsize - (size_t)len - 1, p->message_length);
 		memcpy(&buf[len], p->message, msglen);
 		buf[msglen + (size_t)len] = '\0';
 	}
