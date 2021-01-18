@@ -58,7 +58,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           build-wrapper-linux-x86-64 --out-dir bw-output \
-              make
+              make STACK_LIMIT=512
           sonar-scanner \
               -Dsonar.organization=onkwon-github \
               -Dsonar.projectKey=onkwon_libmcu \
