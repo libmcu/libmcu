@@ -35,8 +35,11 @@ DEFS += \
 OBJS += $(addprefix $(BUILDIR)/, $(SRCS:.c=.o))
 DEPS += $(OBJS:.o=.d)
 
-OUTLIB := $(BUILDIR)/$(PROJECT).a
-OUTPUT := $(OUTLIB) $(BUILDIR)/sources.txt $(BUILDIR)/includes.txt
+OUTCOM := $(BUILDIR)/$(PROJECT)_$(VERSION_TAG)
+OUTLIB := $(OUTCOM).a
+OUTZIP := $(OUTCOM).tgz
+OUTSHA := $(OUTCOM).sha256
+OUTPUT := $(OUTZIP) $(BUILDIR)/sources.txt $(BUILDIR)/includes.txt
 
 all: $(OUTPUT)
 	$(Q)$(SZ) -t --common $(sort $(OBJS))
@@ -47,6 +50,14 @@ $(BUILDIR)/sources.txt: $(OUTLIB)
 $(BUILDIR)/includes.txt: $(OUTLIB)
 	$(info generating  $@)
 	$(Q)echo $(subst -I,,$(sort $(INCS))) | tr ' ' '\n' > $@
+
+$(OUTZIP): $(OUTSHA)
+	$(info generating  $@)
+	$(Q)rm -f $@
+	$(Q)tar -zcf $@ $(basename $<).*
+$(OUTSHA): $(OUTLIB)
+	$(info generating  $@)
+	$(Q)openssl dgst -sha256 $< > $@
 $(OUTLIB): $(OBJS)
 	$(info archiving   $@)
 	$(Q)$(AR) $(ARFLAGS) $@ $^ 1> /dev/null 2>&1
