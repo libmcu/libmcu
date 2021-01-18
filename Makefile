@@ -1,138 +1,69 @@
 PROJECT := libmcu
 BASEDIR := $(shell pwd)
 BUILDIR := build
-SRCDIRS := src
 
-VERSION ?= $(shell git describe --long --tags --dirty --always)
-VERSION_LIST := $(subst -, , $(VERSION))
-VERSION_TAG := $(subst ., , $(subst v,, $(strip $(word 1, $(VERSION_LIST)))))
-VERSION_MAJOR := $(strip $(word 1, $(VERSION_TAG)))
-VERSION_MINOR := $(strip $(word 2, $(VERSION_TAG)))
-VERSION_BUILD := $(strip $(word 2, $(VERSION_LIST)))
-
-V ?= 0
+VERBOSE ?= 0
+V ?= $(VERBOSE)
 ifeq ($(V), 0)
 	Q = @
 else
 	Q =
 endif
+export BASEDIR
+export BUILDIR
+export Q
 
-# Toolchains
-ifneq ($(CROSS_COMPILE),)
-	CROSS_COMPILE_PREFIX := $(CROSS_COMPILE)-
-endif
-CC := $(CROSS_COMPILE_PREFIX)gcc
-LD := $(CROSS_COMPILE_PREFIX)ld
-SZ := $(CROSS_COMPILE_PREFIX)size
-AR := $(CROSS_COMPILE_PREFIX)ar
-OC := $(CROSS_COMPILE_PREFIX)objcopy
-OD := $(CROSS_COMPILE_PREFIX)objdump
+include projects/version.mk
+include projects/toolchain.mk
 
-# Compiler options
-CFLAGS += \
-	  -std=gnu99 \
-	  -static \
-	  -nostdlib \
-	  -fno-builtin \
-	  -fno-common \
-	  -ffunction-sections \
-	  -fdata-sections \
-	  -Os
-#CFLAGS += -fstack-usage # generates .su files per each objects
-#CFLAGS += -fno-short-enums
-#CFLAGS += -flto # it increases stack usage and removes some debug info
+LIBMCU_COMPONENTS ?= $(patsubst components/%, %, $(wildcard components/*))
+include projects/components.mk
 
-## Compiler warnings
-CFLAGS += \
-	  -Wall \
-	  -Wextra \
-	  -Wformat=2 \
-	  -Wmissing-prototypes \
-	  -Wstrict-prototypes \
-	  -Wmissing-declarations \
-	  -Wcast-align \
-	  -Wpointer-arith \
-	  -Wbad-function-cast \
-	  -Wnested-externs \
-	  -Wcast-qual \
-	  -Wmissing-format-attribute \
-	  -Wmissing-include-dirs \
-	  -Wformat-nonliteral \
-	  -Wdouble-promotion \
-	  -Wfloat-equal \
-	  -Winline \
-	  -Wundef \
-	  -Wshadow \
-	  -Wwrite-strings \
-	  -Waggregate-return \
-	  -Wredundant-decls \
-	  -Wconversion \
-	  -Wstrict-overflow=5 \
-	  -Werror
-#-Wformat-truncation=2
-#-Wformat-overflow
-#-Wabi=11 -Wlogical-op -Wstack-usage=$(STACK_LIMIT)
+SRCS += $(LIBMCU_COMPONENTS_SRCS)
+INCS += $(LIBMCU_COMPONENTS_INCS)
+DEFS += \
+	_POSIX_THREADS \
+	BUILD_DATE=\""$(shell date)"\" \
+	VERSION_TAG=$(VERSION_TAG) \
+	VERSION=$(VERSION)
 
-## Compiler errors
-CFLAGS += -Wno-error=format-nonliteral
+OBJS += $(addprefix $(BUILDIR)/, $(SRCS:.c=.o))
+DEPS += $(OBJS:.o=.d)
 
-ifndef NDEBUG
-	CFLAGS += -g3
-	#CFLAGS += -fsanitize=address
-endif
+OUTCOM := $(BUILDIR)/$(PROJECT)_$(VERSION_TAG)
+OUTLIB := $(OUTCOM).a
+OUTZIP := $(OUTCOM).tgz
+OUTSHA := $(OUTCOM).sha256
+OUTPUT := $(OUTZIP) $(BUILDIR)/sources.txt $(BUILDIR)/includes.txt
 
-ARFLAGS = crsu
+all: $(OUTPUT)
+	$(Q)$(SZ) -t --common $(sort $(OBJS))
 
-# Linker options
-LDFLAGS += \
-	   --gc-sections \
-	   --print-gc-sections
-LIBS =
-LD_SCRIPT =
-ifneq ($(LD_SCRIPT),)
-	LDFLAGS += -T$(LD_SCRIPT)
-endif
-ifdef LD_LIBRARY_PATH
-	LDFLAGS += -L$(LD_LIBRARY_PATH) -lc
-endif
+$(BUILDIR)/sources.txt: $(OUTLIB)
+	$(info generating  $@)
+	$(Q)echo $(sort $(SRCS)) | tr ' ' '\n' > $@
+$(BUILDIR)/includes.txt: $(OUTLIB)
+	$(info generating  $@)
+	$(Q)echo $(subst -I,,$(sort $(INCS))) | tr ' ' '\n' > $@
 
-# Build options
-APP_INCLUDES = include include/libmcu/posix
-APP_DEFINES  = \
-	       _POSIX_THREADS \
-	       BUILD_DATE=\""$(shell date)"\" \
-	       VERSION_MAJOR=$(VERSION_MAJOR) \
-	       VERSION_MINOR=$(VERSION_MINOR) \
-	       VERSION_BUILD=$(VERSION_BUILD) \
-	       VERSION=$(VERSION)
-
-SRCS = $(foreach dir, $(SRCDIRS), $(shell find $(dir) -type f -regex ".*\.c"))
-INCS = $(addprefix -I, $(APP_INCLUDES))
-DEFS = $(addprefix -D, $(APP_DEFINES))
-OBJS = $(addprefix $(BUILDIR)/, $(SRCS:.c=.o))
-DEPS = $(OBJS:.o=.d)
-
-PROJECT_OBJ := $(BUILDIR)/$(PROJECT)_$(VERSION)
-
-.DEFAULT_GOAL :=
-all: $(PROJECT_OBJ).tgz
-	@echo "\n  $(notdir $(PROJECT_OBJ))"
-	@echo "  $(shell cat $(PROJECT_OBJ).sha256)"
-
-$(PROJECT_OBJ).tgz: $(PROJECT_OBJ).sha256
-	@echo "  TAR      $@"
+$(OUTZIP): $(OUTSHA)
+	$(info generating  $@)
 	$(Q)rm -f $@
 	$(Q)tar -zcf $@ $(basename $<).*
-$(PROJECT_OBJ).sha256: $(PROJECT_OBJ).a
-	@echo "  HASH     $@"
+$(OUTSHA): $(OUTLIB)
+	$(info generating  $@)
 	$(Q)openssl dgst -sha256 $< > $@
-$(PROJECT_OBJ).a: $(OBJS)
-	@echo "  AR       $@"
+$(OUTLIB): $(OBJS)
+	$(info archiving   $@)
 	$(Q)$(AR) $(ARFLAGS) $@ $^ 1> /dev/null 2>&1
-$(OBJS): $(BUILDIR)/%.o: %.c Makefile $(LD_SCRIPT)
-	@echo "  CC       $*.c"
+
+$(OBJS): $(BUILDIR)/%.o: %.c $(MAKEFILE_LIST)
+	$(info compiling   $<)
 	@mkdir -p $(@D)
-	$(Q)$(CC) -o $@ -c $*.c -MMD $(DEFS) $(INCS) $(CFLAGS)
+	$(Q)$(CC) -o $@ -c $*.c -MMD \
+		$(addprefix -D, $(DEFS)) \
+		$(addprefix -I, $(INCS)) \
+		$(CFLAGS)
 
 ifneq ($(MAKECMDGOALS), clean)
 ifneq ($(MAKECMDGOALS), depend)
