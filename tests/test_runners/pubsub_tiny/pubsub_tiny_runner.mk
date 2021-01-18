@@ -1,11 +1,11 @@
 COMPONENT_NAME = pubsub_tiny
 
 SRC_FILES = \
-	../components/pubsub/src/pubsub_tiny.c \
+	../components/pubsub_tiny/src/pubsub_tiny.c \
 	stubs/logging.c
 
 TEST_SRC_FILES = \
-	src/pubsub/test_pubsub_tiny.cpp
+	src/pubsub_tiny/test_pubsub_tiny.cpp
 
 INCLUDE_DIRS += \
 	stubs \
