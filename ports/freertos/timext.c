@@ -1,4 +1,4 @@
-#include "include/timext.h"
+#include "libmcu/timext.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -9,9 +9,9 @@
 #define MSEC_TO_TICKS(msec)		((msec) / portTICK_PERIOD_MS)
 #define TICKS_TO_MSEC(ticks)		((ticks) * portTICK_PERIOD_MS)
 
-unsigned int timeout_set(unsigned int msec)
+void timeout_set(unsigned int *goal, unsigned int msec)
 {
-	return xTaskGetTickCount() + MSEC_TO_TICKS(msec);
+	*goal = xTaskGetTickCount() + MSEC_TO_TICKS(msec);
 }
 
 bool timeout_is_expired(unsigned int goal)
