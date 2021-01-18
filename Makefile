@@ -1,3 +1,4 @@
+PROJECT := libmcu
 BASEDIR := $(shell pwd)
 BUILDIR := build
 
@@ -34,7 +35,7 @@ DEFS += \
 OBJS += $(addprefix $(BUILDIR)/, $(SRCS:.c=.o))
 DEPS += $(OBJS:.o=.d)
 
-OUTLIB := $(BUILDIR)/lib$(PROJECT).a
+OUTLIB := $(BUILDIR)/$(PROJECT).a
 OUTPUT := $(OUTLIB) $(BUILDIR)/sources.txt $(BUILDIR)/includes.txt
 
 all: $(OUTPUT)
