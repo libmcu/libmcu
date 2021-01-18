@@ -2,8 +2,19 @@ clang
 
 -std=gnu++14
 
--Iinclude
--Iinclude/posix
+-Icomponents/common/include
+-Icomponents/common/include/libmcu/posix
+-Icomponents/apptimer/include
+-Icomponents/bitmap/include
+-Icomponents/jobqueue/include
+-Icomponents/logging/include
+-Icomponents/mode/include
+-Icomponents/pubsub/include
+-Icomponents/queue/include
+-Icomponents/retry/include
+-Icomponents/shell/include
+-Icomponents/timext/include
+
 -I/usr/local/Cellar/cpputest/4.0/include
 
 -isystem /usr/local/include
