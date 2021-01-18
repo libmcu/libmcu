@@ -27,7 +27,7 @@ allocation at all. And a log size is 16 bytes excluding user messages.
 
 An example for storage implementation can be found
 [examples/memory_storage.c](examples/memory_storage.c) and a simple server-side
-script [scripts/translate_log.py](scripts/translate_log.py).
+script [tools/scripts/translate_log.py](tools/scripts/translate_log.py).
 
 Writing a log in a structured way would help you see and trace easier on the
 server side, something like:

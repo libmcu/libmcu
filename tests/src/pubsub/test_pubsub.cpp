@@ -29,6 +29,7 @@ TEST_GROUP(PubSub) {
 	}
 };
 
+// create() is doing nothing but a place holder for pubsub_tiny.
 TEST(PubSub, create_ShouldReturnSuccess) {
 	const char *mytopic = "mytopic";
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_create(mytopic));
