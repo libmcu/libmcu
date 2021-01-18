@@ -21,7 +21,8 @@ $(TESTS):
 	$(MAKE) -f $@ $(BUILD_RULE)
 
 LCOV_INFO_FILE = $(BUILDIR)/lcov.info
-$(BUILDIR)/test_coverage: $(BUILDIR)
+.PHONY: lcov
+$(BUILDIR)/test_coverage lcov: $(BUILDIR)
 	@lcov \
         --base-directory . \
         --directory . \

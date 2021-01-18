@@ -26,11 +26,9 @@ jobs:
         run: make -C tests
       - name: Build coverage results
         run: |
-          echo $(pwd)
-          mkdir -p coverage_report
-          cd coverage_report
-          gcov -abcfup ../src/* -o ../tests/build/src/
-          gcov -abcfup ../src/* -o ../tests/build/src/shell
+          make -C tests lcov
+          mkdir coverage_report
+          cp tests/build/lcov.info coverage_report/
       - name: Archive code coverage results
         uses: actions/upload-artifact@v1
         with:
@@ -64,10 +62,10 @@ jobs:
           sonar-scanner \
               -Dsonar.organization=onkwon-github \
               -Dsonar.projectKey=onkwon_libmcu \
-              -Dsonar.sources=src,include,ports \
+              -Dsonar.sources=components,ports \
               -Dsonar.tests=tests \
               -Dsonar.test.inclusions=**/test_*.cpp \
-              -Dsonar.cfamily.gcov.reportsPath=coverage_report \
+              -Dsonar.cfamily.lcov.reportsPath=coverage_report \
               -Dsonar.cfamily.build-wrapper-output=bw-output \
               -Dsonar.host.url=https://sonarcloud.io \
               -Dsonar.login=${{ secrets.SONAR_TOKEN }}
