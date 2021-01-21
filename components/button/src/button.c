@@ -1,10 +1,17 @@
 #include "libmcu/button.h"
 #include <string.h>
 #include <assert.h>
+#include <pthread.h>
 #include "libmcu/compiler.h"
 
 #if !defined(BUTTON_MAX)
 #define BUTTON_MAX				1
+#endif
+#if !defined(BUTTON_SAMPLING_PERIOD_MS)
+#define BUTTON_SAMPLING_PERIOD_MS		10U
+#endif
+#if !defined(BUTTON_MIN_PRESS_TIME_MS)
+#define BUTTON_MIN_PRESS_TIME_MS		60U
 #endif
 #if 0
 #if !defined(BUTTON_REPEAT_DELAY_MS)
@@ -13,12 +20,6 @@
 #if !defined(BUTTON_REPEAT_RATE_MS)
 #define BUTTON_REPEAT_RATE_MS			100U
 #endif
-#endif
-#if !defined(BUTTON_SAMPLING_PERIOD_MS)
-#define BUTTON_SAMPLING_PERIOD_MS		10U
-#endif
-#if !defined(BUTTON_MIN_PRESS_TIME_MS)
-#define BUTTON_MIN_PRESS_TIME_MS		60U
 #endif
 LIBMCU_STATIC_ASSERT(BUTTON_MAX < 8*sizeof(unsigned int),
 		"BUTTON_MAX must be less than bitmap data type size.");
@@ -53,7 +54,7 @@ static struct {
 	unsigned int (*get_time_ms)(void);
 	void (*wait_next_sampling_period)(unsigned int ms);
 
-	// TODO: lock
+	pthread_mutex_t lock;
 	struct button buttons[BUTTON_MAX];
 } m;
 
@@ -152,16 +153,9 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-void LIBMCU_WEAK button_sleep(void *context)
-{
-	unused(context);
-	// enable interrupt again
-}
-
 void button_poll(void *context)
 {
 	button_poll_internal(context);
-	button_sleep(context);
 }
 
 bool button_register(const button_handlers_t *handlers, int (*get_state)(void))
@@ -170,19 +164,31 @@ bool button_register(const button_handlers_t *handlers, int (*get_state)(void))
 		return false;
 	}
 
-	struct button *btn = get_unused_button();
+	bool rc = false;
 
-	if (btn == NULL) {
-		return false;
+	pthread_mutex_lock(&m.lock);
+	{
+		struct button *btn = get_unused_button();
+
+		if (btn == NULL) {
+			goto out;
+		}
+
+		btn->ops = handlers;
+		btn->get_state = get_state;
+		btn->pressed = false;
+		memset(&btn->data, 0, sizeof(btn->data));
+		btn->active = true;
 	}
+	pthread_mutex_unlock(&m.lock);
 
-	btn->ops = handlers;
-	btn->get_state = get_state;
-	btn->active = true;
-	btn->pressed = false;
-	memset(&btn->data, 0, sizeof(btn->data));
+	rc = true;
+out:
+	return rc;
+}
 
-	return true;
+void LIBMCU_WEAK button_hw_init(void)
+{
 }
 
 void button_init(unsigned int (*get_time_ms)(void),
@@ -195,4 +201,8 @@ void button_init(unsigned int (*get_time_ms)(void),
 	m.wait_next_sampling_period = delayf;
 
 	memset(m.buttons, 0, sizeof(m.buttons));
+
+	pthread_mutex_init(&m.lock, NULL);
+
+	button_hw_init();
 }

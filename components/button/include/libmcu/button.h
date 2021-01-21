@@ -16,16 +16,18 @@ struct button_data {
 typedef struct {
 	void (*pressed)(const struct button_data *btn, void *context);
 	void (*released)(const struct button_data *btn, void *context);
+#if 0
 	void (*repeat_started)(const struct button_data *btn, void *context);
 	void (*repeat)(const struct button_data *btn, void *context);
 	void (*double_clicked)(const struct button_data *btn, void *context);
+#endif
 } button_handlers_t;
 
 void button_init(unsigned int (*get_time_ms)(void),
 		void (*delayf)(unsigned int ms));
+void button_hw_init(void);
 bool button_register(const button_handlers_t *handlers, int (*get_state)(void));
 void button_poll(void *context);
-void button_sleep(void *context);
 
 #if defined(__cplusplus)
 }
