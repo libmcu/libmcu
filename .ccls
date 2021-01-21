@@ -14,6 +14,7 @@ clang
 -Icomponents/retry/include
 -Icomponents/shell/include
 -Icomponents/timext/include
+-Icomponents/button/include
 
 -I/usr/local/Cellar/cpputest/4.0/include
 
