@@ -34,7 +34,7 @@ LIBMCU_STATIC_ASSERT(MIN_PRESSED_HISTORY < (8*sizeof(unsigned int) - 2),
 		"The history pattern must be within the data type size.");
 
 typedef enum {
-	BUTTON_STATE_UNKNOWN,
+	BUTTON_STATE_UNKNOWN			= 0,
 	BUTTON_STATE_PRESSED,
 	BUTTON_STATE_RELEASED,
 	BUTTON_STATE_DOWN,
@@ -66,24 +66,24 @@ static void update_button(struct button *btn)
 	btn->data.history = history;
 }
 
-static bool is_button_pressed(struct button *btn)
+static bool is_button_pressed(const struct button *btn)
 {
 	unsigned int expected = (1U << MIN_PRESSED_HISTORY) - 1;   // 0b0111111
 	return (btn->data.history & HISTORY_MASK) == expected;
 }
 
-static bool is_button_released(struct button *btn)
+static bool is_button_released(const struct button *btn)
 {
 	unsigned int expected = 1U << MIN_PRESSED_HISTORY;         // 0b1000000
 	return (btn->data.history & HISTORY_MASK) == expected;
 }
 
-static bool is_button_up(struct button *btn)
+static bool is_button_up(const struct button *btn)
 {
 	return (btn->data.history & HISTORY_MASK) == 0;
 }
 
-static bool is_button_down(struct button *btn)
+static bool is_button_down(const struct button *btn)
 {
 	return (btn->data.history & HISTORY_MASK) == HISTORY_MASK;
 }
