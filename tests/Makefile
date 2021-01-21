@@ -6,7 +6,7 @@ export INCLUDE_DIRS += \
 	. \
 	$(CPPUTEST_HOME)/include
 
-TESTS := $(shell find test_runners -type f -regex ".*_runner\.mk")
+TESTS := $(shell find test_runners -type f -regex ".*runner\.mk")
 
 .PHONY: all
 all: test

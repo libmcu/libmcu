@@ -40,6 +40,7 @@ CFLAGS += -Wall \
 	  -Wfloat-equal \
 	  -Winline \
 	  -Wundef \
+	  -Wunused-macros \
 	  -Wshadow \
 	  -Wwrite-strings \
 	  -Waggregate-return \
