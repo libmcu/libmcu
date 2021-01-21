@@ -55,6 +55,7 @@ $(OUTSHA): $(OUTLIB)
 	$(Q)openssl dgst -sha256 $< > $@
 $(OUTLIB): $(OBJS)
 	$(info archiving   $@)
+	$(Q)rm -f $@
 	$(Q)$(AR) $(ARFLAGS) $@ $^ 1> /dev/null 2>&1
 
 $(OBJS): $(BUILDIR)/%.o: %.c $(MAKEFILE_LIST)
