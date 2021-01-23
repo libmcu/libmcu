@@ -23,8 +23,8 @@ typedef struct {
 #endif
 } button_handlers_t;
 
-void button_init(unsigned int (*get_time_ms)(void),
-		void (*delayf)(unsigned int ms));
+void button_init(unsigned int (*get_monotonic_tick_in_ms)(void),
+		void (*mydelay)(unsigned int ms));
 void button_hw_init(void);
 bool button_register(const button_handlers_t *handlers, int (*get_state)(void));
 void button_poll(void *context);
