@@ -116,7 +116,8 @@ static bool jobqueue_process(jobqueue_t *pool)
 
 static void *jobqueue_task(void *e)
 {
-	info("new thread created");
+	info("new thread created. %u running",
+			((jobqueue_t *)e)->active_threads);
 
 	while (jobqueue_process(e)) {
 	}
