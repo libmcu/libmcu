@@ -47,15 +47,21 @@ int sem_trywait(sem_t *sem)
 	return xSemaphoreTake(psem->handle, 0) == pdPASS? 0 : -1;
 }
 
+int sem_getvalue(sem_t *sem, int *sval)
+{
+	struct semaphore *psem = (struct semaphore *)sem;
+	*sval = uxSemaphoreGetCount(psem->handle);
+	return 0;
+}
+
 int sem_post(sem_t *sem)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
 	return xSemaphoreGive(psem->handle) == pdPASS? 0 : -1;
 }
 
-int sem_getvalue(sem_t *sem, int *sval)
+int sem_post_nointr(sem_t *sem)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
-	*sval = uxSemaphoreGetCount(psem->handle);
-	return 0;
+	return xSemaphoreGiveFromISR(psem->handle, NULL) == pdPASS? 0 : -1;
 }

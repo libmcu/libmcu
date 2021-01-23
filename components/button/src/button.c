@@ -51,8 +51,8 @@ struct button {
 };
 
 static struct {
-	unsigned int (*get_time_ms)(void);
-	void (*wait_next_sampling_period)(unsigned int ms);
+	unsigned int (*get_monotonic_tick_in_ms)(void);
+	void (*delay)(unsigned int ms);
 
 	pthread_mutex_t lock;
 	struct button buttons[BUTTON_MAX];
@@ -94,7 +94,7 @@ static button_state_t scan_button(struct button *btn, void *context)
 		return BUTTON_STATE_INACTIVE;
 	}
 
-	unsigned int t = m.get_time_ms();
+	unsigned int t = m.get_monotonic_tick_in_ms();
 
 	update_button(btn);
 
@@ -138,7 +138,7 @@ static void button_poll_internal(void *context)
 	unsigned int bitmap = (1U << BUTTON_MAX) - 1;
 
 	while ((bitmap = scan_buttons(bitmap, context)) != 0) {
-		m.wait_next_sampling_period(BUTTON_SAMPLING_PERIOD_MS);
+		m.delay(BUTTON_SAMPLING_PERIOD_MS);
 	}
 }
 
@@ -191,14 +191,14 @@ void LIBMCU_WEAK button_hw_init(void)
 {
 }
 
-void button_init(unsigned int (*get_time_ms)(void),
-		void (*delayf)(unsigned int ms))
+void button_init(unsigned int (*get_monotonic_tick_in_ms)(void),
+		void (*mydelay)(unsigned int ms))
 {
-	assert(get_time_ms != NULL);
-	assert(delayf != NULL);
+	assert(get_monotonic_tick_in_ms != NULL);
+	assert(mydelay != NULL);
 
-	m.get_time_ms = get_time_ms;
-	m.wait_next_sampling_period = delayf;
+	m.get_monotonic_tick_in_ms = get_monotonic_tick_in_ms;
+	m.delay = mydelay;
 
 	memset(m.buttons, 0, sizeof(m.buttons));
 
