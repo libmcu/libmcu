@@ -22,7 +22,8 @@ struct jobqueue {
 	sem_t job_queue;
 	jobqueue_attr_t attr;
 	uint8_t active_threads;
-	unsigned int max_concurrent_jobs;
+	uint8_t max_concurrent_jobs;
+	uint8_t nr_running;
 };
 
 struct job {
@@ -33,7 +34,7 @@ struct job {
 	void *context;
 };
 
-static inline uint8_t job_count_internal(jobqueue_t *pool)
+static inline uint8_t count_scheduled(jobqueue_t *pool)
 {
 	uint8_t count = 0;
 	struct list *p;
@@ -43,6 +44,16 @@ static inline uint8_t job_count_internal(jobqueue_t *pool)
 	}
 
 	return count;
+}
+
+static inline uint8_t count_running(jobqueue_t *pool)
+{
+	return pool->nr_running;
+}
+
+static inline uint8_t job_count_internal(jobqueue_t *pool)
+{
+	return (uint8_t)(count_scheduled(pool) + count_running(pool));
 }
 
 static inline void job_delete_internal(jobqueue_t *pool, struct job *job)
@@ -61,28 +72,30 @@ static inline void job_delete_internal(jobqueue_t *pool, struct job *job)
 	}
 }
 
+static struct job *get_job_scheduled(jobqueue_t *pool)
+{
+	if (count_scheduled(pool) == 0) {
+		return NULL;
+	}
+
+	struct job *job = list_entry(pool->job_list.next, struct job, entry);
+	list_del(&job->entry, &pool->job_list);
+	job->state = JOB_STATE_COMPLETED;
+
+	return job;
+}
+
 static bool jobqueue_process(jobqueue_t *pool)
 {
 	bool busy = true;
-	struct job *job = NULL;
+	struct job *job;
 
 	sem_wait(&pool->job_queue);
 
 	pthread_mutex_lock(&pool->lock);
 	{
-		uint8_t njobs_waiting = job_count_internal(pool);
-
-		if (njobs_waiting) {
-			job = list_entry(pool->job_list.next, struct job, entry);
-			list_del(&job->entry, &pool->job_list);
-			job->state = JOB_STATE_COMPLETED;
-		}
-
-		if (njobs_waiting <= pool->active_threads
-				&& pool->active_threads > pool->attr.min_threads) {
-			pool->active_threads--;
-			busy = false;
-		}
+		job = get_job_scheduled(pool);
+		pool->nr_running++;
 	}
 	pthread_mutex_unlock(&pool->lock);
 
@@ -90,12 +103,28 @@ static bool jobqueue_process(jobqueue_t *pool)
 		job->callback(job->context);
 	}
 
+	pthread_mutex_lock(&pool->lock);
+	{
+		pool->nr_running--;
+
+		if (job_count_internal(pool) <= pool->active_threads &&
+				pool->active_threads > pool->attr.min_threads) {
+			pool->active_threads--;
+			busy = false;
+		}
+	}
+	pthread_mutex_unlock(&pool->lock);
+
 	return busy;
 }
 
 static void *jobqueue_task(void *e)
 {
+	info("new thread created");
+
 	while (jobqueue_process(e));
+
+	info("terminating thread");
 
 #if !defined(UNITTEST)
 	pthread_exit(NULL);
@@ -123,15 +152,17 @@ static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *jo
 		pthread_attr_init(&attr);
 		pthread_attr_setstacksize(&attr, pool->attr.stack_size_bytes);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		if (pthread_create(&thread, &attr, jobqueue_task, pool) == 0) {
-			pool->active_threads++;
+		if (pthread_create(&thread, &attr, jobqueue_task, pool) != 0) {
+			error("cannot create new thread");
+			return JOB_ERROR;
 		}
+		pool->active_threads++;
 	}
 
 	return JOB_SUCCESS;
 }
 
-jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
+jobqueue_t *jobqueue_create(uint8_t max_concurrent_jobs)
 {
 	jobqueue_t *pool;
 
@@ -144,6 +175,7 @@ jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
 
 	list_init(&pool->job_list);
 	pthread_mutex_init(&pool->lock, NULL);
+	pool->nr_running = 0;
 	pool->active_threads = 0;
 	pool->max_concurrent_jobs = max_concurrent_jobs;
 	pool->attr = (jobqueue_attr_t) {
