@@ -8,32 +8,35 @@
 #include "libmcu/list.h"
 #include "libmcu/logging.h"
 
-typedef enum {
-	JOB_STATE_INITIALIZED			= 0,
-	JOB_STATE_SCHEDULED,
-	JOB_STATE_COMPLETED,
-	JOB_STATE_DELETED,
-	JOB_STATE_UNKNOWN,
-} job_state_t;
-
 struct jobqueue {
 	pthread_mutex_t lock;
 	struct list job_list;
 	sem_t job_queue;
 	jobqueue_attr_t attr;
 	uint8_t active_threads;
-	unsigned int max_concurrent_jobs;
+	uint8_t max_concurrent_jobs;
+	uint8_t nr_running;
 };
 
 struct job {
 	struct list entry;
 	struct list *pool;
-	job_state_t state;
 	job_callback_t callback;
 	void *context;
 };
 
-static inline uint8_t job_count_internal(jobqueue_t *pool)
+static inline bool is_job_scheduled(const jobqueue_t *pool, const struct job *job)
+{
+	struct list *p;
+	list_for_each(p, &pool->job_list) {
+		if (p == &job->entry) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static inline uint8_t count_scheduled(const jobqueue_t *pool)
 {
 	uint8_t count = 0;
 	struct list *p;
@@ -45,44 +48,50 @@ static inline uint8_t job_count_internal(jobqueue_t *pool)
 	return count;
 }
 
-static inline void job_delete_internal(jobqueue_t *pool, struct job *job)
+static inline uint8_t count_running(const jobqueue_t *pool)
 {
-	if (job->state != JOB_STATE_SCHEDULED) {
-		return;
-	}
+	return pool->nr_running;
+}
 
+static inline uint8_t job_count_internal(const jobqueue_t *pool)
+{
+	return (uint8_t)(count_scheduled(pool) + count_running(pool));
+}
+
+static inline void job_delete_internal(jobqueue_t *pool, const struct job *job)
+{
 	struct list *p;
 	list_for_each(p, &pool->job_list) {
 		if (p == &job->entry) {
 			list_del(p, &pool->job_list);
-			job->state = JOB_STATE_DELETED;
 			break;
 		}
 	}
 }
 
+static struct job *get_job_scheduled_detaching(jobqueue_t *pool)
+{
+	if (count_scheduled(pool) == 0) {
+		return NULL;
+	}
+
+	struct job *job = list_entry(pool->job_list.next, struct job, entry);
+	list_del(&job->entry, &pool->job_list);
+
+	return job;
+}
+
 static bool jobqueue_process(jobqueue_t *pool)
 {
 	bool busy = true;
-	struct job *job = NULL;
+	struct job *job;
 
 	sem_wait(&pool->job_queue);
 
 	pthread_mutex_lock(&pool->lock);
 	{
-		uint8_t njobs_waiting = job_count_internal(pool);
-
-		if (njobs_waiting) {
-			job = list_entry(pool->job_list.next, struct job, entry);
-			list_del(&job->entry, &pool->job_list);
-			job->state = JOB_STATE_COMPLETED;
-		}
-
-		if (njobs_waiting <= pool->active_threads
-				&& pool->active_threads > pool->attr.min_threads) {
-			pool->active_threads--;
-			busy = false;
-		}
+		job = get_job_scheduled_detaching(pool);
+		pool->nr_running++;
 	}
 	pthread_mutex_unlock(&pool->lock);
 
@@ -90,12 +99,29 @@ static bool jobqueue_process(jobqueue_t *pool)
 		job->callback(job->context);
 	}
 
+	pthread_mutex_lock(&pool->lock);
+	{
+		pool->nr_running--;
+
+		if (job_count_internal(pool) <= pool->active_threads &&
+				pool->active_threads > pool->attr.min_threads) {
+			pool->active_threads--;
+			busy = false;
+		}
+	}
+	pthread_mutex_unlock(&pool->lock);
+
 	return busy;
 }
 
 static void *jobqueue_task(void *e)
 {
-	while (jobqueue_process(e));
+	info("new thread created");
+
+	while (jobqueue_process(e)) {
+	}
+
+	info("terminating thread");
 
 #if !defined(UNITTEST)
 	pthread_exit(NULL);
@@ -110,9 +136,8 @@ static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *jo
 		return JOB_FULL;
 	}
 
-	if (job->state != JOB_STATE_SCHEDULED) {
+	if (!is_job_scheduled(pool, job)) {
 		list_add_tail(&job->entry, &pool->job_list);
-		job->state = JOB_STATE_SCHEDULED;
 		sem_post(&pool->job_queue);
 	}
 
@@ -123,15 +148,17 @@ static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *jo
 		pthread_attr_init(&attr);
 		pthread_attr_setstacksize(&attr, pool->attr.stack_size_bytes);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		if (pthread_create(&thread, &attr, jobqueue_task, pool) == 0) {
-			pool->active_threads++;
+		if (pthread_create(&thread, &attr, jobqueue_task, pool) != 0) {
+			error("cannot create new thread");
+			return JOB_ERROR;
 		}
+		pool->active_threads++;
 	}
 
 	return JOB_SUCCESS;
 }
 
-jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
+jobqueue_t *jobqueue_create(uint8_t max_concurrent_jobs)
 {
 	jobqueue_t *pool;
 
@@ -144,6 +171,7 @@ jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs)
 
 	list_init(&pool->job_list);
 	pthread_mutex_init(&pool->lock, NULL);
+	pool->nr_running = 0;
 	pool->active_threads = 0;
 	pool->max_concurrent_jobs = max_concurrent_jobs;
 	pool->attr = (jobqueue_attr_t) {
@@ -209,7 +237,6 @@ job_error_t job_init(jobqueue_t *pool, job_t *job,
 	p->pool = &pool->job_list;
 	p->callback = callback;
 	p->context = context;
-	p->state = JOB_STATE_INITIALIZED;
 
 	return JOB_SUCCESS;
 }

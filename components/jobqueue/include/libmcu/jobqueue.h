@@ -48,7 +48,7 @@ typedef struct jobqueue_attr {
 
 typedef void (*job_callback_t)(void *context);
 
-jobqueue_t *jobqueue_create(unsigned int max_concurrent_jobs);
+jobqueue_t *jobqueue_create(uint8_t max_concurrent_jobs);
 job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr);
 job_error_t jobqueue_destroy(jobqueue_t *pool);
 
