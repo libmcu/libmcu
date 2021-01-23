@@ -58,7 +58,7 @@ static inline uint8_t job_count_internal(const jobqueue_t *pool)
 	return (uint8_t)(count_scheduled(pool) + count_running(pool));
 }
 
-static inline void job_delete_internal(jobqueue_t *pool, struct job *job)
+static inline void job_delete_internal(jobqueue_t *pool, const struct job *job)
 {
 	struct list *p;
 	list_for_each(p, &pool->job_list) {
@@ -118,7 +118,8 @@ static void *jobqueue_task(void *e)
 {
 	info("new thread created");
 
-	while (jobqueue_process(e));
+	while (jobqueue_process(e)) {
+	}
 
 	info("terminating thread");
 
