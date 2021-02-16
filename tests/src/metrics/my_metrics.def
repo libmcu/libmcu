@@ -1,4 +1,4 @@
-METRICS_DEFINE(0, ReportIntervalMs)
+METRICS_DEFINE(0, ReportInterval)
 METRICS_DEFINE(1, UnexpectedRebootCount)
 METRICS_DEFINE(2, WallTime)
 METRICS_DEFINE(3, StackHighWaterMark)

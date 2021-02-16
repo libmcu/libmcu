@@ -9,7 +9,7 @@ extern "C" {
 #include <stddef.h>
 
 #if !defined(METRICS_USER_DEFINES)
-#define METRICS_USER_DEFINES		"metrics_defaults.def"
+#define METRICS_USER_DEFINES		"metrics.def"
 #endif
 
 typedef enum {
