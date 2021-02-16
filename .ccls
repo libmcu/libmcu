@@ -15,6 +15,7 @@ clang
 -Icomponents/shell/include
 -Icomponents/timext/include
 -Icomponents/button/include
+-Icomponents/metrics/include
 
 -I/usr/local/Cellar/cpputest/4.0/include
 
