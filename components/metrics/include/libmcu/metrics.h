@@ -8,13 +8,13 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-#if !defined(METRICS_USER_DEFINE)
-#define METRICS_USER_DEFINE		"libmcu/metrics_defaults.def"
+#if !defined(METRICS_USER_DEFINES)
+#define METRICS_USER_DEFINES		"libmcu/metrics_defaults.def"
 #endif
 
 typedef enum {
 #define METRICS_DEFINE(id, key)	key = id,
-#include METRICS_USER_DEFINE
+#include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 } metric_key_t;
 
