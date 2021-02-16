@@ -1,7 +1,1 @@
-METRICS_DEFINE(0, ReportIntervalMsMetric)
-METRICS_DEFINE(1, UnexpectedRebootCountMetric)
-METRICS_DEFINE(2, WallTimeMetric)
-METRICS_DEFINE(3, StackHighWaterMarkMetric)
-METRICS_DEFINE(4, HeapHighWaterMarkMetric)
-METRICS_DEFINE(5, ServerConnectedTimeMetric)
-METRICS_DEFINE(6, BatteryPctMetric)
+METRICS_DEFINE(0, ReportIntervalMs)

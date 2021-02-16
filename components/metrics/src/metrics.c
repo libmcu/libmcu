@@ -15,7 +15,7 @@ struct metrics_s {
 static pthread_mutex_t metrics_lock;
 static struct metrics_s metrics[] = {
 #define METRICS_DEFINE(id, key) (struct metrics_s){ .key_id = id, .value = 0, },
-#include "libmcu/metrics_defaults.def"
+#include METRICS_USER_DEFINE
 #undef METRICS_DEFINE
 };
 
@@ -55,9 +55,12 @@ static void reset_all(void)
 	}
 }
 
+// TODO: get the default encoder for CBOR
 LIBMCU_WEAK size_t metrics_encode(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value)
 {
+	unused(key);
+
 	if (bufsize < sizeof(value)) {
 		return 0;
 	}

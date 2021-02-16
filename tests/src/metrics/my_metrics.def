@@ -1,0 +1,7 @@
+METRICS_DEFINE(0, ReportIntervalMs)
+METRICS_DEFINE(1, UnexpectedRebootCount)
+METRICS_DEFINE(2, WallTime)
+METRICS_DEFINE(3, StackHighWaterMark)
+METRICS_DEFINE(4, HeapHighWaterMark)
+METRICS_DEFINE(5, ServerConnectedTime)
+METRICS_DEFINE(6, BatteryPct)
