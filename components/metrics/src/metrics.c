@@ -43,7 +43,7 @@ static struct metrics_s *get_obj_from_key(metric_key_t key)
 static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value))
 {
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		struct metrics_s *p = get_obj_from_index(i);
+		const struct metrics_s *p = get_obj_from_index(i);
 		callback_each(p->key_id, p->value);
 	}
 }
@@ -75,7 +75,7 @@ static size_t encode_all(uint8_t *buf, size_t bufsize)
 	size_t written = 0;
 
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		struct metrics_s *p = get_obj_from_index(i);
+		const struct metrics_s *p = get_obj_from_index(i);
 		written += metrics_encode(&buf[written], bufsize - written,
 				p->key_id, p->value);
 	}
