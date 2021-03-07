@@ -273,8 +273,6 @@ pubsub_error_t pubsub_publish(const char *topic, const void *msg, size_t msglen)
 	}
 	subscriptions_unlock();
 
-	debug("Publish to \"%s\"", topic);
-
 	return PUBSUB_SUCCESS;
 }
 
