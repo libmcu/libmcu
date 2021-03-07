@@ -5,14 +5,17 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#if !defined(DEFAULT_PTHREAD_NAME)
-#define DEFAULT_PTHREAD_NAME			"pthread"
+#if !defined(PTHREAD_STACK_MIN)
+#define PTHREAD_STACK_MIN			1024
 #endif
 #if !defined(DEFAULT_PTHREAD_STACK_SIZE)
 #define DEFAULT_PTHREAD_STACK_SIZE		3072
 #endif
 #if !defined(DEFAULT_PTHREAD_PRIORITY)
 #define DEFAULT_PTHREAD_PRIORITY		5
+#endif
+#if !defined(DEFAULT_PTHREAD_NAME)
+#define DEFAULT_PTHREAD_NAME			"pthread"
 #endif
 
 struct task_ctx {
@@ -42,7 +45,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (thread == NULL || start_routine == NULL) {
 		return -EINVAL;
 	}
-	if ((ctx = pvPortMalloc(*ctx)) == NULL) {
+	if ((ctx = pvPortMalloc(sizeof(*ctx))) == NULL) {
 		return -ENOMEM;
 	}
 
