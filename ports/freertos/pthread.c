@@ -29,9 +29,10 @@ static void task_wrapper(void *param)
 	void *(*task)(void *) = ctx->task;
 	void *arg = ctx->arg;
 
-	vPortFree(ctx);
+	vPortFree(param);
 
 	void *res = task(arg);
+	(void)res;
 }
 
 int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
@@ -59,7 +60,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	TaskHandle_t task_handle = NULL;
 	BaseType_t ok = xTaskCreate(task_wrapper,
-			"name",
+			name,
 			stack_size,
 			ctx,
 			pri,
