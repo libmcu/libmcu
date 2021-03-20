@@ -1,6 +1,6 @@
 #include "libmcu/ringbuf.h"
 #include <string.h>
-#include <strings.h>
+#include "libmcu/bitops.h"
 
 #define GET_INDEX(i, n)			((i) & ((n) - 1))
 
@@ -96,7 +96,7 @@ bool ringbuf_init(ringbuf_t *self, void *buf, size_t bufsize)
 
 	memset(buf, 0, bufsize);
 
-	self->capacity = 1U << (fls((int)bufsize) - 1); // must be power of 2
+	self->capacity = 1U << (flsl((long)bufsize) - 1); // must be power of 2
 	self->index = 0;
 	self->outdex = 0;
 	self->buffer = buf;

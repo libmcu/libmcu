@@ -5,9 +5,19 @@
 extern "C" {
 #endif
 
-static inline int fls(unsigned long x)
+#include <stdbool.h>
+#include <limits.h>
+
+#if defined(__GLIBC__)
+static inline int flsl(long x)
 {
-	return x? (int)sizeof(x) * 8 - __builtin_clzl(x) : 0;
+	return x? (int)sizeof(x) * CHAR_BIT - __builtin_clzl((unsigned long)x) : 0;
+}
+#endif
+
+static inline bool ispower2(unsigned int x)
+{
+	return (x & (x - 1)) == 0;
 }
 
 #if defined(__cplusplus)

@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <assert.h>
+#include <string.h>
 
 #include "libmcu/llist.h"
 #include "libmcu/bitops.h"
@@ -18,9 +19,9 @@
 #define MIN(x, y)			((x) > (y)? (y) : (x))
 #endif
 
-#define time_before(goal, chasing)	((int)(chasing) - (int)(goal)    < 0)
+#define time_before(goal, chasing)	(((int)(chasing) - (int)(goal)) < 0)
 
-#define SLOTS_BITS			(fls(NR_SLOTS) - 1)
+#define SLOTS_BITS			(flsl(NR_SLOTS) - 1)
 #define SLOTS_MASK			((1UL << SLOTS_BITS) - 1)
 #define WHEELS_BITS			(SLOTS_BITS * NR_WHEELS)
 #define MAX_WHEELS_TIMEOUT		(1UL << WHEELS_BITS)
@@ -48,7 +49,7 @@ static struct {
 static int get_wheel_index_from_timeout(apptimer_timeout_t timeout)
 {
 	assert(timeout != 0);
-	return MIN(WHEELS_BITS - 1, fls(timeout) - 1) / SLOTS_BITS;
+	return MIN(WHEELS_BITS - 1, flsl((long)timeout) - 1) / SLOTS_BITS;
 }
 
 static int get_slot_index_from_timeout(apptimer_timeout_t timeout,
