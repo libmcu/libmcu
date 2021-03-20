@@ -1,5 +1,6 @@
 #include "libmcu/ringbuf.h"
 #include <string.h>
+#include <strings.h>
 
 #define GET_INDEX(i, n)			((i) & ((n) - 1))
 
