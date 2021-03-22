@@ -1,5 +1,8 @@
 # button
 
+## Overview
+The debouncer that I implemented here learned from [Elliot Williams's Debounce Your Noisy Buttons article](https://hackaday.com/2015/12/10/embed-with-elliot-debounce-your-noisy-buttons-part-ii/).
+
 ## Integration Guide
 ### Define Parameters
 * `BUTTON_MAX`
