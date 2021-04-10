@@ -58,7 +58,7 @@ shell_cmd_error_t shell_cmd_info(int argc, const char *argv[], const void *env)
 		return SHELL_CMD_INVALID_PARAM;
 	}
 
-	const shell_io_t *io = env;
+	const shell_io_t *io = (const shell_io_t *)env;
 
 	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 

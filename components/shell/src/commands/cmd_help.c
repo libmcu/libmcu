@@ -11,7 +11,7 @@ shell_cmd_error_t shell_cmd_help(int argc, const char *argv[], const void *env)
 
 	const shell_cmd_t *commands = shell_get_command_list();
 	const shell_cmd_t *cmd;
-	const shell_io_t *io = env;
+	const shell_io_t *io = (const shell_io_t *)env;
 
 	for (int i = 0; (cmd = &commands[i]) && cmd->name; i++) {
 		io->write(cmd->name, strlen(cmd->name));
