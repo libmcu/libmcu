@@ -53,8 +53,8 @@ static void print_next_line(const shell_io_t *io)
 /* NOTE: Some of memory-mapped peripheral registers are word aligned. */
 static uint8_t read_byte_with_word_aligned(uintptr_t addr, int offset)
 {
-	uintptr_t aligned_addr = (addr + (uintptr_t)offset) & ~3U;
-	uint32_t word = *(const volatile uint32_t *)aligned_addr;
+	uintptr_t aligned_addr = (addr + (uintptr_t)offset) & ~3UL;
+	uintptr_t word = *(const volatile uintptr_t *)aligned_addr;
 	uintptr_t pos = (addr + (uintptr_t)offset) & 3;
 	uint8_t *p = (uint8_t *)&word;
 	return p[pos];
