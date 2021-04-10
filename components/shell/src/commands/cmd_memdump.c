@@ -16,7 +16,7 @@ static void print_addr(const shell_io_t *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, "%16p:", (uintptr_t *)addr);
-	io->write(buf, (size_t)strnlen(buf, BUFSIZE));
+	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
 static void print_space(const shell_io_t *io, int n)
@@ -30,7 +30,7 @@ static void print_hex(const shell_io_t *io, uint8_t val)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, " %02x", val);
-	io->write(buf, (size_t)strnlen(buf, BUFSIZE));
+	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
 static void print_ascii(const shell_io_t *io, uint8_t val)
@@ -39,7 +39,7 @@ static void print_ascii(const shell_io_t *io, uint8_t val)
 
 	if (val >= 0x20 && val < 0x7F) {
 		snprintf(buf, BUFSIZE-1, "%c", val);
-		io->write(buf, (size_t)strnlen(buf, BUFSIZE));
+		io->write(buf, strnlen(buf, BUFSIZE));
 	} else {
 		io->write(".", 1);
 	}
@@ -56,7 +56,7 @@ static uint8_t read_byte_with_word_aligned(uintptr_t addr, int offset)
 	uintptr_t aligned_addr = (addr + (uintptr_t)offset) & ~3UL;
 	uintptr_t word = *(const volatile uintptr_t *)aligned_addr;
 	uintptr_t pos = (addr + (uintptr_t)offset) & 3;
-	uint8_t *p = (uint8_t *)&word;
+	const uint8_t *p = (const uint8_t *)&word;
 	return p[pos];
 }
 
