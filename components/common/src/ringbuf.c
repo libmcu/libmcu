@@ -99,7 +99,7 @@ bool ringbuf_init(ringbuf_t *self, void *buf, size_t bufsize)
 	self->capacity = 1U << (flsl((long)bufsize) - 1); // must be power of 2
 	self->index = 0;
 	self->outdex = 0;
-	self->buffer = buf;
+	self->buffer = (uint8_t *)buf;
 
 	return true;
 }
@@ -110,10 +110,10 @@ ringbuf_t *ringbuf_new(size_t space_size)
 {
 	ringbuf_t *ringbuf;
 
-	if (!(ringbuf = calloc(1, sizeof(*ringbuf)))) {
+	if (!(ringbuf = (ringbuf_t *)calloc(1, sizeof(*ringbuf)))) {
 		return NULL;
 	}
-	if (!(ringbuf->buffer = calloc(1, space_size))) {
+	if (!(ringbuf->buffer = (uint8_t *)calloc(1, space_size))) {
 		free(ringbuf);
 		return NULL;
 	}

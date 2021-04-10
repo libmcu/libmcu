@@ -15,7 +15,7 @@
 static void print_addr(const shell_io_t *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
-	snprintf(buf, BUFSIZE-1, "%16zx:", addr);
+	snprintf(buf, BUFSIZE-1, "%16p:", (uintptr_t *)addr);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
@@ -50,11 +50,19 @@ static void print_next_line(const shell_io_t *io)
 	io->write("\r\n", 2);
 }
 
+/* NOTE: Some of memory-mapped peripheral registers are word aligned. */
+static uint8_t read_byte_with_word_aligned(uintptr_t addr, int offset)
+{
+	uintptr_t aligned_addr = (addr + (uintptr_t)offset) & ~3UL;
+	uintptr_t word = *(const volatile uintptr_t *)aligned_addr;
+	uintptr_t pos = (addr + (uintptr_t)offset) & 3;
+	const uint8_t *p = (const uint8_t *)&word;
+	return p[pos];
+}
+
 static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io)
 {
 	print_addr(io, addr);
-
-	const uint8_t *p = (uint8_t *)addr;
 
 	for (int i = 0; i < width; i++) {
 		if ((i % 8) == 0) {
@@ -64,17 +72,15 @@ static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io
 		if (i >= len) {
 			print_space(io, 3);
 		} else {
-			print_hex(io, p[i]);
+			print_hex(io, read_byte_with_word_aligned(addr, i));
 		}
 	}
 }
 
 static void memdump_ascii(uintptr_t addr, int len, const shell_io_t *io)
 {
-	const uint8_t *p = (uint8_t *)addr;
-
-	for (int j = 0; j < len; j++) {
-		print_ascii(io, p[j]);
+	for (int i = 0; i < len; i++) {
+		print_ascii(io, read_byte_with_word_aligned(addr, i));
 	}
 }
 
@@ -98,7 +104,7 @@ shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *en
 	static uintptr_t addr = (uintptr_t)&shell_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
-	const shell_io_t *io = env;
+	const shell_io_t *io = (const shell_io_t *)env;
 
 	switch (argc) {
 	case 1: // use the same address as before
@@ -107,10 +113,10 @@ shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *en
 #endif
 		break;
 	case 2: // with cached length
-		addr = (uintptr_t)strtol(argv[1], NULL, 16);
+		addr = (uintptr_t)strtoll(argv[1], NULL, 16);
 		break;
 	case 3:
-		addr = (uintptr_t)strtol(argv[1], NULL, 16);
+		addr = (uintptr_t)strtoll(argv[1], NULL, 16);
 		length = (int)strtol(argv[2], NULL, 10);
 		break;
 	default:
