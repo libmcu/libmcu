@@ -15,7 +15,7 @@
 static void print_addr(const shell_io_t *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
-	snprintf(buf, BUFSIZE-1, "%16lx:", (uint32_t)addr);
+	snprintf(buf, BUFSIZE-1, "%16p:", (uintptr_t *)addr);
 	io->write(buf, (size_t)strnlen(buf, BUFSIZE));
 }
 
