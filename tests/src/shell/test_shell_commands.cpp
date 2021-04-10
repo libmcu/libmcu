@@ -92,7 +92,7 @@ TEST_GROUP(memdump) {
 
 TEST(memdump, md_ShouldReturnOneByte_WhenLengthOneGiven) {
 	char fixed_mem[128];
-	sprintf(fixed_mem, "%16lx:  14                    ", (uintptr_t)memsrc);
+	sprintf(fixed_mem, "%16p:  14                    ", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "1", };
 	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_memdump(3, argv, &io));
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
@@ -100,9 +100,9 @@ TEST(memdump, md_ShouldReturnOneByte_WhenLengthOneGiven) {
 
 TEST(memdump, md_ShouldReturnAligned16Bytes_WhenLength16Given) {
 	char fixed_mem[128];
-	sprintf(fixed_mem, "%16lx:  14 15 16 17 18 19 1a 1b  "
+	sprintf(fixed_mem, "%16p:  14 15 16 17 18 19 1a 1b  "
 			"1c 1d 1e 1f 20 21 22 23    "
-			"............ !\"#", (uintptr_t)memsrc);
+			"............ !\"#", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "16", };
 	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_memdump(3, argv, &io));
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
@@ -110,7 +110,7 @@ TEST(memdump, md_ShouldReturnAligned16Bytes_WhenLength16Given) {
 
 TEST(memdump, md_ShouldReturnPreviosMemoryAddr_WhenNoArgsGiven) {
 	char fixed_mem[128];
-	sprintf(fixed_mem, "%16lx:", (uintptr_t)memsrc);
+	sprintf(fixed_mem, "%16p:", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "16", };
 	shell_cmd_memdump(3, argv, &io);
 	clear_spy_buffer();
@@ -121,8 +121,8 @@ TEST(memdump, md_ShouldReturnPreviosMemoryAddr_WhenNoArgsGiven) {
 
 TEST(memdump, md_ShouldReturnPreviousLength_WhenNoLengthGiven) {
 	char fixed_mem[128];
-	sprintf(fixed_mem, "%16lx:  14 15 16 17 18 19 1a 1b"
-			"                         ", (uintptr_t)memsrc);
+	sprintf(fixed_mem, "%16p:  14 15 16 17 18 19 1a 1b"
+			"                         ", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "8", };
 	shell_cmd_memdump(3, argv, &io);
 	clear_spy_buffer();
