@@ -1,3 +1,5 @@
+cmake_policy(SET CMP0057 NEW)
+
 if (NOT "common" IN_LIST LIBMCU_COMPONENTS)
 	list(APPEND LIBMCU_COMPONENTS common)
 endif()
