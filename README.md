@@ -49,3 +49,14 @@ include $(LIBMCU_ROOT)/projects/components.mk
 <SRC_FILES> += $(LIBMCU_COMPONENTS_SRCS)
 <INC_PATHS> += $(LIBMCU_COMPONENTS_INCS)
 ```
+
+#### CMake
+
+```cmake
+set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
+list(APPEND LIBMCU_COMPONENTS logging pubsub metrics)
+include(${LIBMCU_ROOT}/projects/components.cmake)
+
+# Add ${LIBMCU_COMPONENTS_SRCS} to your target sources
+# Add ${LIBMCU_COMPONENTS_INCS} to your target includes
+```
