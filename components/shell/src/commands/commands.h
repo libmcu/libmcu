@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "../shell_command.h"
+#include "libmcu/shell_command.h"
 
 shell_cmd_error_t shell_cmd_exit(int argc, const char *argv[], const void *env);
 shell_cmd_error_t shell_cmd_help(int argc, const char *argv[], const void *env);

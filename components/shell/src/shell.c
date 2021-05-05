@@ -1,8 +1,7 @@
 #include "libmcu/shell.h"
+#include "libmcu/shell_command.h"
 #include <string.h>
 #include <assert.h>
-#include "shell_command.h"
-#include "commands/commands.h"
 
 #if !defined(SHELL_COMMAND_MAXLEN)
 #define SHELL_COMMAND_MAXLEN			32

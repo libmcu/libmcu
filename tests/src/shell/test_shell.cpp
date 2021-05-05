@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
 #include "libmcu/shell.h"
-#include "shell_command.h"
+#include "libmcu/shell_command.h"
 
 static shell_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 {
