@@ -12,11 +12,13 @@ extern "C" {
 #define METRICS_USER_DEFINES		"metrics.def"
 #endif
 
-typedef enum {
+enum {
 #define METRICS_DEFINE(id, key)	key = id,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
-} metric_key_t;
+};
+
+typedef uint8_t metric_key_t;
 
 void metrics_set(metric_key_t key, int32_t val);
 void metrics_increase(metric_key_t key);
