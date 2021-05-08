@@ -14,7 +14,7 @@ struct metrics {
 
 static pthread_mutex_t metrics_lock;
 static struct metrics metrics[] = {
-#define METRICS_DEFINE(id, kstr) (struct metrics){ .key = kstr, .value = 0, },
+#define METRICS_DEFINE(id, keystr) (struct metrics){ .key = keystr, .value = 0, },
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };
