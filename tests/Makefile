@@ -1,21 +1,21 @@
-export CPPUTEST_HOME = ../external/cpputest
+export CPPUTEST_HOME = cpputest
 export BUILDIR ?= build
-export INCLUDE_DIRS += \
-	../components/common/include/libmcu/posix \
-	../components/common/include \
-	. \
-	$(CPPUTEST_HOME)/include
 
-TESTS := $(shell find test_runners -type f -regex ".*runner\.mk")
+TESTS := $(shell find runners -type f -regex ".*\.mk")
 
-.PHONY: all
+.PHONY: all test compile gcov debug flags
 all: test
-.PHONY: test
 test: BUILD_RULE=all
 test: $(TESTS)
-.PHONY: compile
 compile: BUILD_RULE=start
 compile: $(TESTS)
+gcov: BUILD_RULE=gcov
+gcov: $(TESTS)
+debug: BUILD_RULE=debug
+debug: $(TESTS)
+flags: BUILD_RULE=flags
+flags: $(TESTS)
+
 .PHONY: $(TESTS)
 $(TESTS):
 	$(MAKE) -f $@ $(BUILD_RULE)
@@ -47,10 +47,13 @@ $(BUILDIR): $(TESTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILDIR)
+	$(Q)rm -rf $(BUILDIR)
 
 .PHONY: install reinstall
-install:
+install: | $(CPPUTEST_HOME)
 	@cd $(CPPUTEST_HOME) && autoreconf -i && ./configure && make
 reinstall:
 	@cd $(CPPUTEST_HOME) && make
+$(CPPUTEST_HOME):
+	@git clone -b hack/malloc --single-branch \
+		https://github.com/onkwon/cpputest.git $@

@@ -1,3 +1,0 @@
-[submodule "external/cpputest"]
-	path = external/cpputest
-	url = https://github.com/onkwon/cpputest.git
