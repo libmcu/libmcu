@@ -1,7 +1,7 @@
 COMPONENT_NAME = list
 
 SRC_FILES = \
-	stubs/empty.c
+	stubs/bitops.c
 
 TEST_SRC_FILES = \
 	src/common/test_list.cpp \
