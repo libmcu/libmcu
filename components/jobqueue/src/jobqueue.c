@@ -119,7 +119,7 @@ static void *jobqueue_task(void *e)
 	info("new thread created. %u running",
 			((jobqueue_t *)e)->active_threads);
 
-	while (jobqueue_process(e)) {
+	while (jobqueue_process((jobqueue_t *)e)) {
 	}
 
 	info("terminating thread");
@@ -163,7 +163,7 @@ jobqueue_t *jobqueue_create(uint8_t max_concurrent_jobs)
 {
 	jobqueue_t *pool;
 
-	if (!(pool = calloc(1, sizeof(*pool)))) {
+	if (!(pool = (jobqueue_t *)calloc(1, sizeof(*pool)))) {
 		goto out_err;
 	}
 	if (sem_init(&pool->job_queue, 0, 0) != 0) {

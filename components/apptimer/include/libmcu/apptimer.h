@@ -21,7 +21,7 @@ typedef enum {
 } apptimer_error_t;
 
 typedef union {
-#if defined(__WORDSIZE) && __WORDSIZE == 64
+#if defined(__SIZE_WIDTH__) && __SIZE_WIDTH__ == 64
 	char _size[56];
 #else
 	char _size[28];

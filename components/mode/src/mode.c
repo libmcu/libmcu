@@ -83,7 +83,7 @@ int mode_register_transition_callback(const mode_transition_callback_t callback)
 
 	struct callback_obj *p;
 
-	if (!(p = malloc(sizeof(*p)))) {
+	if (!(p = (struct callback_obj *)malloc(sizeof(*p)))) {
 		return -1;
 	}
 

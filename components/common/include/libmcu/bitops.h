@@ -8,7 +8,7 @@ extern "C" {
 #include <stdbool.h>
 #include <limits.h>
 
-#if defined(__GLIBC__)
+#if !defined(__clang__)
 static inline int flsl(long x)
 {
 	return x? (int)sizeof(x) * CHAR_BIT - __builtin_clzl((unsigned long)x) : 0;
