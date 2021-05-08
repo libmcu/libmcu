@@ -119,7 +119,7 @@ static size_t logging_peek_internal(void *buf, size_t bufsize)
 	} \
 	va_end(ap); \
 	if (len > 0 && len <= LOGGING_MESSAGE_MAXLEN) { \
-		ptr->message_length = (typeof(ptr->message_length))len; \
+		ptr->message_length = (uint8_t)len; \
 	} \
 } while (0)
 

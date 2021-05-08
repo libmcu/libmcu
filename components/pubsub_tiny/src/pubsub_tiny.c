@@ -156,7 +156,7 @@ pubsub_error_t pubsub_create(const char *topic_name)
 	topic_t *topic;
 	pubsub_error_t err = PUBSUB_EXIST_TOPIC;
 	size_t topic_len = (topic_name == NULL)? 0 :
-		strnlen(topic_name, PUBSUB_TOPIC_NAME_MAXLEN);
+		(size_t)strnlen(topic_name, PUBSUB_TOPIC_NAME_MAXLEN);
 
 	if (topic_len == 0) {
 		return PUBSUB_INVALID_PARAM;

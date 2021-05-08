@@ -7,19 +7,21 @@
 #define ARRAY_LEN(arr)		(sizeof(arr) / sizeof(arr[0]))
 #define METRICS_LEN		ARRAY_LEN(metrics)
 
-struct metrics_s {
-	const uint8_t key_id;
+struct metrics {
+	const metric_key_t key;
 	int32_t value;
-};
+} LIBMCU_PACKED;
 
 static pthread_mutex_t metrics_lock;
-static struct metrics_s metrics[] = {
-#define METRICS_DEFINE(id, key) (struct metrics_s){ .key_id = id, .value = 0, },
+static struct metrics metrics[] = {
+#define METRICS_DEFINE(id, _key) (struct metrics){ .key = _key, .value = 0, },
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };
 
-static struct metrics_s *get_obj_from_index(uint32_t index)
+LIBMCU_STATIC_ASSERT(sizeof(metric_key_t) == 1, "");
+
+static struct metrics *get_obj_from_index(uint32_t index)
 {
 	return &metrics[index];
 }
@@ -27,7 +29,7 @@ static struct metrics_s *get_obj_from_index(uint32_t index)
 static uint32_t get_index_from_key(metric_key_t key)
 {
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		if (get_obj_from_index(i)->key_id == key) {
+		if (get_obj_from_index(i)->key == key) {
 			return i;
 		}
 	}
@@ -35,7 +37,7 @@ static uint32_t get_index_from_key(metric_key_t key)
 	assert(0);
 }
 
-static struct metrics_s *get_obj_from_key(metric_key_t key)
+static struct metrics *get_obj_from_key(metric_key_t key)
 {
 	return get_obj_from_index(get_index_from_key(key));
 }
@@ -43,8 +45,8 @@ static struct metrics_s *get_obj_from_key(metric_key_t key)
 static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value))
 {
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		const struct metrics_s *p = get_obj_from_index(i);
-		callback_each(p->key_id, p->value);
+		const struct metrics *p = get_obj_from_index(i);
+		callback_each(p->key, p->value);
 	}
 }
 
@@ -55,7 +57,6 @@ static void reset_all(void)
 	}
 }
 
-// TODO: get the default encoder for CBOR
 LIBMCU_WEAK size_t metrics_encode(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value)
 {
@@ -75,9 +76,9 @@ static size_t encode_all(uint8_t *buf, size_t bufsize)
 	size_t written = 0;
 
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		const struct metrics_s *p = get_obj_from_index(i);
+		const struct metrics *p = get_obj_from_index(i);
 		written += metrics_encode(&buf[written], bufsize - written,
-				p->key_id, p->value);
+				p->key, p->value);
 	}
 
 	return written;
@@ -125,7 +126,7 @@ size_t metrics_get_encoded(void *buf, size_t bufsize)
 
 	pthread_mutex_lock(&metrics_lock);
 	{
-		written = encode_all(buf, bufsize);
+		written = encode_all((uint8_t *)buf, bufsize);
 	}
 	pthread_mutex_unlock(&metrics_lock);
 

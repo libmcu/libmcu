@@ -12,6 +12,8 @@ INCLUDE_DIRS += \
 	../components/logging/include \
 	../components/metrics/include
 
-CPPUTEST_CPPFLAGS += -DMETRICS_USER_DEFINES=\"src/metrics/my_metrics.def\"
+CPPUTEST_CPPFLAGS += \
+	-fshort-enums \
+	-DMETRICS_USER_DEFINES=\"src/metrics/my_metrics.def\"
 
 include test_runners/MakefileRunner.mk
