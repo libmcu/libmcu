@@ -1,4 +1,6 @@
-## Usage
+# Metrics
+
+## Integration Guide
 
 1. Define your metrics with the `METRICS_DEFINE` macro in a file. e.g. [metrics.def](include/metrics.def)
 2. Let the compiler know where your file is located using `METRICS_USER_DEFINES`
