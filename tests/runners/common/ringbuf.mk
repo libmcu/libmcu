@@ -1,6 +1,7 @@
 COMPONENT_NAME = ringbuf
 
 SRC_FILES = \
+	stubs/bitops.c \
 	../components/common/src/ringbuf.c \
 
 TEST_SRC_FILES = \
