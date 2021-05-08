@@ -7,6 +7,7 @@ include projects/components.mk
 SRCS += $(LIBMCU_COMPONENTS_SRCS)
 INCS += $(LIBMCU_COMPONENTS_INCS)
 DEFS += \
+	METRICS_USER_DEFINES=\"../src/metrics.def\" \
 	_POSIX_C_SOURCE=200809L \
 	_POSIX_THREADS \
 	BUILD_DATE=\""$(shell date)"\" \

@@ -1,0 +1,3 @@
+METRICS_DEFINE(1, HeartbeatInterval)
+METRICS_DEFINE(2, HeapLowWatermark)
+METRICS_DEFINE(3, StackHighWatermark)
