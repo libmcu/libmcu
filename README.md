@@ -1,7 +1,8 @@
 # libmcu
 ![Build Status](https://github.com/onkwon/libmcu/workflows/build/badge.svg)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=alert_status)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=security_rating)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=coverage)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
 [![codecov](https://codecov.io/gh/onkwon/libmcu/branch/master/graph/badge.svg?token=KBLNIEKUF4)](https://codecov.io/gh/onkwon/libmcu)
 
 ## Overview
@@ -25,7 +26,6 @@ examples can also be found under [examples](examples).
 * [mode](components/mode)
 * [pubsub](components/pubsub)
 * [pubsub_tiny](components/pubsub_tiny)
-* [queue](components/queue)
 * [retry](components/retry)
 * [shell](components/shell)
 * [timext](components/timext)
