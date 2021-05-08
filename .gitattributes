@@ -1,1 +1,1 @@
-tests/src/*.cpp -linguist-detectable
+*.h linguist-language=C

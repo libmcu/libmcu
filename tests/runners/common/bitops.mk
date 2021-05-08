@@ -1,10 +1,10 @@
-COMPONENT_NAME = llist
+COMPONENT_NAME = bitops
 
 SRC_FILES = \
-	stubs/bitops.c
+	../components/common/src/bitops.c
 
 TEST_SRC_FILES = \
-	src/common/test_llist.cpp \
+	src/common/bitops_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \

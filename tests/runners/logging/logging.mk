@@ -1,6 +1,7 @@
 COMPONENT_NAME = logging
 
 SRC_FILES = \
+	stubs/bitops.c \
 	../examples/memory_storage.c \
 	../components/common/src/ringbuf.c \
 	../components/logging/src/logging.c
