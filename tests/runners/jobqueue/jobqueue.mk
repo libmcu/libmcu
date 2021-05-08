@@ -8,12 +8,19 @@ SRC_FILES = \
 	../components/jobqueue/src/jobqueue.c
 
 TEST_SRC_FILES = \
-	src/jobqueue/test_jobqueue.cpp
+	src/jobqueue/jobqueue_test.cpp \
+	src/test_all.cpp \
 
-INCLUDE_DIRS += \
+INCLUDE_DIRS = \
 	stubs \
 	../components/common/include/libmcu/posix \
+	../components/common/include \
 	../components/logging/include \
-	../components/jobqueue/include
+	../components/jobqueue/include \
+	$(CPPUTEST_HOME)/include \
+	. \
 
-include test_runners/MakefileRunner.mk
+MOCKS_SRC_DIRS =
+CPPUTEST_CPPFLAGS = -DUNITTEST
+
+include MakefileRunner.mk

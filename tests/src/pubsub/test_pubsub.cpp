@@ -3,6 +3,8 @@
 #include <string.h>
 #include "libmcu/pubsub.h"
 
+static const char *topic = "group/user/id";
+
 static int callback_count;
 static uint8_t message_spy[128];
 static size_t message_length_spy;
@@ -14,7 +16,6 @@ static void callback(void *context, const void *msg, size_t msglen)
 }
 
 TEST_GROUP(PubSub) {
-	const char *topic = "group/user/id";
 	pubsub_subscribe_t subs[PUBSUB_MIN_SUBSCRIPTION_CAPACITY];
 
 	void setup(void) {
