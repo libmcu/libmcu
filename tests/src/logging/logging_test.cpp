@@ -102,15 +102,22 @@ TEST(logging, get_level_ShouldReturnVerbose_WhenInitialStateGiven) {
 	LONGS_EQUAL(LOGGING_TYPE_VERBOSE, logging_get_level_current());
 }
 TEST(logging, get_level_ShouldReturnGlobalLogLevel_WhenTagFull) {
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#1"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#2"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#3"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#4"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#5"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#6"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#7"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#8"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "NEW"}, "");
+	const logging_context l1 = { .tag = "#1", };
+	const logging_context l2 = { .tag = "#2", };
+	const logging_context l3 = { .tag = "#3", };
+	const logging_context l4 = { .tag = "#4", };
+	const logging_context l5 = { .tag = "#5", };
+	const logging_context l6 = { .tag = "#6", };
+	const logging_context l7 = { .tag = "#7", };
+	const logging_context l8 = { .tag = "#8", };
+	logging_save(LOGGING_TYPE_INFO, &l1, "");
+	logging_save(LOGGING_TYPE_INFO, &l2, "");
+	logging_save(LOGGING_TYPE_INFO, &l3, "");
+	logging_save(LOGGING_TYPE_INFO, &l4, "");
+	logging_save(LOGGING_TYPE_INFO, &l5, "");
+	logging_save(LOGGING_TYPE_INFO, &l6, "");
+	logging_save(LOGGING_TYPE_INFO, &l7, "");
+	logging_save(LOGGING_TYPE_INFO, &l8, "");
 	logging_set_level("NEW", LOGGING_TYPE_ERROR);
 	LONGS_EQUAL(LOGGING_TYPE_VERBOSE, logging_get_level("NEW"));
 }
@@ -145,10 +152,12 @@ TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
 		.withParameter("datasize", 42);
 	mock().setData("expectedSize", 42);
 
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){
-			.tag = "mytag",
-			.pc = (const void *)0xc0decafe,
-			.lr = (const void *)0xfeedbeef, }, "The first test");
+	const logging_context l = {
+		.tag = "mytag",
+		.pc = (const void *)0xc0decafe,
+		.lr = (const void *)0xfeedbeef,
+	};
+	logging_save(LOGGING_TYPE_INFO, &l, "The first test");
 }
 TEST(logging, save_ShouldNotWriteLog_WhenLogLevelIsError) {
 	mock().expectNoCall("storage_write");
@@ -161,24 +170,24 @@ TEST(logging, save_ShouldNotWriteLog_WhenGlobalLogLevelIsError) {
 	info("Should not write");
 }
 IGNORE_TEST(logging, save_ShouldTakeCareOfNullPointer_WhenNullMessageDelivered) {
-	size_t written = logging_save(LOGGING_TYPE_INFO,
-			&(const logging_context){.tag = "#1"}, NULL);
+	const logging_context l = { .tag = "#1", };
+	size_t written = logging_save(LOGGING_TYPE_INFO, &l, NULL);
 	uint8_t buf[128];
 	size_t bytes_read = logging_read(buf, sizeof(buf));
 	LONGS_EQUAL(written, bytes_read);
 }
 TEST(logging, save_ShouldReturnZero_WhenLogLevelIsLowerThanMinLogLevel) {
+	const logging_context default_logctx = { .tag = TAG, };
 	logging_set_level_current(LOGGING_TYPE_ERROR);
-	LONGS_EQUAL(0, logging_save(LOGGING_TYPE_INFO,
-				&(const logging_context){.tag = TAG}, ""));
+	LONGS_EQUAL(0, logging_save(LOGGING_TYPE_INFO, &default_logctx, ""));
 }
 TEST(logging, save_ShouldReturnZero_WhenLogLevelIsInvalid) {
-	LONGS_EQUAL(0, logging_save(LOGGING_TYPE_MAX,
-				&(const logging_context){.tag = TAG}, ""));
+	const logging_context default_logctx = { .tag = TAG, };
+	LONGS_EQUAL(0, logging_save(LOGGING_TYPE_MAX, &default_logctx, ""));
 }
 TEST(logging, save_ShouldReturnWrittenSize) {
-	LONGS_EQUAL(28, logging_save(LOGGING_TYPE_INFO,
-				&(const logging_context){.tag = TAG}, ""));
+	const logging_context default_logctx = { .tag = TAG, };
+	LONGS_EQUAL(28, logging_save(LOGGING_TYPE_INFO, &default_logctx, ""));
 }
 TEST(logging, save_ShouldParseFormattedString) {
 	const uint8_t expected[] = {
@@ -194,7 +203,8 @@ TEST(logging, save_ShouldParseFormattedString) {
 		.withParameter("datasize", 45);
 	mock().setData("expectedSize", 45);
 
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = TAG},
+	const logging_context default_logctx = { .tag = TAG, };
+	logging_save(LOGGING_TYPE_INFO, &default_logctx,
 			"fmt %d: %s", 123, "mystring");
 }
 
@@ -218,21 +228,19 @@ TEST(logging, count_tags_ShouldReturnZero_WhenInitialStateGiven) {
 	LONGS_EQUAL(0, logging_count_tags());
 }
 TEST(logging, count_tags_ShouldReturnNumberOfTags) {
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){
-			.tag = "#1",
-			.pc = (const void *)0xc0decafe,
-			.lr = (const void *)0xfeedbeef, }, "");
+	const logging_context l1 = { .tag = "#1", };
+	const logging_context l2 = { .tag = "#2", };
+	logging_save(LOGGING_TYPE_INFO, &l1, "");
 	LONGS_EQUAL(1, logging_count_tags());
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){
-			.tag = "#2",
-			.pc = (const void *)0xc0decafe,
-			.lr = (const void *)0xfeedbeef, }, "");
+	logging_save(LOGGING_TYPE_INFO, &l2, "");
 	LONGS_EQUAL(2, logging_count_tags());
 }
 
 TEST(logging, iterate_tag_ShouldRunCallback) {
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#1"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#2"}, "");
+	const logging_context l1 = { .tag = "#1", };
+	const logging_context l2 = { .tag = "#2", };
+	logging_save(LOGGING_TYPE_INFO, &l1, "");
+	logging_save(LOGGING_TYPE_INFO, &l2, "");
 	logging_set_level("#1", LOGGING_TYPE_INFO);
 	logging_set_level("#2", LOGGING_TYPE_ERROR);
 
@@ -264,9 +272,12 @@ TEST(logging, count_ShouldReturnTotalNumberOfLogsSaved_WhenMultiTagsGiven) {
 	mock().expectOneCall("storage_count").andReturnValue(3);
 	mock().expectNCalls(3, "storage_write").ignoreOtherParameters();
 
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#1"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#2"}, "");
-	logging_save(LOGGING_TYPE_INFO, &(const logging_context){.tag = "#2"}, "");
+	const logging_context l1 = { .tag = "#1", };
+	const logging_context l2 = { .tag = "#2", };
+	const logging_context l3 = { .tag = "#3", };
+	logging_save(LOGGING_TYPE_INFO, &l1, "");
+	logging_save(LOGGING_TYPE_INFO, &l2, "");
+	logging_save(LOGGING_TYPE_INFO, &l3, "");
 
 	LONGS_EQUAL(3, logging_count());
 }
@@ -284,9 +295,10 @@ TEST(logging, read_ShouldReturnZero_WhenBufSizeNotEnough) {
 	LONGS_EQUAL(0, logging_read(buf, sizeof(buf)));
 }
 TEST(logging, read_ShouldReturnLogSize) {
+	const logging_context default_logctx = { .tag = TAG, };
 	uint8_t buf[128];
-	size_t bytes_written = logging_save(LOGGING_TYPE_INFO,
-			&(const logging_context){.tag = TAG}, NULL);
+	size_t bytes_written = logging_save(LOGGING_TYPE_INFO, &default_logctx,
+			NULL);
 	mock().expectOneCall("storage_read").andReturnValue(bytes_written);
 	LONGS_EQUAL(bytes_written, logging_read(buf, sizeof(buf)));
 }

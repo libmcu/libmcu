@@ -17,6 +17,14 @@ extern "C" {
 #if !defined(LOGGING_TAGS_MAXNUM)
 #define LOGGING_TAGS_MAXNUM			8
 #endif
+#if !defined(LOGGING_TAG)
+#define LOGGING_TAG				__FILE__
+#endif
+
+#define logging_set_level_current(level)	\
+	logging_set_level(LOGGING_TAG, level)
+#define logging_get_level_current()		\
+	logging_get_level(LOGGING_TAG)
 
 enum logging_type {
 	LOGGING_TYPE_VERBOSE			= 0,
@@ -61,16 +69,7 @@ size_t logging_count_tags(void);
 void logging_iterate_tag(void (*callback_each)(const char *tag,
 			logging_t min_log_level));
 
-#if !defined(LOGGING_TAG)
-#define LOGGING_TAG				__FILE__
-#endif
-
-#define logging_set_level_current(level)	\
-	logging_set_level(LOGGING_TAG, level)
-#define logging_get_level_current()		\
-	logging_get_level(LOGGING_TAG)
-
-/* Wrappers for convenience */
+/* helpers for convenience */
 #if !defined(get_program_counter)
 	#if defined(__GNUC__)
 	#define get_program_counter()		({__label__ l; l: &&l; })
@@ -80,11 +79,12 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 #endif
 
 #define LOGGING_WRAPPER(type, ...) do { 				\
-	logging_save(type, &(const struct logging_context){		\
-			.tag = LOGGING_TAG,				\
-			.pc = get_program_counter(),			\
-			.lr = __builtin_return_address(0),		\
-			}, __VA_ARGS__);				\
+	const struct logging_context ctx = {				\
+		.tag = LOGGING_TAG,					\
+		.pc = get_program_counter(),				\
+		.lr = __builtin_return_address(0),			\
+	};								\
+	logging_save(type, &ctx, __VA_ARGS__);				\
 } while (0)
 
 #define verbose(...) \
