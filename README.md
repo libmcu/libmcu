@@ -9,7 +9,7 @@
 A toolkit for firmware development.
 
 The documentation of each components are under the subdirectories. Some usage
-examples can also be found under [examples](examples).
+examples can also be found under [examples](examples) and [test cases](tests/src).
 
 ## Components
 * [apptimer](components/apptimer)

@@ -1,8 +1,8 @@
 #include "libmcu/pubsub.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
 
