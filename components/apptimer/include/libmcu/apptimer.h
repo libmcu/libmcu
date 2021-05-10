@@ -12,6 +12,10 @@ extern "C" {
 #define APPTIMER_MAX_TIMEOUT		\
 	((1UL << (sizeof(apptimer_timeout_t) * CHAR_BIT - 1)) - 1)
 
+#if !defined(APPTIMER_DEBUG)
+#define APPTIMER_DEBUG(...)
+#endif
+
 typedef enum {
 	APPTIMER_SUCCESS		= 0,
 	APPTIMER_ERROR			= -1,

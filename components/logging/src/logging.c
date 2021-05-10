@@ -56,14 +56,12 @@ static const char *stringify_type(logging_t type)
 		return "DEBUG";
 	case LOGGING_TYPE_INFO:
 		return "INFO";
-	case LOGGING_TYPE_NOTICE:
-		return "NOTICE";
 	case LOGGING_TYPE_WARN:
 		return "WARN";
 	case LOGGING_TYPE_ERROR:
 		return "ERROR";
-	case LOGGING_TYPE_ALERT:
-		return "ALERT";
+	case LOGGING_TYPE_NONE:
+		return "NONE";
 	default:
 		break;
 	}
@@ -359,14 +357,14 @@ logging_t logging_get_level_global(void)
 	return get_global_tag()->min_log_level;
 }
 
-void logging_init(const logging_storage_t *ops)
+void logging_init(const logging_storage_t *log_storage)
 {
-	assert(ops != NULL);
+	assert(log_storage != NULL);
 
 	pthread_mutex_init(&m.lock, NULL);
 
 	clear_tags();
-	m.storage = ops;
+	m.storage = log_storage;
 }
 
 void logging_iterate_tag(void (*callback_each)(const char *tag,

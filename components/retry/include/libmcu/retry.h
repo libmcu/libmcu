@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#if !defined(RETRY_DEBUG)
+#define RETRY_DEBUG(...)
+#endif
+
 #include <stdint.h>
 
 typedef enum {

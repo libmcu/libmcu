@@ -7,7 +7,6 @@
 
 #include "libmcu/list.h"
 #include "libmcu/compiler.h"
-#include "libmcu/logging.h"
 
 #if !defined(PUBSUB_TOPIC_DESTROY_MESSAGE)
 #define PUBSUB_TOPIC_DESTROY_MESSAGE			"topic destroyed"
@@ -145,7 +144,7 @@ static subscribe_t *subscribe_core(subscribe_t *obj,
 	obj->callback = cb;
 	obj->context = context;
 
-	info("Subscribe to %s", topic_name);
+	PUBSUB_DEBUG("Subscribe to %s", topic_name);
 
 	return obj;
 }
@@ -176,7 +175,7 @@ pubsub_error_t pubsub_create(const char *topic_name)
 	pubsub_unlock();
 
 	if (duplicated == NULL) {
-		info("%s topic created", topic->name);
+		PUBSUB_DEBUG("%s topic created", topic->name);
 		return PUBSUB_SUCCESS;
 	}
 
@@ -208,7 +207,7 @@ pubsub_error_t pubsub_destroy(const char *topic_name)
 		return PUBSUB_NO_EXIST_TOPIC;
 	}
 
-	info("%s " PUBSUB_TOPIC_DESTROY_MESSAGE, topic->name);
+	PUBSUB_DEBUG("%s " PUBSUB_TOPIC_DESTROY_MESSAGE, topic->name);
 
 	free(topic);
 
@@ -236,7 +235,7 @@ pubsub_error_t pubsub_publish(const char *topic_name,
 		return PUBSUB_NO_EXIST_TOPIC;
 	}
 
-	debug("Publish to %s", topic->name);
+	PUBSUB_DEBUG("Publish to %s", topic->name);
 
 	return PUBSUB_SUCCESS;
 }
@@ -280,7 +279,7 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
 	}
 	pubsub_unlock();
 
-	info("Unsubscribe from %s", p->topic->name);
+	PUBSUB_DEBUG("Unsubscribe from %s", p->topic->name);
 
 	if (!IS_SUBSCRIBER_STATIC(p)) {
 		free(p);

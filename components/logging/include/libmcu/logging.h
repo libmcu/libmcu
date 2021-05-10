@@ -30,10 +30,9 @@ enum logging_type {
 	LOGGING_TYPE_VERBOSE			= 0,
 	LOGGING_TYPE_DEBUG,
 	LOGGING_TYPE_INFO,
-	LOGGING_TYPE_NOTICE,
 	LOGGING_TYPE_WARN,
 	LOGGING_TYPE_ERROR,
-	LOGGING_TYPE_ALERT,
+	LOGGING_TYPE_NONE,
 	LOGGING_TYPE_MAX,
 };
 typedef uint8_t logging_t;
@@ -44,7 +43,7 @@ struct logging_context {
 	const void *lr;
 };
 
-void logging_init(const logging_storage_t *ops);
+void logging_init(const logging_storage_t *log_storage);
 size_t logging_save(logging_t type, const struct logging_context *ctx, ...);
 size_t logging_read(void *buf, size_t bufsize);
 size_t logging_peek(void *buf, size_t bufsize);
@@ -93,14 +92,10 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 	LOGGING_WRAPPER(LOGGING_TYPE_DEBUG, __VA_ARGS__)
 #define info(...) \
 	LOGGING_WRAPPER(LOGGING_TYPE_INFO, __VA_ARGS__)
-#define notice(...) \
-	LOGGING_WRAPPER(LOGGING_TYPE_NOTICE, __VA_ARGS__)
 #define warn(...) \
 	LOGGING_WRAPPER(LOGGING_TYPE_WARN, __VA_ARGS__)
 #define error(...) \
 	LOGGING_WRAPPER(LOGGING_TYPE_ERROR, __VA_ARGS__)
-#define alert(...) \
-	LOGGING_WRAPPER(LOGGING_TYPE_ALERT, __VA_ARGS__)
 
 #if defined(__cplusplus)
 }

@@ -1,13 +1,12 @@
 #include "libmcu/pubsub.h"
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
 
 #include "libmcu/compiler.h"
-#include "libmcu/logging.h"
 
 #if !defined(PUBSUB_MIN_SUBSCRIPTION_CAPACITY)
 #define PUBSUB_MIN_SUBSCRIPTION_CAPACITY		4
@@ -128,7 +127,7 @@ static bool expand_subscription_capacity(void)
 	m.subscription.pool = new_subs;
 	free(old_subs);
 
-	info("Expanded from %u to %u", capacity, new_capacity);
+	PUBSUB_DEBUG("Expanded from %u to %u", capacity, new_capacity);
 	return true;
 }
 
@@ -160,14 +159,14 @@ static void shrink_subscription_capacity(void)
 	m.subscription.pool = new_subs;
 	free(old_subs);
 
-	info("Shrunken from %u to %u", capacity, new_capacity);
+	PUBSUB_DEBUG("Shrunken from %u to %u", capacity, new_capacity);
 }
 
 static bool register_subscription(const subscribe_t *sub)
 {
 	if (m.subscription.length >= m.subscription.capacity) {
 		if (!expand_subscription_capacity()) {
-			error("can't expand");
+			PUBSUB_DEBUG("can't expand");
 			return false;
 		}
 	}
@@ -176,7 +175,8 @@ static bool register_subscription(const subscribe_t *sub)
 		if (m.subscription.pool[i] == NULL) {
 			m.subscription.pool[i] = sub;
 			m.subscription.length++;
-			debug("%p added for \"%s\"", sub, sub->topic_filter);
+			PUBSUB_DEBUG("%p added for \"%s\"",
+					sub, sub->topic_filter);
 			return true;
 		}
 	}
@@ -191,12 +191,13 @@ static bool unregister_subscription(const subscribe_t *sub)
 			m.subscription.pool[i] = NULL;
 			m.subscription.length--;
 			shrink_subscription_capacity();
-			debug("%p removed from \"%s\"", sub, sub->topic_filter);
+			PUBSUB_DEBUG("%p removed from \"%s\"",
+					sub, sub->topic_filter);
 			return true;
 		}
 	}
 
-	warn("%p for \"%s\" not found", sub, sub->topic_filter);
+	PUBSUB_DEBUG("%p for \"%s\" not found", sub, sub->topic_filter);
 	return false;
 }
 
@@ -244,7 +245,7 @@ static subscribe_t *subscribe_core(subscribe_t *sub, const char *topic_filter,
 		return NULL;
 	}
 
-	info("Subscribe to \"%s\"", topic_filter);
+	PUBSUB_DEBUG("Subscribe to \"%s\"", topic_filter);
 
 	return sub;
 }
@@ -320,7 +321,7 @@ pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
 		return PUBSUB_NO_EXIST_SUBSCRIBER;
 	}
 
-	info("Unsubscribe from \"%s\"", sub->topic_filter);
+	PUBSUB_DEBUG("Unsubscribe from \"%s\"", sub->topic_filter);
 
 	if (!IS_SUBSCRIBER_STATIC(sub)) {
 		free(sub);

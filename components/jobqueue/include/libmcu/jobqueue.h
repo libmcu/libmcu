@@ -21,6 +21,10 @@ extern "C" {
 #define JOBQUEUE_DEFAULT_PRIORITY		5
 #endif
 
+#if !defined(JOBQUEUE_DEBUG)
+#define JOBQUEUE_DEBUG(...)
+#endif
+
 typedef enum {
 	JOB_SUCCESS				= 0,
 	JOB_INVALID_PARAM,
