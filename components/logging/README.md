@@ -10,13 +10,23 @@ An example for storage implementation can be found
 [examples/memory_storage.c](../../examples/memory_storage.c) and a simple server-side
 script [tools/scripts/translate_log.py](../../tools/scripts/translate_log.py).
 
-Writing a log in a structured way would help you see and trace easier on the
-server side, something like:
+## Integration Guide
+
+* `LOGGING_MESSAGE_MAXLEN` : The default is 80 bytes
+* `LOGGING_TAGS_MAXNUM` : The default is 8
+* `LOGGING_TAG` : The default is `__FILE__`
+  - The shorter `__FILE__` the more code size preserved when you use the default
+* `get_program_counter()`
+
+### Custom TAG instead of __FILE__
+Please refer to [test case](https://github.com/onkwon/libmcu/blob/master/tests/src/logging/logging_test.cpp#L10) and [makefile](https://github.com/onkwon/libmcu/blob/master/tests/runners/logging/logging.mk#L15).
+
+## Example
 
 ```c
-info("#battery %d%%", battery");
-info("rssi %d", rssi); // #wifi unit:dBm
-error("#i2c timeout");
+debug("message");
+logging_set_level_current(LOGGING_TYPE_INFO);
+info("RSSI %d", rssi);
+logging_set_level(TAG, LOGGING_TYPE_ERROR);
+error("i2c timeout");
 ```
-
-## Integration Guide

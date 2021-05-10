@@ -1,9 +1,11 @@
 #include "libmcu/logging.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 #if defined(__STDC_HOSTED__)
 #include <stdio.h>
 #endif
@@ -31,12 +33,21 @@ LIBMCU_STATIC_ASSERT(LOGGING_MESSAGE_MAXLEN
 		< (1U << (sizeof(((logging_data_t *)0)->message_length) * 8)),
 		"MESSAGE_MAXLEN must not exceed its data type size.");
 
+struct logging_tag {
+	const char *tag;
+	logging_t min_log_level;
+};
+
 static struct {
+	pthread_mutex_t lock;
+
+	struct logging_tag tags[LOGGING_TAGS_MAXNUM];
+	struct logging_tag global_tag;
+
 	const logging_storage_t *storage;
-	logging_t min_save_level;
 } m;
 
-static inline const char *stringify_type(logging_t type)
+static const char *stringify_type(logging_t type)
 {
 	switch (type) {
 	case LOGGING_TYPE_VERBOSE:
@@ -59,20 +70,90 @@ static inline const char *stringify_type(logging_t type)
 	return "UNKNOWN";
 }
 
-static inline logging_magic_t compute_magic(const logging_data_t *entry)
+static logging_magic_t compute_magic(const logging_data_t *entry)
 {
 	return (logging_magic_t)(entry->pc ^ entry->lr ^ LOGGING_MAGIC);
 }
 
-static inline bool is_logging_type_enabled(const logging_t type)
+static bool is_global_tag(const struct logging_tag *tag)
 {
-	if (type < m.min_save_level) {
+	return tag == &m.global_tag;
+}
+
+static struct logging_tag *get_global_tag(void)
+{
+	return &m.global_tag;
+}
+
+static void clear_tags(void)
+{
+	for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
+		memset(&m.tags[i], 0, sizeof(m.tags[i]));
+	}
+
+	memset(get_global_tag(), 0, sizeof(*get_global_tag()));
+}
+
+static struct logging_tag *get_empty_tag(void)
+{
+	for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
+		struct logging_tag *p = &m.tags[i];
+		if (p->tag == NULL) {
+			return p;
+		}
+	}
+
+	return NULL;
+}
+
+static struct logging_tag *get_tag_from_string(const char *tag)
+{
+	for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
+		struct logging_tag *p = &m.tags[i];
+		if (p->tag == tag) {
+			return p;
+		}
+	}
+
+	return NULL;
+}
+
+static struct logging_tag *register_tag(const char *tag)
+{
+	struct logging_tag *p = get_empty_tag();
+
+	if (p == NULL) {
+		return get_global_tag();
+	}
+
+	p->tag = tag;
+	return p;
+}
+
+static struct logging_tag *obtain_tag(const char *tag)
+{
+	struct logging_tag *p = get_tag_from_string(tag);
+
+	if (p == NULL) {
+		p = register_tag(tag);
+	}
+
+	return p;
+}
+
+static bool is_logging_type_enabled(const struct logging_tag *tag,
+		const logging_t type)
+{
+	if (!is_global_tag(tag) && type < get_global_tag()->min_log_level) {
+		return false;
+	}
+	if (type < tag->min_log_level) {
 		return false;
 	}
 	return true;
 }
 
-static inline bool is_logging_type_valid(const logging_t type)
+static bool is_logging_type_valid(const logging_t type)
 {
 	if (type >= LOGGING_TYPE_MAX) {
 		return false;
@@ -80,26 +161,26 @@ static inline bool is_logging_type_valid(const logging_t type)
 	return true;
 }
 
-static inline size_t get_log_size(const logging_data_t *entry)
+static size_t get_log_size(const logging_data_t *entry)
 {
-	size_t size = sizeof(*entry);
+	size_t sz = sizeof(*entry);
 
 	if (entry && entry->message_length) {
-		size += entry->message_length;
+		sz += entry->message_length;
 	}
 
-	return size;
+	return sz;
 }
 
-static inline size_t logging_consume_internal(size_t size)
+static size_t consume_internal(size_t consume_size)
 {
-	if (!size) {
+	if (!consume_size) {
 		return 0;
 	}
-	return m.storage->consume(size);
+	return m.storage->consume(consume_size);
 }
 
-static size_t logging_peek_internal(void *buf, size_t bufsize)
+static size_t peek_internal(void *buf, size_t bufsize)
 {
 	if (!buf || bufsize < sizeof(logging_data_t)) {
 		return 0;
@@ -107,11 +188,11 @@ static size_t logging_peek_internal(void *buf, size_t bufsize)
 	return m.storage->read(buf, bufsize);
 }
 
-#define pack_message(ptr, lr) do { \
+#define pack_message(ptr, basearg) do { \
 	va_list ap; \
 	const char *fmt; \
 	int len = 0; \
-	va_start(ap, lr); \
+	va_start(ap, basearg); \
 	fmt = va_arg(ap, char *); \
 	if (fmt) { \
 		len = vsnprintf((char *)ptr->message, LOGGING_MESSAGE_MAXLEN, \
@@ -123,7 +204,7 @@ static size_t logging_peek_internal(void *buf, size_t bufsize)
 	} \
 } while (0)
 
-static inline void pack_log(logging_data_t *entry, logging_t type,
+static void pack_log(logging_data_t *entry, logging_t type,
 		const void *pc, const void *lr)
 {
 	*entry = (logging_data_t) {
@@ -137,57 +218,169 @@ static inline void pack_log(logging_data_t *entry, logging_t type,
 	entry->magic = compute_magic(entry);
 }
 
-size_t logging_save(logging_t type, const void *pc, const void *lr, ...)
+size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 {
+	assert(ctx != NULL);
 
-	if (!is_logging_type_valid(type)) {
-		return 0;
+	size_t result = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		const struct logging_tag *tag = obtain_tag(ctx->tag);
+
+		if (!is_logging_type_valid(type)) {
+			goto out;
+		}
+		if (!is_logging_type_enabled(tag, type)) {
+			goto out;
+		}
+
+		uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
+		logging_data_t *log = (logging_data_t *)buf;
+		pack_log(log, type, ctx->pc, ctx->lr);
+		pack_message(log, ctx);
+		// TODO: logging_encode(log)
+
+		result = m.storage->write(log, get_log_size(log));
 	}
-	if (!is_logging_type_enabled(type)) {
-		return 0;
-	}
+out:
+	pthread_mutex_unlock(&m.lock);
 
-	uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
-	logging_data_t *log = (logging_data_t *)buf;
-	pack_log(log, type, pc, lr);
-	pack_message(log, lr);
-	// TODO: logging_encode(log)
-
-	return m.storage->write(log, get_log_size(log));
+	return result;
 }
 
 size_t logging_peek(void *buf, size_t bufsize)
 {
-	return logging_peek_internal(buf, bufsize);
+	size_t result = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		result = peek_internal(buf, bufsize);
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	return result;
 }
 
-size_t logging_consume(size_t size)
+size_t logging_consume(size_t consume_size)
 {
-	return logging_consume_internal(size);
+	size_t result = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		result = consume_internal(consume_size);
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	return result;
 }
 
 size_t logging_read(void *buf, size_t bufsize)
 {
-	size_t size_read = logging_peek_internal(buf, bufsize);
-	logging_consume_internal(size_read);
+	size_t size_read = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		size_read = peek_internal(buf, bufsize);
+		consume_internal(size_read);
+	}
+	pthread_mutex_unlock(&m.lock);
+
 	return size_read;
 }
 
 size_t logging_count(void)
 {
-	return m.storage->count();
+	size_t result = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		result = m.storage->count();
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	return result;
 }
 
-void logging_set_level(logging_t min_log_level)
+size_t logging_count_tags(void)
 {
-	if (min_log_level < LOGGING_TYPE_MAX) {
-		m.min_save_level = min_log_level;
+	size_t cnt = 0;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
+			if (m.tags[cnt].tag != NULL) {
+				cnt++;
+			}
+		}
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	return cnt;
+}
+
+void logging_set_level(const char *tag, logging_t min_log_level)
+{
+	struct logging_tag *p;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		p = obtain_tag(tag);
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	if (min_log_level < LOGGING_TYPE_MAX && !is_global_tag(p)) {
+		p->min_log_level = min_log_level;
 	}
 }
 
-logging_t logging_get_level(void)
+logging_t logging_get_level(const char *tag)
 {
-	return m.min_save_level;
+	logging_t result;
+
+	pthread_mutex_lock(&m.lock);
+	{
+		result = obtain_tag(tag)->min_log_level;
+	}
+	pthread_mutex_unlock(&m.lock);
+
+	return result;
+}
+
+void logging_set_level_global(logging_t min_log_level)
+{
+	if (min_log_level < LOGGING_TYPE_MAX) {
+		get_global_tag()->min_log_level = min_log_level;
+	}
+}
+
+logging_t logging_get_level_global(void)
+{
+	return get_global_tag()->min_log_level;
+}
+
+void logging_init(const logging_storage_t *ops)
+{
+	assert(ops != NULL);
+
+	pthread_mutex_init(&m.lock, NULL);
+
+	clear_tags();
+	m.storage = ops;
+}
+
+void logging_iterate_tag(void (*callback_each)(const char *tag,
+			logging_t min_log_level))
+{
+	assert(callback_each != NULL);
+
+	for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
+		const struct logging_tag *p = &m.tags[i];
+		if (p->tag == NULL) {
+			continue;
+		}
+		callback_each(p->tag, p->min_log_level);
+	}
 }
 
 #if !defined(MIN)
@@ -208,10 +401,4 @@ const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 	}
 
 	return buf;
-}
-
-void logging_init(const logging_storage_t *ops)
-{
-	m.storage = ops;
-	logging_set_level(LOGGING_TYPE_DEBUG);
 }

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-size_t logging_save(const logging_t type, const void *pc, const void *lr, ...)
+size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 {
 	int len = printf("%lu: [%s] <%p,%p> ", (unsigned long)time(0),
 			type == 0? "VERBOSE" :
@@ -13,9 +13,9 @@ size_t logging_save(const logging_t type, const void *pc, const void *lr, ...)
 			type == 4? "WARN" :
 			type == 5? "ERROR" :
 			type == 6? "ALERT" : "UNKNOWN",
-			pc, lr);
+			ctx->pc, ctx->lr);
 	va_list ap;
-	va_start(ap, lr);
+	va_start(ap, ctx);
 	const char *fmt = va_arg(ap, char *);
 	if (fmt) {
 		len += vfprintf(stdout, fmt, ap);
