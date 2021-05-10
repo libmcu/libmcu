@@ -219,7 +219,7 @@ size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 {
 	assert(ctx != NULL);
 
-	struct logging_tag *tag = obtain_tag(ctx->tag);
+	const struct logging_tag *tag = obtain_tag(ctx->tag);
 
 	if (!is_logging_type_valid(type)) {
 		return 0;
@@ -312,7 +312,7 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 	assert(callback_each != NULL);
 
 	for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
-		struct logging_tag *p = &m.tags[i];
+		const struct logging_tag *p = &m.tags[i];
 		if (p->tag == NULL) {
 			continue;
 		}
