@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "libmcu/list.h"
-#include "libmcu/logging.h"
+#include "libmcu/compiler.h"
 
 struct callback_obj {
 	mode_transition_callback_t callback;
@@ -15,6 +15,7 @@ static runmode_t current_mode = UNKNOWN_MODE;
 static pthread_mutex_t mode_lock;
 static struct list callbacks_list_head;
 
+LIBMCU_UNUSED
 static inline const char *mode_stringify(runmode_t mode)
 {
 	switch (mode) {
@@ -32,7 +33,7 @@ static inline const char *mode_stringify(runmode_t mode)
 
 void mode_set(runmode_t mode)
 {
-	debug("change mode from %s to %s",
+	MODE_DEBUG("change mode from %s to %s",
 			mode_stringify(current_mode),
 			mode_stringify(mode));
 

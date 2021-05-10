@@ -8,10 +8,6 @@
 ## Overview
 A toolkit for firmware development.
 
-Some of components have dependency on [libmcu/logging](#logging). You can get
-rid of the dependency by defining an empty `logging_save()` in case you're not
-using it. Please refer to [tests/stubs/logging.c](tests/stubs/logging.c).
-
 The documentation of each components are under the subdirectories. Some usage
 examples can also be found under [examples](examples).
 

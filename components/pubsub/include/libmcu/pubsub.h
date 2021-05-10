@@ -11,6 +11,10 @@ extern "C" {
 #define PUBSUB_TOPIC_NAME_MAXLEN		32
 #endif
 
+#if !defined(PUBSUB_DEBUG)
+#define PUBSUB_DEBUG(...)
+#endif
+
 typedef enum {
 	PUBSUB_SUCCESS				= 0,
 	PUBSUB_ERROR				= -1,

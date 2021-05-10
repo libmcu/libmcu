@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#if !defined(MODE_DEBUG)
+#define MODE_DEBUG(...)
+#endif
+
 typedef enum {
 	PROVISIONING_MODE	= 0,
 	REPORT_MODE,

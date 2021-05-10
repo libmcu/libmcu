@@ -1,6 +1,5 @@
 #include "libmcu/retry.h"
 #include "libmcu/system.h"
-#include "libmcu/logging.h"
 
 #if !defined(RETRY_DEFAULT_MAX_BACKOFF_MS)
 #define RETRY_DEFAULT_MAX_BACKOFF_MS		300000U // 5-min
@@ -62,7 +61,7 @@ retry_error_t retry_backoff(retry_t *param)
 	}
 
 	unsigned int backoff_time = get_backoff_time(param);
-	info("Retry in %u ms, %u/%u", backoff_time,
+	RETRY_DEBUG("Retry in %u ms, %u/%u", backoff_time,
 			param->attempts+1, param->max_attempts);
 	param->sleep(backoff_time);
 	param->attempts++;

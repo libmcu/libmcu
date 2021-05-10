@@ -7,7 +7,6 @@
 #include "libmcu/llist.h"
 #include "libmcu/bitops.h"
 #include "libmcu/compiler.h"
-#include "libmcu/logging.h"
 
 #if !defined(APPTIMER_NR_WHEELS)
 #define APPTIMER_NR_WHEELS		5
@@ -107,20 +106,22 @@ static void insert_timer_into_wheel(struct apptimer * const timer)
 
 	if (is_timer_expired(timer)) {
 		insert_timer_into_pending(timer);
-		debug("%lx: Insert timer in pending %d %d", get_timer_counter(),
+		APPTIMER_DEBUG("%lx: Insert timer in pending %d %d",
+				get_timer_counter(),
 				timer->goaltime, timer->interval);
 		return;
 	}
 
 	apptimer_timeout_t current_time = get_timer_counter();
-	apptimer_timeout_t delta = get_time_distance(timer->goaltime, current_time);
+	apptimer_timeout_t delta =
+		get_time_distance(timer->goaltime, current_time);
 	apptimer_timeout_t split = current_time & SLOTS_MASK;
 	int wheel = get_wheel_index_from_timeout(delta + split);
 	int slot = get_slot_index_from_timeout(delta + split, wheel);
 
 	llist_add(&timer->list, &m.wheels[wheel][slot]);
 
-	debug("%lu: Insert timer(%lu) in wheel %d slot %d",
+	APPTIMER_DEBUG("%lu: Insert timer(%lu) in wheel %d slot %d",
 			current_time, timer->goaltime, wheel, slot);
 }
 
@@ -275,7 +276,7 @@ int apptimer_count(void)
 void apptimer_schedule(apptimer_timeout_t time_elapsed)
 {
 	if (time_elapsed > APPTIMER_MAX_TIMEOUT) {
-		error("time overrun %lu / %lu",
+		APPTIMER_DEBUG("time overrun %lu / %lu",
 				time_elapsed, APPTIMER_MAX_TIMEOUT);
 	}
 
@@ -286,7 +287,7 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 	int farmost_wheel = get_wheel_index_from_timeout(diff_time);
 	int slot = (diff_time >= MAX_WHEELS_TIMEOUT)? (int)SLOTS_MASK :
 		get_slot_index_from_timeout(current_time, farmost_wheel);
-	debug("schedule %lx(%lx): wheel %d slot %d",
+	APPTIMER_DEBUG("schedule %lx(%lx): wheel %d slot %d",
 			current_time, diff_time, farmost_wheel, slot);
 
 	pthread_mutex_lock(&m.wheels_lock);
@@ -309,8 +310,9 @@ void apptimer_schedule(apptimer_timeout_t time_elapsed)
 
 void apptimer_init(void (*update_alarm)(apptimer_timeout_t timeout))
 {
-	debug("slots bits %d, max timeout %lu, wheels bits %d:%lu", SLOTS_BITS,
-			APPTIMER_MAX_TIMEOUT, WHEELS_BITS, MAX_WHEELS_TIMEOUT-1);
+	APPTIMER_DEBUG("slots bits %d, max timeout %lu, wheels bits %d:%lu",
+			SLOTS_BITS, APPTIMER_MAX_TIMEOUT, WHEELS_BITS,
+			MAX_WHEELS_TIMEOUT - 1);
 
 	pthread_mutex_init(&m.wheels_lock, NULL);
 	m.update_alarm = update_alarm;

@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 #include "libmcu/list.h"
-#include "libmcu/logging.h"
 
 struct jobqueue {
 	pthread_mutex_t lock;
@@ -116,13 +115,13 @@ static bool jobqueue_process(jobqueue_t *pool)
 
 static void *jobqueue_task(void *e)
 {
-	info("new thread created. %u running",
+	JOBQUEUE_DEBUG("new thread created. %u running",
 			((jobqueue_t *)e)->active_threads);
 
 	while (jobqueue_process((jobqueue_t *)e)) {
 	}
 
-	info("terminating thread");
+	JOBQUEUE_DEBUG("terminating thread");
 
 #if !defined(UNITTEST)
 	pthread_exit(NULL);
@@ -150,7 +149,7 @@ static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *jo
 		pthread_attr_setstacksize(&attr, pool->attr.stack_size_bytes);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 		if (pthread_create(&thread, &attr, jobqueue_task, pool) != 0) {
-			error("cannot create new thread");
+			JOBQUEUE_DEBUG("cannot create new thread");
 			return JOB_ERROR;
 		}
 		pool->active_threads++;
@@ -212,7 +211,7 @@ job_error_t jobqueue_destroy(jobqueue_t *pool)
 
 	uint8_t jobs_left = job_count(pool);
 	if (jobs_left != 0) {
-		warn("%u jobs to be run exist", jobs_left);
+		JOBQUEUE_DEBUG("%u jobs to be run exist", jobs_left);
 	}
 
 	pthread_mutex_lock(&pool->lock);
@@ -287,7 +286,7 @@ uint8_t job_count(jobqueue_t *pool)
 	int semcnt = 0;
 	sem_getvalue(&pool->job_queue, &semcnt);
 	if (count != (uint8_t)semcnt) {
-		error("count doesn't match %d - %d", count, semcnt);
+		JOBQUEUE_DEBUG("count doesn't match %d - %d", count, semcnt);
 	}
 
 	return count;
