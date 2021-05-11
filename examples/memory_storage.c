@@ -1,8 +1,8 @@
 #include "memory_storage.h"
 #include <pthread.h>
 #include <string.h>
-#include <assert.h>
 #include "libmcu/ringbuf.h"
+#include "libmcu/assert.h"
 
 static size_t memory_write(const void *data, size_t size);
 static size_t memory_read(void *buf, size_t bufsize);

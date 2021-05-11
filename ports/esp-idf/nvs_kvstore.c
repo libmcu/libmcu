@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <assert.h>
 
+#include "libmcu/assert.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "nvs.h"

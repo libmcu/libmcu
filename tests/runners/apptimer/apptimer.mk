@@ -10,7 +10,7 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
-	stubs \
+	stubs/overrides \
 	../components/logging/include \
 	../components/apptimer/include \
 	../components/common/include \

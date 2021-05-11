@@ -41,14 +41,11 @@ export CPPUTEST_WARNINGFLAGS = \
 	\
 	-Wswitch-default \
 	-Wswitch-enum \
-	-Wno-long-long \
-	-Wno-missing-braces \
 	-Wno-missing-field-initializers \
-	-Wno-packed \
 	-Wno-unused-parameter \
 	\
 	-Wno-error=switch-enum \
-	-Wno-error=aggregate-return
+
 #-Wredundant-decls -Wswitch-enum
 
 ifeq ($(shell uname), Darwin)

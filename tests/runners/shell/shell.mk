@@ -8,8 +8,10 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
+	stubs/overrides \
 	../components/shell/src \
 	../components/shell/include \
+	../components/common/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

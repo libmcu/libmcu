@@ -1,6 +1,5 @@
 #include "libmcu/logging.h"
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
@@ -11,6 +10,7 @@
 #endif
 
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 #define LOGGING_MAGIC				0xA5A5U
 

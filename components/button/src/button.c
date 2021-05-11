@@ -1,8 +1,8 @@
 #include "libmcu/button.h"
 #include <string.h>
-#include <assert.h>
 #include <pthread.h>
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 #if !defined(BUTTON_MAX)
 #define BUTTON_MAX				1

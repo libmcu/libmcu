@@ -1,6 +1,6 @@
 #include "libmcu/system.h"
-#include <assert.h>
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 const char * LIBMCU_WEAK system_get_version_string(void)
 {
@@ -31,7 +31,7 @@ int LIBMCU_WEAK system_reset_factory(void)
 	return 0;
 }
 
-void LIBMCU_WEAK LIBMCU_NORETURN system_reboot(void)
+void LIBMCU_WEAK system_reboot(void)
 {
 	assert(0);
 }

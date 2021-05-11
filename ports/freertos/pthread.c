@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <errno.h>
-#include <assert.h>
 
+#include "libmcu/assert.h"
 #include "FreeRTOS.h"
 #include "task.h"
 

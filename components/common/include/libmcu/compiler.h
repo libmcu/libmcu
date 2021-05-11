@@ -43,6 +43,13 @@ extern "C" {
 #define container_of(ptr, type, member) \
 	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
 
+#define libmcu_get_lr()			__builtin_return_address(0)
+#if defined(__GNUC__)
+#define libmcu_get_pc()			({__label__ l; l: &&l; })
+#else
+#define libmcu_get_pc()			((void *)0xfeedc0de)
+#endif
+
 #if defined(__cplusplus)
 }
 #endif
