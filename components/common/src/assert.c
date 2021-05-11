@@ -6,6 +6,5 @@ void libmcu_assertion_failed(const uintptr_t *pc, const uintptr_t *lr)
 {
 	unused(pc);
 	unused(lr);
-hang:
-	goto hang;
+	while (1) { /* hang */ }
 }

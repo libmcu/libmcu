@@ -7,7 +7,6 @@ extern "C" {
 
 #include "libmcu/compiler.h"
 
-#undef assert
 #define assert(exp)			(unused(exp))
 
 #if defined(__cplusplus)
