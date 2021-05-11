@@ -1,8 +1,8 @@
 #include "libmcu/metrics.h"
-#include <assert.h>
 #include <pthread.h>
 #include <string.h>
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 #define ARRAY_LEN(arr)		(sizeof(arr) / sizeof(arr[0]))
 #define METRICS_LEN		ARRAY_LEN(metrics)
@@ -33,6 +33,7 @@ static uint32_t get_index_from_key(metric_key_t key)
 	}
 
 	assert(0);
+	return 0;
 }
 
 static struct metrics *get_obj_from_key(metric_key_t key)

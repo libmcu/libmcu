@@ -9,8 +9,8 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
+	stubs/overrides \
 	src/metrics \
-	stubs \
 	../components/logging/include \
 	../components/metrics/include \
 	../components/common/include \

@@ -48,7 +48,8 @@ export CPPUTEST_WARNINGFLAGS = \
 	-Wno-unused-parameter \
 	\
 	-Wno-error=switch-enum \
-	-Wno-error=aggregate-return
+	-Wno-error=aggregate-return \
+
 #-Wredundant-decls -Wswitch-enum
 
 ifeq ($(shell uname), Darwin)

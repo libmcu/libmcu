@@ -9,6 +9,7 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
+	stubs/overrides \
 	../components/logging/include \
 	../components/button/include \
 	../components/common/include \

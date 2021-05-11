@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <assert.h>
 
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 #if !defined(PUBSUB_MIN_SUBSCRIPTION_CAPACITY)
 #define PUBSUB_MIN_SUBSCRIPTION_CAPACITY		4
@@ -182,6 +182,7 @@ static bool register_subscription(const subscribe_t *sub)
 	}
 
 	assert(0); // can not reach down here
+	return false;
 }
 
 static bool unregister_subscription(const subscribe_t *sub)

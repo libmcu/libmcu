@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include <errno.h>
 #include <time.h>
-#include <assert.h>
 
+#include "libmcu/assert.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"

@@ -1,12 +1,12 @@
 #include "libmcu/apptimer.h"
 
 #include <pthread.h>
-#include <assert.h>
 #include <string.h>
 
 #include "libmcu/llist.h"
 #include "libmcu/bitops.h"
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
 
 #if !defined(APPTIMER_NR_WHEELS)
 #define APPTIMER_NR_WHEELS		5

@@ -9,7 +9,7 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
-	stubs \
+	stubs/overrides \
 	../components/logging/include \
 	../components/pubsub/include \
 	../components/common/include \
