@@ -245,7 +245,7 @@ job_t job_create(jobqueue_t pool, job_callback_t callback, void *context)
 {
 	struct job *job = NULL;
 
-	if (pool == NULL ||
+	if ((pool == NULL) ||
 			((job = (struct job *)calloc(1, sizeof(*job))) == NULL)) {
 		goto out;
 	}
