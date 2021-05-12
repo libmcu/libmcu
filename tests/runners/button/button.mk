@@ -1,16 +1,14 @@
 COMPONENT_NAME = button
 
 SRC_FILES = \
-	stubs/logging.c \
 	../components/button/src/button.c
 
 TEST_SRC_FILES = \
-	src/button/test_button.cpp \
+	src/button/button_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/logging/include \
 	../components/button/include \
 	../components/common/include \
 	$(CPPUTEST_HOME)/include \

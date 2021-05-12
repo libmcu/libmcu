@@ -14,10 +14,10 @@
 
 /* NOTE: It sets the least significant bit of `subscriber->context` to
  * differentiate static subscriber from one created dynamically. */
-#define GET_SUBSCRIBER_CONTEXT(obj)			\
-	(void *)((uintptr_t)(obj)->context & ~1UL)
-#define IS_SUBSCRIBER_STATIC(obj)			\
-	((uintptr_t)(obj)->context & 1UL)
+#define GET_SUBSCRIBER_CONTEXT(handle)			\
+	(void *)((uintptr_t)(handle)->context & ~1UL)
+#define IS_SUBSCRIBER_STATIC(handle)			\
+	((uintptr_t)(handle)->context & 1UL)
 #define GET_CONTEXT_STATIC(ctx)				\
 	(void *)((uintptr_t)(ctx) | 1UL)
 
@@ -33,7 +33,7 @@ typedef struct {
 	pubsub_callback_t callback;
 	void *context;
 } subscribe_t;
-LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_t),
+LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_static_t),
 	"The size of public and private subscribe data type must be the same.");
 
 static struct {
@@ -119,7 +119,7 @@ static void pubsub_unlock(void)
 	pthread_mutex_unlock(&m.pubsub_list_lock);
 }
 
-static subscribe_t *subscribe_core(subscribe_t *obj,
+static subscribe_t *subscribe_core(subscribe_t *handle,
 		const char *topic_name, pubsub_callback_t cb, void *context)
 {
 	topic_t *topic;
@@ -131,8 +131,8 @@ static subscribe_t *subscribe_core(subscribe_t *obj,
 	pubsub_lock();
 	{
 		if ((topic = find_topic(topic_name)) != NULL) {
-			obj->topic = topic;
-			list_add(&obj->subscription_node, &topic->subscriptions);
+			handle->topic = topic;
+			list_add(&handle->subscription_node, &topic->subscriptions);
 		}
 	}
 	pubsub_unlock();
@@ -141,12 +141,12 @@ static subscribe_t *subscribe_core(subscribe_t *obj,
 		return NULL;
 	}
 
-	obj->callback = cb;
-	obj->context = context;
+	handle->callback = cb;
+	handle->context = context;
 
 	PUBSUB_DEBUG("Subscribe to %s", topic_name);
 
-	return obj;
+	return handle;
 }
 
 pubsub_error_t pubsub_create(const char *topic_name)
@@ -240,34 +240,34 @@ pubsub_error_t pubsub_publish(const char *topic_name,
 	return PUBSUB_SUCCESS;
 }
 
-pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
+pubsub_subscribe_t pubsub_subscribe_static(pubsub_subscribe_t handle,
 		const char *topic_name, pubsub_callback_t cb, void *context)
 {
-	return (pubsub_subscribe_t *)
-		subscribe_core((subscribe_t *)obj, topic_name, cb,
+	return (pubsub_subscribe_t)
+		subscribe_core((subscribe_t *)handle, topic_name, cb,
 				GET_CONTEXT_STATIC(context));
 }
 
-pubsub_subscribe_t *pubsub_subscribe(const char *topic_name,
+pubsub_subscribe_t pubsub_subscribe(const char *topic_name,
 		pubsub_callback_t cb, void *context)
 {
-	subscribe_t *obj = (subscribe_t *)calloc(1, sizeof(*obj));
+	subscribe_t *handle = (subscribe_t *)calloc(1, sizeof(*handle));
 
-	if (obj == NULL) {
+	if (handle == NULL) {
 		return NULL;
 	}
 
-	if (subscribe_core(obj, topic_name, cb, context) == NULL) {
-		free(obj);
+	if (subscribe_core(handle, topic_name, cb, context) == NULL) {
+		free(handle);
 		return NULL;
 	}
 
-	return (pubsub_subscribe_t *)obj;
+	return (pubsub_subscribe_t)handle;
 }
 
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t handle)
 {
-	subscribe_t *p = (subscribe_t *)obj;
+	subscribe_t *p = (subscribe_t *)handle;
 
 	if (!p || !p->topic) {
 		return PUBSUB_INVALID_PARAM;

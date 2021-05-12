@@ -56,3 +56,7 @@ concurrently in another context.
 ![pubsub usecase](../../docs/images/pubsub_jobqueue.png)
 
 ## Integration Guide
+
+* `PUBSUB_TOPIC_NAME_MAXLEN`
+* `PUBSUB_MIN_SUBSCRIPTION_CAPACITY`
+* `PUBSUB_DEBUG`

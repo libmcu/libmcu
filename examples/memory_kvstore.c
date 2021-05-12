@@ -16,7 +16,7 @@
 #endif
 
 struct memory_kvstore {
-	kvstore_t ops;
+	struct kvstore_io ops;
 	char *namespace;
 	struct list namespace_list;
 	struct list keylist_head;
@@ -59,7 +59,7 @@ static struct memory_kvstore_entry *find_key(const struct memory_kvstore *obj,
 	return NULL;
 }
 
-static size_t memory_kvstore_write(kvstore_t *kvstore,
+static size_t memory_kvstore_write(kvstore_t kvstore,
 		const char *key, const void *value, size_t size)
 {
 	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
@@ -103,7 +103,7 @@ err:
 	return 0;
 }
 
-static size_t memory_kvstore_read(const kvstore_t *kvstore,
+static size_t memory_kvstore_read(const kvstore_t kvstore,
 		const char *key, void *buf, size_t bufsize)
 {
 	const struct memory_kvstore *obj =
@@ -118,7 +118,7 @@ static size_t memory_kvstore_read(const kvstore_t *kvstore,
 	return 0;
 }
 
-void memory_kvstore_delete(kvstore_t *kvstore)
+void memory_kvstore_destroy(kvstore_t kvstore)
 {
 	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
 
@@ -136,7 +136,7 @@ void memory_kvstore_delete(kvstore_t *kvstore)
 	free(kvstore);
 }
 
-kvstore_t *memory_kvstore_new(const char *ns)
+kvstore_t memory_kvstore_create(const char *ns)
 {
 	struct memory_kvstore *p;
 

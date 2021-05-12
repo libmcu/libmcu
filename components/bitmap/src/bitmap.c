@@ -1,8 +1,8 @@
 #include "libmcu/bitmap.h"
 
-bool bitmap_get(const bitmap_t * const bitmap, int pos)
+bool bitmap_get(const bitmap_t bitmap, int pos)
 {
-	bitmap_t val;
+	bitmap_static_t val;
 
 	val = bitmap[pos / BITMAP_UNIT_BITS];
 	val &= (1UL << (pos % BITMAP_UNIT_BITS));
@@ -10,9 +10,9 @@ bool bitmap_get(const bitmap_t * const bitmap, int pos)
 	return val != 0;
 }
 
-void bitmap_set(bitmap_t * const bitmap, int pos)
+void bitmap_set(bitmap_t bitmap, int pos)
 {
-	bitmap_t t;
+	bitmap_static_t t;
 	int index = pos / BITMAP_UNIT_BITS;
 
 	t = bitmap[index];
@@ -21,7 +21,7 @@ void bitmap_set(bitmap_t * const bitmap, int pos)
 	bitmap[index] = t;
 }
 
-int bitmap_count(const bitmap_t * const bitmap, int n)
+int bitmap_count(const bitmap_t bitmap, int n)
 {
 	int nword = n / BITMAP_UNIT_BITS;
 	int remained = n % BITMAP_UNIT_BITS;
@@ -44,9 +44,9 @@ int bitmap_count(const bitmap_t * const bitmap, int n)
 	return cnt;
 }
 
-void bitmap_clear(bitmap_t * const bitmap, int pos)
+void bitmap_clear(bitmap_t bitmap, int pos)
 {
-	bitmap_t t;
+	bitmap_static_t t;
 	int index = pos / BITMAP_UNIT_BITS;
 
 	t = bitmap[index];
@@ -55,7 +55,8 @@ void bitmap_clear(bitmap_t * const bitmap, int pos)
 	bitmap[index] = t;
 }
 
-void bitmap_init(bitmap_t * const bitmap, int n, bool initial_value)
+void bitmap_create_static(bitmap_static_t * const bitmap,
+		int n, bool initial_value)
 {
 	int nword = n / BITMAP_UNIT_BITS;
 	int remained = n % BITMAP_UNIT_BITS;
@@ -65,7 +66,7 @@ void bitmap_init(bitmap_t * const bitmap, int n, bool initial_value)
 	}
 
 	if (remained) {
-		bitmap_t t = 0;
+		bitmap_static_t t = 0;
 
 		for (int i = 0; i < remained; i++) {
 			t = (t << 1UL) | (1UL * initial_value);

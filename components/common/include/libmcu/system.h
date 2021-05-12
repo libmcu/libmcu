@@ -1,5 +1,5 @@
 #ifndef LIBMCU_SYSTEM_H
-#define LIBMCU_SYSTEM_H 202012L
+#define LIBMCU_SYSTEM_H
 
 #if defined(__cplusplus)
 extern "C" {

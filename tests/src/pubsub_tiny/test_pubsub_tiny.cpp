@@ -80,7 +80,7 @@ TEST(PubSub, destroy_ShouldRemoveAndDestroySubscriptionsRegisterd) {
 }
 
 TEST(PubSub, subscribe_ShouldReturnSubscriptionHandle) {
-	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t sub = pubsub_subscribe(topic, callback, NULL);
 	CHECK(sub != NULL);
 	LONGS_EQUAL(1, pubsub_count(topic));
 	pubsub_unsubscribe(sub);
@@ -102,28 +102,28 @@ TEST(PubSub, subscribe_ShouldReturnNull_WhenNoMatchingTopicFound) {
 }
 
 TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNullParamsGiven) {
-	pubsub_subscribe_t sub;
+	pubsub_subscribe_static_t sub;
 	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub, NULL, callback, NULL));
 	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub, topic, NULL, NULL));
 }
 
 TEST(PubSub, subscribe_static_ShouldReturnNull_WhenNoMatchingTopicFound) {
-	pubsub_subscribe_t sub;
+	pubsub_subscribe_static_t sub;
 	POINTERS_EQUAL(NULL, pubsub_subscribe_static(&sub,
 				"unknown topic", callback, NULL));
 }
 
 TEST(PubSub, subscribe_static_ShouldReturnSubscriptionHandle) {
-	pubsub_subscribe_t sub;
-	pubsub_subscribe_t *p =
+	pubsub_subscribe_static_t sub;
+	pubsub_subscribe_t p =
 		pubsub_subscribe_static(&sub, topic, callback, NULL);
-	CHECK(p != NULL);
+	POINTERS_EQUAL(&sub, p);
 	LONGS_EQUAL(1, pubsub_count(topic));
 	pubsub_unsubscribe(p);
 }
 
 TEST(PubSub, unsubscribe_static_ShouldReturnSuccess) {
-	pubsub_subscribe_t sub;
+	pubsub_subscribe_static_t sub;
 	pubsub_subscribe_static(&sub, topic, callback, NULL);
 	LONGS_EQUAL(1, pubsub_count(topic));
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(&sub));
@@ -131,7 +131,7 @@ TEST(PubSub, unsubscribe_static_ShouldReturnSuccess) {
 }
 
 TEST(PubSub, unsubscribe_ShouldReturnSuccess) {
-	pubsub_subscribe_t *sub = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t sub = pubsub_subscribe(topic, callback, NULL);
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_unsubscribe(sub));
 }
 
@@ -150,9 +150,9 @@ TEST(PubSub, publish_ShouldReturnInvaludParams_WhenNullParamsGiven) {
 }
 
 TEST(PubSub, publish_ShouldReturnSuccessAndCallCallback) {
-	pubsub_subscribe_t *sub1 = pubsub_subscribe(topic, callback, NULL);
-	pubsub_subscribe_t *sub2 = pubsub_subscribe(topic, callback, NULL);
-	pubsub_subscribe_t *sub3 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t sub1 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t sub2 = pubsub_subscribe(topic, callback, NULL);
+	pubsub_subscribe_t sub3 = pubsub_subscribe(topic, callback, NULL);
 	LONGS_EQUAL(3, pubsub_count(topic));
 	LONGS_EQUAL(PUBSUB_SUCCESS, pubsub_publish(topic, "message", 7));
 	LONGS_EQUAL(7, message_length_spy);

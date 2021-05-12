@@ -1,5 +1,5 @@
 #ifndef LIBMCU_PUBSUB_H
-#define LIBMCU_PUBSUB_H 202012L
+#define LIBMCU_PUBSUB_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -11,8 +11,8 @@ extern "C" {
 #define PUBSUB_TOPIC_NAME_MAXLEN		32
 #endif
 
-#if !defined(RETRY_DEBUG)
-#define RETRY_DEBUG(...)
+#if !defined(PUBSUB_DEBUG)
+#define PUBSUB_DEBUG(...)
 #endif
 
 typedef enum {
@@ -34,8 +34,9 @@ typedef union {
 	char _size[16];
 #endif
 	long _align;
-} pubsub_subscribe_t;
+} pubsub_subscribe_static_t;
 
+typedef pubsub_subscribe_static_t * pubsub_subscribe_t;
 typedef void (*pubsub_callback_t)(void *context, const void *msg, size_t msglen);
 
 /** Publish a message to a topic
@@ -54,11 +55,11 @@ pubsub_error_t pubsub_publish(const char *topic, const void *msg, size_t msglen)
 /* NOTE: `topic_filter` must be kept even after registering the subscription
  * because we don't newly allocate memory for the topic filter but use its
  * pointer ever afterward. */
-pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
+pubsub_subscribe_t pubsub_subscribe_static(pubsub_subscribe_t handle,
 		const char *topic_filter, pubsub_callback_t cb, void *context);
-pubsub_subscribe_t *pubsub_subscribe(const char *topic_filter,
+pubsub_subscribe_t pubsub_subscribe(const char *topic_filter,
 		pubsub_callback_t cb, void *context);
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj);
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t handle);
 
 int pubsub_count(const char *topic);
 

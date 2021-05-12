@@ -1,5 +1,5 @@
 #ifndef LIBMCU_METRICS_H
-#define LIBMCU_METRICS_H 202102L
+#define LIBMCU_METRICS_H
 
 #if defined(__cplusplus)
 extern "C" {

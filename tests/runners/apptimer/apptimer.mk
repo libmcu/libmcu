@@ -1,17 +1,15 @@
 COMPONENT_NAME = apptimer
 
 SRC_FILES = \
-	stubs/logging.c \
 	stubs/bitops.c \
 	../components/apptimer/src/apptimer.c \
 
 TEST_SRC_FILES = \
-	src/apptimer/test_apptimer.cpp \
+	src/apptimer/apptimer_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/logging/include \
 	../components/apptimer/include \
 	../components/common/include \
 	$(CPPUTEST_HOME)/include \

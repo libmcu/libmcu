@@ -38,7 +38,7 @@ static void released(const struct button_data *btn, void *context)
 }
 
 TEST_GROUP(button) {
-	button_handlers_t handlers;
+	struct button_handlers handlers;
 
 	void setup(void) {
 		button_init(fake_get_time_ms, fake_delayf);

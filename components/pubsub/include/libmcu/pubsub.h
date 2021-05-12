@@ -1,5 +1,5 @@
 #ifndef LIBMCU_PUBSUB_H
-#define LIBMCU_PUBSUB_H 202012L
+#define LIBMCU_PUBSUB_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -34,31 +34,36 @@ typedef union {
 	char _size[16];
 #endif
 	long _align;
-} pubsub_subscribe_t;
+} pubsub_subscribe_static_t;
 
+typedef pubsub_subscribe_static_t * pubsub_subscribe_t;
 typedef void (*pubsub_callback_t)(void *context, const void *msg, size_t msglen);
 
-/** Publish a message to a topic
+/**
+ * @brief Publish a message to a topic
  *
- * It delivers the message for all subscribers in the context of the caller.
- * So it takes time to finish calling all the callbacks registered in
- * subscriptions. You may want some kind of task to make it run in another
- * context, using such a jobqueue.
+ * Calling all the callbacks registered in the subscriptions is done in the
+ * context of the caller, which takes time to finish all. So a kind of task,
+ * such a jobqueue, would help it run in another context.
  *
  * @param topic is where the message gets publshed to
  * @param msg A message to publish
  * @param msglen The length of the message
+ *
+ * @return error code in @ref pubsub_error_t
  */
 pubsub_error_t pubsub_publish(const char *topic, const void *msg, size_t msglen);
 
-/* NOTE: `topic_filter` must be kept even after registering the subscription
- * because we don't newly allocate memory for the topic filter but use its
- * pointer ever afterward. */
-pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
+/**
+ * @note `topic_filter` should be kept in valid memory space even after
+ * registered. Because it keeps dereferencing the pointer of `topic_filter`
+ * ever afterward until unsubscribing.
+ */
+pubsub_subscribe_t pubsub_subscribe_static(pubsub_subscribe_t handle,
 		const char *topic_filter, pubsub_callback_t cb, void *context);
-pubsub_subscribe_t *pubsub_subscribe(const char *topic_filter,
+pubsub_subscribe_t pubsub_subscribe(const char *topic_filter,
 		pubsub_callback_t cb, void *context);
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj);
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t handle);
 
 int pubsub_count(const char *topic);
 

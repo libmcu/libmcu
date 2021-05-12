@@ -4,14 +4,14 @@
 #include "memory_kvstore.h"
 
 TEST_GROUP(MemoryKVStore) {
-	kvstore_t *storage;
+	kvstore_t storage;
 
 	void setup(void) {
 		memory_kvstore_init();
-		storage = memory_kvstore_new("namespace");
+		storage = memory_kvstore_create("namespace");
 	}
 	void teardown() {
-		memory_kvstore_delete(storage);
+		memory_kvstore_destroy(storage);
 	}
 };
 
@@ -99,7 +99,7 @@ TEST(MemoryKVStore, new_ShouldReturnExistNamespace_WhenAlreadyCreated) {
 	uint32_t val_written = 0xdeadbeef;
 	uint32_t val_read = 0;
 	kvstore_write(storage, "key", &val_written, sizeof(val_written));
-	kvstore_t *same_ns = memory_kvstore_new("namespace");
+	kvstore_t same_ns = memory_kvstore_create("namespace");
 	kvstore_read(same_ns, "key", &val_read, sizeof(val_read));
 	LONGS_EQUAL(val_written, val_read);
 }
@@ -110,7 +110,7 @@ TEST(MemoryKVStore, new_ShouldKeepDataSeperatedFromOtherNamespaces_WhenNewNamesp
 	uint32_t val2_written = 0xdeafc1de;
 	uint32_t val2_read = 0;
 
-	kvstore_t *ns2 = memory_kvstore_new("another namespace");
+	kvstore_t ns2 = memory_kvstore_create("another namespace");
 
 	kvstore_write(storage, "samekey", &val1_written, sizeof(val1_written));
 	kvstore_write(ns2, "samekey", &val2_written, sizeof(val2_written));
@@ -120,15 +120,15 @@ TEST(MemoryKVStore, new_ShouldKeepDataSeperatedFromOtherNamespaces_WhenNewNamesp
 	kvstore_read(ns2, "samekey", &val2_read, sizeof(val2_read));
 	LONGS_EQUAL(val2_written, val2_read);
 
-	memory_kvstore_delete(ns2);
+	memory_kvstore_destroy(ns2);
 }
 
 TEST(MemoryKVStore, new_ShouldReturnNull_WhenAllocFails) {
 	cpputest_malloc_set_out_of_memory();
-	POINTERS_EQUAL(NULL, memory_kvstore_new("newNs"));
+	POINTERS_EQUAL(NULL, memory_kvstore_create("newNs"));
 	cpputest_malloc_set_not_out_of_memory();
 
 	cpputest_malloc_set_out_of_memory_countdown(2);
-	POINTERS_EQUAL(NULL, memory_kvstore_new("newNs"));
+	POINTERS_EQUAL(NULL, memory_kvstore_create("newNs"));
 	cpputest_malloc_set_not_out_of_memory();
 }

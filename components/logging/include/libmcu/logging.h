@@ -1,5 +1,5 @@
 #ifndef LIBMCU_LOGGING_H
-#define LIBMCU_LOGGING_H 202012L
+#define LIBMCU_LOGGING_H
 
 #if defined(__cplusplus)
 extern "C" {
