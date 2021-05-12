@@ -12,7 +12,7 @@ static size_t memory_count(void);
 static struct {
 	logging_storage_t ops;
 	pthread_mutex_t storage_lock;
-	ringbuf_t storage;
+	ringbuf_static_t storage;
 	size_t count; // number of entries in the storage
 } memory_storage = {
 	.ops = {
@@ -87,7 +87,7 @@ static size_t memory_count(void)
 const logging_storage_t * __attribute__((weak))
 memory_storage_init(void *storage, size_t storage_size)
 {
-	ringbuf_init(&memory_storage.storage, storage, storage_size);
+	ringbuf_create_static(&memory_storage.storage, storage, storage_size);
 
 	pthread_mutex_init(&memory_storage.storage_lock, NULL);
 	memory_storage.count = 0;

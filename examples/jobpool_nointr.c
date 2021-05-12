@@ -19,7 +19,7 @@ enum job_state {
 };
 
 struct job_desc {
-	job_t handle;
+	job_static_t obj;
 	int state;
 	void (*run)(void *context);
 	void *context;
@@ -31,7 +31,7 @@ static struct {
 	unsigned int job_index;
 
 	sem_t sema;
-	job_t manager;
+	job_static_t manager;
 } m;
 
 static void job_wrapper(void *context)
@@ -45,11 +45,11 @@ static void job_wrapper(void *context)
 
 static bool schedule_job(struct job_desc *job)
 {
-	if (job_create_static(m.jobqueue, &job->handle, job_wrapper, job)
+	if (job_create_static(m.jobqueue, &job->obj, job_wrapper, job)
 			!= JOB_SUCCESS) {
 		return false;
 	}
-	if (job_schedule(m.jobqueue, &job->handle) != JOB_SUCCESS) {
+	if (job_schedule(m.jobqueue, &job->obj) != JOB_SUCCESS) {
 		return false;
 	}
 
