@@ -1,5 +1,5 @@
 #ifndef LOGGING_STORAGE_H
-#define LOGGING_STORAGE_H 202012L
+#define LOGGING_STORAGE_H
 
 #if defined(__cplusplus)
 extern "C" {

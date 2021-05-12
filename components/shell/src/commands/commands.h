@@ -1,5 +1,5 @@
 #ifndef LIBMCU_SHELL_CMDS_H
-#define LIBMCU_SHELL_CMDS_H 202012L
+#define LIBMCU_SHELL_CMDS_H
 
 #if defined(__cplusplus)
 extern "C" {
