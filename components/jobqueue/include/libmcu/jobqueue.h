@@ -60,6 +60,7 @@ job_error_t jobqueue_destroy(jobqueue_t pool);
 
 job_error_t job_create_static(jobqueue_t pool,
 		job_t job, job_callback_t callback, void *context);
+job_t job_create(jobqueue_t pool, job_callback_t callback, void *context);
 job_error_t job_schedule(jobqueue_t pool, job_t job);
 job_error_t job_deschedule(jobqueue_t pool, job_t job);
 

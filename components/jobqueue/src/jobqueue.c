@@ -241,6 +241,23 @@ job_error_t job_create_static(jobqueue_t pool, job_t job,
 	return JOB_SUCCESS;
 }
 
+job_t job_create(jobqueue_t pool, job_callback_t callback, void *context)
+{
+	struct job *job = NULL;
+
+	if (pool == NULL ||
+			((job = (struct job *)calloc(1, sizeof(*job))) == NULL)) {
+		goto out;
+	}
+
+	job->pool = &pool->job_list;
+	job->callback = callback;
+	job->context = context;
+
+out:
+	return (job_t)job;
+}
+
 job_error_t job_deschedule(jobqueue_t pool, job_t job)
 {
 	if (!pool || !job) {
