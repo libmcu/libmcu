@@ -16,13 +16,13 @@ static uint16_t get_jitter(uint16_t max_jitter_ms)
 	return (uint16_t)system_random() % max_jitter_ms;
 }
 
-static void reset_backoff(retry_t *param)
+static void reset_backoff(struct retry_params *param)
 {
 	param->attempts = 0;
 	param->previous_backoff_ms = 0;
 }
 
-static unsigned int get_backoff_time(const retry_t *param)
+static unsigned int get_backoff_time(const struct retry_params *param)
 {
 	uint16_t jitter = get_jitter(param->max_jitter_ms);
 
@@ -40,7 +40,7 @@ static unsigned int get_backoff_time(const retry_t *param)
 	return backoff;
 }
 
-static void adjust_params(retry_t *param)
+static void adjust_params(struct retry_params *param)
 {
 	if (param->max_backoff_ms == 0) {
 		param->max_backoff_ms = RETRY_DEFAULT_MAX_BACKOFF_MS;
@@ -51,7 +51,7 @@ static void adjust_params(retry_t *param)
 	}
 }
 
-retry_error_t retry_backoff(retry_t *param)
+retry_error_t retry_backoff(struct retry_params *param)
 {
 	adjust_params(param);
 
@@ -70,7 +70,7 @@ retry_error_t retry_backoff(retry_t *param)
 	return RETRY_SUCCESS;
 }
 
-void retry_reset(retry_t *param)
+void retry_reset(struct retry_params *param)
 {
 	reset_backoff(param);
 }

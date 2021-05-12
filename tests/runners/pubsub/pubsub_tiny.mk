@@ -10,8 +10,7 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs \
-	../components/logging/include \
-	../components/pubsub/include \
+	../components/pubsub_tiny/include \
 	../components/common/include \
 	$(CPPUTEST_HOME)/include \
 

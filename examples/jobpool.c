@@ -9,8 +9,8 @@
 #endif
 
 static struct {
-	jobqueue_t *jobqueue;
-	job_t jobs[JOBPOOL_MAX_JOBS];
+	jobqueue_t jobqueue;
+	job_static_t jobs[JOBPOOL_MAX_JOBS];
 	unsigned int job_index;
 } m;
 
@@ -33,7 +33,7 @@ bool jobpool_init(void)
 
 bool jobpool_schedule(void (*job)(void *context), void *job_context)
 {
-	if (job_init(m.jobqueue, &m.jobs[m.job_index], job, job_context)
+	if (job_create_static(m.jobqueue, &m.jobs[m.job_index], job, job_context)
 			!= JOB_SUCCESS) {
 		return false;
 	}

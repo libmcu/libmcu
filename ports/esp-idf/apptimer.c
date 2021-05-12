@@ -39,7 +39,7 @@ static bool create_core(struct apptimer *timer, uint32_t timeout_ms, bool repeat
 	return true;
 }
 
-int apptimer_create_static(apptimer_t *timer, uint32_t timeout_ms, bool repeat,
+int apptimer_create_static(apptimer_t timer, uint32_t timeout_ms, bool repeat,
 		void (*callback)(void *param))
 {
 	struct apptimer *p = (struct apptimer *)timer;
@@ -55,7 +55,7 @@ int apptimer_create_static(apptimer_t *timer, uint32_t timeout_ms, bool repeat,
 	return APPTIMER_SUCCESS;
 }
 
-apptimer_t *apptimer_create(uint32_t timeout_ms, bool repeat,
+apptimer_t apptimer_create(uint32_t timeout_ms, bool repeat,
 		void (*callback)(void *param))
 {
 	struct apptimer *p;
@@ -68,10 +68,10 @@ apptimer_t *apptimer_create(uint32_t timeout_ms, bool repeat,
 		return NULL;
 	}
 
-	return (apptimer_t *)p;
+	return (apptimer_t)p;
 }
 
-int apptimer_delete(apptimer_t *timer)
+int apptimer_destroy(apptimer_t timer)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 	apptimer_error_t rc =
@@ -83,14 +83,14 @@ int apptimer_delete(apptimer_t *timer)
 	return rc;
 }
 
-int apptimer_start(apptimer_t *timer)
+int apptimer_start(apptimer_t timer)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 	return p->start(UNMASK_STATIC_FLAG(p->handle), p->timeout_us) == ESP_OK?
 		APPTIMER_SUCCESS : APPTIMER_ERROR;
 }
 
-int apptimer_stop(apptimer_t *timer)
+int apptimer_stop(apptimer_t timer)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 	return esp_timer_stop(UNMASK_STATIC_FLAG(p->handle)) == ESP_OK?

@@ -26,7 +26,7 @@ struct job_desc {
 };
 
 static struct {
-	jobqueue_t *jobqueue;
+	jobqueue_t jobqueue;
 	struct job_desc jobs[JOBPOOL_MAX_JOBS];
 	unsigned int job_index;
 
@@ -45,7 +45,7 @@ static void job_wrapper(void *context)
 
 static bool schedule_job(struct job_desc *job)
 {
-	if (job_init(m.jobqueue, &job->handle, job_wrapper, job)
+	if (job_create_static(m.jobqueue, &job->handle, job_wrapper, job)
 			!= JOB_SUCCESS) {
 		return false;
 	}
@@ -140,7 +140,7 @@ bool jobpool_init(void)
 		return false;
 	}
 
-	if (job_init(m.jobqueue, &m.manager, manager, &m.sema)
+	if (job_create_static(m.jobqueue, &m.manager, manager, &m.sema)
 			!= JOB_SUCCESS) {
 		return false;
 	}

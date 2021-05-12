@@ -44,14 +44,14 @@ typedef enum {
 
 struct button {
 	struct button_data data;
-	const button_handlers_t *ops;
+	const struct button_handlers *ops;
 	int (*get_state)(void);
 	bool pressed;
 	bool active;
 };
 
 static struct {
-	unsigned int (*get_monotonic_tick_in_ms)(void);
+	unsigned int (*get_monotonic_time_in_ms)(void);
 	void (*delay)(unsigned int ms);
 
 	pthread_mutex_t lock;
@@ -94,7 +94,7 @@ static button_state_t scan_button(struct button *btn, void *context)
 		return BUTTON_STATE_INACTIVE;
 	}
 
-	unsigned int t = m.get_monotonic_tick_in_ms();
+	unsigned int t = m.get_monotonic_time_in_ms();
 
 	update_button(btn);
 
@@ -155,12 +155,17 @@ static struct button *get_unused_button(void)
 
 void button_poll(void *context)
 {
-	button_poll_internal(context);
+	pthread_mutex_lock(&m.lock);
+	{
+		button_poll_internal(context);
+	}
+	pthread_mutex_unlock(&m.lock);
 }
 
-bool button_register(const button_handlers_t *handlers, int (*get_state)(void))
+bool button_register(const struct button_handlers *handlers,
+		int (*get_button_state)(void))
 {
-	if (handlers == NULL || get_state == NULL) {
+	if (handlers == NULL || get_button_state == NULL) {
 		return false;
 	}
 
@@ -175,7 +180,7 @@ bool button_register(const button_handlers_t *handlers, int (*get_state)(void))
 		}
 
 		btn->ops = handlers;
-		btn->get_state = get_state;
+		btn->get_state = get_button_state;
 		btn->pressed = false;
 		memset(&btn->data, 0, sizeof(btn->data));
 		btn->active = true;
@@ -187,22 +192,16 @@ out:
 	return rc;
 }
 
-void LIBMCU_WEAK button_hw_init(void)
-{
-}
-
-void button_init(unsigned int (*get_monotonic_tick_in_ms)(void),
+void button_init(unsigned int (*get_monotonic_time_in_ms)(void),
 		void (*mydelay)(unsigned int ms))
 {
-	assert(get_monotonic_tick_in_ms != NULL);
+	assert(get_monotonic_time_in_ms != NULL);
 	assert(mydelay != NULL);
 
-	m.get_monotonic_tick_in_ms = get_monotonic_tick_in_ms;
+	m.get_monotonic_time_in_ms = get_monotonic_time_in_ms;
 	m.delay = mydelay;
 
 	memset(m.buttons, 0, sizeof(m.buttons));
 
 	pthread_mutex_init(&m.lock, NULL);
-
-	button_hw_init();
 }

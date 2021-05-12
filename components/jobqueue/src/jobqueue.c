@@ -24,7 +24,7 @@ struct job {
 	void *context;
 };
 
-static inline bool is_job_scheduled(const jobqueue_t *pool, const struct job *job)
+static inline bool is_job_scheduled(const jobqueue_t pool, const struct job *job)
 {
 	struct list *p;
 	list_for_each(p, &pool->job_list) {
@@ -35,7 +35,7 @@ static inline bool is_job_scheduled(const jobqueue_t *pool, const struct job *jo
 	return false;
 }
 
-static inline uint8_t count_scheduled(const jobqueue_t *pool)
+static inline uint8_t count_scheduled(const jobqueue_t pool)
 {
 	uint8_t count = 0;
 	struct list *p;
@@ -47,17 +47,17 @@ static inline uint8_t count_scheduled(const jobqueue_t *pool)
 	return count;
 }
 
-static inline uint8_t count_running(const jobqueue_t *pool)
+static inline uint8_t count_running(const jobqueue_t pool)
 {
 	return pool->nr_running;
 }
 
-static inline uint8_t job_count_internal(const jobqueue_t *pool)
+static inline uint8_t job_count_internal(const jobqueue_t pool)
 {
 	return (uint8_t)(count_scheduled(pool) + count_running(pool));
 }
 
-static inline void job_delete_internal(jobqueue_t *pool, const struct job *job)
+static inline void job_delete_internal(jobqueue_t pool, const struct job *job)
 {
 	struct list *p;
 	list_for_each(p, &pool->job_list) {
@@ -68,7 +68,7 @@ static inline void job_delete_internal(jobqueue_t *pool, const struct job *job)
 	}
 }
 
-static struct job *get_job_scheduled_detaching(jobqueue_t *pool)
+static struct job *get_job_scheduled_detaching(jobqueue_t pool)
 {
 	if (count_scheduled(pool) == 0) {
 		return NULL;
@@ -80,7 +80,7 @@ static struct job *get_job_scheduled_detaching(jobqueue_t *pool)
 	return job;
 }
 
-static bool jobqueue_process(jobqueue_t *pool)
+static bool jobqueue_process(jobqueue_t pool)
 {
 	bool busy = true;
 	struct job *job;
@@ -116,9 +116,9 @@ static bool jobqueue_process(jobqueue_t *pool)
 static void *jobqueue_task(void *e)
 {
 	JOBQUEUE_DEBUG("new thread created. %u running",
-			((jobqueue_t *)e)->active_threads);
+			((jobqueue_t)e)->active_threads);
 
-	while (jobqueue_process((jobqueue_t *)e)) {
+	while (jobqueue_process((jobqueue_t)e)) {
 	}
 
 	JOBQUEUE_DEBUG("terminating thread");
@@ -129,7 +129,7 @@ static void *jobqueue_task(void *e)
 	return NULL;
 }
 
-static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *job)
+static inline job_error_t job_schedule_internal(jobqueue_t pool, struct job *job)
 {
 	uint8_t nr_jobs = job_count_internal(pool);
 	if (nr_jobs >= pool->max_concurrent_jobs) {
@@ -158,11 +158,11 @@ static inline job_error_t job_schedule_internal(jobqueue_t *pool, struct job *jo
 	return JOB_SUCCESS;
 }
 
-jobqueue_t *jobqueue_create(uint8_t max_concurrent_jobs)
+jobqueue_t jobqueue_create(uint8_t max_concurrent_jobs)
 {
-	jobqueue_t *pool;
+	jobqueue_t pool;
 
-	if (!(pool = (jobqueue_t *)calloc(1, sizeof(*pool)))) {
+	if (!(pool = (jobqueue_t)calloc(1, sizeof(*pool)))) {
 		goto out_err;
 	}
 	if (sem_init(&pool->job_queue, 0, 0) != 0) {
@@ -188,7 +188,7 @@ out_err:
 	return NULL;
 }
 
-job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr)
+job_error_t jobqueue_set_attr(jobqueue_t pool, const jobqueue_attr_t *attr)
 {
 	if (!pool || !attr) {
 		return JOB_INVALID_PARAM;
@@ -203,7 +203,7 @@ job_error_t jobqueue_set_attr(jobqueue_t *pool, const jobqueue_attr_t *attr)
 	return JOB_SUCCESS;
 }
 
-job_error_t jobqueue_destroy(jobqueue_t *pool)
+job_error_t jobqueue_destroy(jobqueue_t pool)
 {
 	if (!pool) {
 		return JOB_INVALID_PARAM;
@@ -225,7 +225,7 @@ job_error_t jobqueue_destroy(jobqueue_t *pool)
 	return JOB_SUCCESS;
 }
 
-job_error_t job_init(jobqueue_t *pool, job_t *job,
+job_error_t job_create_static(jobqueue_t pool, job_t job,
 		job_callback_t callback, void *context)
 {
 	if (!pool || !job) {
@@ -241,7 +241,7 @@ job_error_t job_init(jobqueue_t *pool, job_t *job,
 	return JOB_SUCCESS;
 }
 
-job_error_t job_delete(jobqueue_t *pool, job_t *job)
+job_error_t job_deschedule(jobqueue_t pool, job_t job)
 {
 	if (!pool || !job) {
 		return JOB_INVALID_PARAM;
@@ -256,7 +256,7 @@ job_error_t job_delete(jobqueue_t *pool, job_t *job)
 	return JOB_SUCCESS;
 }
 
-job_error_t job_schedule(jobqueue_t *pool, job_t *job)
+job_error_t job_schedule(jobqueue_t pool, job_t job)
 {
 	if (!pool || !job) {
 		return JOB_INVALID_PARAM;
@@ -273,7 +273,7 @@ job_error_t job_schedule(jobqueue_t *pool, job_t *job)
 	return err;
 }
 
-uint8_t job_count(jobqueue_t *pool)
+uint8_t job_count(jobqueue_t pool)
 {
 	uint8_t count;
 

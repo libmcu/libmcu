@@ -24,12 +24,12 @@ TEST(AppTimer, create_ShouldReturnNull_WhenNullTimerGiven) {
 }
 
 TEST(AppTimer, create_ShouldReturnNull_WhenNullCallbackGiven) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	POINTERS_EQUAL(NULL, apptimer_create_static(&timer, false, NULL));
 }
 
 TEST(AppTimer, create_ShouldReturnTheSamePointer_WhenTimerPointerGiven) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	POINTERS_EQUAL(&timer, apptimer_create_static(&timer, false, callback));
 }
 
@@ -42,7 +42,7 @@ TEST(AppTimer, start_ShouldReturnInvalidParam_WhenNullTimerGiven) {
 }
 
 TEST(AppTimer, start_ShouldReturnAlreadyStarted_WhenStartAgain) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	LONGS_EQUAL(0, apptimer_count());
 	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_start(&timer, 10, NULL));
@@ -51,14 +51,14 @@ TEST(AppTimer, start_ShouldReturnAlreadyStarted_WhenStartAgain) {
 }
 
 TEST(AppTimer, start_ShouldReturnTimeLimitExceeded_WhenMoreThanMaxTimeoutGiven) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	LONGS_EQUAL(APPTIMER_TIME_LIMIT_EXCEEDED,
 			apptimer_start(&timer, APPTIMER_MAX_TIMEOUT+1, NULL));
 }
 
 TEST(AppTimer, start_ShouldRunTimerRecursively_WhenRepeatOptionGiven) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, true, callback);
 	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_start(&timer, 10, NULL));
 	for (int i = 0; i < 10; i++) {
@@ -71,7 +71,7 @@ TEST(AppTimer, start_ShouldRunTimerRecursively_WhenRepeatOptionGiven) {
 }
 
 TEST(AppTimer, stop_ShouldStopTimerStarted) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_start(&timer, 10, NULL));
 	LONGS_EQUAL(1, apptimer_count());
@@ -86,16 +86,16 @@ IGNORE_TEST(AppTimer, stop_ShouldDoNothing_WhenNotStartedTimerGiven) {
 }
 
 TEST(AppTimer, delete_ShouldDeleteTimerCreated) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
-	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_delete(&timer));
+	LONGS_EQUAL(APPTIMER_SUCCESS, apptimer_destroy(&timer));
 }
 
 IGNORE_TEST(AppTimer, delete_ShouldDoNothing_WhenAlreadyDeletedTimerGiven) {
 }
 
 TEST(AppTimer, schedule_ShouldUpdateTimerWheels_WhenEverytimeCalled) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	apptimer_schedule(1);
 	apptimer_start(&timer, 10, NULL);
@@ -114,7 +114,7 @@ TEST(AppTimer, schedule_ShouldUpdateTimerWheels_WhenEverytimeCalled) {
 }
 
 TEST(AppTimer, schedule_ShouldNotCompensateTimerTimeout_WhenLatencyGiven) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, true, callback);
 	apptimer_start(&timer, 10, NULL);
 	apptimer_schedule(15);
@@ -125,7 +125,7 @@ TEST(AppTimer, schedule_ShouldNotCompensateTimerTimeout_WhenLatencyGiven) {
 }
 
 TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesWrapOver) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, true, callback);
 	apptimer_schedule(((apptimer_timeout_t)-1) - 5);
 	apptimer_start(&timer, 10, NULL);
@@ -147,7 +147,7 @@ TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesWrapOver) {
 }
 
 TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesOverSignBit) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	// after APPTIMER_MAX_TIMEOUT+1, the sign bit of timer counter will be
 	// set
@@ -160,7 +160,7 @@ TEST(AppTimer, schedule_ShouldRunTheSame_WhenCounterGoesOverSignBit) {
 }
 
 TEST(AppTimer, start_ShouldAddTimerInTheRightWheel_WhenTimeCounterUpdated) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	apptimer_schedule(1);
 	apptimer_start(&timer, 10, NULL);
@@ -171,7 +171,7 @@ TEST(AppTimer, start_ShouldAddTimerInTheRightWheel_WhenTimeCounterUpdated) {
 }
 
 TEST(AppTimer, Timer_ShouldExpire_WhenTimePassedMoreThanGivenTimeout) {
-	apptimer_t timer;
+	apptimer_static_t timer;
 	apptimer_create_static(&timer, false, callback);
 	apptimer_schedule(17);
 	apptimer_start(&timer, 10, NULL);
@@ -182,7 +182,7 @@ TEST(AppTimer, Timer_ShouldExpire_WhenTimePassedMoreThanGivenTimeout) {
 }
 
 TEST(AppTimer, Timers_ShouldExpire_WhenTimePassedMoreThanGivenTimeout) {
-	apptimer_t timer[16];
+	apptimer_static_t timer[16];
 	apptimer_timeout_t tout = 2;
 	int n = sizeof(timer) / sizeof(timer[0]);
 
@@ -199,7 +199,7 @@ TEST(AppTimer, Timers_ShouldExpire_WhenTimePassedMoreThanGivenTimeout) {
 }
 
 TEST(AppTimer, ShouldCallCallback_WhenTimedOut) {
-	apptimer_t timer[16];
+	apptimer_static_t timer[16];
 	apptimer_timeout_t tout = 2;
 	apptimer_timeout_t elapsed = 0;
 	int n = sizeof(timer) / sizeof(timer[0]);
@@ -239,9 +239,9 @@ TEST_GROUP(AppTimer_WithHardwareTimer) {
 };
 
 TEST(AppTimer_WithHardwareTimer, first_timer_ShouldSetAlarm) {
-	apptimer_t timer1;
-	apptimer_t timer2;
-	apptimer_t timer3;
+	apptimer_static_t timer1;
+	apptimer_static_t timer2;
+	apptimer_static_t timer3;
 	apptimer_create_static(&timer1, false, callback);
 	apptimer_create_static(&timer2, false, callback);
 	apptimer_create_static(&timer3, false, callback);

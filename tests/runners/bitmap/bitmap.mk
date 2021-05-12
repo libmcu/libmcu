@@ -4,7 +4,7 @@ SRC_FILES = \
 	../components/bitmap/src/bitmap.c
 
 TEST_SRC_FILES = \
-	src/bitmap/test_bitmap.cpp \
+	src/bitmap/bitmap_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \

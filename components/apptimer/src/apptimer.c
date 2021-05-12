@@ -33,7 +33,7 @@ struct apptimer {
 	void *context;
 	struct llist list;
 };
-LIBMCU_STATIC_ASSERT(sizeof(struct apptimer) == sizeof(apptimer_t),
+LIBMCU_STATIC_ASSERT(sizeof(struct apptimer) == sizeof(apptimer_static_t),
 		"apptimer_t must be larger or equal to struct apptimer.");
 
 static struct {
@@ -185,8 +185,8 @@ static void run_pending_timers(void)
 	}
 }
 
-apptimer_error_t apptimer_start(apptimer_t * const timer,
-		apptimer_timeout_t timeout, void *callback_context)
+apptimer_error_t apptimer_start(apptimer_t timer, apptimer_timeout_t timeout,
+		void *callback_context)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 
@@ -217,7 +217,7 @@ apptimer_error_t apptimer_start(apptimer_t * const timer,
 	return APPTIMER_SUCCESS;
 }
 
-apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
+apptimer_t apptimer_create_static(apptimer_t timer, bool repeat,
 		apptimer_callback_t callback)
 {
 	struct apptimer *p = (struct apptimer *)timer;
@@ -234,14 +234,14 @@ apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
 }
 
 // TODO: Implement `apptimer_create()`
-apptimer_t *apptimer_create(bool repeat, apptimer_callback_t callback)
+apptimer_t apptimer_create(bool repeat, apptimer_callback_t callback)
 {
 	unused(repeat);
 	unused(callback);
 	return NULL;
 }
 
-apptimer_error_t apptimer_stop(apptimer_t * const timer)
+apptimer_error_t apptimer_stop(apptimer_t timer)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 
@@ -254,7 +254,7 @@ apptimer_error_t apptimer_stop(apptimer_t * const timer)
 	return APPTIMER_SUCCESS;
 }
 
-apptimer_error_t apptimer_delete(apptimer_t *timer)
+apptimer_error_t apptimer_destroy(apptimer_t timer)
 {
 	struct apptimer *p = (struct apptimer *)timer;
 

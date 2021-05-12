@@ -16,10 +16,10 @@ int system_random(void)
 }
 
 TEST_GROUP(retry) {
-	retry_t retry;
+	struct retry_params retry;
 	void setup(void) {
 		nr_sleep_called = 0;
-		retry = (retry_t) {
+		retry = (struct retry_params) {
 			.max_backoff_ms = 300000,
 			.min_backoff_ms = 5000,
 			.max_jitter_ms = 5000,
@@ -60,19 +60,19 @@ TEST(retry, retry_ShouldSleepForInRange) {
 }
 
 TEST(retry, retry_ShouldSetDefaultMaxBackOffMs_WhenZeroGivenForIt) {
-	retry_t myretry = { 0, };
+	struct retry_params myretry = { 0, };
 	retry_backoff(&myretry);
 	LONGS_EQUAL(300000, myretry.max_backoff_ms);
 }
 
 TEST(retry, retry_ShouldSetDefaultMaxJitterMs_WhenZeroGivenForIt) {
-	retry_t myretry = { 0, };
+	struct retry_params myretry = { 0, };
 	retry_backoff(&myretry);
 	LONGS_EQUAL(5000, myretry.max_jitter_ms);
 }
 
 TEST(retry, retry_ShouldSetMaxJitterMsToMinBackOffMs_WhenMinBackoffMsGiven) {
-	retry_t myretry = { .min_backoff_ms = 1000, };
+	struct retry_params myretry = { .min_backoff_ms = 1000, };
 	retry_backoff(&myretry);
 	LONGS_EQUAL(1000, myretry.max_jitter_ms);
 }

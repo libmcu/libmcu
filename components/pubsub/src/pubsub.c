@@ -14,10 +14,10 @@
 
 /* NOTE: It sets the least significant bit of `subscriber->context` to
  * differentiate static subscriber from one created dynamically. */
-#define GET_SUBSCRIBER_CONTEXT(obj)			\
-	(void *)((uintptr_t)(obj)->context & ~1UL)
-#define IS_SUBSCRIBER_STATIC(obj)			\
-	((uintptr_t)(obj)->context & 1UL)
+#define GET_SUBSCRIBER_CONTEXT(handle)			\
+	(void *)((uintptr_t)(handle)->context & ~1UL)
+#define IS_SUBSCRIBER_STATIC(handle)			\
+	((uintptr_t)(handle)->context & 1UL)
 #define GET_CONTEXT_STATIC(ctx)				\
 	(void *)((uintptr_t)(ctx) | 1UL)
 
@@ -27,7 +27,7 @@ typedef struct {
 	void *context;
 	intptr_t _placeholder_for_compatibility_to_tiny_pubsub;
 } subscribe_t;
-LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_t),
+LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_static_t),
 	"The size of public and private subscribe data type must be the same.");
 
 static struct {
@@ -278,34 +278,34 @@ pubsub_error_t pubsub_publish(const char *topic, const void *msg, size_t msglen)
 	return PUBSUB_SUCCESS;
 }
 
-pubsub_subscribe_t *pubsub_subscribe_static(pubsub_subscribe_t *obj,
+pubsub_subscribe_t pubsub_subscribe_static(pubsub_subscribe_t handle,
 		const char *topic_filter, pubsub_callback_t cb, void *context)
 {
-	return (pubsub_subscribe_t *)
-		subscribe_core((subscribe_t *)obj, topic_filter, cb,
+	return (pubsub_subscribe_t)
+		subscribe_core((subscribe_t *)handle, topic_filter, cb,
 				GET_CONTEXT_STATIC(context));
 }
 
-pubsub_subscribe_t *pubsub_subscribe(const char *topic_filter,
+pubsub_subscribe_t pubsub_subscribe(const char *topic_filter,
 		pubsub_callback_t cb, void *context)
 {
-	subscribe_t *obj = (subscribe_t *)calloc(1, sizeof(*obj));
+	subscribe_t *handle = (subscribe_t *)calloc(1, sizeof(*handle));
 
-	if (obj == NULL) {
+	if (handle == NULL) {
 		return NULL;
 	}
 
-	if (subscribe_core(obj, topic_filter, cb, context) == NULL) {
-		free(obj);
+	if (subscribe_core(handle, topic_filter, cb, context) == NULL) {
+		free(handle);
 		return NULL;
 	}
 
-	return (pubsub_subscribe_t *)obj;
+	return (pubsub_subscribe_t)handle;
 }
 
-pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t *obj)
+pubsub_error_t pubsub_unsubscribe(pubsub_subscribe_t handle)
 {
-	subscribe_t *sub = (subscribe_t *)obj;
+	subscribe_t *sub = (subscribe_t *)handle;
 
 	if (sub == NULL || sub->topic_filter == NULL) {
 		return PUBSUB_INVALID_PARAM;

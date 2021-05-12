@@ -1,5 +1,5 @@
 #ifndef LIBMCU_COMPILER_H
-#define LIBMCU_COMPILER_H 202012L
+#define LIBMCU_COMPILER_H
 
 #if defined(__cplusplus)
 extern "C" {

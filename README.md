@@ -11,6 +11,11 @@ A toolkit for firmware development.
 The documentation of each components are under the subdirectories. Some usage
 examples can also be found under [examples](examples) and [test cases](tests/src).
 
+Simplicity and code size are considered first while trying to avoid dynamic
+allocation as much as possible.
+
+Any feedback would be appreciated.
+
 ## Components
 * [apptimer](components/apptimer)
 * [bitmap](components/bitmap)

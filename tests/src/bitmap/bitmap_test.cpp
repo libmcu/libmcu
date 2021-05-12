@@ -9,7 +9,7 @@ TEST_GROUP(bitmap) {
 	DEFINE_BITMAP(bitmap, DEFAULT_BITMAP_LENGTH);
 
 	void setup(void) {
-		bitmap_init(bitmap, DEFAULT_BITMAP_LENGTH, 0);
+		bitmap_create_static(bitmap, DEFAULT_BITMAP_LENGTH, 0);
 	}
 	void teardown(void) {
 	}
@@ -19,24 +19,26 @@ TEST(bitmap, define_ShouldPreserveRequiredBytes_WhenNumberOfBitsGiven) {
 	DEFINE_BITMAP(arr1, 128);
 	LONGS_EQUAL(sizeof(arr1), 128/CHAR_BIT);
 	DEFINE_BITMAP(arr2, 5);
-	LONGS_EQUAL(sizeof(arr2), sizeof(bitmap_t)); // minimum size
+	LONGS_EQUAL(sizeof(arr2), sizeof(bitmap_static_t)); // minimum size
 	DEFINE_BITMAP(arr3, 100);
-	LONGS_EQUAL(sizeof(arr3), ALIGN(100/CHAR_BIT, sizeof(bitmap_t)));
+	LONGS_EQUAL(sizeof(arr3), ALIGN(100/CHAR_BIT, sizeof(bitmap_static_t)));
 	DEFINE_BITMAP(arr4, 200);
-	LONGS_EQUAL(sizeof(arr4), ALIGN(200/CHAR_BIT, sizeof(bitmap_t)));
+	LONGS_EQUAL(sizeof(arr4), ALIGN(200/CHAR_BIT, sizeof(bitmap_static_t)));
 }
 
 TEST(bitmap, init_ShouldClearArray_WhenInitialValueIsZero) {
-	bitmap_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)] = { 0, };
+	bitmap_static_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)]
+		= { 0, };
 	DEFINE_BITMAP(arr, DEFAULT_BITMAP_LENGTH);
 
-	bitmap_init(arr, DEFAULT_BITMAP_LENGTH, 0);
+	bitmap_create_static(arr, DEFAULT_BITMAP_LENGTH, 0);
 
 	MEMCMP_EQUAL(fixed_bitmap, arr, sizeof(fixed_bitmap));
 }
 
 TEST(bitmap, init_ShouldSetArray_WhenInitialValueIsOne) {
-	bitmap_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)] = { 0, };
+	bitmap_static_t fixed_bitmap[BITMAP_ARRAY_SIZE(DEFAULT_BITMAP_LENGTH)]
+		= { 0, };
 	memset(fixed_bitmap, -1, DEFAULT_BITMAP_LENGTH/CHAR_BIT);
 	for (int i = 0; i < DEFAULT_BITMAP_LENGTH % CHAR_BIT; i++) {
 		int pos = DEFAULT_BITMAP_LENGTH - i - 1;
@@ -44,7 +46,7 @@ TEST(bitmap, init_ShouldSetArray_WhenInitialValueIsOne) {
 	}
 	DEFINE_BITMAP(arr, DEFAULT_BITMAP_LENGTH);
 
-	bitmap_init(arr, DEFAULT_BITMAP_LENGTH, 1);
+	bitmap_create_static(arr, DEFAULT_BITMAP_LENGTH, 1);
 
 	LONGS_EQUAL(DEFAULT_BITMAP_LENGTH,
 			bitmap_count(arr, DEFAULT_BITMAP_LENGTH));

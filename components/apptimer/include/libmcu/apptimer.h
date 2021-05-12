@@ -1,5 +1,5 @@
 #ifndef LIBMCU_APPTIMER_H
-#define LIBMCU_APPTIMER_H 202012L
+#define LIBMCU_APPTIMER_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -31,8 +31,9 @@ typedef union {
 	char _size[28];
 #endif
 	long _align;
-} apptimer_t;
+} apptimer_static_t;
 
+typedef apptimer_static_t * apptimer_t;
 typedef void (*apptimer_callback_t)(void *context);
 typedef uintptr_t apptimer_timeout_t;
 
@@ -44,14 +45,14 @@ typedef uintptr_t apptimer_timeout_t;
 void apptimer_init(void (*update_alarm)(apptimer_timeout_t timeout));
 apptimer_error_t apptimer_deinit(void);
 
-apptimer_t *apptimer_create(bool repeat, apptimer_callback_t callback);
-apptimer_t *apptimer_create_static(apptimer_t * const timer, bool repeat,
+apptimer_t apptimer_create(bool repeat, apptimer_callback_t callback);
+apptimer_t apptimer_create_static(apptimer_t timer, bool repeat,
 		apptimer_callback_t callback);
-apptimer_error_t apptimer_delete(apptimer_t *timer);
+apptimer_error_t apptimer_destroy(apptimer_t timer);
 
-apptimer_error_t apptimer_start(apptimer_t * const timer,
+apptimer_error_t apptimer_start(apptimer_t timer,
 		apptimer_timeout_t timeout, void *callback_context);
-apptimer_error_t apptimer_stop(apptimer_t * const timer);
+apptimer_error_t apptimer_stop(apptimer_t timer);
 int apptimer_count(void);
 
 /** Process expirations and bookkeepings

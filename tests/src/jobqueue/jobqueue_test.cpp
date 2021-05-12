@@ -12,8 +12,8 @@ typedef struct job_context {
 } job_context_t;
 
 TEST_GROUP(JobPool) {
-	jobqueue_t *jobqueue;
-	job_t jobs[MAX_JOBS];
+	jobqueue_t jobqueue;
+	job_static_t jobs[MAX_JOBS];
 	job_context_t jobctx[MAX_JOBS];
 
 	void setup(void) {
@@ -52,23 +52,26 @@ TEST(JobPool, stringify_ShouldReturnErrorString) {
 }
 
 TEST(JobPool, init_ShouldReturnParamError_WhenPoolOrJobIsNull) {
-	LONGS_EQUAL(JOB_INVALID_PARAM, job_init(NULL, &jobs[0], NULL, NULL));
-	LONGS_EQUAL(JOB_INVALID_PARAM, job_init(jobqueue, NULL, NULL, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM,
+			job_create_static(NULL, &jobs[0], NULL, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM,
+			job_create_static(jobqueue, NULL, NULL, NULL));
 }
 
 TEST(JobPool, init_ShouldReturnSuccess) {
-	LONGS_EQUAL(JOB_SUCCESS, job_init(jobqueue, &jobs[0], NULL, NULL));
+	LONGS_EQUAL(JOB_SUCCESS,
+			job_create_static(jobqueue, &jobs[0], NULL, NULL));
 }
 
 TEST(JobPool, schedule_ShouldReturnParamError_WhenPoolOrJobIsNull) {
-	job_init(jobqueue, &jobs[0], NULL, NULL);
+	job_create_static(jobqueue, &jobs[0], NULL, NULL);
 
 	LONGS_EQUAL(JOB_INVALID_PARAM, job_schedule(NULL, &jobs[0]));
 	LONGS_EQUAL(JOB_INVALID_PARAM, job_schedule(jobqueue, NULL));
 }
 
 TEST(JobPool, schedule_ShouldReturnSuccess) {
-	job_init(jobqueue, &jobs[0], callback, &jobctx[0]);
+	job_create_static(jobqueue, &jobs[0], callback, &jobctx[0]);
 
 	mock().expectOneCall("pthread_attr_init");
 	mock().expectOneCall("pthread_attr_setstacksize");
@@ -87,37 +90,37 @@ TEST(JobPool, schedule_ShouldReturnFull_WhenScheduleMoreThanMaxJobs) {
 	};
 	jobqueue_set_attr(jobqueue, &myattr);
 	for (int i = 0; i < MAX_JOBS; i++) {
-		job_init(jobqueue, &jobs[i], callback, &jobctx[i]);
+		job_create_static(jobqueue, &jobs[i], callback, &jobctx[i]);
 		LONGS_EQUAL(JOB_SUCCESS, job_schedule(jobqueue, &jobs[i]));
 	}
-	job_t extra_job;
+	job_static_t extra_job;
 	job_context_t extra_jobctx;
-	job_init(jobqueue, &extra_job, callback, &extra_jobctx);
+	job_create_static(jobqueue, &extra_job, callback, &extra_jobctx);
 	LONGS_EQUAL(JOB_FULL, job_schedule(jobqueue, &extra_job));
 }
 
 TEST(JobPool, delete_ShouldReturnInvalidParam_WhenNullPointersGiven) {
-	LONGS_EQUAL(JOB_INVALID_PARAM, job_delete(NULL, &jobs[0]));
-	LONGS_EQUAL(JOB_INVALID_PARAM, job_delete(jobqueue, NULL));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_deschedule(NULL, &jobs[0]));
+	LONGS_EQUAL(JOB_INVALID_PARAM, job_deschedule(jobqueue, NULL));
 }
 
 TEST(JobPool, delete_ShouldReturnSuccess_WhenNoMatchingScheduledJob) {
-	job_init(jobqueue, &jobs[0], NULL, NULL);
+	job_create_static(jobqueue, &jobs[0], NULL, NULL);
 
 	LONGS_EQUAL(0, job_count(jobqueue));
-	LONGS_EQUAL(JOB_SUCCESS, job_delete(jobqueue, &jobs[0]));
+	LONGS_EQUAL(JOB_SUCCESS, job_deschedule(jobqueue, &jobs[0]));
 	LONGS_EQUAL(0, job_count(jobqueue));
 }
 
 TEST(JobPool, delete_ShouldReturnSuccess_WhenScheduledJobDeleted) {
-	job_init(jobqueue, &jobs[0], NULL, NULL);
+	job_create_static(jobqueue, &jobs[0], NULL, NULL);
 
 	LONGS_EQUAL(0, job_count(jobqueue));
 	mock().expectOneCall("pthread_create").andReturnValue(-1);
 	job_schedule(jobqueue, &jobs[0]);
 	LONGS_EQUAL(1, job_count(jobqueue));
 
-	LONGS_EQUAL(JOB_SUCCESS, job_delete(jobqueue, &jobs[0]));
+	LONGS_EQUAL(JOB_SUCCESS, job_deschedule(jobqueue, &jobs[0]));
 	LONGS_EQUAL(0, job_count(jobqueue));
 }
 
@@ -125,7 +128,7 @@ TEST(JobPool, count_ShouldReturnJobsScheduled) {
 	mock().expectNCalls(MAX_JOBS, "pthread_create").andReturnValue(-1);
 
 	for (int i = 0; i < MAX_JOBS; i++) {
-		job_init(jobqueue, &jobs[i], callback, &jobctx[i]);
+		job_create_static(jobqueue, &jobs[i], callback, &jobctx[i]);
 
 		LONGS_EQUAL(i, job_count(jobqueue));
 		job_schedule(jobqueue, &jobs[i]);
@@ -139,7 +142,7 @@ TEST(JobPool, schedule_ShouldRunCallback_WhenCallbackRegistered) {
 	mock().expectNCalls(MAX_JOBS, "pthread_create");
 
 	for (int i = 0; i < MAX_JOBS; i++) {
-		job_init(jobqueue, &jobs[i], callback, &jobctx[i]);
+		job_create_static(jobqueue, &jobs[i], callback, &jobctx[i]);
 		job_schedule(jobqueue, &jobs[i]);
 		CHECK_EQUAL(true, jobctx[i].is_callback_called);
 	}

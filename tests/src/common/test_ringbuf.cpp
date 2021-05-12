@@ -2,9 +2,9 @@
 #include "CppUTest/TestHarness_c.h"
 #include "libmcu/ringbuf.h"
 
-static inline size_t ringbuf_left(ringbuf_t *self)
+static inline size_t ringbuf_left(ringbuf_t handle)
 {
-	return ringbuf_capacity(self) - ringbuf_length(self);
+	return ringbuf_capacity(handle) - ringbuf_length(handle);
 }
 
 TEST_GROUP(RingBuffer) {
@@ -14,24 +14,25 @@ TEST_GROUP(RingBuffer) {
 	void teardown(void) {
 	}
 
-	ringbuf_t ringbuf_obj;
+	ringbuf_static_t ringbuf_obj;
 	uint8_t ringbuf_space[SPACE_SIZE];
 	void prepare_test(void) {
-		ringbuf_init(&ringbuf_obj, ringbuf_space, sizeof(ringbuf_space));
+		ringbuf_create_static(&ringbuf_obj,
+				ringbuf_space, sizeof(ringbuf_space));
 	}
 };
 
 TEST(RingBuffer, init_ShouldReturnFalse_WhenObjectIsNullOrSpaceIsNull) {
-	ringbuf_t ringbuf;
+	ringbuf_static_t ringbuf;
 	uint8_t buf[2];
-	CHECK_EQUAL(false, ringbuf_init(NULL, buf, sizeof(buf)));
-	CHECK_EQUAL(false, ringbuf_init(&ringbuf, NULL, sizeof(buf)));
+	CHECK_EQUAL(false, ringbuf_create_static(NULL, buf, sizeof(buf)));
+	CHECK_EQUAL(false, ringbuf_create_static(&ringbuf, NULL, sizeof(buf)));
 }
 
 TEST(RingBuffer, init_ShouldReturnTrue_WhenInitializeSuccessfully) {
-	ringbuf_t ringbuf;
+	ringbuf_static_t ringbuf;
 	uint8_t buf[2];
-	CHECK_EQUAL(true, ringbuf_init(&ringbuf, buf, sizeof(buf)));
+	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
 }
 
 TEST(RingBuffer, write_ShouldReturnZero_WhenWriteSizeIsLargerThanSpaceSize) {
@@ -185,26 +186,26 @@ TEST(RingBuffer, write_cancel_ShouldReturnCanceledSize_WhenSuccessful) {
 }
 
 TEST(RingBuffer, new_ShouldReturnNewObject) {
-	ringbuf_t *obj = ringbuf_new(32);
-	CHECK(obj);
+	ringbuf_t handle = ringbuf_create(32);
+	CHECK(handle);
 
 	const uint8_t test_data[] = "1234567890123";
 	uint8_t buf[32] = { 0, };
-	ringbuf_write(obj, test_data, sizeof(test_data));
-	LONGS_EQUAL(sizeof(test_data), ringbuf_read(obj, 0, buf, sizeof(test_data)));
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(handle, 0, buf, sizeof(test_data)));
 	MEMCMP_EQUAL(test_data, buf, sizeof(test_data));
 
-	ringbuf_delete(obj);
+	ringbuf_destroy(handle);
 }
 
 TEST(RingBuffer, new_ShouldReturnNull_WhenOutOfMemory) {
 	cpputest_malloc_set_out_of_memory();
-	POINTERS_EQUAL(NULL, ringbuf_new(32));
+	POINTERS_EQUAL(NULL, ringbuf_create(32));
 	cpputest_malloc_set_not_out_of_memory();
 }
 
 TEST(RingBuffer, new_ShouldReturnNull_WhenOutOfMemory2) {
 	cpputest_malloc_set_out_of_memory_countdown(2);
-	POINTERS_EQUAL(NULL, ringbuf_new(32));
+	POINTERS_EQUAL(NULL, ringbuf_create(32));
 	cpputest_malloc_set_not_out_of_memory();
 }
