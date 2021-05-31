@@ -16,8 +16,12 @@ struct button_data {
 struct button_handlers {
 	void (*pressed)(const struct button_data *btn, void *context);
 	void (*released)(const struct button_data *btn, void *context);
+	union {
+		void (*holding)(const struct button_data *btn, void *context);
+		void (*repeat_started)(const struct button_data *btn,
+				void *context);
+	};
 #if 0
-	void (*repeat_started)(const struct button_data *btn, void *context);
 	void (*repeat)(const struct button_data *btn, void *context);
 	void (*double_clicked)(const struct button_data *btn, void *context);
 #endif
