@@ -13,10 +13,10 @@
 #if !defined(BUTTON_MIN_PRESS_TIME_MS)
 #define BUTTON_MIN_PRESS_TIME_MS		60U
 #endif
-#if 0
 #if !defined(BUTTON_REPEAT_DELAY_MS)
 #define BUTTON_REPEAT_DELAY_MS			300U
 #endif
+#if 0
 #if !defined(BUTTON_REPEAT_RATE_MS)
 #define BUTTON_REPEAT_RATE_MS			100U
 #endif
@@ -48,6 +48,7 @@ struct button {
 	int (*get_state)(void);
 	bool pressed;
 	bool active;
+	bool holding;
 };
 
 static struct {
@@ -88,31 +89,69 @@ static bool is_button_down(const struct button *btn)
 	return (btn->data.history & HISTORY_MASK) == HISTORY_MASK;
 }
 
+static void do_pressed(struct button *btn, void *context)
+{
+	if (btn->pressed) {
+		return;
+	}
+
+	unsigned int t = m.get_monotonic_time_in_ms();
+
+	btn->data.time_pressed = t;
+	btn->pressed = true;
+	if (btn->ops->pressed) {
+		btn->ops->pressed(&btn->data, context);
+	}
+}
+
+static void do_released(struct button *btn, void *context)
+{
+	if (!btn->pressed) {
+		return;
+	}
+
+	unsigned int t = m.get_monotonic_time_in_ms();
+
+	btn->data.time_released = t;
+	btn->pressed = false;
+	btn->holding = false;
+	if (btn->ops->released) {
+		btn->ops->released(&btn->data, context);
+	}
+}
+
+static void do_holding(struct button *btn, void *context)
+{
+	if (btn->holding) {
+		return;
+	}
+
+	unsigned int t = m.get_monotonic_time_in_ms();
+
+	if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
+		btn->holding = true;
+		if (btn->ops->holding) {
+			btn->ops->holding(&btn->data, context);
+		}
+	}
+}
+
 static button_state_t scan_button(struct button *btn, void *context)
 {
 	if (!btn->active) {
 		return BUTTON_STATE_INACTIVE;
 	}
 
-	unsigned int t = m.get_monotonic_time_in_ms();
-
 	update_button(btn);
 
-	if (is_button_pressed(btn) && !btn->pressed) {
-		btn->data.time_pressed = t;
-		btn->pressed = true;
-		if (btn->ops->pressed) {
-			btn->ops->pressed(&btn->data, context);
-		}
+	if (is_button_pressed(btn)) {
+		do_pressed(btn, context);
 		return BUTTON_STATE_PRESSED;
-	} else if (is_button_released(btn) && btn->pressed) {
-		btn->data.time_released = t;
-		btn->pressed = false;
-		if (btn->ops->released) {
-			btn->ops->released(&btn->data, context);
-		}
+	} else if (is_button_released(btn)) {
+		do_released(btn, context);
 		return BUTTON_STATE_RELEASED;
 	} else if (is_button_down(btn)) {
+		do_holding(btn, context);
 		return BUTTON_STATE_DOWN;
 	} else if (is_button_up(btn)) {
 		return BUTTON_STATE_UP;
@@ -182,6 +221,7 @@ bool button_register(const struct button_handlers *handlers,
 		btn->ops = handlers;
 		btn->get_state = get_button_state;
 		btn->pressed = false;
+		btn->holding = false;
 		memset(&btn->data, 0, sizeof(btn->data));
 		btn->active = true;
 	}
