@@ -46,9 +46,9 @@ typedef void (*pubsub_callback_t)(void *context, const void *msg, size_t msglen)
  * context of the caller, which takes time to finish all. So a kind of task,
  * such a jobqueue, would help it run in another context.
  *
- * @param topic is where the message gets publshed to
- * @param msg A message to publish
- * @param msglen The length of the message
+ * @param[in] topic is where the message gets publshed to
+ * @param[in] msg A message to publish
+ * @param[in] msglen The length of the message
  *
  * @return error code in @ref pubsub_error_t
  */
