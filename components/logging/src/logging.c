@@ -12,6 +12,10 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
+#if !defined(MIN)
+#define MIN(a, b)				((a) > (b)? (b) : (a))
+#endif
+
 #define LOGGING_MAGIC				0xA5A5U
 
 typedef uint16_t logging_magic_t;
@@ -193,13 +197,12 @@ static size_t peek_internal(void *buf, size_t bufsize)
 	va_start(ap, basearg); \
 	fmt = va_arg(ap, char *); \
 	if (fmt) { \
-		len = vsnprintf((char *)ptr->message, LOGGING_MESSAGE_MAXLEN, \
+		len = vsnprintf((char *)ptr->message, \
+				LOGGING_MESSAGE_MAXLEN - 1, \
 				fmt, ap); \
 	} \
 	va_end(ap); \
-	if (len > 0 && len <= LOGGING_MESSAGE_MAXLEN) { \
-		ptr->message_length = (uint8_t)len; \
-	} \
+	ptr->message_length = MIN((uint8_t)len, LOGGING_MESSAGE_MAXLEN); \
 } while (0)
 
 static void pack_log(logging_data_t *entry, logging_t type,
@@ -218,9 +221,10 @@ static void pack_log(logging_data_t *entry, logging_t type,
 
 size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 {
-	assert(ctx != NULL);
-
+	static uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
 	size_t result = 0;
+
+	assert(ctx != NULL);
 
 	pthread_mutex_lock(&m.lock);
 	{
@@ -233,7 +237,6 @@ size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 			goto out;
 		}
 
-		uint8_t buf[LOGGING_MESSAGE_MAXLEN + sizeof(logging_data_t)];
 		logging_data_t *log = (logging_data_t *)buf;
 		pack_log(log, type, ctx->pc, ctx->lr);
 		pack_message(log, ctx);
@@ -381,9 +384,6 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 	}
 }
 
-#if !defined(MIN)
-#define MIN(a, b)			((a) > (b)? (b) : (a))
-#endif
 const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 {
 	const logging_data_t *p = (const logging_data_t *)log;
