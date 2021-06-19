@@ -37,8 +37,8 @@ int sem_wait(sem_t *sem)
 int sem_timedwait(sem_t *sem, unsigned int timeout_ms)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
-	return xSemaphoreTake(psem->handle, timeout_ms / portTICK_PERIOD_MS)
-		== pdPASS? 0 : -1;
+	unsigned int ticks = pdMS_TO_TICKS(timeout_ms);
+	return xSemaphoreTake(psem->handle, ticks) == pdPASS? 0 : -1;
 }
 
 int sem_trywait(sem_t *sem)
