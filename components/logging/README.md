@@ -3,8 +3,9 @@
 ## Overview
 ![logging class diagram](../../docs/images/logging.png)
 
-On ARM Cortex-M cores, it uses 128 bytes stack at most with no dynamic
-allocation at all. And a log size is 16 bytes excluding user messages.
+On ARM Cortex-M cores, it uses 56 bytes stack and 181 bytes static memory at
+most with no dynamic allocation at all. And a log size is 17 bytes excluding
+user messages.
 
 An example for storage implementation can be found
 [examples/memory_storage.c](../../examples/memory_storage.c) and a simple server-side
@@ -14,6 +15,7 @@ script [tools/scripts/translate_log.py](../../tools/scripts/translate_log.py).
 
 * `LOGGING_MESSAGE_MAXLEN` : The default is 80 bytes
 * `LOGGING_TAGS_MAXNUM` : The default is 8
+  - The unregistered tags over `LOGGING_TAGS_MAXNUM` share the global tag information
 * `LOGGING_TAG` : The default is `__FILE__`
   - The shorter `__FILE__` the more code size preserved when you use the default
 * `get_program_counter()`

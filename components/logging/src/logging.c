@@ -25,8 +25,8 @@ typedef struct {
 	uintptr_t pc;
 	uintptr_t lr;
 	logging_magic_t magic;
+	uint16_t message_length;
 	logging_t type;
-	uint8_t message_length;
 	uint8_t message[];
 } LIBMCU_PACKED logging_data_t;
 LIBMCU_STATIC_ASSERT(sizeof(logging_t) == sizeof(uint8_t),
