@@ -15,7 +15,7 @@ script [tools/scripts/translate_log.py](../../tools/scripts/translate_log.py).
 
 * `LOGGING_MESSAGE_MAXLEN` : The default is 80 bytes
 * `LOGGING_TAGS_MAXNUM` : The default is 8
-  - The unregistered tags over `LOGGING_TAGS_MAXNUM` share the global tag
+  - The unregistered tags over `LOGGING_TAGS_MAXNUM` share the global tag information
 * `LOGGING_TAG` : The default is `__FILE__`
   - The shorter `__FILE__` the more code size preserved when you use the default
 * `get_program_counter()`
