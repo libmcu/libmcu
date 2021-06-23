@@ -46,9 +46,8 @@ static size_t print_address(uint8_t *buf, size_t bufsize, uintptr_t addr)
 	char c[HEXDUMP_ADDRLEN + 1];
 	size_t len = get_hexstr_reversed(c, sizeof(c), (uint32_t)addr,
 			HEXDUMP_ADDRLEN, ' ');
-	size_t i;
 
-	for (i = 0; i < len && i < (bufsize - 2); i++) {
+	for (size_t i = 0; i < len && i < (bufsize - 2); i++) {
 		buf[i] = (uint8_t)c[len - i - 1];
 	}
 
