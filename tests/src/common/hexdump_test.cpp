@@ -1,6 +1,7 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 #include "libmcu/hexdump.h"
+#include <string.h>
 
 TEST_GROUP(hexdump) {
 	void setup(void) {
