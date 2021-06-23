@@ -17,7 +17,7 @@
 	 HEXDUMP_WIDTH + 1/*\n*/)
 
 static size_t get_hexstr_reversed(char *buf, size_t bufsize, uint32_t value,
-		size_t width, char blank)
+		size_t width, char c_padding)
 {
 	const char *hextbl = "0123456789abcdef";
 	size_t len;
@@ -33,7 +33,7 @@ static size_t get_hexstr_reversed(char *buf, size_t bufsize, uint32_t value,
 	}
 
 	for (size_t i = len; i < width && i < (bufsize - 1); i++) {
-		buf[i] = blank;
+		buf[i] = c_padding;
 	}
 
 	buf[width] = '\0';
