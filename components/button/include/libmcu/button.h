@@ -27,11 +27,17 @@ struct button_handlers {
 #endif
 };
 
-void button_init(unsigned int (*get_monotonic_time_in_ms)(void),
-		void (*mydelay)(unsigned int ms));
+void button_init(unsigned int (*get_time_ms)(void));
 bool button_register(const struct button_handlers *handlers,
 		int (*get_button_state)(void));
-void button_poll(void *context);
+/**
+ * Scan all buttons and update the states
+ *
+ * @param[in] context user context
+ *
+ * @return false when waiting for the next period. true otherwise
+ */
+bool button_poll(void *context);
 
 #if defined(__cplusplus)
 }

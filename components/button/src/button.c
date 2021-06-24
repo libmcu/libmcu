@@ -29,7 +29,7 @@ LIBMCU_STATIC_ASSERT(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_PERIOD_MS,
 #define MIN_PRESSED_HISTORY			\
 	(BUTTON_MIN_PRESS_TIME_MS / BUTTON_SAMPLING_PERIOD_MS)
 #define HISTORY_MASK				\
-	((1U << (MIN_PRESSED_HISTORY + 1)) - 1) // 0b1111111
+	((1U << (MIN_PRESSED_HISTORY + 1)) - 1) /* 0b1111111 */
 LIBMCU_STATIC_ASSERT(MIN_PRESSED_HISTORY < (8*sizeof(unsigned int) - 2),
 		"The history pattern must be within the data type size.");
 
@@ -52,8 +52,7 @@ struct button {
 };
 
 static struct {
-	unsigned int (*get_monotonic_time_in_ms)(void);
-	void (*delay)(unsigned int ms);
+	unsigned int (*get_time_ms)(void);
 
 	pthread_mutex_t lock;
 	struct button buttons[BUTTON_MAX];
@@ -69,13 +68,13 @@ static void update_button(struct button *btn)
 
 static bool is_button_pressed(const struct button *btn)
 {
-	unsigned int expected = (1U << MIN_PRESSED_HISTORY) - 1;   // 0b0111111
+	unsigned int expected = (1U << MIN_PRESSED_HISTORY) - 1; /* 0b0111111 */
 	return (btn->data.history & HISTORY_MASK) == expected;
 }
 
 static bool is_button_released(const struct button *btn)
 {
-	unsigned int expected = 1U << MIN_PRESSED_HISTORY;         // 0b1000000
+	unsigned int expected = 1U << MIN_PRESSED_HISTORY; /* 0b1000000 */
 	return (btn->data.history & HISTORY_MASK) == expected;
 }
 
@@ -89,98 +88,6 @@ static bool is_button_down(const struct button *btn)
 	return (btn->data.history & HISTORY_MASK) == HISTORY_MASK;
 }
 
-static void do_pressed(struct button *btn, void *context)
-{
-	if (btn->pressed) {
-		return;
-	}
-
-	unsigned int t = m.get_monotonic_time_in_ms();
-
-	btn->data.time_pressed = t;
-	btn->pressed = true;
-	if (btn->ops->pressed) {
-		btn->ops->pressed(&btn->data, context);
-	}
-}
-
-static void do_released(struct button *btn, void *context)
-{
-	if (!btn->pressed) {
-		return;
-	}
-
-	unsigned int t = m.get_monotonic_time_in_ms();
-
-	btn->data.time_released = t;
-	btn->pressed = false;
-	btn->holding = false;
-	if (btn->ops->released) {
-		btn->ops->released(&btn->data, context);
-	}
-}
-
-static void do_holding(struct button *btn, void *context)
-{
-	if (btn->holding) {
-		return;
-	}
-
-	unsigned int t = m.get_monotonic_time_in_ms();
-
-	if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
-		btn->holding = true;
-		if (btn->ops->holding) {
-			btn->ops->holding(&btn->data, context);
-		}
-	}
-}
-
-static button_state_t scan_button(struct button *btn, void *context)
-{
-	if (!btn->active) {
-		return BUTTON_STATE_INACTIVE;
-	}
-
-	update_button(btn);
-
-	if (is_button_pressed(btn)) {
-		do_pressed(btn, context);
-		return BUTTON_STATE_PRESSED;
-	} else if (is_button_released(btn)) {
-		do_released(btn, context);
-		return BUTTON_STATE_RELEASED;
-	} else if (is_button_down(btn)) {
-		do_holding(btn, context);
-		return BUTTON_STATE_DOWN;
-	} else if (is_button_up(btn)) {
-		return BUTTON_STATE_UP;
-	}
-
-	return BUTTON_STATE_UNKNOWN;
-}
-
-static unsigned int scan_buttons(unsigned int bitmap, void *context)
-{
-	for (int i = 0; i < BUTTON_MAX; i++) {
-		if (scan_button(&m.buttons[i], context) == BUTTON_STATE_UP) {
-			bitmap &= ~(1U << i);
-		}
-	}
-
-	return bitmap;
-}
-
-static void button_poll_internal(void *context)
-{
-	// it gets zeros when all buttons are up
-	unsigned int bitmap = (1U << BUTTON_MAX) - 1;
-
-	while ((bitmap = scan_buttons(bitmap, context)) != 0) {
-		m.delay(BUTTON_SAMPLING_PERIOD_MS);
-	}
-}
-
 static struct button *get_unused_button(void)
 {
 	for (int i = 0; i < BUTTON_MAX; i++) {
@@ -192,13 +99,106 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-void button_poll(void *context)
+static void do_pressed(struct button *btn, void *context, unsigned int t)
 {
+	if (btn->pressed) {
+		return;
+	}
+
+	btn->data.time_pressed = t;
+	btn->pressed = true;
+	if (btn->ops->pressed) {
+		btn->ops->pressed(&btn->data, context);
+	}
+}
+
+static void do_released(struct button *btn, void *context, unsigned int t)
+{
+	if (!btn->pressed) {
+		return;
+	}
+
+	btn->data.time_released = t;
+	btn->pressed = false;
+	btn->holding = false;
+	if (btn->ops->released) {
+		btn->ops->released(&btn->data, context);
+	}
+}
+
+static void do_holding(struct button *btn, void *context, unsigned int t)
+{
+	if (btn->holding) {
+		return;
+	}
+
+	if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
+		btn->holding = true;
+		if (btn->ops->holding) {
+			btn->ops->holding(&btn->data, context);
+		}
+	}
+}
+
+static button_state_t scan_button(struct button *btn, void *context,
+		unsigned int t)
+{
+	if (!btn->active) {
+		return BUTTON_STATE_INACTIVE;
+	}
+
+	update_button(btn);
+
+	if (is_button_pressed(btn)) {
+		do_pressed(btn, context, t);
+		return BUTTON_STATE_PRESSED;
+	} else if (is_button_released(btn)) {
+		do_released(btn, context, t);
+		return BUTTON_STATE_RELEASED;
+	} else if (is_button_down(btn)) {
+		do_holding(btn, context, t);
+		return BUTTON_STATE_DOWN;
+	} else if (is_button_up(btn)) {
+		return BUTTON_STATE_UP;
+	}
+
+	return BUTTON_STATE_UNKNOWN;
+}
+
+static void scan_all(void *context, unsigned int t)
+{
+	for (int i = 0; i < BUTTON_MAX; i++) {
+		scan_button(&m.buttons[i], context, t);
+	}
+}
+
+static bool button_poll_internal(void *context)
+{
+	static unsigned int t0;
+	unsigned int t = m.get_time_ms();
+
+	if ((t - t0) < BUTTON_SAMPLING_PERIOD_MS) {
+		return false;
+	}
+
+	scan_all(context, t);
+
+	t0 = t;
+
+	return true;
+}
+
+bool button_poll(void *context)
+{
+	bool rc;
+
 	pthread_mutex_lock(&m.lock);
 	{
-		button_poll_internal(context);
+		rc = button_poll_internal(context);
 	}
 	pthread_mutex_unlock(&m.lock);
+
+	return rc;
 }
 
 bool button_register(const struct button_handlers *handlers,
@@ -232,14 +232,10 @@ out:
 	return rc;
 }
 
-void button_init(unsigned int (*get_monotonic_time_in_ms)(void),
-		void (*mydelay)(unsigned int ms))
+void button_init(unsigned int (*get_time_ms)(void))
 {
-	assert(get_monotonic_time_in_ms != NULL);
-	assert(mydelay != NULL);
-
-	m.get_monotonic_time_in_ms = get_monotonic_time_in_ms;
-	m.delay = mydelay;
+	assert(get_time_ms != NULL);
+	m.get_time_ms = get_time_ms;
 
 	memset(m.buttons, 0, sizeof(m.buttons));
 
