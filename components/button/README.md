@@ -43,14 +43,14 @@ unsigned int get_time_ms(void) {
 
 ```c
 static void btn_pressed(const struct button_data *btn, void *context) {
-	debug("button#1 pressed %d, %x", btn->time_pressed, btn->history);
+	debug("pressed %d, %x", btn->time_pressed, btn->history);
 }
 static void btn_released(const struct button_data *btn, void *context) {
-	debug("button#1 released %d, %x", btn->time_released, btn->history);
+	debug("released %d, %x", btn->time_released, btn->history);
 }
 
 void register_buttons(void) {
-	button_handlers_t mybtn = {
+	static button_handlers_t mybtn = {
 		.pressed = btn_pressed,
 		.released = btn_released,
 	};
@@ -63,3 +63,5 @@ void register_buttons(void) {
 ```c
 button_poll(NULL);
 ```
+
+then registered callback will be called when button activity detected.
