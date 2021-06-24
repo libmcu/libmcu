@@ -10,7 +10,7 @@ jobs:
   build:
     name: Compile and Test
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.6
+    container: onkwon/yaos:0.7
     steps:
       - name: Clone Repository
         uses: actions/checkout@v1
@@ -43,7 +43,7 @@ jobs:
     name: SonarCloud Scan
     needs: build
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.6
+    container: onkwon/yaos:0.7
     steps:
       - name: Clone Repository
         uses: actions/checkout@v1

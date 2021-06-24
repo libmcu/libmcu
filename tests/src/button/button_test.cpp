@@ -27,11 +27,6 @@ static void holding(const struct button_data *btn, void *context)
 
 static unsigned int fake_time;
 
-static void fake_delayf(unsigned int ms)
-{
-	fake_time += ms;
-}
-
 static unsigned int fake_get_time_ms(void)
 {
 	return fake_time++;
@@ -43,11 +38,11 @@ TEST_GROUP(button) {
 	void setup(void) {
 		mock().ignoreOtherCalls();
 
-		button_init(fake_get_time_ms, fake_delayf);
+		button_init(fake_get_time_ms);
 		handlers.pressed = pressed;
 		handlers.released = released;
 		handlers.holding = holding;
-		fake_time = 0;
+		fake_time = (unsigned int)-33;
 	}
 	void teardown(void) {
 		mock().checkExpectations();
@@ -81,12 +76,16 @@ TEST(button, poll_ShouldDoNothing_WhenNoiseGiven) {
 	mock().expectNCalls(5, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
 
-	button_register(&handlers, get_button_state);
-	button_poll(NULL);
-
 	mock().expectNoCall("pressed");
 	mock().expectNoCall("holding");
 	mock().expectNoCall("released");
+
+	button_register(&handlers, get_button_state);
+
+	int n = 3+2+4+3+5+7;
+	for (int i = 0; i < n; i++) {
+		while (!button_poll(NULL)) ;
+	}
 }
 
 TEST(button, poll_ShouldCallPressed_WhenValidPatternGiven) {
@@ -103,7 +102,11 @@ TEST(button, poll_ShouldCallPressed_WhenValidPatternGiven) {
 	mock().expectOneCall("released");
 
 	button_register(&handlers, get_button_state);
-	button_poll(NULL);
+
+	int n = 2+1+1+1+13+7;
+	for (int i = 0; i < n; i++) {
+		while (!button_poll(NULL)) ;
+	}
 }
 
 TEST(button, poll_ShouldIgnoreNoise_WhenNoiseGivenInMiddleOfPressed) {
@@ -122,7 +125,11 @@ TEST(button, poll_ShouldIgnoreNoise_WhenNoiseGivenInMiddleOfPressed) {
 	mock().expectOneCall("released");
 
 	button_register(&handlers, get_button_state);
-	button_poll(NULL);
+
+	int n = 10+4+2+1+1+1+13+7;
+	for (int i = 0; i < n; i++) {
+		while (!button_poll(NULL)) ;
+	}
 }
 
 TEST(button, poll_ShouldCallHolding_WhenHoldingButtonPressed) {
@@ -130,7 +137,7 @@ TEST(button, poll_ShouldCallHolding_WhenHoldingButtonPressed) {
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
-	mock().expectNCalls(35, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
 
 	mock().expectOneCall("pressed");
@@ -138,5 +145,9 @@ TEST(button, poll_ShouldCallHolding_WhenHoldingButtonPressed) {
 	mock().expectOneCall("released");
 
 	button_register(&handlers, get_button_state);
-	button_poll(NULL);
+
+	int n = 2+1+1+1+36+7;
+	for (int i = 0; i < n; i++) {
+		while (!button_poll(NULL)) ;
+	}
 }

@@ -12,6 +12,7 @@ INCLUDE_DIRS = \
 	stubs \
 	../components/pubsub_tiny/include \
 	../components/common/include \
+	../components/logging/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =
