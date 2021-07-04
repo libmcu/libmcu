@@ -387,10 +387,10 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 {
 	const logging_data_t *p = (const logging_data_t *)log;
-	int len = snprintf(buf, bufsize-1, "%lu: [%s] <%p,%p> ",
+	int len = snprintf(buf, bufsize-2, "%lu: [%s] <%p,%p> ",
 			(unsigned long)p->timestamp, stringify_type(p->type),
 			(void *)p->pc, (void *)p->lr);
-	buf[bufsize] = '\0';
+	buf[bufsize-1] = '\0';
 
 	if (len > 0) {
 		size_t msglen = MIN(bufsize - (size_t)len - 1, p->message_length);
