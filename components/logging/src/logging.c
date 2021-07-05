@@ -202,7 +202,7 @@ static size_t peek_internal(void *buf, size_t bufsize)
 				fmt, ap); \
 	} \
 	va_end(ap); \
-	ptr->message_length = MIN((uint8_t)len, LOGGING_MESSAGE_MAXLEN); \
+	ptr->message_length = MIN((uint16_t)len, LOGGING_MESSAGE_MAXLEN); \
 } while (0)
 
 static void pack_log(logging_data_t *entry, logging_t type,
