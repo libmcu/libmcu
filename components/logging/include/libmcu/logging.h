@@ -78,12 +78,12 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 #endif
 
 #define LOGGING_WRAPPER(type, ...) do { 				\
-	const struct logging_context ctx = {				\
+	const struct logging_context _logctx = {			\
 		.tag = LOGGING_TAG,					\
 		.pc = get_program_counter(),				\
 		.lr = __builtin_return_address(0),			\
 	};								\
-	logging_save(type, &ctx, __VA_ARGS__);				\
+	logging_save(type, &_logctx, __VA_ARGS__);			\
 } while (0)
 
 #define verbose(...) \
