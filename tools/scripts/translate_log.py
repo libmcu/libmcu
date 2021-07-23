@@ -4,7 +4,7 @@ import os
 import struct
 
 TYPE_LIST = ("VERBOSE", "DEBUG", "INFO", "WARN", "ERROR", "NONE")
-TIMESTAMP_SIZE = 4 # 8 or 4 bytes
+TIMESTAMP_SIZE = 8 # 8 or 4 bytes
 LOG_SIZE = TIMESTAMP_SIZE + 4*2 + 2 + 2 + 1 # sizeof(ts + pc + lr + len + type)
 LOG_MAGIC = 0xA5A5
 
@@ -65,7 +65,7 @@ class Embedlog:
         if self.check_if_valid() is not True:
             return 1
 
-        self.message_length = struct.unpack("B", byte_stream[base_idx+10:base_idx+12])[0]
+        self.message_length = struct.unpack("H", byte_stream[base_idx+10:base_idx+12])[0]
         self.log_type = struct.unpack("B", byte_stream[base_idx+12:base_idx+13])[0]
         self.message = struct.unpack(str(self.message_length) + "s",
                                      byte_stream[base_idx+13:base_idx+13+self.message_length])[0].decode('ascii')
