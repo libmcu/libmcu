@@ -24,7 +24,6 @@ Any feedback would be appreciated.
 * [jobqueue](components/jobqueue)
 * [logging](components/logging)
 * [metrics](components/metrics)
-* [mode](components/mode)
 * [pubsub](components/pubsub)
 * [pubsub_tiny](components/pubsub_tiny)
 * [retry](components/retry)

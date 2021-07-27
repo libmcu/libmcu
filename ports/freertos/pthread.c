@@ -80,7 +80,10 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 void pthread_exit(void *retval)
 {
 	vTaskDelete(NULL);
-	assert(0); // should never called
+
+	assert(0); /* should never called */
+
+	while (1) { /* hang */ }
 }
 
 pthread_t pthread_self(void)
