@@ -38,6 +38,39 @@ static void initialize_instance(struct ringbuf *instance, size_t bufsize)
 	instance->outdex = 0;
 }
 
+static size_t read_core(const ringbuf_t handle,
+		size_t offset, void *buf, size_t data_size)
+{
+	const struct ringbuf *instance = (const struct ringbuf *)handle;
+
+	if (get_length(instance) < data_size + offset) {
+		return 0;
+	}
+
+	size_t index = GET_INDEX(instance->outdex + offset, instance->capacity);
+	size_t contiguous = instance->capacity - index;
+	size_t remained = (contiguous < data_size)? data_size - contiguous : 0;
+	size_t cut = data_size - remained;
+
+	memcpy(buf, &instance->buffer[index], cut);
+	memcpy((uint8_t *)buf + cut, instance->buffer, remained);
+
+	return data_size;
+}
+
+static bool consume_core(ringbuf_t handle, size_t consume_size)
+{
+	struct ringbuf *instance = (struct ringbuf *)handle;
+
+	if (get_length(instance) < consume_size) {
+		return false;
+	}
+
+	instance->outdex += consume_size;
+
+	return true;
+}
+
 size_t ringbuf_write(ringbuf_t handle, const void *data, size_t data_size)
 {
 	struct ringbuf *instance = (struct ringbuf *)handle;
@@ -72,37 +105,27 @@ size_t ringbuf_write_cancel(ringbuf_t handle, size_t size)
 	return size;
 }
 
-size_t ringbuf_read(const ringbuf_t handle,
+size_t ringbuf_peek(const ringbuf_t handle,
 		size_t offset, void *buf, size_t data_size)
 {
-	const struct ringbuf *instance = (const struct ringbuf *)handle;
-
-	if (get_length(instance) < data_size + offset) {
-		return 0;
-	}
-
-	size_t index = GET_INDEX(instance->outdex + offset, instance->capacity);
-	size_t contiguous = instance->capacity - index;
-	size_t remained = (contiguous < data_size)? data_size - contiguous : 0;
-	size_t cut = data_size - remained;
-
-	memcpy(buf, &instance->buffer[index], cut);
-	memcpy((uint8_t *)buf + cut, instance->buffer, remained);
-
-	return data_size;
+	return read_core(handle, offset, buf, data_size);
 }
 
 bool ringbuf_consume(ringbuf_t handle, size_t consume_size)
 {
-	struct ringbuf *instance = (struct ringbuf *)handle;
+	return consume_core(handle, consume_size);
+}
 
-	if (get_length(instance) < consume_size) {
-		return false;
+size_t ringbuf_read(const ringbuf_t handle,
+		size_t offset, void *buf, size_t data_size)
+{
+	size_t bytes_read = read_core(handle, offset, buf, data_size);
+
+	if (bytes_read > 0) {
+		consume_core(handle, bytes_read);
 	}
 
-	instance->outdex += consume_size;
-
-	return true;
+	return bytes_read;
 }
 
 size_t ringbuf_length(const ringbuf_t handle)
