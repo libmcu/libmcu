@@ -5,7 +5,7 @@ SRC_FILES = \
 	../components/common/src/ringbuf.c \
 
 TEST_SRC_FILES = \
-	src/common/test_ringbuf.cpp \
+	src/common/ringbuf_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
