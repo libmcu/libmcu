@@ -26,6 +26,9 @@ Please refer to [test case](https://github.com/onkwon/libmcu/blob/master/tests/s
 ## Example
 
 ```c
+uint8_t logbuf[512];
+logging_init(memory_storage_init(logbuf, sizeof(logbuf)));
+
 debug("message");
 logging_set_level_current(LOGGING_TYPE_INFO);
 info("RSSI %d", rssi);
