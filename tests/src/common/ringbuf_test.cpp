@@ -69,12 +69,12 @@ TEST(RingBuffer, used_plus_left_ShouldMatchToSpaceTotalSize) {
 	LONGS_EQUAL(SPACE_SIZE, ringbuf_length(&ringbuf_obj) + ringbuf_left(&ringbuf_obj));
 }
 
-TEST(RingBuffer, read_ShouldReturnZero_WhenRequestSizeIsLargerThanUsedSpaceSize) {
+TEST(RingBuffer, read_ShouldReturnLengthOfBytesRead_WhenLargerBufferGiven) {
 	prepare_test();
 	const uint8_t test_data[] = "1234567890123";
 	uint8_t buf[80];
 	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
-	LONGS_EQUAL(0, ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
 }
 
 TEST(RingBuffer, read_ShouldReturnDataSizeRead_WhenSuccessful) {
@@ -86,12 +86,12 @@ TEST(RingBuffer, read_ShouldReturnDataSizeRead_WhenSuccessful) {
 	MEMCMP_EQUAL(test_data, buf, sizeof(test_data));
 }
 
-TEST(RingBuffer, read_ShouldReturnZero_WhenRequestSizePlusOffsetIsLargerThanUsedSpaceSize) {
+TEST(RingBuffer, read_ShouldReturnLengthOfBytesRead_WhenLargerBufferGivenWithOffset) {
 	prepare_test();
 	const uint8_t test_data[] = "1234567890123";
 	uint8_t buf[80] = { 0, };
 	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
-	LONGS_EQUAL(0, ringbuf_read(&ringbuf_obj, 1, buf, sizeof(test_data)));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 1, buf, sizeof(test_data)));
 }
 
 TEST(RingBuffer, peek_ShouldReturnDataSizeRead_WhenSuccessfulWithOffset) {

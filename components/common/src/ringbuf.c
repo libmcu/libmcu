@@ -4,6 +4,9 @@
 #include "libmcu/bitops.h"
 
 #define GET_INDEX(i, n)			((i) & ((n) - 1))
+#if !defined(MIN)
+#define MIN(a, b)			(((a) > (b)) ? (b) : (a))
+#endif
 
 struct ringbuf {
 	size_t capacity;
@@ -39,23 +42,21 @@ static void initialize_instance(struct ringbuf *instance, size_t bufsize)
 }
 
 static size_t read_core(const ringbuf_t *handle,
-		size_t offset, void *buf, size_t data_size)
+		size_t offset, void *buf, size_t bufsize)
 {
 	const struct ringbuf *instance = (const struct ringbuf *)handle;
 
-	if (get_length(instance) < data_size + offset) {
-		return 0;
-	}
+	bufsize = MIN(get_length(instance), bufsize);
 
 	size_t index = GET_INDEX(instance->outdex + offset, instance->capacity);
 	size_t contiguous = instance->capacity - index;
-	size_t remained = (contiguous < data_size)? data_size - contiguous : 0;
-	size_t cut = data_size - remained;
+	size_t remained = (contiguous < bufsize)? bufsize - contiguous : 0;
+	size_t cut = bufsize - remained;
 
 	memcpy(buf, &instance->buffer[index], cut);
 	memcpy((uint8_t *)buf + cut, instance->buffer, remained);
 
-	return data_size;
+	return bufsize;
 }
 
 static bool consume_core(ringbuf_t *handle, size_t consume_size)
@@ -71,25 +72,25 @@ static bool consume_core(ringbuf_t *handle, size_t consume_size)
 	return true;
 }
 
-size_t ringbuf_write(ringbuf_t *handle, const void *data, size_t data_size)
+size_t ringbuf_write(ringbuf_t *handle, const void *data, size_t datasize)
 {
 	struct ringbuf *instance = (struct ringbuf *)handle;
 
-	if (get_available(instance) < data_size) {
+	if (get_available(instance) < datasize) {
 		return 0;
 	}
 
 	size_t index = GET_INDEX(instance->index, instance->capacity);
 	size_t contiguous = instance->capacity - index;
-	size_t remained = (contiguous < data_size)? data_size - contiguous : 0;
+	size_t remained = (contiguous < datasize)? datasize - contiguous : 0;
 
-	memcpy(instance->buffer + index, data, data_size - remained);
-	memcpy(instance->buffer, ((const uint8_t *)data + data_size - remained),
+	memcpy(instance->buffer + index, data, datasize - remained);
+	memcpy(instance->buffer, ((const uint8_t *)data + datasize - remained),
 			remained);
 
-	instance->index += data_size;
+	instance->index += datasize;
 
-	return data_size;
+	return datasize;
 }
 
 size_t ringbuf_write_cancel(ringbuf_t *handle, size_t size)
@@ -106,9 +107,9 @@ size_t ringbuf_write_cancel(ringbuf_t *handle, size_t size)
 }
 
 size_t ringbuf_peek(const ringbuf_t *handle,
-		size_t offset, void *buf, size_t data_size)
+		size_t offset, void *buf, size_t bufsize)
 {
-	return read_core(handle, offset, buf, data_size);
+	return read_core(handle, offset, buf, bufsize);
 }
 
 bool ringbuf_consume(ringbuf_t *handle, size_t consume_size)
@@ -117,9 +118,9 @@ bool ringbuf_consume(ringbuf_t *handle, size_t consume_size)
 }
 
 size_t ringbuf_read(ringbuf_t *handle,
-		size_t offset, void *buf, size_t data_size)
+		size_t offset, void *buf, size_t bufsize)
 {
-	size_t bytes_read = read_core(handle, offset, buf, data_size);
+	size_t bytes_read = read_core(handle, offset, buf, bufsize);
 
 	if (bytes_read > 0) {
 		consume_core(handle, bytes_read);
