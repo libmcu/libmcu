@@ -1,5 +1,5 @@
-#ifndef LIBMCU_SHELL_H
-#define LIBMCU_SHELL_H
+#ifndef LIBMCU_CLI_H
+#define LIBMCU_CLI_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -10,12 +10,12 @@ extern "C" {
 typedef struct {
 	size_t (*read)(void *buf, size_t bufsize);
 	size_t (*write)(const void *data, size_t data_size);
-} shell_io_t;
+} cli_io_t;
 
-void shell_run(const shell_io_t *io);
+void cli_run(const cli_io_t *io);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* LIBMCU_SHELL_H */
+#endif /* LIBMCU_CLI_H */

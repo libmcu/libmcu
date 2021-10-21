@@ -1,17 +1,17 @@
 #include "commands.h"
 #include <string.h>
-#include "libmcu/shell.h"
+#include "libmcu/cli.h"
 #include "libmcu/compiler.h"
 
-shell_cmd_error_t shell_cmd_help(int argc, const char *argv[], const void *env)
+cli_cmd_error_t cli_cmd_help(int argc, const char *argv[], const void *env)
 {
 	unused(argc);
 	unused(argv);
 	unused(env);
 
-	const shell_cmd_t *commands = shell_get_command_list();
-	const shell_cmd_t *cmd;
-	const shell_io_t *io = (const shell_io_t *)env;
+	const cli_cmd_t *commands = cli_get_command_list();
+	const cli_cmd_t *cmd;
+	const cli_io_t *io = (const cli_io_t *)env;
 
 	for (int i = 0; (cmd = &commands[i]) && cmd->name; i++) {
 		io->write(cmd->name, strlen(cmd->name));
@@ -22,5 +22,5 @@ shell_cmd_error_t shell_cmd_help(int argc, const char *argv[], const void *env)
 		io->write("\r\n", 2);
 	}
 
-	return SHELL_CMD_SUCCESS;
+	return CLI_CMD_SUCCESS;
 }

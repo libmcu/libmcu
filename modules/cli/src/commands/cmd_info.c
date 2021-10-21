@@ -1,6 +1,6 @@
 #include "commands.h"
 #include <string.h>
-#include "libmcu/shell.h"
+#include "libmcu/cli.h"
 #include "libmcu/system.h"
 
 typedef enum {
@@ -31,34 +31,34 @@ static cmd_opt_t get_command_option(int argc, const char *opt)
 	return CMD_OPT_ALL;
 }
 
-static void print_version(const shell_io_t *io)
+static void print_version(const cli_io_t *io)
 {
 	const char *ver = system_get_version_string();
 	io->write(ver, strlen(ver));
 	io->write("\r\n", 2);
 }
 
-static void print_sn(const shell_io_t *io)
+static void print_sn(const cli_io_t *io)
 {
 	const char *sn = system_get_serial_number_string();
 	io->write(sn, strlen(sn));
 	io->write("\r\n", 2);
 }
 
-static void print_build_date(const shell_io_t *io)
+static void print_build_date(const cli_io_t *io)
 {
 	const char *build_date = system_get_build_date_string();
 	io->write(build_date, strlen(build_date));
 	io->write("\r\n", 2);
 }
 
-shell_cmd_error_t shell_cmd_info(int argc, const char *argv[], const void *env)
+cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)
 {
 	if (argc > 2) {
-		return SHELL_CMD_INVALID_PARAM;
+		return CLI_CMD_INVALID_PARAM;
 	}
 
-	const shell_io_t *io = (const shell_io_t *)env;
+	const cli_io_t *io = (const cli_io_t *)env;
 
 	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 
@@ -72,5 +72,5 @@ shell_cmd_error_t shell_cmd_info(int argc, const char *argv[], const void *env)
 		print_build_date(io);
 	}
 
-	return SHELL_CMD_SUCCESS;
+	return CLI_CMD_SUCCESS;
 }

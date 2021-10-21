@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "libmcu/shell.h"
+#include "libmcu/cli.h"
 
 #define BUFSIZE				32
 #define BYTES_PER_LINE			16
@@ -12,28 +12,28 @@
 #define MIN(x, y)			(((x) > (y))? (y) : (x))
 #endif
 
-static void print_addr(const shell_io_t *io, uintptr_t addr)
+static void print_addr(const cli_io_t *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, "%16p:", (uintptr_t *)addr);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
-static void print_space(const shell_io_t *io, int n)
+static void print_space(const cli_io_t *io, int n)
 {
 	for (int i = 0; i < n; i++) {
 		io->write(" ", 1);
 	}
 }
 
-static void print_hex(const shell_io_t *io, uint8_t val)
+static void print_hex(const cli_io_t *io, uint8_t val)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, " %02x", val);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
-static void print_ascii(const shell_io_t *io, uint8_t val)
+static void print_ascii(const cli_io_t *io, uint8_t val)
 {
 	char buf[BUFSIZE] = { 0, };
 
@@ -45,7 +45,7 @@ static void print_ascii(const shell_io_t *io, uint8_t val)
 	}
 }
 
-static void print_next_line(const shell_io_t *io)
+static void print_next_line(const cli_io_t *io)
 {
 	io->write("\r\n", 2);
 }
@@ -60,7 +60,7 @@ static uint8_t read_byte_with_word_aligned(uintptr_t addr, int offset)
 	return p[pos];
 }
 
-static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io)
+static void memdump_hex(uintptr_t addr, int len, int width, const cli_io_t *io)
 {
 	print_addr(io, addr);
 
@@ -77,14 +77,14 @@ static void memdump_hex(uintptr_t addr, int len, int width, const shell_io_t *io
 	}
 }
 
-static void memdump_ascii(uintptr_t addr, int len, const shell_io_t *io)
+static void memdump_ascii(uintptr_t addr, int len, const cli_io_t *io)
 {
 	for (int i = 0; i < len; i++) {
 		print_ascii(io, read_byte_with_word_aligned(addr, i));
 	}
 }
 
-static void memdump(uintptr_t addr, int len, int width, const shell_io_t *io)
+static void memdump(uintptr_t addr, int len, int width, const cli_io_t *io)
 {
 	uintptr_t start_addr = addr;
 	uintptr_t end_addr = addr + (uintptr_t)len;
@@ -99,12 +99,12 @@ static void memdump(uintptr_t addr, int len, int width, const shell_io_t *io)
 	}
 }
 
-shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *env)
+cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env)
 {
-	static uintptr_t addr = (uintptr_t)&shell_cmd_memdump;
+	static uintptr_t addr = (uintptr_t)&cli_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
-	const shell_io_t *io = (const shell_io_t *)env;
+	const cli_io_t *io = (const cli_io_t *)env;
 
 	switch (argc) {
 	case 1: // use the same address as before
@@ -125,5 +125,5 @@ shell_cmd_error_t shell_cmd_memdump(int argc, const char *argv[], const void *en
 
 	memdump(addr, length, BYTES_PER_LINE, io);
 
-	return SHELL_CMD_SUCCESS;
+	return CLI_CMD_SUCCESS;
 }

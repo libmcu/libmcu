@@ -1,15 +1,15 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
-#include "libmcu/shell.h"
-#include "libmcu/shell_command.h"
+#include "libmcu/cli.h"
+#include "libmcu/cli_command.h"
 
-static shell_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
+static cli_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 {
-	return SHELL_CMD_EXIT;
+	return CLI_CMD_EXIT;
 }
-static shell_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
+static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 {
-	const shell_io_t *io = (const shell_io_t *)env;
+	const cli_io_t *io = (const cli_io_t *)env;
 	char buf[1024];
 	int len = 0;
 	for (int i = 0; i < argc; i++) {
@@ -17,25 +17,25 @@ static shell_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 		len += written;
 	}
 	io->write(buf, (size_t)len);
-	return SHELL_CMD_SUCCESS;
+	return CLI_CMD_SUCCESS;
 }
-static shell_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
+static cli_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
 {
-	return SHELL_CMD_ERROR;
+	return CLI_CMD_ERROR;
 }
-static shell_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env)
+static cli_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env)
 {
-	return SHELL_CMD_INVALID_PARAM;
+	return CLI_CMD_INVALID_PARAM;
 }
 
-static const shell_cmd_t commands[] = {
-	{ "exit", cmd_exit, "Exit the shell" },
+static const cli_cmd_t commands[] = {
+	{ "exit", cmd_exit, "Exit the CLI" },
 	{ "args", cmd_args, "" },
 	{ "error", cmd_error, NULL },
 	{ "invalid", cmd_invalid, "desc" },
 	{ NULL, NULL, NULL },
 };
-const shell_cmd_t *shell_get_command_list(void)
+const cli_cmd_t *cli_get_command_list(void)
 {
 	return commands;
 }
@@ -60,12 +60,12 @@ static void set_write_data(const char *s) {
 	strncpy(writebuf, s, sizeof(writebuf));
 }
 
-static shell_io_t io = {
+static cli_io_t io = {
 	.read = myread,
 	.write = mywrite,
 };
 
-TEST_GROUP(shell) {
+TEST_GROUP(cli) {
 	void setup(void) {
 		write_index = 0;
 		read_index = 0;
@@ -80,62 +80,62 @@ TEST_GROUP(shell) {
 	}
 };
 
-TEST(shell, shell_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
+TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
 	given("Hello, World\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
-TEST(shell, shell_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
+TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
 	given("Hello, World\rexit\r");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
-TEST(shell, shell_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {
+TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {
 	given("Hello, World\r\nexit\r\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
-TEST(shell, shell_ShouldReturnExit_WhenExitCommandGiven) {
+TEST(cli, cli_ShouldReturnExit_WhenExitCommandGiven) {
 	given("exit\r\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ exit\r\nEXIT\r\n");
 }
 
-TEST(shell, shell_ShouldReturnBLANK_WhenNoCommandGiven) {
+TEST(cli, cli_ShouldReturnBLANK_WhenNoCommandGiven) {
 	given("\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ \r\n$ exit\r\nEXIT\r\n");
 }
 
-TEST(shell, shell_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
+TEST(cli, cli_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
 	given("help\bq\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ help\b \bq\r\ncommand not found");
 }
 
-TEST(shell, shell_ShouldIgnoreTab) {
+TEST(cli, cli_ShouldIgnoreTab) {
 	given("hel\tp\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ help\r\n");
 }
 
-TEST(shell, shell_ShouldParseArgs_WhenMultipleArgsGiven) {
+TEST(cli, cli_ShouldParseArgs_WhenMultipleArgsGiven) {
 	given("args 1 2 3 4\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ args 1 2 3 4\r\n1: args\n2: 1\n3: 2\n4: 3\n5: 4\n");
 }
 
-TEST(shell, shell_ShouldReturnError_WhenErrorGiven) {
+TEST(cli, cli_ShouldReturnError_WhenErrorGiven) {
 	given("error\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ error\r\nERROR\r\n");
 }
 
-TEST(shell, shell_ShouldReturnDesc_WhenCommandUsageInvalid) {
+TEST(cli, cli_ShouldReturnDesc_WhenCommandUsageInvalid) {
 	given("invalid\nexit\n");
-	shell_run(&io);
+	cli_run(&io);
 	then("$ invalid\r\ndesc\r\n");
 }

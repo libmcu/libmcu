@@ -2,20 +2,20 @@ clang
 
 -std=gnu++14
 
--Icomponents/common/include
--Icomponents/common/include/libmcu/posix
--Icomponents/apptimer/include
--Icomponents/bitmap/include
--Icomponents/jobqueue/include
--Icomponents/logging/include
--Icomponents/mode/include
--Icomponents/pubsub/include
--Icomponents/queue/include
--Icomponents/retry/include
--Icomponents/shell/include
--Icomponents/timext/include
--Icomponents/button/include
--Icomponents/metrics/include
+-Imodule/common/include
+-Imodule/common/include/libmcu/posix
+-Imodule/apptimer/include
+-Imodule/bitmap/include
+-Imodule/jobqueue/include
+-Imodule/logging/include
+-Imodule/mode/include
+-Imodule/pubsub/include
+-Imodule/queue/include
+-Imodule/retry/include
+-Imodule/cli/include
+-Imodule/timext/include
+-Imodule/button/include
+-Imodule/metrics/include
 
 -I/usr/local/Cellar/cpputest/4.0/include
 

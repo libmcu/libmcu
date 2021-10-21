@@ -1,16 +1,16 @@
-COMPONENT_NAME = shell
+COMPONENT_NAME = cli
 
 SRC_FILES = \
-	../modules/shell/src/shell.c
+	../modules/cli/src/cli.c
 
 TEST_SRC_FILES = \
-	src/shell/test_shell.cpp \
+	src/cli/test_cli.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../modules/shell/src \
-	../modules/shell/include \
+	../modules/cli/src \
+	../modules/cli/include \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 

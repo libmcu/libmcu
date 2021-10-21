@@ -20,6 +20,7 @@ Any feedback would be appreciated.
 * [apptimer](modules/apptimer)
 * [bitmap](modules/bitmap)
 * [button](modules/button)
+* [cli](modules/cli)
 * [common](modules/common)
 * [jobqueue](modules/jobqueue)
 * [logging](modules/logging)
@@ -27,7 +28,6 @@ Any feedback would be appreciated.
 * [pubsub](modules/pubsub)
 * [pubsub_tiny](modules/pubsub_tiny)
 * [retry](modules/retry)
-* [shell](modules/shell)
 * [timext](modules/timext)
 
 ## Integration Guide

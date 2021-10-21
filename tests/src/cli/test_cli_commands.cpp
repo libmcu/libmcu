@@ -1,11 +1,11 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
 #include <stdlib.h>
-#include "libmcu/shell.h"
+#include "libmcu/cli.h"
 #include "commands/commands.h"
 #include "libmcu/system.h"
 
-const shell_cmd_t *shell_get_command_list(void) {
+const cli_cmd_t *cli_get_command_list(void) {
 	return NULL;
 }
 
@@ -27,12 +27,12 @@ static size_t write_spy(const void *data, size_t data_size) {
 	write_spy_buffer[write_spy_buffer_index] = '\0';
 	return data_size;
 }
-static shell_io_t io = {
+static cli_io_t io = {
 	.read = NULL,
 	.write = write_spy,
 };
 
-TEST_GROUP(shell_commands) {
+TEST_GROUP(cli_commands) {
 	void setup(void) {
 		write_spy_buffer_index = 0;
 	}
@@ -40,34 +40,34 @@ TEST_GROUP(shell_commands) {
 	}
 };
 
-TEST(shell_commands, exit_ShouldReturnShellCmdExit) {
-	LONGS_EQUAL(SHELL_CMD_EXIT, shell_cmd_exit(1, NULL, NULL));
+TEST(cli_commands, exit_ShouldReturnShellCmdExit) {
+	LONGS_EQUAL(CLI_CMD_EXIT, cli_cmd_exit(1, NULL, NULL));
 }
 
-TEST(shell_commands, info_ShouldReturnAllInfo_WhenNoArgsGiven) {
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_info(1, NULL, &io));
+TEST(cli_commands, info_ShouldReturnAllInfo_WhenNoArgsGiven) {
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(1, NULL, &io));
 	STRCMP_EQUAL("version\r\nserial number\r\nbuild date\r\n", write_spy_buffer);
 }
 
-TEST(shell_commands, info_ShouldReturnInvalidParam_WhenMoreThan2ArgsGiven) {
-	LONGS_EQUAL(SHELL_CMD_INVALID_PARAM, shell_cmd_info(3, NULL, &io));
+TEST(cli_commands, info_ShouldReturnInvalidParam_WhenMoreThan2ArgsGiven) {
+	LONGS_EQUAL(CLI_CMD_INVALID_PARAM, cli_cmd_info(3, NULL, &io));
 }
 
-TEST(shell_commands, info_ShouldReturnVersion_WhenSecondArgumentGivenAsVersion) {
+TEST(cli_commands, info_ShouldReturnVersion_WhenSecondArgumentGivenAsVersion) {
 	const char *argv[] = { "info", "version", };
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_info(2, argv, &io));
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &io));
 	STRCMP_EQUAL("version\r\n", write_spy_buffer);
 }
 
-TEST(shell_commands, info_ShouldReturnSerialNumber_WhenSecondArgumentGivenAsSn) {
+TEST(cli_commands, info_ShouldReturnSerialNumber_WhenSecondArgumentGivenAsSn) {
 	const char *argv[] = { "info", "sn", };
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_info(2, argv, &io));
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &io));
 	STRCMP_EQUAL("serial number\r\n", write_spy_buffer);
 }
 
-TEST(shell_commands, info_ShouldReturnBuildDate_WhenSecondArgumentGiven) {
+TEST(cli_commands, info_ShouldReturnBuildDate_WhenSecondArgumentGiven) {
 	const char *argv[] = { "info", "build", };
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_info(2, argv, &io));
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &io));
 	STRCMP_EQUAL("build date\r\n", write_spy_buffer);
 }
 
@@ -94,7 +94,7 @@ TEST(memdump, md_ShouldReturnOneByte_WhenLengthOneGiven) {
 	char fixed_mem[128];
 	sprintf(fixed_mem, "%16p:  14                    ", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "1", };
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_memdump(3, argv, &io));
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_memdump(3, argv, &io));
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
 }
 
@@ -104,7 +104,7 @@ TEST(memdump, md_ShouldReturnAligned16Bytes_WhenLength16Given) {
 			"1c 1d 1e 1f 20 21 22 23    "
 			"............ !\"#", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "16", };
-	LONGS_EQUAL(SHELL_CMD_SUCCESS, shell_cmd_memdump(3, argv, &io));
+	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_memdump(3, argv, &io));
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
 }
 
@@ -112,10 +112,10 @@ TEST(memdump, md_ShouldReturnPreviosMemoryAddr_WhenNoArgsGiven) {
 	char fixed_mem[128];
 	sprintf(fixed_mem, "%16p:", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "16", };
-	shell_cmd_memdump(3, argv, &io);
+	cli_cmd_memdump(3, argv, &io);
 	clear_spy_buffer();
 	const char *argv2[] = { "md", };
-	shell_cmd_memdump(1, argv2, &io);
+	cli_cmd_memdump(1, argv2, &io);
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
 }
 
@@ -124,9 +124,9 @@ TEST(memdump, md_ShouldReturnPreviousLength_WhenNoLengthGiven) {
 	sprintf(fixed_mem, "%16p:  14 15 16 17 18 19 1a 1b"
 			"                         ", (uintptr_t *)memsrc);
 	const char *argv[] = { "md", addr, "8", };
-	shell_cmd_memdump(3, argv, &io);
+	cli_cmd_memdump(3, argv, &io);
 	clear_spy_buffer();
 	const char *argv2[] = { "md", addr, };
-	shell_cmd_memdump(2, argv2, &io);
+	cli_cmd_memdump(2, argv2, &io);
 	STRNCMP_EQUAL(fixed_mem, write_spy_buffer, strlen(fixed_mem));
 }
