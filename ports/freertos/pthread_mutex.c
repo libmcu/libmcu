@@ -18,6 +18,8 @@ static int pthread_mutex_lock_internal(SemaphoreHandle_t sema, TickType_t timeou
 
 int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 {
+	(void)attr;
+
 	SemaphoreHandle_t sema;
 
 	if (mutex == NULL) {
@@ -66,8 +68,9 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeo
 
 	struct timespec currtime;
 	clock_gettime(CLOCK_REALTIME, &currtime);
-	TickType_t timeout_tick = (timeout->tv_sec - currtime.tv_sec) * 1000 +
-		(timeout->tv_nsec - currtime.tv_nsec) / 1000000;
+	TickType_t timeout_tick = (TickType_t)(
+			(timeout->tv_sec - currtime.tv_sec) * 1000 +
+			(timeout->tv_nsec - currtime.tv_nsec) / 1000000);
 
 	if (pthread_mutex_lock_internal(sema, timeout_tick / portTICK_PERIOD_MS) == -EBUSY) {
 		return -ETIMEDOUT;

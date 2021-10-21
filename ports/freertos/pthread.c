@@ -54,16 +54,16 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	ctx->arg = arg;
 
 	if (attr != NULL) {
-		stack_size = attr->stacksize;
+		stack_size = (size_t)attr->stacksize;
 		pri = attr->schedparam.sched_priority;
 	}
 
 	TaskHandle_t task_handle = NULL;
 	BaseType_t ok = xTaskCreate(task_wrapper,
 			name,
-			stack_size,
+			(uint16_t)stack_size,
 			ctx,
-			pri,
+			(uint16_t)pri,
 			&task_handle);
 
 	if (ok != pdPASS) {
@@ -79,6 +79,8 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 void pthread_exit(void *retval)
 {
+	(void)retval;
+
 	vTaskDelete(NULL);
 
 	assert(0); /* should never called */
@@ -143,7 +145,7 @@ int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)
 		return -EINVAL;
 	}
 
-	attr->stacksize = stacksize;
+	attr->stacksize = (int)stacksize;
 
 	return 0;
 }
@@ -154,7 +156,7 @@ int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 		return -EINVAL;
 	}
 
-	*stacksize = attr->stacksize;
+	*stacksize = (size_t)attr->stacksize;
 
 	return 0;
 }
