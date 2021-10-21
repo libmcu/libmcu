@@ -1,7 +1,7 @@
 COMPONENT_NAME = pubsub_tiny
 
 SRC_FILES = \
-	../components/pubsub_tiny/src/pubsub_tiny.c \
+	../modules/pubsub_tiny/src/pubsub_tiny.c \
 	stubs/logging.c
 
 TEST_SRC_FILES = \
@@ -10,9 +10,9 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs \
-	../components/pubsub_tiny/include \
-	../components/common/include \
-	../components/logging/include \
+	../modules/pubsub_tiny/include \
+	../modules/common/include \
+	../modules/logging/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

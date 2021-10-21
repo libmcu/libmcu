@@ -2,7 +2,7 @@ COMPONENT_NAME = apptimer
 
 SRC_FILES = \
 	stubs/bitops.c \
-	../components/apptimer/src/apptimer.c \
+	../modules/apptimer/src/apptimer.c \
 
 TEST_SRC_FILES = \
 	src/apptimer/apptimer_test.cpp \
@@ -10,8 +10,8 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/apptimer/include \
-	../components/common/include \
+	../modules/apptimer/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

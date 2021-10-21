@@ -9,7 +9,7 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	../examples \
-	../components/common/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

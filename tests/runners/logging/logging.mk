@@ -1,7 +1,7 @@
 COMPONENT_NAME = logging
 
 SRC_FILES = \
-	../components/logging/src/logging.c
+	../modules/logging/src/logging.c
 
 TEST_SRC_FILES = \
 	src/logging/logging_test.cpp \
@@ -9,8 +9,8 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/logging/include \
-	../components/common/include \
+	../modules/logging/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 CPPUTEST_CPPFLAGS = -DLOGGING_TAG=TAG

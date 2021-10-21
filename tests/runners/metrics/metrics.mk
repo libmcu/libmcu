@@ -2,7 +2,7 @@ COMPONENT_NAME = metrics
 
 SRC_FILES = \
 	stubs/logging.c \
-	../components/metrics/src/metrics.c
+	../modules/metrics/src/metrics.c
 
 TEST_SRC_FILES = \
 	src/metrics/test_metrics.cpp \
@@ -11,9 +11,9 @@ TEST_SRC_FILES = \
 INCLUDE_DIRS = \
 	stubs/overrides \
 	src/metrics \
-	../components/logging/include \
-	../components/metrics/include \
-	../components/common/include \
+	../modules/logging/include \
+	../modules/metrics/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 CPPUTEST_CPPFLAGS = -DMETRICS_USER_DEFINES=\"my_metrics.def\"

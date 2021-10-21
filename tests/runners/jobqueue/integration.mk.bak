@@ -2,7 +2,7 @@ COMPONENT_NAME = jobqueue_integration
 
 SRC_FILES = \
 	stubs/logging.c \
-	../components/jobqueue/src/jobqueue.c
+	../modules/jobqueue/src/jobqueue.c
 
 TEST_SRC_FILES = \
 	src/jobqueue/test_jobqueue_integration.cpp
@@ -10,8 +10,8 @@ TEST_SRC_FILES = \
 INCLUDE_DIRS += \
 	stubs \
 	../include/libmcu/posix \
-	../components/logging/include \
-	../components/jobqueue/include
+	../modules/logging/include \
+	../modules/jobqueue/include
 
 CPPUTEST_LDFLAGS += -lpthread
 

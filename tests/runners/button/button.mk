@@ -1,7 +1,7 @@
 COMPONENT_NAME = button
 
 SRC_FILES = \
-	../components/button/src/button.c
+	../modules/button/src/button.c
 
 TEST_SRC_FILES = \
 	src/button/button_test.cpp \
@@ -9,8 +9,8 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/button/include \
-	../components/common/include \
+	../modules/button/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 CPPUTEST_CPPFLAGS = \

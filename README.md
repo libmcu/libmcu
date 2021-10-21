@@ -11,24 +11,24 @@ A toolkit for firmware development.
 Simplicity and code size are considered first while trying to avoid dynamic
 allocation as much as possible.
 
-The documentation of each components are under the subdirectories. Some usage
+The documentation of each modules are under the subdirectories. Some usage
 examples can also be found under [examples](examples) and [test cases](tests/src).
 
 Any feedback would be appreciated.
 
-## Components
-* [apptimer](components/apptimer)
-* [bitmap](components/bitmap)
-* [button](components/button)
-* [common](components/common)
-* [jobqueue](components/jobqueue)
-* [logging](components/logging)
-* [metrics](components/metrics)
-* [pubsub](components/pubsub)
-* [pubsub_tiny](components/pubsub_tiny)
-* [retry](components/retry)
-* [shell](components/shell)
-* [timext](components/timext)
+## Modules
+* [apptimer](modules/apptimer)
+* [bitmap](modules/bitmap)
+* [button](modules/button)
+* [common](modules/common)
+* [jobqueue](modules/jobqueue)
+* [logging](modules/logging)
+* [metrics](modules/metrics)
+* [pubsub](modules/pubsub)
+* [pubsub_tiny](modules/pubsub_tiny)
+* [retry](modules/retry)
+* [shell](modules/shell)
+* [timext](modules/timext)
 
 ## Integration Guide
 ### Include `libmcu` into your project
@@ -43,20 +43,20 @@ $ git submodule add https://github.com/onkwon/libmcu.git ${THIRD_PARTY_DIR}/libm
 
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
-LIBMCU_COMPONENTS := logging pubsub metrics
-include $(LIBMCU_ROOT)/projects/components.mk
+LIBMCU_MODULES := logging pubsub metrics
+include $(LIBMCU_ROOT)/projects/modules.mk
 
-<SRC_FILES> += $(LIBMCU_COMPONENTS_SRCS)
-<INC_PATHS> += $(LIBMCU_COMPONENTS_INCS)
+<SRC_FILES> += $(LIBMCU_MODULES_SRCS)
+<INC_PATHS> += $(LIBMCU_MODULES_INCS)
 ```
 
 #### CMake
 
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
-list(APPEND LIBMCU_COMPONENTS logging pubsub metrics)
-include(${LIBMCU_ROOT}/projects/components.cmake)
+list(APPEND LIBMCU_MODULES logging pubsub metrics)
+include(${LIBMCU_ROOT}/projects/modules.cmake)
 
-# Add ${LIBMCU_COMPONENTS_SRCS} to your target sources
-# Add ${LIBMCU_COMPONENTS_INCS} to your target includes
+# Add ${LIBMCU_MODULES_SRCS} to your target sources
+# Add ${LIBMCU_MODULES_INCS} to your target includes
 ```

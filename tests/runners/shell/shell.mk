@@ -1,7 +1,7 @@
 COMPONENT_NAME = shell
 
 SRC_FILES = \
-	../components/shell/src/shell.c
+	../modules/shell/src/shell.c
 
 TEST_SRC_FILES = \
 	src/shell/test_shell.cpp \
@@ -9,9 +9,9 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/shell/src \
-	../components/shell/include \
-	../components/common/include \
+	../modules/shell/src \
+	../modules/shell/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

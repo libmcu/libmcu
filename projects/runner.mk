@@ -1,11 +1,11 @@
 include projects/version.mk
 include projects/toolchain.mk
 
-LIBMCU_COMPONENTS ?= $(patsubst components/%, %, $(wildcard components/*))
-include projects/components.mk
+LIBMCU_MODULES ?= $(patsubst modules/%, %, $(wildcard modules/*))
+include projects/modules.mk
 
-SRCS += $(LIBMCU_COMPONENTS_SRCS)
-INCS += $(LIBMCU_COMPONENTS_INCS)
+SRCS += $(LIBMCU_MODULES_SRCS)
+INCS += $(LIBMCU_MODULES_INCS)
 DEFS += \
 	METRICS_USER_DEFINES=\"../metrics.def\" \
 	_POSIX_C_SOURCE=200809L \

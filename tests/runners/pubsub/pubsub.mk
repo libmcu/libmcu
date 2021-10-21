@@ -1,7 +1,7 @@
 COMPONENT_NAME = pubsub
 
 SRC_FILES = \
-	../components/pubsub/src/pubsub.c
+	../modules/pubsub/src/pubsub.c
 
 TEST_SRC_FILES = \
 	src/pubsub/pubsub_test.cpp \
@@ -9,8 +9,8 @@ TEST_SRC_FILES = \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../components/pubsub/include \
-	../components/common/include \
+	../modules/pubsub/include \
+	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
 CPPUTEST_CPPFLAGS = -DPUBSUB_MIN_SUBSCRIPTION_CAPACITY=1
