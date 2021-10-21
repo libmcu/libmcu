@@ -45,7 +45,16 @@ extern "C" {
 
 #define libmcu_get_lr()			__builtin_return_address(0)
 #if defined(__GNUC__)
-#define libmcu_get_pc()			({__label__ l; l: &&l; })
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wreturn-local-addr"
+static inline void *libmcu_get_pc(void)
+{
+	__label__ l;
+l:
+	return &&l;
+}
+#pragma GCC diagnostic pop
 #else
 #define libmcu_get_pc()			((void *)0xfeedc0de)
 #endif
