@@ -1,7 +1,6 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
 #include "libmcu/cli.h"
-#include "libmcu/cli_command.h"
 
 static cli_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 {
@@ -9,14 +8,14 @@ static cli_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 }
 static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 {
-	const cli_io_t *io = (const cli_io_t *)env;
+	const cli_t *cli = (const cli_t *)env;
 	char buf[1024];
 	int len = 0;
 	for (int i = 0; i < argc; i++) {
 		int written = sprintf(buf+len, "%d: %s\n", i+1, argv[i]);
 		len += written;
 	}
-	io->write(buf, (size_t)len);
+	cli->io->write(buf, (size_t)len);
 	return CLI_CMD_SUCCESS;
 }
 static cli_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
@@ -33,12 +32,7 @@ static const cli_cmd_t commands[] = {
 	{ "args", cmd_args, "" },
 	{ "error", cmd_error, NULL },
 	{ "invalid", cmd_invalid, "desc" },
-	{ NULL, NULL, NULL },
 };
-const cli_cmd_t *cli_get_command_list(void)
-{
-	return commands;
-}
 
 static char writebuf[256];
 static char readbuf[256];
@@ -66,9 +60,14 @@ static cli_io_t io = {
 };
 
 TEST_GROUP(cli) {
+	cli_t cli;
+
 	void setup(void) {
 		write_index = 0;
 		read_index = 0;
+
+		cli_init(&cli, &io, commands,
+				sizeof(commands) / sizeof(commands[0]));
 	}
 	void teardown() {
 	}
@@ -76,66 +75,78 @@ TEST_GROUP(cli) {
 		set_write_data(s);
 	}
 	void then(const char *s) {
-		STRNCMP_EQUAL(s, &readbuf[54], strlen(s));
+		STRNCMP_EQUAL(s, &readbuf[51], strlen(s));
 	}
 };
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
 	given("Hello, World\nexit\n");
-	cli_run(&io);
-	then("$ Hello, World\r\ncommand not found\r\n");
+	cli_run(&cli);
+	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
 	given("Hello, World\rexit\r");
-	cli_run(&io);
-	then("$ Hello, World\r\ncommand not found\r\n");
+	cli_run(&cli);
+	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {
-	given("Hello, World\r\nexit\r\n");
-	cli_run(&io);
-	then("$ Hello, World\r\ncommand not found\r\n");
+	given("Hello, World\nexit\n");
+	cli_run(&cli);
+	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnExit_WhenExitCommandGiven) {
-	given("exit\r\n");
-	cli_run(&io);
-	then("$ exit\r\nEXIT\r\n");
+	given("exit\n");
+	cli_run(&cli);
+	then("$ exit\nEXIT\n");
 }
 
 TEST(cli, cli_ShouldReturnBLANK_WhenNoCommandGiven) {
 	given("\nexit\n");
-	cli_run(&io);
-	then("$ \r\n$ exit\r\nEXIT\r\n");
+	cli_run(&cli);
+	then("$ \n$ exit\nEXIT\n");
 }
 
 TEST(cli, cli_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
 	given("help\bq\nexit\n");
-	cli_run(&io);
-	then("$ help\b \bq\r\ncommand not found");
+	cli_run(&cli);
+	then("$ help\b \bq\ncommand not found");
 }
 
 TEST(cli, cli_ShouldIgnoreTab) {
 	given("hel\tp\nexit\n");
-	cli_run(&io);
-	then("$ help\r\n");
+	cli_run(&cli);
+	then("$ help\n");
 }
 
 TEST(cli, cli_ShouldParseArgs_WhenMultipleArgsGiven) {
+	given("args 1 2 3\nexit\n");
+	cli_run(&cli);
+	then("$ args 1 2 3\n1: args\n2: 1\n3: 2\n4: 3\n");
+}
+
+TEST(cli, cli_ShouldIgnoreArgs_WhenMoreThanMaxArgsGiven) {
 	given("args 1 2 3 4\nexit\n");
-	cli_run(&io);
-	then("$ args 1 2 3 4\r\n1: args\n2: 1\n3: 2\n4: 3\n5: 4\n");
+	cli_run(&cli);
+	then("$ args 1 2 3 4\n1: args\n2: 1\n3: 2\n4: 3\n");
 }
 
 TEST(cli, cli_ShouldReturnError_WhenErrorGiven) {
 	given("error\nexit\n");
-	cli_run(&io);
-	then("$ error\r\nERROR\r\n");
+	cli_run(&cli);
+	then("$ error\nERROR\n");
 }
 
 TEST(cli, cli_ShouldReturnDesc_WhenCommandUsageInvalid) {
 	given("invalid\nexit\n");
-	cli_run(&io);
-	then("$ invalid\r\ndesc\r\n");
+	cli_run(&cli);
+	then("$ invalid\ndesc\n");
+}
+
+TEST(cli, cli_ShouldIgnoreInput_WhenDefaultMaxLen62Reached) {
+	given("1234567890123456789012345678901234567890123456789012345678901234567890\nexit\n");
+	cli_run(&cli);
+	then("$ 12345678901234567890123456789012345678901234567890123456789012\n");
 }

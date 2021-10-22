@@ -4,12 +4,11 @@ SRC_FILES = \
 	../modules/cli/src/cli.c
 
 TEST_SRC_FILES = \
-	src/cli/test_cli.cpp \
+	src/cli/cli_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
 	stubs/overrides \
-	../modules/cli/src \
 	../modules/cli/include \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \

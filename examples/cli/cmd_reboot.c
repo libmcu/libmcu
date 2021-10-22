@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "cli_commands.h"
 #include "libmcu/compiler.h"
 #include "libmcu/system.h"
 

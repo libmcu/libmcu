@@ -1,17 +1,17 @@
 COMPONENT_NAME = cli_commands
 
 SRC_FILES = \
-	../modules/cli/src/commands/cmd_exit.c \
-	../modules/cli/src/commands/cmd_info.c \
-	../modules/cli/src/commands/cmd_memdump.c
+	../examples/cli/cmd_exit.c \
+	../examples/cli/cmd_info.c \
+	../examples/cli/cmd_memdump.c
 
 TEST_SRC_FILES = \
-	src/cli/test_cli_commands.cpp \
+	src/cli/cli_commands_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
 	../modules/logging/include \
-	../modules/cli/src \
+	../examples/cli \
 	../modules/cli/include \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \

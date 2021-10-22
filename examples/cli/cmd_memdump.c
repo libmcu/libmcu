@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "cli_commands.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -15,7 +15,7 @@
 static void print_addr(const cli_io_t *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
-	snprintf(buf, BUFSIZE-1, "%16p:", (uintptr_t *)addr);
+	snprintf(buf, BUFSIZE-1, "%16p:", (void *)addr);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
@@ -104,7 +104,7 @@ cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env)
 	static uintptr_t addr = (uintptr_t)&cli_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
-	const cli_io_t *io = (const cli_io_t *)env;
+	const cli_t *cli = (const cli_t *)env;
 
 	switch (argc) {
 	case 1: // use the same address as before
@@ -123,7 +123,7 @@ cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env)
 		break;
 	}
 
-	memdump(addr, length, BYTES_PER_LINE, io);
+	memdump(addr, length, BYTES_PER_LINE, cli->io);
 
 	return CLI_CMD_SUCCESS;
 }

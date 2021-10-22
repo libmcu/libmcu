@@ -1,70 +1,65 @@
 #include "libmcu/cli.h"
-#include "libmcu/cli_command.h"
+#include <stdbool.h>
 #include <string.h>
 #include "libmcu/assert.h"
 
-#if !defined(CLI_COMMAND_MAXLEN)
-#define CLI_COMMAND_MAXLEN			32
-#endif
-#if !defined(CLI_ARGS_MAXLEN)
-#define CLI_ARGS_MAXLEN				8
-#endif
 #define CLI_PROMPT				"$ "
 #define CLI_PROMPT_OK				""
-#define CLI_PROMPT_ERROR			"ERROR\r\n"
-#define CLI_PROMPT_NOT_FOUND			"command not found\r\n"
+#define CLI_PROMPT_ERROR			"ERROR\n"
+#define CLI_PROMPT_NOT_FOUND			"command not found\n"
 #define CLI_PROMPT_START_MESSAGE		\
-	"\r\n\r\nType 'help' to get a list of available commands.\r\n"
-#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\r\n"
+	"\n\nType 'help' to get a list of available commands.\n"
+#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
 
-static void readline(char *buf, size_t bufsize, const cli_io_t *io)
+static bool readline(cli_t *cli)
 {
-	size_t index = 0;
 	char ch;
 
-	io->write(CLI_PROMPT, strlen(CLI_PROMPT));
-
-	while (index < (bufsize - 1)) {
-		if (io->read(&ch, 1) != 1) {
-			continue;
-		}
-		if (ch == '\r' || ch == '\n') {
-			break;
-		}
-		if (ch == '\t') {
-			continue;
-		}
-		if (ch == '\b') {
-			if (index > 0) {
-				index--;
-				io->write("\b \b", 3);
-			}
-			continue;
-		}
-
-		buf[index] = ch;
-		index++;
-
-		io->write(&ch, 1);
+	if (cli->io->read(&ch, 1) != 1) {
+		return false;
 	}
 
-	io->write("\r\n", 2);
+	if (ch == '\r' || ch == '\n') {
+		cli->io->write("\n", 1);
 
-	buf[index] = '\n';
-	buf[index+1] = '\0';
+		cli->cmdbuf[cli->cmdbuf_index++] = '\n';
+		cli->cmdbuf[cli->cmdbuf_index++] = '\0';
+
+		cli->cmdbuf_index = 0;
+
+		return true;
+	} else if (ch == '\b') {
+		if (cli->cmdbuf_index > 0) {
+			cli->cmdbuf_index--;
+			cli->io->write("\b \b", 3);
+		}
+	} else if (ch == '\t') {
+	} else {
+		if (cli->cmdbuf_index >= CLI_COMMAND_MAXLEN) {
+			return false;
+		}
+
+		cli->cmdbuf[cli->cmdbuf_index++] = ch;
+		cli->io->write(&ch, 1);
+	}
+
+	return false;
 }
 
-static int parse(char *str, const char *argv[])
+static int parse_command(char *str, const char *argv[], size_t maxargs)
 {
 	int argc = 0;
 	char *p = str;
 	argv[0] = str;
 	while ((p = strpbrk(p + 1, " \n")) != NULL) {
-		argv[++argc] = p + 1;
+		argc += 1;
+		if ((size_t)argc < maxargs) {
+			argv[argc] = p + 1;
+		}
 		*p = '\0';
 	}
 
-	return argc;
+	return (size_t)argc > maxargs? (int)maxargs : argc;
 }
 
 static void report_result(const cli_io_t *io, cli_cmd_error_t err,
@@ -75,9 +70,9 @@ static void report_result(const cli_io_t *io, cli_cmd_error_t err,
 		io->write(CLI_PROMPT_OK, strlen(CLI_PROMPT_OK));
 		break;
 	case CLI_CMD_INVALID_PARAM:
-		if (cmd->desc) {
+		if (cmd && cmd->desc) {
 			io->write(cmd->desc, strlen(cmd->desc));
-			io->write("\r\n", 2);
+			io->write("\n", 1);
 		}
 		break;
 	case CLI_CMD_NOT_FOUND:
@@ -91,46 +86,74 @@ static void report_result(const cli_io_t *io, cli_cmd_error_t err,
 	}
 }
 
-static cli_cmd_error_t process(int argc, const char *argv[],
-		const cli_io_t *io)
+static cli_cmd_error_t process_command(const cli_t *cli,
+		int argc, const char *argv[], const void *env)
 {
 	if (argc <= 0) {
 		return CLI_CMD_BLANK;
 	}
 
 	cli_cmd_error_t rc = CLI_CMD_NOT_FOUND;
-	const cli_cmd_t *commands = cli_get_command_list();
-	const cli_cmd_t *cmd;
+	const cli_cmd_t *cmd = NULL;
 
-	for (int i = 0; (cmd = &commands[i]) && cmd->name; i++) {
+	for (size_t i = 0; i < cli->cmds_count; i++) {
+		cmd = &cli->cmds[i];
 		if (strcmp(cmd->name, argv[0]) == 0) {
-			rc = cmd->run(argc, argv, io);
+			rc = cmd->func(argc, argv, env);
 			break;
 		}
 	}
 
-	report_result(io, rc, cmd);
+	report_result(cli->io, rc, cmd);
 
 	return rc;
 }
 
-void cli_run(const cli_io_t *io)
+static cli_cmd_error_t cli_step_core(cli_t *cli)
 {
-	assert(io != NULL);
+	if (!readline(cli)) {
+		return CLI_CMD_SUCCESS;
+	}
 
-	char readbuf[CLI_COMMAND_MAXLEN + 1];
+	const char *argv[CLI_ARGS_MAXLEN];
+	int argc = parse_command(cli->cmdbuf, argv, CLI_ARGS_MAXLEN);
+
+	cli_cmd_error_t err = process_command(cli, argc, argv, cli);
+
+	if (err != CLI_CMD_EXIT) {
+		cli->io->write(CLI_PROMPT, strlen(CLI_PROMPT));
+	}
+
+	return err;
+}
+
+void cli_step(cli_t *cli)
+{
+	cli_step_core(cli);
+}
+
+void cli_run(cli_t *cli)
+{
 	cli_cmd_error_t rc;
 
-	int argc;
-	const char *argv[CLI_ARGS_MAXLEN];
-
-	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
-
 	do {
-		readline(readbuf, sizeof(readbuf), io);
-		argc = parse(readbuf, argv);
-		rc = process(argc, argv, io);
+		rc = cli_step_core(cli);
 	} while (rc != CLI_CMD_EXIT);
 
-	io->write(CLI_PROMPT_EXIT_MESSAGE, strlen(CLI_PROMPT_EXIT_MESSAGE));
+	cli->io->write(CLI_PROMPT_EXIT_MESSAGE,
+			strlen(CLI_PROMPT_EXIT_MESSAGE));
+}
+
+void cli_init(cli_t *cli,
+		const cli_io_t *io, const cli_cmd_t *cmds, size_t cmdcnt)
+{
+	assert(cli != NULL && io != NULL && cmds != NULL);
+
+	cli->io = io;
+	cli->cmds = cmds;
+	cli->cmds_count = cmdcnt;
+	cli->cmdbuf_index = 0;
+
+	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
+	io->write(CLI_PROMPT, strlen(CLI_PROMPT));
 }

@@ -1,4 +1,4 @@
-#include "commands.h"
+#include "cli_commands.h"
 #include <string.h>
 #include "libmcu/cli.h"
 #include "libmcu/system.h"
@@ -58,18 +58,18 @@ cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)
 		return CLI_CMD_INVALID_PARAM;
 	}
 
-	const cli_io_t *io = (const cli_io_t *)env;
+	const cli_t *cli = (const cli_t *)env;
 
 	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 
 	if (options & CMD_OPT_VERSION) {
-		print_version(io);
+		print_version(cli->io);
 	}
 	if (options & CMD_OPT_SERIAL_NUMBER) {
-		print_sn(io);
+		print_sn(cli->io);
 	}
 	if (options & CMD_OPT_BUILD_DATE) {
-		print_build_date(io);
+		print_build_date(cli->io);
 	}
 
 	return CLI_CMD_SUCCESS;

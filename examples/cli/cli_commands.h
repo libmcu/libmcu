@@ -13,6 +13,8 @@ cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env);
 cli_cmd_error_t cli_cmd_reboot(int argc, const char *argv[], const void *env);
 cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env);
 
+extern const cli_cmd_t cli_commands[];
+
 #if defined(__cplusplus)
 }
 #endif
