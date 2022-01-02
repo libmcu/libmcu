@@ -8,6 +8,7 @@ extern "C" {
 #include <stdint.h>
 #include "libmcu/compiler.h"
 
+#undef assert
 #define assert(exp) \
 	do { \
 		if (!(exp)) { \

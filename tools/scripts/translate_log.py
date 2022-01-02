@@ -4,12 +4,12 @@ import os
 import struct
 
 TYPE_LIST = ("VERBOSE", "DEBUG", "INFO", "WARN", "ERROR", "NONE")
-TIMESTAMP_SIZE = 8 # 8 or 4 bytes
+TIMESTAMP_SIZE = 4 # 8 or 4 bytes
 LOG_SIZE = TIMESTAMP_SIZE + 4*2 + 2 + 2 + 1 # sizeof(ts + pc + lr + len + type)
 LOG_MAGIC = 0xA5A5
 
 
-class Embedlog:
+class embedlog:
     def __init__(self):
         self.elf_file = None
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-    log = Embedlog()
+    log = embedlog()
 
     if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
         log.elf_file = sys.argv[1]

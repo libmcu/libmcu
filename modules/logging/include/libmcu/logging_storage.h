@@ -9,6 +9,7 @@ extern "C" {
 
 typedef struct logging_storage_ops {
 	size_t (*write)(const void *data, size_t size);
+	size_t (*peek)(void *buf, size_t bufsize);
 	/** Read up to `bufsize` bytes from the storage
 	 * @return The number of bytes read is returned on success,
 	 *         0 is returned on error or when no log is there. */

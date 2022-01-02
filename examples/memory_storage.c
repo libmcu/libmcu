@@ -4,9 +4,10 @@
 #include "libmcu/ringbuf.h"
 #include "libmcu/assert.h"
 
-static size_t memory_write(const void *data, size_t size);
+static size_t memory_peek(void *buf, size_t bufsize);
 static size_t memory_read(void *buf, size_t bufsize);
 static size_t memory_consume(size_t size);
+static size_t memory_write(const void *data, size_t size);
 static size_t memory_count(void);
 
 static struct {
@@ -16,12 +17,67 @@ static struct {
 	size_t count; // number of entries in the storage
 } memory_storage = {
 	.ops = {
-		.write = memory_write,
+		.peek = memory_peek,
 		.read = memory_read,
 		.consume = memory_consume,
+		.write = memory_write,
 		.count = memory_count,
 	},
 };
+
+static size_t peek_internal(void *buf, size_t bufsize)
+{
+	size_t bytes_read = 0;
+	size_t data_size;
+
+	if (ringbuf_peek(&memory_storage.storage, 0, &data_size, sizeof(data_size))
+			&& data_size <= bufsize) {
+		bytes_read = ringbuf_peek(&memory_storage.storage, sizeof(data_size), buf, data_size);
+	}
+
+	return bytes_read;
+}
+
+static size_t memory_peek(void *buf, size_t bufsize)
+{
+	pthread_mutex_lock(&memory_storage.storage_lock);
+	size_t bytes_read = peek_internal(buf, bufsize);
+	pthread_mutex_unlock(&memory_storage.storage_lock);
+
+	return bytes_read;
+}
+
+static size_t memory_read(void *buf, size_t bufsize)
+{
+	pthread_mutex_lock(&memory_storage.storage_lock);
+	size_t bytes_read = peek_internal(buf, bufsize);
+	if (bytes_read > 0) {
+		ringbuf_consume(&memory_storage.storage,
+				bytes_read + sizeof(bytes_read));
+		memory_storage.count--;
+	}
+	pthread_mutex_unlock(&memory_storage.storage_lock);
+
+	return bytes_read;
+}
+
+static size_t memory_consume(size_t size)
+{
+	size_t data_size = 0;
+
+	pthread_mutex_lock(&memory_storage.storage_lock);
+	if (ringbuf_peek(&memory_storage.storage, 0, &data_size, sizeof(data_size))) {
+		if (ringbuf_consume(&memory_storage.storage, data_size + sizeof(data_size))) {
+			assert(data_size == size);
+			memory_storage.count--;
+		} else {
+			data_size = 0;
+		}
+	}
+	pthread_mutex_unlock(&memory_storage.storage_lock);
+
+	return data_size;
+}
 
 static size_t memory_write(const void *data, size_t size)
 {
@@ -41,39 +97,6 @@ static size_t memory_write(const void *data, size_t size)
 	memory_storage_write_hook(data, size);
 
 	return written;
-}
-
-static size_t memory_read(void *buf, size_t bufsize)
-{
-	size_t bytes_read = 0;
-	size_t data_size;
-
-	pthread_mutex_lock(&memory_storage.storage_lock);
-	if (ringbuf_read(&memory_storage.storage, 0, &data_size, sizeof(data_size))
-			&& data_size <= bufsize) {
-		bytes_read = ringbuf_read(&memory_storage.storage, sizeof(data_size), buf, data_size);
-	}
-	pthread_mutex_unlock(&memory_storage.storage_lock);
-
-	return bytes_read;
-}
-
-static size_t memory_consume(size_t size)
-{
-	size_t data_size = 0;
-
-	pthread_mutex_lock(&memory_storage.storage_lock);
-	if (ringbuf_read(&memory_storage.storage, 0, &data_size, sizeof(data_size))) {
-		if (ringbuf_consume(&memory_storage.storage, data_size + sizeof(data_size))) {
-			assert(data_size == size);
-			memory_storage.count--;
-		} else {
-			data_size = 0;
-		}
-	}
-	pthread_mutex_unlock(&memory_storage.storage_lock);
-
-	return data_size;
 }
 
 static size_t memory_count(void)

@@ -187,7 +187,7 @@ static size_t peek_internal(void *buf, size_t bufsize)
 	if (!buf || bufsize < sizeof(logging_data_t)) {
 		return 0;
 	}
-	return m.storage->read(buf, bufsize);
+	return m.storage->peek(buf, bufsize);
 }
 
 #define pack_message(ptr, basearg) do { \
@@ -282,8 +282,7 @@ size_t logging_read(void *buf, size_t bufsize)
 
 	pthread_mutex_lock(&m.lock);
 	{
-		size_read = peek_internal(buf, bufsize);
-		consume_internal(size_read);
+		size_read = m.storage->read(buf, bufsize);
 	}
 	pthread_mutex_unlock(&m.lock);
 
