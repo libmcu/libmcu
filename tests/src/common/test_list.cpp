@@ -53,7 +53,7 @@ TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList_WhenNodeAddedInOrder) {
 	struct list node1, node2;
 	list_add_tail(&node1, &head); // head->node1->NULL
 	list_add_tail(&node2, &head); // head->node1->node2->NULL
-	CHECK(list_del(&node1, &head) == 0);
+	list_del(&node1, &head);
 	POINTERS_EQUAL(&node2, head.next);
 	POINTERS_EQUAL(&head, head.next->next);
 }
@@ -62,14 +62,14 @@ TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList_WhenNodeAddedOutOfOrder) 
 	struct list node1, node2;
 	list_add_tail(&node1, &head); // head->node1->NULL
 	list_add(&node2, &head); // head->node2->node1->NULL
-	CHECK(list_del(&node1, &head) == 0);
+	list_del(&node1, &head);
 	POINTERS_EQUAL(&node2, head.next);
 	POINTERS_EQUAL(&head, head.next->next);
 }
 
 TEST(SinglyLinkedList, del_ShouldFailDeleting_WhenThereIsNoMatchingNode) {
 	struct list node;
-	CHECK(list_del(&node, &head) == -1);
+	list_del(&node, &head);
 }
 
 TEST(SinglyLinkedList, empty_ShouldReturnTrue_WhenListHasNoNode) {

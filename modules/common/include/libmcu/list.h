@@ -50,7 +50,7 @@ static inline LIBMCU_ALWAYS_INLINE void list_add_tail(struct list *node,
 	(*ref)->next = node;
 }
 
-static inline LIBMCU_ALWAYS_INLINE int list_del(const struct list *node,
+static inline LIBMCU_ALWAYS_INLINE void list_del(const struct list *node,
 		struct list *head)
 {
 	struct list **ref = &head;
@@ -59,12 +59,7 @@ static inline LIBMCU_ALWAYS_INLINE int list_del(const struct list *node,
 		ref = &(*ref)->next;
 	}
 
-	if ((*ref)->next == head) {
-		return -1;
-	}
-
 	(*ref)->next = (*ref)->next->next;
-	return 0;
 }
 
 static inline LIBMCU_ALWAYS_INLINE bool list_empty(const struct list *head)
