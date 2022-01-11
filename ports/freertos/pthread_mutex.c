@@ -72,7 +72,7 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeo
 			(timeout->tv_sec - currtime.tv_sec) * 1000 +
 			(timeout->tv_nsec - currtime.tv_nsec) / 1000000);
 
-	if (pthread_mutex_lock_internal(sema, timeout_tick / portTICK_PERIOD_MS) == -EBUSY) {
+	if (pthread_mutex_lock_internal(sema, timeout_tick / configTICK_RATE_HZ) == -EBUSY) {
 		return -ETIMEDOUT;
 	}
 
