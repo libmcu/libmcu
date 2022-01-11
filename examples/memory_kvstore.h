@@ -8,8 +8,8 @@ extern "C" {
 #include "libmcu/kvstore.h"
 
 int memory_kvstore_init(void);
-void memory_kvstore_destroy(kvstore_t kvstore);
-kvstore_t memory_kvstore_create(const char *ns);
+void memory_kvstore_destroy(struct kvstore *kvstore);
+struct kvstore *memory_kvstore_create(const char *ns);
 
 #if defined(__cplusplus)
 }

@@ -4,68 +4,93 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "libmcu/assert.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 
-struct nvs_kvstore_s {
-	struct kvstore_io ops;
+#include "libmcu/assert.h"
+
+struct nvs_kvstore {
+	struct kvstore super;
 	nvs_handle_t handle;
 };
 
-static int nvs_kvstore_open(const char *ns, nvs_handle_t *namespace_handle)
-{
-	return !nvs_open(ns, NVS_READWRITE, namespace_handle);
-}
+static bool initialized = false;
 
-static size_t nvs_kvstore_write(kvstore_t kvstore,
-		const char *key, const void *value, size_t size)
+static int nvs_storge_init(void)
 {
-	struct nvs_kvstore_s *p = (typeof(p))kvstore;
-
-	if (nvs_set_blob(p->handle, key, value, size)) {
+	if (initialized) {
 		return 0;
 	}
 
-	return !nvs_commit(p->handle)? size : 0;
-}
-
-static size_t nvs_kvstore_read(const kvstore_t kvstore,
-		const char *key, void *buf, size_t bufsize)
-{
-	const struct nvs_kvstore_s *p = (typeof(p))kvstore;
-	return !nvs_get_blob(p->handle, key, buf, &bufsize)? bufsize : 0;
-}
-
-kvstore_t nvs_kvstore_create(const char *ns)
-{
-	struct nvs_kvstore_s *p;
-
-	if (!(p = malloc(sizeof(*p)))) {
-		return NULL;
+	esp_err_t err = nvs_flash_init();
+	switch (err) {
+		case ESP_OK:
+			break;
+		case ESP_ERR_NVS_NO_FREE_PAGES:
+		case ESP_ERR_NVS_NEW_VERSION_FOUND:
+			return -1;
+		default:
+			return -2;
 	}
 
-	if (!nvs_kvstore_open(ns, &p->handle)) {
-		free(p);
-		return NULL;
+	initialized = true;
+
+	return 0;
+}
+
+static int nvs_storage_open(char const *namespace, nvs_handle_t *namespace_handle)
+{
+	return nvs_open(namespace, NVS_READWRITE, namespace_handle);
+}
+
+static void nvs_storage_close(nvs_handle_t *namespace_handle)
+{
+	nvs_close(*namespace_handle);
+}
+
+static int nvs_kvstore_write(struct kvstore const *self, char const *key, void const *value, size_t size)
+{
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+
+	int err = nvs_set_blob(nvs_kvstore->handle, key, value, size);
+	if (err) {
+		return 0;
 	}
-
-	p->ops = (typeof(p->ops)) {
-		.write = nvs_kvstore_write,
-		.read = nvs_kvstore_read,
-	};
-
-	return &p->ops;
+	return !nvs_commit(nvs_kvstore->handle)? size : 0;
 }
 
-void nvs_kvstore_destroy(kvstore_t kvstore)
+static int nvs_kvstore_read(struct kvstore const *self, char const *key, void *buf, size_t size)
 {
-	nvs_close(((typeof(struct nvs_kvstore_s *))kvstore)->handle);
-	free(kvstore);
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+	return !nvs_get_blob(nvs_kvstore->handle, key, buf, &size)? size : 0;
 }
 
-int nvs_kvstore_init(void)
+static int nvs_kvstore_open(struct kvstore const *self, char const *namespace)
 {
-	return nvs_flash_init();
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+	return nvs_storage_open(namespace, &nvs_kvstore->handle);
+}
+
+static void nvs_kvstore_close(struct kvstore const *self)
+{
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+	nvs_storage_close(&nvs_kvstore->handle);
+}
+
+struct kvstore *nvs_kvstore_new(void)
+{
+	struct nvs_kvstore *nvs_kvstore = malloc(sizeof(*nvs_kvstore));
+	assert(nvs_kvstore);
+
+	int rc = nvs_storge_init();
+	assert(rc == 0);
+
+	struct kvstore *kvstore = (struct kvstore *)nvs_kvstore;
+	kvstore->write = nvs_kvstore_write;
+	kvstore->read = nvs_kvstore_read;
+	kvstore->open = nvs_kvstore_open;
+	kvstore->close = nvs_kvstore_close;
+
+	return kvstore;
 }

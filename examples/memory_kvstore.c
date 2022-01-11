@@ -16,7 +16,7 @@
 #endif
 
 struct memory_kvstore {
-	struct kvstore_io ops;
+	struct kvstore ops;
 	char *namespace;
 	struct list namespace_list;
 	struct list keylist_head;
@@ -31,7 +31,7 @@ struct memory_kvstore_entry {
 
 static DEFINE_LIST_HEAD(namespace_list_head);
 
-static struct memory_kvstore *find_namespace(const char *namespace)
+static struct memory_kvstore *find_namespace(char const *namespace)
 {
 	struct list *p;
 	list_for_each(p, &namespace_list_head) {
@@ -45,8 +45,8 @@ static struct memory_kvstore *find_namespace(const char *namespace)
 	return NULL;
 }
 
-static struct memory_kvstore_entry *find_key(const struct memory_kvstore *obj,
-		const char *key)
+static struct memory_kvstore_entry *find_key(struct memory_kvstore const *obj,
+		char const *key)
 {
 	struct list *p;
 	list_for_each(p, &obj->keylist_head) {
@@ -59,8 +59,8 @@ static struct memory_kvstore_entry *find_key(const struct memory_kvstore *obj,
 	return NULL;
 }
 
-static size_t memory_kvstore_write(kvstore_t kvstore,
-		const char *key, const void *value, size_t size)
+static int memory_kvstore_write(struct kvstore *kvstore,
+		char const *key, void const *value, size_t size)
 {
 	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
 
@@ -93,7 +93,7 @@ static size_t memory_kvstore_write(kvstore_t kvstore,
 	memcpy(entry->value, value, size);
 	entry->value_size = size;
 
-	return size;
+	return (int)size;
 
 err_free_key:
 	free(entry->key);
@@ -103,22 +103,22 @@ err:
 	return 0;
 }
 
-static size_t memory_kvstore_read(const kvstore_t kvstore,
-		const char *key, void *buf, size_t bufsize)
+static int memory_kvstore_read(struct kvstore const *kvstore,
+		char const *key, void *buf, size_t bufsize)
 {
-	const struct memory_kvstore *obj =
-		(const struct memory_kvstore *)kvstore;
-	const struct memory_kvstore_entry *entry = find_key(obj, key);
+	struct memory_kvstore const *obj =
+		(struct memory_kvstore const *)kvstore;
+	struct memory_kvstore_entry const *entry = find_key(obj, key);
 	if (entry) {
 		size_t size = MIN(bufsize, entry->value_size);
 		memcpy(buf, entry->value, size);
-		return size;
+		return (int)size;
 	}
 
 	return 0;
 }
 
-void memory_kvstore_destroy(kvstore_t kvstore)
+void memory_kvstore_destroy(struct kvstore *kvstore)
 {
 	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
 
@@ -136,7 +136,7 @@ void memory_kvstore_destroy(kvstore_t kvstore)
 	free(kvstore);
 }
 
-kvstore_t memory_kvstore_create(const char *ns)
+struct kvstore *memory_kvstore_create(char const *ns)
 {
 	struct memory_kvstore *p;
 

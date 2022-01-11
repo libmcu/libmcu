@@ -4,7 +4,7 @@
 #include "memory_kvstore.h"
 
 TEST_GROUP(MemoryKVStore) {
-	kvstore_t storage;
+	struct kvstore *storage;
 
 	void setup(void) {
 		memory_kvstore_init();
@@ -99,7 +99,7 @@ TEST(MemoryKVStore, new_ShouldReturnExistNamespace_WhenAlreadyCreated) {
 	uint32_t val_written = 0xdeadbeef;
 	uint32_t val_read = 0;
 	kvstore_write(storage, "key", &val_written, sizeof(val_written));
-	kvstore_t same_ns = memory_kvstore_create("namespace");
+	struct kvstore *same_ns = memory_kvstore_create("namespace");
 	kvstore_read(same_ns, "key", &val_read, sizeof(val_read));
 	LONGS_EQUAL(val_written, val_read);
 }
@@ -110,7 +110,7 @@ TEST(MemoryKVStore, new_ShouldKeepDataSeperatedFromOtherNamespaces_WhenNewNamesp
 	uint32_t val2_written = 0xdeafc1de;
 	uint32_t val2_read = 0;
 
-	kvstore_t ns2 = memory_kvstore_create("another namespace");
+	struct kvstore *ns2 = memory_kvstore_create("another namespace");
 
 	kvstore_write(storage, "samekey", &val1_written, sizeof(val1_written));
 	kvstore_write(ns2, "samekey", &val2_written, sizeof(val2_written));

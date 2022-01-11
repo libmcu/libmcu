@@ -7,25 +7,35 @@ extern "C" {
 
 #include <stddef.h>
 
-typedef struct kvstore_io * kvstore_t;
-
-struct kvstore_io {
-	size_t (*write)(kvstore_t kvstore,
-			const char *key, const void *value, size_t size);
-	size_t (*read)(const kvstore_t kvstore,
-			const char *key, void *buf, size_t bufsize);
+struct kvstore {
+	int (*write)(struct kvstore *self,
+			char const *key, void const *value, size_t size);
+	int (*read)(struct kvstore const *self,
+			char const *key, void *buf, size_t size);
+	int (*open)(struct kvstore const *self, char const *ns);
+	void (*close)(struct kvstore const *self);
 };
 
-static inline size_t kvstore_write(kvstore_t kvstore,
-		const char *key, const void *value, size_t size)
+static inline int kvstore_open(struct kvstore const *self, char const *ns)
 {
-	return kvstore->write(kvstore, key, value, size);
+	return self->open(self, ns);
 }
 
-static inline size_t kvstore_read(const kvstore_t kvstore,
-		const char *key, void *buf, size_t bufsize)
+static inline void kvstore_close(struct kvstore const *self)
 {
-	return kvstore->read(kvstore, key, buf, bufsize);
+	self->close(self);
+}
+
+static inline int kvstore_write(struct kvstore *self,
+		char const *key, void const *value, size_t size)
+{
+	return self->write(self, key, value, size);
+}
+
+static inline int kvstore_read(struct kvstore const *self,
+		char const *key, void *buf, size_t size)
+{
+	return self->read(self, key, buf, size);
 }
 
 #if defined(__cplusplus)
