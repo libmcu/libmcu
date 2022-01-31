@@ -1,6 +1,6 @@
 #include "libmcu/posix/semaphore.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 #include "libmcu/compiler.h"
 
 #define SEM_MAX				0x7FFFU

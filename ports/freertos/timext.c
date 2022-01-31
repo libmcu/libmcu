@@ -1,7 +1,7 @@
 #include "libmcu/timext.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define time_after(goal, chasing)	((int)(goal)    - (int)(chasing) < 0)
 #define time_before(goal, chasing)	((int)(chasing) - (int)(goal)    < 0)
