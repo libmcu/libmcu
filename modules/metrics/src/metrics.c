@@ -92,6 +92,19 @@ void metrics_set(metric_key_t key, int32_t val)
 	pthread_mutex_unlock(&metrics_lock);
 }
 
+int32_t metrics_get(metric_key_t key)
+{
+	int32_t value;
+
+	pthread_mutex_lock(&metrics_lock);
+	{
+		value = get_obj_from_key(key)->value;
+	}
+	pthread_mutex_unlock(&metrics_lock);
+
+	return value;
+}
+
 void metrics_increase(metric_key_t key)
 {
 	pthread_mutex_lock(&metrics_lock);

@@ -21,6 +21,7 @@ enum {
 typedef uint8_t metric_key_t;
 
 void metrics_set(metric_key_t key, int32_t val);
+int32_t metrics_get(metric_key_t key);
 void metrics_increase(metric_key_t key);
 void metrics_increase_by(metric_key_t key, int32_t n);
 void metrics_reset(void);

@@ -64,6 +64,12 @@ TEST_GROUP(metrics) {
 	}
 };
 
+TEST(metrics, get_ShouldReturnValue) {
+	int32_t expected = 12345;
+	metrics_set(ReportInterval, expected);
+	LONGS_EQUAL(expected, metrics_get(ReportInterval));
+}
+
 TEST(metrics, set_ShouldSetMetricValue123_WhenValue123Given) {
 	metrics_iterate(save_metric_ReportInterval_only);
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
