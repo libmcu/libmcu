@@ -54,3 +54,4 @@ dkms.conf
 build
 *cscope.*
 tests/cpputest
+.ccls-cache
