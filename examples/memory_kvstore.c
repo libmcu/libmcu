@@ -103,7 +103,7 @@ err:
 	return 0;
 }
 
-static int memory_kvstore_read(struct kvstore const *kvstore,
+static int memory_kvstore_read(struct kvstore *kvstore,
 		char const *key, void *buf, size_t bufsize)
 {
 	struct memory_kvstore const *obj =
