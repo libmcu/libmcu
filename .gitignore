@@ -55,3 +55,4 @@ build
 *cscope.*
 tests/cpputest
 .ccls-cache
+compile_commands.json
