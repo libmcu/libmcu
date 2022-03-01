@@ -16,7 +16,9 @@ INCLUDE_DIRS = \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
-CPPUTEST_CPPFLAGS = -DMETRICS_USER_DEFINES=\"my_metrics.def\"
+CPPUTEST_CPPFLAGS = \
+	-DMETRICS_USER_DEFINES=\"my_metrics.def\" \
+	-DMETRICS_KEY_STRING
 
 MOCKS_SRC_DIRS =
 

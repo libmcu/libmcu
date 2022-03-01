@@ -19,8 +19,10 @@ static void clear_saved_metrics(void)
 	}
 }
 
-static void save_metric_ReportInterval_only(metric_key_t keyid, int32_t value)
+static void save_metric_ReportInterval_only(metric_key_t keyid, int32_t value,
+					    void *ctx)
 {
+	(void)ctx;
 	if (keyid != ReportInterval) {
 		return;
 	}
@@ -29,8 +31,9 @@ static void save_metric_ReportInterval_only(metric_key_t keyid, int32_t value)
 	saved_metrics[0].value = value;
 }
 
-static void print_metric_each(metric_key_t keyid, int32_t value)
+static void print_metric_each(metric_key_t keyid, int32_t value, void *ctx)
 {
+	(void)ctx;
 	debug("Metric %02u : %d", keyid, value);
 }
 
@@ -48,7 +51,7 @@ static void report_periodic(void)
 	metrics_increase_by(ReportInterval, now - stamp);
 	stamp = now;
 
-	metrics_iterate(print_metric_each);
+	metrics_iterate(print_metric_each, 0);
 
 	uint8_t buf[128];
 	metrics_get_encoded(buf, sizeof(buf));
@@ -71,36 +74,36 @@ TEST(metrics, get_ShouldReturnValue) {
 }
 
 TEST(metrics, set_ShouldSetMetricValue123_WhenValue123Given) {
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(0, saved_metrics[0].value);
 
 	metrics_set(ReportInterval, 123);
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(123, saved_metrics[0].value);
 }
 
 TEST(metrics, increase_ShouldIncreaseValueByOne) {
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(0, saved_metrics[0].value);
 
 	metrics_increase(ReportInterval);
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(1, saved_metrics[0].value);
 }
 
 TEST(metrics, increase_by_ShouldIncreaseValueByN_WhenN45Given) {
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(0, saved_metrics[0].value);
 
 	metrics_increase_by(ReportInterval, 45);
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(45, saved_metrics[0].value);
@@ -110,7 +113,7 @@ TEST(metrics, reset_ShouldResetAllMetrics) {
 	metrics_set(ReportInterval, 1234);
 
 	metrics_reset();
-	metrics_iterate(save_metric_ReportInterval_only);
+	metrics_iterate(save_metric_ReportInterval_only, 0);
 
 	LONGS_EQUAL(ReportInterval, saved_metrics[0].id);
 	LONGS_EQUAL(0, saved_metrics[0].value);
@@ -131,6 +134,11 @@ TEST(metrics, get_encoded_ShouldReturnSizeOfAllEncodedMetrics_WhenReportInterval
 	size_t size = metrics_get_encoded(buf, sizeof(buf));
 	LONGS_EQUAL(28, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
+}
+
+TEST(metrics, stringify_key_ShouldReturnString_WhenKeyGiven) {
+	char const *p = metrics_stringify_key(ReportInterval);
+	STRCMP_EQUAL("ReportInterval", p);
 }
 
 TEST(metrics, test) {

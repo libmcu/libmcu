@@ -18,6 +18,13 @@ static struct metrics metrics[] = {
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };
+#if defined(METRICS_KEY_STRING)
+static char const *key_strings[] = {
+#define METRICS_DEFINE(id, keystr) #keystr,
+#include METRICS_USER_DEFINES
+#undef METRICS_DEFINE
+};
+#endif
 
 static struct metrics *get_obj_from_index(uint32_t index)
 {
@@ -41,11 +48,12 @@ static struct metrics *get_obj_from_key(metric_key_t key)
 	return get_obj_from_index(get_index_from_key(key));
 }
 
-static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value))
+static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
+					      void *ctx), void *ctx)
 {
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
 		const struct metrics *p = get_obj_from_index(i);
-		callback_each(p->key, p->value);
+		callback_each(p->key, p->value, ctx);
 	}
 }
 
@@ -145,10 +153,18 @@ size_t metrics_get_encoded(void *buf, size_t bufsize)
 	return written;
 }
 
-void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value))
+void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
+					   void *ctx), void *ctx)
 {
-	iterate_all(callback_each);
+	iterate_all(callback_each, ctx);
 }
+
+#if defined(METRICS_KEY_STRING)
+char const *metrics_stringify_key(metric_key_t key)
+{
+	return key_strings[key];
+}
+#endif
 
 void metrics_init(void)
 {
