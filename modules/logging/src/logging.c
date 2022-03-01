@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <pthread.h>
 #if defined(__STDC_HOSTED__)
 #include <stdio.h>
 #endif
@@ -43,8 +42,6 @@ struct logging_tag {
 };
 
 static struct {
-	pthread_mutex_t lock;
-
 	struct logging_tag tags[LOGGING_TAGS_MAXNUM];
 	struct logging_tag global_tag;
 
@@ -226,7 +223,7 @@ size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 
 	assert(ctx != NULL);
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		const struct logging_tag *tag = obtain_tag(ctx->tag);
 
@@ -245,7 +242,7 @@ size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
 		result = m.storage->write(log, get_log_size(log));
 	}
 out:
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return result;
 }
@@ -254,11 +251,11 @@ size_t logging_peek(void *buf, size_t bufsize)
 {
 	size_t result = 0;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		result = peek_internal(buf, bufsize);
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return result;
 }
@@ -267,11 +264,11 @@ size_t logging_consume(size_t consume_size)
 {
 	size_t result = 0;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		result = consume_internal(consume_size);
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return result;
 }
@@ -280,11 +277,11 @@ size_t logging_read(void *buf, size_t bufsize)
 {
 	size_t size_read = 0;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		size_read = m.storage->read(buf, bufsize);
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return size_read;
 }
@@ -293,11 +290,11 @@ size_t logging_count(void)
 {
 	size_t result = 0;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		result = m.storage->count();
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return result;
 }
@@ -306,7 +303,7 @@ size_t logging_count_tags(void)
 {
 	size_t cnt = 0;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		for (int i = 0; i < LOGGING_TAGS_MAXNUM; i++) {
 			if (m.tags[cnt].tag != NULL) {
@@ -314,7 +311,7 @@ size_t logging_count_tags(void)
 			}
 		}
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return cnt;
 }
@@ -323,11 +320,11 @@ void logging_set_level(const char *tag, logging_t min_log_level)
 {
 	struct logging_tag *p;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		p = obtain_tag(tag);
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	if (min_log_level < LOGGING_TYPE_MAX && !is_global_tag(p)) {
 		p->min_log_level = min_log_level;
@@ -338,11 +335,11 @@ logging_t logging_get_level(const char *tag)
 {
 	logging_t result;
 
-	pthread_mutex_lock(&m.lock);
+	logging_lock();
 	{
 		result = obtain_tag(tag)->min_log_level;
 	}
-	pthread_mutex_unlock(&m.lock);
+	logging_unlock();
 
 	return result;
 }
@@ -363,7 +360,7 @@ void logging_init(const logging_storage_t *log_storage)
 {
 	assert(log_storage != NULL);
 
-	pthread_mutex_init(&m.lock, NULL);
+	logging_lock_init();
 
 	clear_tags();
 	m.storage = log_storage;
@@ -398,4 +395,16 @@ const char *logging_stringify(char *buf, size_t bufsize, const void *log)
 	}
 
 	return buf;
+}
+
+LIBMCU_WEAK void logging_lock_init(void)
+{
+}
+
+LIBMCU_WEAK void logging_lock(void)
+{
+}
+
+LIBMCU_WEAK void logging_unlock(void)
+{
 }

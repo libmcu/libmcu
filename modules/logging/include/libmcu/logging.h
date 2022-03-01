@@ -68,6 +68,10 @@ size_t logging_count_tags(void);
 void logging_iterate_tag(void (*callback_each)(const char *tag,
 			logging_t min_log_level));
 
+void logging_lock_init(void);
+void logging_lock(void);
+void logging_unlock(void);
+
 /* helpers for convenience */
 #if !defined(get_program_counter)
 	#if defined(__GNUC__)

@@ -54,7 +54,7 @@ static void report_periodic(void)
 	metrics_iterate(print_metric_each, 0);
 
 	uint8_t buf[128];
-	metrics_get_encoded(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf));
 	metrics_reset();
 }
 
@@ -119,19 +119,19 @@ TEST(metrics, reset_ShouldResetAllMetrics) {
 	LONGS_EQUAL(0, saved_metrics[0].value);
 }
 
-TEST(metrics, get_encoded_ShouldReturnSizeOfAllEncodedMetrics_WhenZeroedValueGiven) {
+TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenZeroedValueGiven) {
 	uint8_t expected_encoded_data[128] = { 0, };
 	uint8_t buf[128];
-	size_t size = metrics_get_encoded(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf));
 	LONGS_EQUAL(28, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
 }
 
-TEST(metrics, get_encoded_ShouldReturnSizeOfAllEncodedMetrics_WhenReportIntervalValueSet) {
+TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenReportIntervalValueSet) {
 	uint8_t expected_encoded_data[128] = { 0x78, 0x56, 0x34, 0x12, };
 	uint8_t buf[128];
 	metrics_set(ReportInterval, 0x12345678);
-	size_t size = metrics_get_encoded(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf));
 	LONGS_EQUAL(28, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
 }

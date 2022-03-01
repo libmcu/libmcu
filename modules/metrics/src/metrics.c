@@ -1,5 +1,4 @@
 #include "libmcu/metrics.h"
-#include <pthread.h>
 #include <string.h>
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
@@ -12,7 +11,6 @@ struct metrics {
 	int32_t value;
 } LIBMCU_PACKED;
 
-static pthread_mutex_t metrics_lock;
 static struct metrics metrics[] = {
 #define METRICS_DEFINE(id, keystr) (struct metrics){ .key = keystr, .value = 0, },
 #include METRICS_USER_DEFINES
@@ -52,7 +50,7 @@ static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
 					      void *ctx), void *ctx)
 {
 	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		const struct metrics *p = get_obj_from_index(i);
+		struct metrics const *p = get_obj_from_index(i);
 		callback_each(p->key, p->value, ctx);
 	}
 }
@@ -64,7 +62,130 @@ static void reset_all(void)
 	}
 }
 
-LIBMCU_WEAK size_t metrics_encode(void *buf, size_t bufsize,
+static uint32_t count_metrics_with_nonzero_value(void)
+{
+	uint32_t nr_updated = 0;
+
+	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+		struct metrics const *p = get_obj_from_index(i);
+		if (p->value != 0) {
+			nr_updated++;
+		}
+	}
+
+	return nr_updated;
+}
+
+static size_t encode_all(uint8_t *buf, size_t bufsize)
+{
+	size_t written = metrics_encode_header(buf, bufsize,
+			METRICS_LEN, count_metrics_with_nonzero_value());
+
+	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+		struct metrics const *p = get_obj_from_index(i);
+		written += metrics_encode_each(&buf[written], bufsize - written,
+				p->key, p->value);
+	}
+
+	return written;
+}
+
+void metrics_set(metric_key_t key, int32_t val)
+{
+	metrics_lock();
+	{
+		get_obj_from_key(key)->value = val;
+	}
+	metrics_unlock();
+}
+
+int32_t metrics_get(metric_key_t key)
+{
+	int32_t value;
+
+	metrics_lock();
+	{
+		value = get_obj_from_key(key)->value;
+	}
+	metrics_unlock();
+
+	return value;
+}
+
+void metrics_increase(metric_key_t key)
+{
+	metrics_lock();
+	{
+		get_obj_from_key(key)->value++;
+	}
+	metrics_unlock();
+}
+
+void metrics_increase_by(metric_key_t key, int32_t n)
+{
+	metrics_lock();
+	{
+		get_obj_from_key(key)->value += n;
+	}
+	metrics_unlock();
+}
+
+void metrics_reset(void)
+{
+	metrics_lock();
+	{
+		reset_all();
+	}
+	metrics_unlock();
+}
+
+size_t metrics_collect(void *buf, size_t bufsize)
+{
+	size_t written;
+
+	metrics_lock();
+	{
+		written = encode_all((uint8_t *)buf, bufsize);
+	}
+	metrics_unlock();
+
+	return written;
+}
+
+void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
+					   void *ctx), void *ctx)
+{
+	metrics_lock();
+	{
+		iterate_all(callback_each, ctx);
+	}
+	metrics_unlock();
+}
+
+#if defined(METRICS_KEY_STRING)
+char const *metrics_stringify_key(metric_key_t key)
+{
+	return key_strings[key];
+}
+#endif
+
+void metrics_init(void)
+{
+	metrics_lock_init();
+	reset_all();
+}
+
+LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
+		uint32_t nr_total, uint32_t nr_updated)
+{
+	unused(buf);
+	unused(bufsize);
+	unused(nr_total);
+	unused(nr_updated);
+	return 0;
+}
+
+LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value)
 {
 	unused(key);
@@ -78,97 +199,14 @@ LIBMCU_WEAK size_t metrics_encode(void *buf, size_t bufsize,
 	return sizeof(value);
 }
 
-static size_t encode_all(uint8_t *buf, size_t bufsize)
+LIBMCU_WEAK void metrics_lock_init(void)
 {
-	size_t written = 0;
-
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
-		const struct metrics *p = get_obj_from_index(i);
-		written += metrics_encode(&buf[written], bufsize - written,
-				p->key, p->value);
-	}
-
-	return written;
 }
 
-void metrics_set(metric_key_t key, int32_t val)
+LIBMCU_WEAK void metrics_lock(void)
 {
-	pthread_mutex_lock(&metrics_lock);
-	{
-		get_obj_from_key(key)->value = val;
-	}
-	pthread_mutex_unlock(&metrics_lock);
 }
 
-int32_t metrics_get(metric_key_t key)
+LIBMCU_WEAK void metrics_unlock(void)
 {
-	int32_t value;
-
-	pthread_mutex_lock(&metrics_lock);
-	{
-		value = get_obj_from_key(key)->value;
-	}
-	pthread_mutex_unlock(&metrics_lock);
-
-	return value;
-}
-
-void metrics_increase(metric_key_t key)
-{
-	pthread_mutex_lock(&metrics_lock);
-	{
-		get_obj_from_key(key)->value++;
-	}
-	pthread_mutex_unlock(&metrics_lock);
-}
-
-void metrics_increase_by(metric_key_t key, int32_t n)
-{
-	pthread_mutex_lock(&metrics_lock);
-	{
-		get_obj_from_key(key)->value += n;
-	}
-	pthread_mutex_unlock(&metrics_lock);
-}
-
-void metrics_reset(void)
-{
-	pthread_mutex_lock(&metrics_lock);
-	{
-		reset_all();
-	}
-	pthread_mutex_unlock(&metrics_lock);
-}
-
-size_t metrics_get_encoded(void *buf, size_t bufsize)
-{
-	size_t written;
-
-	pthread_mutex_lock(&metrics_lock);
-	{
-		written = encode_all((uint8_t *)buf, bufsize);
-	}
-	pthread_mutex_unlock(&metrics_lock);
-
-	return written;
-}
-
-void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
-					   void *ctx), void *ctx)
-{
-	iterate_all(callback_each, ctx);
-}
-
-#if defined(METRICS_KEY_STRING)
-char const *metrics_stringify_key(metric_key_t key)
-{
-	return key_strings[key];
-}
-#endif
-
-void metrics_init(void)
-{
-	reset_all();
-	int rc = pthread_mutex_init(&metrics_lock, NULL);
-	assert(rc == 0);
 }

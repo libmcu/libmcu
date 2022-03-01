@@ -23,6 +23,11 @@ script [tools/scripts/translate_log.py](../../tools/scripts/translate_log.py).
 ### Custom TAG instead of __FILE__
 Please refer to [test case](https://github.com/onkwon/libmcu/blob/master/tests/src/logging/logging_test.cpp#L10) and [makefile](https://github.com/onkwon/libmcu/blob/master/tests/runners/logging/logging.mk#L15).
 
+### Syncronization
+
+Implement `logging_lock_init()`, `logging_lock()` and `logging_unlock()` in case
+of multi threaded environment.
+
 ## Example
 
 ```c

@@ -11,3 +11,27 @@
 [^1]: The default file name is `metrics.def`. You don't need to specify the file
 location with `METRICS_USER_DEFINES` when you use the default file name and the
 file is in the include path.
+
+### Encoding
+
+You can implement your own encoder using `metrics_encode_header()` and
+`metrics_encode_each()`. No encoder by default, meaning just a simple byte
+stream.
+
+### Syncronization
+
+Implement `metrics_lock_init()`, `metrics_lock()` and `metrics_unlock()` in case
+of multi threaded environment.
+
+```c
+static pthread_mutex_t lock;
+void metrics_lock_init(void) {
+	pthread_mutex_init(&lock, NULL);
+}
+void metircs_lock(void) {
+	pthread_mutex_lock(&lock);
+}
+void metircs_unlock(void) {
+	pthread_mutex_unlock(&lock);
+}
+```
