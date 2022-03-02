@@ -18,7 +18,7 @@ static struct metrics metrics[] = {
 };
 #if defined(METRICS_KEY_STRING)
 static char const *key_strings[] = {
-#define METRICS_DEFINE(id, keystr) #keystr,
+#define METRICS_DEFINE(id, keystr) [id] = #keystr,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };
