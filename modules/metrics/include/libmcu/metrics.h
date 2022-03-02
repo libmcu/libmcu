@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #if !defined(METRICS_USER_DEFINES)
 #define METRICS_USER_DEFINES		"metrics.def"
@@ -49,7 +50,7 @@ void metrics_lock_init(void);
 void metrics_lock(void);
 void metrics_unlock(void);
 
-void metrics_init(void);
+void metrics_init(bool force);
 
 #if defined(METRICS_KEY_STRING)
 char const *metrics_stringify_key(metric_key_t key);

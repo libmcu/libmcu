@@ -61,7 +61,7 @@ static void report_periodic(void)
 TEST_GROUP(metrics) {
 	void setup(void) {
 		clear_saved_metrics();
-		metrics_init();
+		metrics_init(true);
 	}
 	void teardown() {
 	}

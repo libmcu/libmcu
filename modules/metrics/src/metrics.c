@@ -6,16 +6,23 @@
 #define ARRAY_LEN(arr)		(sizeof(arr) / sizeof(arr[0]))
 #define METRICS_LEN		ARRAY_LEN(metrics)
 
+#define MAGIC_CODE		0xC0DEED0Cu
+
+enum {
+#define METRICS_DEFINE(id, key)		METRICS_##key##id,
+#include METRICS_USER_DEFINES
+#undef METRICS_DEFINE
+	METRICS_KEY_MAX,
+};
+
 struct metrics {
-	const metric_key_t key;
+	metric_key_t key;
 	int32_t value;
 } LIBMCU_PACKED;
 
-static struct metrics metrics[] = {
-#define METRICS_DEFINE(id, keystr) (struct metrics){ .key = keystr, .value = 0, },
-#include METRICS_USER_DEFINES
-#undef METRICS_DEFINE
-};
+LIBMCU_NOINIT static uint32_t magic;
+LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX];
+
 #if defined(METRICS_KEY_STRING)
 static char const *key_strings[] = {
 #define METRICS_DEFINE(id, keystr) [id] = #keystr,
@@ -88,6 +95,19 @@ static size_t encode_all(uint8_t *buf, size_t bufsize)
 	}
 
 	return written;
+}
+
+static void initialize_metrics(void)
+{
+	struct metrics tmp[] = {
+#define METRICS_DEFINE(id, keystr) (struct metrics){ .key = keystr, .value = 0 },
+#include METRICS_USER_DEFINES
+#undef METRICS_DEFINE
+	};
+	assert(sizeof(tmp) == sizeof(metrics));
+	memcpy(metrics, tmp, sizeof(metrics));
+
+	reset_all();
 }
 
 void metrics_set(metric_key_t key, int32_t val)
@@ -169,10 +189,14 @@ char const *metrics_stringify_key(metric_key_t key)
 }
 #endif
 
-void metrics_init(void)
+void metrics_init(bool force)
 {
 	metrics_lock_init();
-	reset_all();
+
+	if (force || magic != MAGIC_CODE) {
+		initialize_metrics();
+		magic = MAGIC_CODE;
+	}
 }
 
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,

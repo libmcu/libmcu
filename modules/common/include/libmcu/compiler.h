@@ -59,6 +59,10 @@ l:
 #define libmcu_get_pc()			((void *)0xfeedc0de)
 #endif
 
+#if !defined(LIBMCU_NOINIT)
+#define LIBMCU_NOINIT			__attribute__((section(".noinit")))
+#endif
+
 #if defined(__cplusplus)
 }
 #endif
