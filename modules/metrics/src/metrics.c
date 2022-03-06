@@ -3,9 +3,6 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#define ARRAY_LEN(arr)		(sizeof(arr) / sizeof(arr[0]))
-#define METRICS_LEN		ARRAY_LEN(metrics)
-
 #define MAGIC_CODE		0xC0DEED0Cu
 
 enum {
@@ -38,7 +35,7 @@ static struct metrics *get_obj_from_index(uint32_t index)
 
 static uint32_t get_index_from_key(metric_key_t key)
 {
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
 		if (get_obj_from_index(i)->key == key) {
 			return i;
 		}
@@ -56,7 +53,7 @@ static struct metrics *get_obj_from_key(metric_key_t key)
 static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
 					      void *ctx), void *ctx)
 {
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_obj_from_index(i);
 		callback_each(p->key, p->value, ctx);
 	}
@@ -64,7 +61,7 @@ static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
 
 static void reset_all(void)
 {
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
 		get_obj_from_index(i)->value = 0;
 	}
 }
@@ -73,7 +70,7 @@ static uint32_t count_metrics_with_nonzero_value(void)
 {
 	uint32_t nr_updated = 0;
 
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_obj_from_index(i);
 		if (p->value != 0) {
 			nr_updated++;
@@ -86,9 +83,9 @@ static uint32_t count_metrics_with_nonzero_value(void)
 static size_t encode_all(uint8_t *buf, size_t bufsize)
 {
 	size_t written = metrics_encode_header(buf, bufsize,
-			METRICS_LEN, count_metrics_with_nonzero_value());
+			METRICS_KEY_MAX, count_metrics_with_nonzero_value());
 
-	for (uint32_t i = 0; i < METRICS_LEN; i++) {
+	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_obj_from_index(i);
 		written += metrics_encode_each(&buf[written], bufsize - written,
 				p->key, p->value);
