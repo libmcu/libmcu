@@ -3,7 +3,7 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#define MAGIC_CODE		0xC0DEED0Cu
+#define MAGIC_CODE			0xC0DEED0Cu
 
 enum {
 #define METRICS_DEFINE(id, key)		METRICS_##key##id,
@@ -177,6 +177,11 @@ void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 		iterate_all(callback_each, ctx);
 	}
 	metrics_unlock();
+}
+
+size_t metrics_count(void)
+{
+	return METRICS_KEY_MAX;
 }
 
 #if defined(METRICS_KEY_STRING)

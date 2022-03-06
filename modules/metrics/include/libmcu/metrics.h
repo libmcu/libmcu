@@ -29,6 +29,7 @@ void metrics_reset(void);
 void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 					   void *ctx), void *ctx);
 size_t metrics_collect(void *buf, size_t bufsize);
+size_t metrics_count(void);
 
 /**
  * @brief It creates an encoding header.
