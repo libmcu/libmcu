@@ -13,21 +13,21 @@ TEST_GROUP(hexdump) {
 TEST(hexdump, ShouldReturnZero_WhenInvalidParamGiven) {
 	char buf[1024];
 	char data[1024];
-	LONGS_EQUAL(0, hexdump(NULL, 0, NULL, 0));
-	LONGS_EQUAL(0, hexdump(buf, sizeof(buf), NULL, sizeof(data)));
-	LONGS_EQUAL(0, hexdump(NULL, sizeof(buf), data, sizeof(data)));
+	LONGS_EQUAL(0, hexdump_verbose(NULL, 0, NULL, 0));
+	LONGS_EQUAL(0, hexdump_verbose(buf, sizeof(buf), NULL, sizeof(data)));
+	LONGS_EQUAL(0, hexdump_verbose(NULL, sizeof(buf), data, sizeof(data)));
 }
 
 TEST(hexdump, ShouldReturnWrittenBytes_WhenAscii) {
 	char buf[1024];
 	const char *data = "16 bytes long dt";
-	LONGS_EQUAL(75, hexdump(buf, sizeof(buf), data, sizeof(data)));
+	LONGS_EQUAL(75, hexdump_verbose(buf, sizeof(buf), data, sizeof(data)));
 }
 
 TEST(hexdump, ShouldReturnWrittenBytes_WhenBinary) {
 	char buf[1024];
 	const uint8_t data[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-	LONGS_EQUAL(75, hexdump(buf, sizeof(buf), data, sizeof(data)));
+	LONGS_EQUAL(75, hexdump_verbose(buf, sizeof(buf), data, sizeof(data)));
 }
 
 TEST(hexdump, ShouldDumpMessageIntoHexString) {
@@ -36,7 +36,7 @@ TEST(hexdump, ShouldDumpMessageIntoHexString) {
 	const char *expected =
 		"       0: 00 01 02 03 04 05 06 07                        \t........\n";
 
-	LONGS_EQUAL(75, hexdump(buf, sizeof(buf), data, sizeof(data)));
+	LONGS_EQUAL(75, hexdump_verbose(buf, sizeof(buf), data, sizeof(data)));
 	STRCMP_EQUAL(expected, buf);
 }
 
@@ -49,5 +49,14 @@ TEST(hexdump, compute_output_size_ShouldReturnOutputSize) {
 TEST(hexdump, hexdump_ShouldReturnZero_WhenBufferSizeIsTooSmall) {
 	uint8_t buf[8];
 	const uint8_t data[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-	LONGS_EQUAL(0, hexdump(buf, sizeof(buf), data, sizeof(data)));
+	LONGS_EQUAL(0, hexdump_verbose(buf, sizeof(buf), data, sizeof(data)));
+}
+
+TEST(hexdump, ShouldDumpMessageOnly) {
+	char buf[1024];
+	const uint8_t data[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	const char *expected = "0001020304050607";
+
+	LONGS_EQUAL(16, hexdump(buf, sizeof(buf), data, sizeof(data)));
+	STRCMP_EQUAL(expected, buf);
 }

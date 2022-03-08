@@ -112,7 +112,30 @@ static size_t print_ascii(uint8_t *buf, size_t bufsize,
 	return buf_i + skipped;
 }
 
-size_t hexdump(void *buf, size_t bufsize, const void *data, size_t datasize)
+size_t hexdump(void *buf, size_t bufsize, void const *data, size_t datasize)
+{
+	if (buf == NULL || data == NULL || datasize == 0 || bufsize == 0) {
+		return 0;
+	}
+
+	char const *src = (char const *)data;
+	char *dst = (char *)buf;
+	size_t outdex = 0;
+	char c[3];
+
+	for (size_t i = 0; i < datasize && (outdex + 4) < bufsize; i++) {
+		get_hexstr_reversed(c, sizeof(c), (uint32_t)src[i], 2, '0');
+		dst[outdex++] = c[1];
+		dst[outdex++] = c[0];
+	}
+
+	dst[outdex] = '\0';
+
+	return outdex;
+}
+
+size_t hexdump_verbose(void *buf, size_t bufsize,
+		void const *data, size_t datasize)
 {
 	if (buf == NULL || data == NULL || datasize == 0 || bufsize == 0) {
 		return 0;
