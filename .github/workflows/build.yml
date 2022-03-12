@@ -10,7 +10,7 @@ jobs:
   build:
     name: Compile and Test
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.7
+    container: onkwon/yaos:0.8
     steps:
       - name: Clone Repository
         uses: actions/checkout@v1
