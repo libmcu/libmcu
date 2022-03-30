@@ -3,7 +3,7 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#define MAGIC_CODE			0xC0DEED0Cu
+#define MAGIC_CODE			((uintptr_t)metrics)
 
 enum {
 #define METRICS_DEFINE(id, key)		METRICS_##key##id,
@@ -17,7 +17,7 @@ struct metrics {
 	int32_t value;
 } LIBMCU_PACKED;
 
-LIBMCU_NOINIT static uint32_t magic;
+LIBMCU_NOINIT static uintptr_t magic;
 LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX];
 
 #if defined(METRICS_KEY_STRING)
