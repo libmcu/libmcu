@@ -50,7 +50,7 @@ int sem_trywait(sem_t *sem)
 int sem_getvalue(sem_t *sem, int *sval)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
-	*sval = uxSemaphoreGetCount(psem->handle);
+	*sval = (int)uxSemaphoreGetCount(psem->handle);
 	return 0;
 }
 
