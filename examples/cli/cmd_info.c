@@ -58,7 +58,7 @@ cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)
 		return CLI_CMD_INVALID_PARAM;
 	}
 
-	const cli_t *cli = (const cli_t *)env;
+	struct cli const *cli = (struct cli const *)env;
 
 	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 

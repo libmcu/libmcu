@@ -104,7 +104,7 @@ cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env)
 	static uintptr_t addr = (uintptr_t)&cli_cmd_memdump;
 	static int length = BYTES_PER_LINE;
 
-	const cli_t *cli = (const cli_t *)env;
+	struct cli const *cli = (struct cli const *)env;
 
 	switch (argc) {
 	case 1: // use the same address as before
