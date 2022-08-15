@@ -8,7 +8,7 @@ static cli_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
 }
 static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 {
-	const cli_t *cli = (const cli_t *)env;
+	struct cli const *cli = (struct cli const *)env;
 	char buf[1024];
 	int len = 0;
 	for (int i = 0; i < argc; i++) {
@@ -27,7 +27,7 @@ static cli_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env
 	return CLI_CMD_INVALID_PARAM;
 }
 
-static const cli_cmd_t commands[] = {
+static struct cli_cmd const commands[] = {
 	{ "exit", cmd_exit, "Exit the CLI" },
 	{ "args", cmd_args, "" },
 	{ "error", cmd_error, NULL },
@@ -60,7 +60,7 @@ static cli_io_t io = {
 };
 
 TEST_GROUP(cli) {
-	cli_t cli;
+	struct cli cli;
 
 	void setup(void) {
 		write_index = 0;

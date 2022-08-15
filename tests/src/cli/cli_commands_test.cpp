@@ -29,7 +29,7 @@ static cli_io_t io = {
 };
 
 TEST_GROUP(cli_commands) {
-	cli_t cli;
+	struct cli cli;
 
 	void setup(void) {
 		write_spy_buffer_index = 0;
@@ -74,7 +74,7 @@ TEST(cli_commands, info_ShouldReturnBuildDate_WhenSecondArgumentGiven) {
 TEST_GROUP(memdump) {
 	uint8_t memsrc[1024];
 	char addr[32];
-	cli_t cli;
+	struct cli cli;
 
 	void setup(void) {
 		cli.io = &io;

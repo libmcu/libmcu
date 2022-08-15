@@ -5,11 +5,11 @@
 extern "C" {
 #endif
 
-#if !defined(CLI_COMMAND_MAXLEN)
-#define CLI_COMMAND_MAXLEN			62
+#if !defined(CLI_CMD_MAXLEN)
+#define CLI_CMD_MAXLEN				62
 #endif
-#if !defined(CLI_ARGS_MAXLEN)
-#define CLI_ARGS_MAXLEN				4
+#if !defined(CLI_CMD_ARGS_MAXLEN)
+#define CLI_CMD_ARGS_MAXLEN			4
 #endif
 
 typedef enum {
@@ -24,11 +24,11 @@ typedef enum {
 typedef cli_cmd_error_t (*cli_cmd_func_t)(int argc, const char *argv[],
 		const void *env);
 
-typedef struct {
-	const char *name;
+struct cli_cmd {
+	char const *name;
 	cli_cmd_func_t func;
-	const char *desc;
-} cli_cmd_t;
+	char const *desc;
+};
 
 #if defined(__cplusplus)
 }

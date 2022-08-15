@@ -3,15 +3,27 @@
 #include <string.h>
 #include "libmcu/assert.h"
 
+#if !defined(CLI_PROMPT)
 #define CLI_PROMPT				"$ "
+#endif
+#if !defined(CLI_PROMPT_OK)
 #define CLI_PROMPT_OK				""
+#endif
+#if !defined(CLI_PROMPT_ERROR)
 #define CLI_PROMPT_ERROR			"ERROR\n"
+#endif
+#if !defined(CLI_PROMPT_NOT_FOUND)
 #define CLI_PROMPT_NOT_FOUND			"command not found\n"
+#endif
+#if !defined(CLI_PROMPT_START_MESSAGE)
 #define CLI_PROMPT_START_MESSAGE		\
 	"\n\nType 'help' to get a list of available commands.\n"
+#endif
+#if !defined(CLI_PROMPT_EXIT_MESSAGE)
 #define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
+#endif
 
-static bool readline(cli_t *cli)
+static bool readline(struct cli *cli)
 {
 	char ch;
 
@@ -35,7 +47,7 @@ static bool readline(cli_t *cli)
 		}
 	} else if (ch == '\t') {
 	} else {
-		if (cli->cmdbuf_index >= CLI_COMMAND_MAXLEN) {
+		if (cli->cmdbuf_index >= CLI_CMD_MAXLEN) {
 			return false;
 		}
 
@@ -46,7 +58,7 @@ static bool readline(cli_t *cli)
 	return false;
 }
 
-static int parse_command(char *str, const char *argv[], size_t maxargs)
+static int parse_command(char *str, char const *argv[], size_t maxargs)
 {
 	int argc = 0;
 	char *p = str;
@@ -62,8 +74,8 @@ static int parse_command(char *str, const char *argv[], size_t maxargs)
 	return (size_t)argc > maxargs? (int)maxargs : argc;
 }
 
-static void report_result(const cli_io_t *io, cli_cmd_error_t err,
-		const cli_cmd_t *cmd)
+static void report_result(cli_io_t const *io, cli_cmd_error_t err,
+		struct cli_cmd const *cmd)
 {
 	switch (err) {
 	case CLI_CMD_SUCCESS:
@@ -86,18 +98,18 @@ static void report_result(const cli_io_t *io, cli_cmd_error_t err,
 	}
 }
 
-static cli_cmd_error_t process_command(const cli_t *cli,
-		int argc, const char *argv[], const void *env)
+static cli_cmd_error_t process_command(struct cli const *cli,
+		int argc, char const *argv[], void const *env)
 {
 	if (argc <= 0) {
 		return CLI_CMD_BLANK;
 	}
 
 	cli_cmd_error_t rc = CLI_CMD_NOT_FOUND;
-	const cli_cmd_t *cmd = NULL;
+	struct cli_cmd const *cmd = NULL;
 
-	for (size_t i = 0; i < cli->cmds_count; i++) {
-		cmd = &cli->cmds[i];
+	for (size_t i = 0; i < cli->cmdlist_len; i++) {
+		cmd = &cli->cmdlist[i];
 		if (strcmp(cmd->name, argv[0]) == 0) {
 			rc = cmd->func(argc, argv, env);
 			break;
@@ -109,14 +121,14 @@ static cli_cmd_error_t process_command(const cli_t *cli,
 	return rc;
 }
 
-static cli_cmd_error_t cli_step_core(cli_t *cli)
+static cli_cmd_error_t cli_step_core(struct cli *cli)
 {
 	if (!readline(cli)) {
 		return CLI_CMD_SUCCESS;
 	}
 
-	const char *argv[CLI_ARGS_MAXLEN];
-	int argc = parse_command(cli->cmdbuf, argv, CLI_ARGS_MAXLEN);
+	char const *argv[CLI_CMD_ARGS_MAXLEN];
+	int argc = parse_command(cli->cmdbuf, argv, CLI_CMD_ARGS_MAXLEN);
 
 	cli_cmd_error_t err = process_command(cli, argc, argv, cli);
 
@@ -127,12 +139,12 @@ static cli_cmd_error_t cli_step_core(cli_t *cli)
 	return err;
 }
 
-void cli_step(cli_t *cli)
+void cli_step(struct cli *cli)
 {
 	cli_step_core(cli);
 }
 
-void cli_run(cli_t *cli)
+void cli_run(struct cli *cli)
 {
 	cli_cmd_error_t rc;
 
@@ -144,14 +156,14 @@ void cli_run(cli_t *cli)
 			strlen(CLI_PROMPT_EXIT_MESSAGE));
 }
 
-void cli_init(cli_t *cli,
-		const cli_io_t *io, const cli_cmd_t *cmds, size_t cmdcnt)
+void cli_init(struct cli *cli, cli_io_t const *io,
+	      struct cli_cmd const *cmdlist, size_t cmdlist_len)
 {
-	assert(cli != NULL && io != NULL && cmds != NULL);
+	assert(cli != NULL && io != NULL && cmdlist != NULL);
 
 	cli->io = io;
-	cli->cmds = cmds;
-	cli->cmds_count = cmdcnt;
+	cli->cmdlist = cmdlist;
+	cli->cmdlist_len = cmdlist_len;
 	cli->cmdbuf_index = 0;
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));

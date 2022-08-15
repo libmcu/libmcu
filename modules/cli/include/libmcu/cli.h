@@ -6,25 +6,26 @@ extern "C" {
 #endif
 
 #include <stddef.h>
-#include "cli_command.h"
+#include <stdbool.h>
+#include "cli_cmd.h"
 
 typedef struct {
 	size_t (*read)(void *buf, size_t bufsize);
-	size_t (*write)(const void *data, size_t data_size);
+	size_t (*write)(void const *data, size_t datasize);
 } cli_io_t;
 
-typedef struct {
-	const cli_io_t *io;
-	const cli_cmd_t *cmds;
-	size_t cmds_count;
-	char cmdbuf[CLI_COMMAND_MAXLEN + 1/*linefeed*/ + 1/*null*/];
+struct cli {
+	cli_io_t const *io;
+	struct cli_cmd const *cmdlist;
+	size_t cmdlist_len;
+	char cmdbuf[CLI_CMD_MAXLEN + 1/*linefeed*/ + 1/*null*/];
 	size_t cmdbuf_index;
-} cli_t;
+};
 
-void cli_init(cli_t *cli,
-		const cli_io_t *io, const cli_cmd_t *cmds, size_t cmdcnt);
-void cli_run(cli_t *cli);
-void cli_step(cli_t *cli);
+void cli_init(struct cli *cli, cli_io_t const *io,
+	      struct cli_cmd const *cmdlist, size_t cmdlist_len);
+void cli_run(struct cli *cli);
+void cli_step(struct cli *cli);
 
 #if defined(__cplusplus)
 }
