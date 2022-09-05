@@ -2,7 +2,6 @@
 #include <zephyr/kernel.h>
 
 #define time_after(goal, chasing)	((int)(goal)    - (int)(chasing) < 0)
-#define time_before(goal, chasing)	((int)(chasing) - (int)(goal)    < 0)
 
 void timeout_set(unsigned int *goal, unsigned int msec)
 {
