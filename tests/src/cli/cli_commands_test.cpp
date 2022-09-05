@@ -23,7 +23,7 @@ static size_t write_spy(const void *data, size_t data_size) {
 	write_spy_buffer[write_spy_buffer_index] = '\0';
 	return data_size;
 }
-static cli_io_t io = {
+static struct cli_io io = {
 	.read = NULL,
 	.write = write_spy,
 };
