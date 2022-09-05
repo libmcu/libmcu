@@ -54,7 +54,7 @@ static void set_write_data(const char *s) {
 	strncpy(writebuf, s, sizeof(writebuf));
 }
 
-static cli_io_t io = {
+static struct cli_io io = {
 	.read = myread,
 	.write = mywrite,
 };

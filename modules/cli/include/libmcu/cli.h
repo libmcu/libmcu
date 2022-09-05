@@ -9,21 +9,22 @@ extern "C" {
 #include <stdbool.h>
 #include "cli_cmd.h"
 
-typedef struct {
+struct cli_io {
 	size_t (*read)(void *buf, size_t bufsize);
 	size_t (*write)(void const *data, size_t datasize);
-} cli_io_t;
+};
 
 struct cli {
-	cli_io_t const *io;
+	struct cli_io const *io;
 	struct cli_cmd const *cmdlist;
 	size_t cmdlist_len;
 	char cmdbuf[CLI_CMD_MAXLEN + 1/*linefeed*/ + 1/*null*/];
 	size_t cmdbuf_index;
 };
 
-void cli_init(struct cli *cli, cli_io_t const *io,
+void cli_init(struct cli *cli, struct cli_io const *io,
 	      struct cli_cmd const *cmdlist, size_t cmdlist_len);
+struct cli_io const *cli_io_init(void);
 void cli_run(struct cli *cli);
 void cli_step(struct cli *cli);
 

@@ -12,28 +12,28 @@
 #define MIN(x, y)			(((x) > (y))? (y) : (x))
 #endif
 
-static void print_addr(const cli_io_t *io, uintptr_t addr)
+static void print_addr(struct cli_io const *io, uintptr_t addr)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, "%16p:", (void *)addr);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
-static void print_space(const cli_io_t *io, int n)
+static void print_space(struct cli_io const *io, int n)
 {
 	for (int i = 0; i < n; i++) {
 		io->write(" ", 1);
 	}
 }
 
-static void print_hex(const cli_io_t *io, uint8_t val)
+static void print_hex(struct cli_io const *io, uint8_t val)
 {
 	char buf[BUFSIZE] = { 0, };
 	snprintf(buf, BUFSIZE-1, " %02x", val);
 	io->write(buf, strnlen(buf, BUFSIZE));
 }
 
-static void print_ascii(const cli_io_t *io, uint8_t val)
+static void print_ascii(struct cli_io const *io, uint8_t val)
 {
 	char buf[BUFSIZE] = { 0, };
 
@@ -45,7 +45,7 @@ static void print_ascii(const cli_io_t *io, uint8_t val)
 	}
 }
 
-static void print_next_line(const cli_io_t *io)
+static void print_next_line(struct cli_io const *io)
 {
 	io->write("\r\n", 2);
 }
@@ -60,7 +60,7 @@ static uint8_t read_byte_with_word_aligned(uintptr_t addr, int offset)
 	return p[pos];
 }
 
-static void memdump_hex(uintptr_t addr, int len, int width, const cli_io_t *io)
+static void memdump_hex(uintptr_t addr, int len, int width, struct cli_io const *io)
 {
 	print_addr(io, addr);
 
@@ -77,14 +77,14 @@ static void memdump_hex(uintptr_t addr, int len, int width, const cli_io_t *io)
 	}
 }
 
-static void memdump_ascii(uintptr_t addr, int len, const cli_io_t *io)
+static void memdump_ascii(uintptr_t addr, int len, struct cli_io const *io)
 {
 	for (int i = 0; i < len; i++) {
 		print_ascii(io, read_byte_with_word_aligned(addr, i));
 	}
 }
 
-static void memdump(uintptr_t addr, int len, int width, const cli_io_t *io)
+static void memdump(uintptr_t addr, int len, int width, struct cli_io const *io)
 {
 	uintptr_t start_addr = addr;
 	uintptr_t end_addr = addr + (uintptr_t)len;

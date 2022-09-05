@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "libmcu/assert.h"
+#include "libmcu/compiler.h"
 
 #if !defined(CLI_PROMPT)
 #define CLI_PROMPT				"$ "
@@ -74,7 +75,7 @@ static int parse_command(char *str, char const *argv[], size_t maxargs)
 	return (size_t)argc > maxargs? (int)maxargs : argc;
 }
 
-static void report_result(cli_io_t const *io, cli_cmd_error_t err,
+static void report_result(struct cli_io const *io, cli_cmd_error_t err,
 		struct cli_cmd const *cmd)
 {
 	switch (err) {
@@ -156,7 +157,7 @@ void cli_run(struct cli *cli)
 			strlen(CLI_PROMPT_EXIT_MESSAGE));
 }
 
-void cli_init(struct cli *cli, cli_io_t const *io,
+void cli_init(struct cli *cli, struct cli_io const *io,
 	      struct cli_cmd const *cmdlist, size_t cmdlist_len)
 {
 	assert(cli != NULL && io != NULL && cmdlist != NULL);
@@ -168,4 +169,9 @@ void cli_init(struct cli *cli, cli_io_t const *io,
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));
+}
+
+struct cli_io const * LIBMCU_WEAK cli_io_init(void)
+{
+	return NULL;
 }
