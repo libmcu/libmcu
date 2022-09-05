@@ -36,6 +36,10 @@ void LIBMCU_WEAK system_reboot(void)
 	assert(0);
 }
 
+void LIBMCU_WEAK system_init(void)
+{
+}
+
 unsigned int LIBMCU_WEAK system_get_free_heap_bytes(void)
 {
 	return 0;
