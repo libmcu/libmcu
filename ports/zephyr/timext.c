@@ -1,21 +1,19 @@
 #include "libmcu/timext.h"
-
-#include "FreeRTOS.h"
-#include "task.h"
+#include <zephyr/kernel.h>
 
 #define time_after(goal, chasing)	((int)(goal)    - (int)(chasing) < 0)
 
 void timeout_set(unsigned int *goal, unsigned int msec)
 {
-	*goal = xTaskGetTickCount() + pdMS_TO_TICKS(msec);
+	*goal = k_uptime_get_32() + msec;
 }
 
 bool timeout_is_expired(unsigned int goal)
 {
-	return time_after(goal, xTaskGetTickCount());
+	return time_after(goal, k_uptime_get_32());
 }
 
 void sleep_ms(unsigned int msec)
 {
-	vTaskDelay(pdMS_TO_TICKS(msec));
+	k_sleep(K_MSEC(msec));
 }
