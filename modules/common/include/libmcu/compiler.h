@@ -20,7 +20,7 @@ extern "C" {
 #define LIBMCU_NORETURN			__attribute__((noreturn))
 #define LIBMCU_PACKED			__attribute__((packed))
 
-#define LIBMCU_STATIC_ASSERT(exp, msg)	_Static_assert(exp, msg)
+#define LIBMCU_STATIC_ASSERT(exp, msg)	__extension__ _Static_assert(exp, msg)
 
 #define barrier()			__asm__ __volatile__("" ::: "memory")
 #define ACCESS_ONCE(x)			(*(volatile __typeof__(x) *)&(x))

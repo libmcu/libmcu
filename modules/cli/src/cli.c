@@ -62,14 +62,19 @@ static bool readline(struct cli *cli)
 static int parse_command(char *str, char const *argv[], size_t maxargs)
 {
 	int argc = 0;
-	char *p = str;
 	argv[0] = str;
-	while ((p = strpbrk(p + 1, " \n")) != NULL) {
-		argc += 1;
-		if ((size_t)argc < maxargs) {
-			argv[argc] = p + 1;
+
+	for (int i = 1; str[i] != '\0'; i++) {
+		if (str[i] != ' ' && str[i] != '\n') {
+			continue;
 		}
-		*p = '\0';
+
+		argc += 1;
+
+		if ((size_t)argc < maxargs) {
+			argv[argc] = str + i + 1;
+		}
+		str[i] = '\0';
 	}
 
 	return (size_t)argc > maxargs? (int)maxargs : argc;
@@ -171,7 +176,7 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));
 }
 
-struct cli_io const * LIBMCU_WEAK cli_io_init(void)
+struct cli_io const * LIBMCU_WEAK cli_io_create(void)
 {
 	return NULL;
 }

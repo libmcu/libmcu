@@ -24,7 +24,7 @@ struct cli {
 
 void cli_init(struct cli *cli, struct cli_io const *io,
 	      struct cli_cmd const *cmdlist, size_t cmdlist_len);
-struct cli_io const *cli_io_init(void);
+struct cli_io const *cli_io_create(void);
 void cli_run(struct cli *cli);
 void cli_step(struct cli *cli);
 
