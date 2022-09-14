@@ -58,7 +58,6 @@ size_t cobs_decode(uint8_t *buf, size_t bufsize,
 			group_len = code = data[i];
 
 			if (code == 0) {
-				buf[o] = 0;
 				break;
 			}
 		}
