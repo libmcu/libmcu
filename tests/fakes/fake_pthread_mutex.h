@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef FAKE_PTHREAD_MUTEX_H
 #define FAKE_PTHREAD_MUTEX_H
 

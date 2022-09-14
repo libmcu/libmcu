@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 COMPONENT_NAME = memory_kvstore
 
 SRC_FILES = \

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LIBMCU_HEXDUMP_H
 #define LIBMCU_HEXDUMP_H
 

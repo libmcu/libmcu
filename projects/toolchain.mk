@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 ifneq ($(CROSS_COMPILE),)
 	CROSS_COMPILE_PREFIX := $(CROSS_COMPILE)-
 endif

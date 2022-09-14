@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 include projects/version.mk
 include projects/toolchain.mk
 

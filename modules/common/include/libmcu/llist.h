@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LIBMCU_DOUBLY_LINKED_LIST_H
 #define LIBMCU_DOUBLY_LINKED_LIST_H
 

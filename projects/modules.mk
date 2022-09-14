@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 ifneq ($(LIBMCU_ROOT),)
 libmcu-basedir := $(LIBMCU_ROOT)/
 endif

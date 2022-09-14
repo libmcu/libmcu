@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 VERSION ?= $(shell git describe --long --tags --dirty --always)
 version-list := $(subst -, , $(VERSION))
 VERSION_TAG := $(strip $(word 1, $(version-list))).$(word 2, $(version-list))

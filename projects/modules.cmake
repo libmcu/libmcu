@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 cmake_policy(SET CMP0057 NEW)
 
 if (NOT "common" IN_LIST LIBMCU_MODULES)
