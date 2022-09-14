@@ -184,7 +184,7 @@ TEST(COBS, decode_4) {
 }
 
 TEST(COBS, decode_5) {
-	uint8_t encoded[257];
+	uint8_t encoded[257] = { 0, };
 	uint8_t expected[255] = { 0, };
 	for (uint8_t i = 2; i < 0xff; i++) {
 		encoded[i] = i;
