@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "cli_commands.h"
 #include "libmcu/compiler.h"
 #include "libmcu/system.h"

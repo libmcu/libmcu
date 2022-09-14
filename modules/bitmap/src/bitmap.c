@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "libmcu/bitmap.h"
 
 bool bitmap_get(const bitmap_t bitmap, int pos)

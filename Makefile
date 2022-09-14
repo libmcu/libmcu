@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 PROJECT := libmcu
 BASEDIR := $(shell pwd)
 BUILDIR := build

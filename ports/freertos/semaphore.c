@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "libmcu/posix/semaphore.h"
 #include "FreeRTOS.h"
 #include "semphr.h"

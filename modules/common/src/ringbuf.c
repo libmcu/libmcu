@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "libmcu/ringbuf.h"
 #include <string.h>
 #include "libmcu/compiler.h"

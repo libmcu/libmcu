@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 #include "CppUTestExt/MockSupport.h"

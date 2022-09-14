@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 COMPONENT_NAME = bitops
 
 SRC_FILES = \

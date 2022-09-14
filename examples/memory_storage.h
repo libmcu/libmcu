@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef MEMORY_STORAGE_H
 #define MEMORY_STORAGE_H
 

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #ifndef LIBMCU_MEMORY_KVSTORE_H
 #define LIBMCU_MEMORY_KVSTORE_H
 

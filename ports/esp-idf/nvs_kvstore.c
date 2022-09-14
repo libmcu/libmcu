@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 // maximum key and namespace string length is 15 bytes
 #include "libmcu/nvs_kvstore.h"
 

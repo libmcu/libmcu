@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 COMPONENT_NAME = cli_commands
 
 SRC_FILES = \

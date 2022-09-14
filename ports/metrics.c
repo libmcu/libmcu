@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@mononn.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "libmcu/metrics.h"
 #include <pthread.h>
 #include "cbor/cbor.h"
