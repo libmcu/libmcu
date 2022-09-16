@@ -18,7 +18,7 @@ static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 	char buf[1024];
 	int len = 0;
 	for (int i = 0; i < argc; i++) {
-		int written = sprintf(buf+len, "%d: %s\n", i+1, argv[i]);
+		int written = sprintf(buf+len, "%d: %s\r\n", i+1, argv[i]);
 		len += written;
 	}
 	cli->io->write(buf, (size_t)len);
@@ -81,78 +81,78 @@ TEST_GROUP(cli) {
 		set_write_data(s);
 	}
 	void then(const char *s) {
-		STRNCMP_EQUAL(s, &readbuf[51], strlen(s));
+		STRNCMP_EQUAL(s, &readbuf[54], strlen(s));
 	}
 };
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
 	given("Hello, World\nexit\n");
 	cli_run(&cli);
-	then("$ Hello, World\ncommand not found\n");
+	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
-	given("Hello, World\rexit\r");
+	given("Hello, World\rexit\nexit\n");
 	cli_run(&cli);
-	then("$ Hello, World\ncommand not found\n");
+	then("$ Hello, Worldexit\r\ncommand not found\r\n$ exit\r\nEXIT\r\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {
-	given("Hello, World\nexit\n");
+	given("Hello, World\r\nexit\r\n");
 	cli_run(&cli);
-	then("$ Hello, World\ncommand not found\n");
+	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
 TEST(cli, cli_ShouldReturnExit_WhenExitCommandGiven) {
 	given("exit\n");
 	cli_run(&cli);
-	then("$ exit\nEXIT\n");
+	then("$ exit\r\nEXIT\r\n");
 }
 
 TEST(cli, cli_ShouldReturnBLANK_WhenNoCommandGiven) {
 	given("\nexit\n");
 	cli_run(&cli);
-	then("$ \n$ exit\nEXIT\n");
+	then("$ \r\n$ exit\r\nEXIT\r\n");
 }
 
 TEST(cli, cli_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
 	given("help\bq\nexit\n");
 	cli_run(&cli);
-	then("$ help\b \bq\ncommand not found");
+	then("$ help\b \bq\r\ncommand not found");
 }
 
 TEST(cli, cli_ShouldIgnoreTab) {
 	given("hel\tp\nexit\n");
 	cli_run(&cli);
-	then("$ help\n");
+	then("$ help\r\n");
 }
 
 TEST(cli, cli_ShouldParseArgs_WhenMultipleArgsGiven) {
 	given("args 1 2 3\nexit\n");
 	cli_run(&cli);
-	then("$ args 1 2 3\n1: args\n2: 1\n3: 2\n4: 3\n");
+	then("$ args 1 2 3\r\n1: args\r\n2: 1\r\n3: 2\r\n4: 3\r\n");
 }
 
 TEST(cli, cli_ShouldIgnoreArgs_WhenMoreThanMaxArgsGiven) {
 	given("args 1 2 3 4\nexit\n");
 	cli_run(&cli);
-	then("$ args 1 2 3 4\n1: args\n2: 1\n3: 2\n4: 3\n");
+	then("$ args 1 2 3 4\r\n1: args\r\n2: 1\r\n3: 2\r\n4: 3\r\n");
 }
 
 TEST(cli, cli_ShouldReturnError_WhenErrorGiven) {
 	given("error\nexit\n");
 	cli_run(&cli);
-	then("$ error\nERROR\n");
+	then("$ error\r\nERROR\r\n");
 }
 
 TEST(cli, cli_ShouldReturnDesc_WhenCommandUsageInvalid) {
 	given("invalid\nexit\n");
 	cli_run(&cli);
-	then("$ invalid\ndesc\n");
+	then("$ invalid\r\ndesc\r\n");
 }
 
 TEST(cli, cli_ShouldIgnoreInput_WhenDefaultMaxLen62Reached) {
 	given("1234567890123456789012345678901234567890123456789012345678901234567890\nexit\n");
 	cli_run(&cli);
-	then("$ 12345678901234567890123456789012345678901234567890123456789012\n");
+	then("$ 12345678901234567890123456789012345678901234567890123456789012\r\n");
 }
