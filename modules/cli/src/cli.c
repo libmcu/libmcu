@@ -17,17 +17,17 @@
 #define CLI_PROMPT_OK				""
 #endif
 #if !defined(CLI_PROMPT_ERROR)
-#define CLI_PROMPT_ERROR			"ERROR\n"
+#define CLI_PROMPT_ERROR			"ERROR\r\n"
 #endif
 #if !defined(CLI_PROMPT_NOT_FOUND)
-#define CLI_PROMPT_NOT_FOUND			"command not found\n"
+#define CLI_PROMPT_NOT_FOUND			"command not found\r\n"
 #endif
 #if !defined(CLI_PROMPT_START_MESSAGE)
 #define CLI_PROMPT_START_MESSAGE		\
-	"\n\nType 'help' to get a list of available commands.\n"
+	"\r\n\r\nType 'help' to get a list of available commands.\r\n"
 #endif
 #if !defined(CLI_PROMPT_EXIT_MESSAGE)
-#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
+#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\r\n"
 #endif
 
 static bool readline(struct cli *cli)
@@ -38,8 +38,8 @@ static bool readline(struct cli *cli)
 		return false;
 	}
 
-	if (ch == '\r' || ch == '\n') {
-		cli->io->write("\n", 1);
+	if (ch == '\n') {
+		cli->io->write("\r\n", 2);
 
 		cli->cmdbuf[cli->cmdbuf_index++] = '\n';
 		cli->cmdbuf[cli->cmdbuf_index++] = '\0';
@@ -47,6 +47,7 @@ static bool readline(struct cli *cli)
 		cli->cmdbuf_index = 0;
 
 		return true;
+	} else if (ch == '\r') {
 	} else if (ch == '\b') {
 		if (cli->cmdbuf_index > 0) {
 			cli->cmdbuf_index--;
@@ -96,7 +97,7 @@ static void report_result(struct cli_io const *io, cli_cmd_error_t err,
 	case CLI_CMD_INVALID_PARAM:
 		if (cmd && cmd->desc) {
 			io->write(cmd->desc, strlen(cmd->desc));
-			io->write("\n", 1);
+			io->write("\r\n", 2);
 		}
 		break;
 	case CLI_CMD_NOT_FOUND:
