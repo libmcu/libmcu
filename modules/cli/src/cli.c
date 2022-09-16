@@ -38,7 +38,7 @@ static bool readline(struct cli *cli)
 		return false;
 	}
 
-	if (ch == '\r' || ch == '\n') {
+	if (ch == '\n') {
 		cli->io->write("\r\n", 2);
 
 		cli->cmdbuf[cli->cmdbuf_index++] = '\n';
@@ -47,6 +47,7 @@ static bool readline(struct cli *cli)
 		cli->cmdbuf_index = 0;
 
 		return true;
+	} else if (ch == '\r') {
 	} else if (ch == '\b') {
 		if (cli->cmdbuf_index > 0) {
 			cli->cmdbuf_index--;
