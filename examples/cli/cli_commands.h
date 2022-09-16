@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include "libmcu/cli_cmd.h"
+#include <stddef.h>
 
 cli_cmd_error_t cli_cmd_exit(int argc, const char *argv[], const void *env);
 cli_cmd_error_t cli_cmd_help(int argc, const char *argv[], const void *env);
@@ -20,6 +21,7 @@ cli_cmd_error_t cli_cmd_reboot(int argc, const char *argv[], const void *env);
 cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env);
 
 extern struct cli_cmd const cli_commands[];
+extern const size_t cli_commands_len;
 
 #if defined(__cplusplus)
 }
