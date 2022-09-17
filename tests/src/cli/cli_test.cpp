@@ -92,9 +92,9 @@ TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
-	given("Hello, World\rexit\nexit\n");
+	given("Hello, World\rexit\r");
 	cli_run(&cli);
-	then("$ Hello, Worldexit\r\ncommand not found\r\n$ exit\r\nEXIT\r\n");
+	then("$ Hello, World\r\ncommand not found\r\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {

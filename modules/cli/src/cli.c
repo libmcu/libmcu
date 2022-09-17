@@ -32,38 +32,49 @@
 
 static bool readline(struct cli *cli)
 {
+	static char prev;
 	char ch;
+	bool rc = false;
 
 	if (cli->io->read(&ch, 1) != 1) {
 		return false;
 	}
 
-	if (ch == '\n') {
-		cli->io->write("\r\n", 2);
+	switch (ch) {
+	case '\n': /* fall through */
+	case '\r': /* carriage return */
+		if (ch != prev && (prev == '\n' || prev == '\r')) {
+			ch = 0; /* to deal with consecutive empty lines */
+			break;
+		}
 
 		cli->cmdbuf[cli->cmdbuf_index++] = '\n';
 		cli->cmdbuf[cli->cmdbuf_index++] = '\0';
-
 		cli->cmdbuf_index = 0;
 
-		return true;
-	} else if (ch == '\r') {
-	} else if (ch == '\b') {
+		cli->io->write("\r\n", 2);
+		rc = true;
+		break;
+	case '\b': /* back space */
 		if (cli->cmdbuf_index > 0) {
 			cli->cmdbuf_index--;
 			cli->io->write("\b \b", 3);
 		}
-	} else if (ch == '\t') {
-	} else {
+		break;
+	case '\t': /* tab */
+		break;
+	default:
 		if (cli->cmdbuf_index >= CLI_CMD_MAXLEN) {
-			return false;
+			break;
 		}
 
 		cli->cmdbuf[cli->cmdbuf_index++] = ch;
 		cli->io->write(&ch, 1);
+		break;
 	}
 
-	return false;
+	prev = ch;
+	return rc;
 }
 
 static int parse_command(char *str, char const *argv[], size_t maxargs)
