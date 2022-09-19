@@ -89,4 +89,5 @@ int LIBMCU_WEAK retry_generate_random(void)
 
 void LIBMCU_WEAK retry_sleep_ms(unsigned int msec)
 {
+	unused(msec);
 }
