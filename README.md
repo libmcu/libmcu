@@ -59,4 +59,6 @@ include(${LIBMCU_ROOT}/projects/modules.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
 # Add ${LIBMCU_MODULES_INCS} to your target includes
+# e.g. add_library(libmcu STATIC ${LIBMCU_COMPONENTS_SRCS})
+#      target_include_directories(libmcu PUBLIC ${LIBMCU_COMPONENTS_INCS})
 ```

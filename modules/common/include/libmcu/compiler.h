@@ -66,7 +66,11 @@ l:
 #endif
 
 #if !defined(LIBMCU_NOINIT)
-#define LIBMCU_NOINIT			__attribute__((section(".noinit")))
+#  if defined(__APPLE__) && defined(__MACH__)
+#    define LIBMCU_NOINIT		__attribute__((section("__NOINIT,__noinit")))
+#  else
+#    define LIBMCU_NOINIT		__attribute__((section(".noinit")))
+#  endif
 #endif
 
 #if defined(__cplusplus)
