@@ -7,7 +7,7 @@
 #include "cli_commands.h"
 #include <string.h>
 #include "libmcu/cli.h"
-#include "libmcu/system.h"
+#include "libmcu/board.h"
 
 typedef enum {
 	CMD_OPT_NONE			= 0x00,
@@ -39,21 +39,21 @@ static cmd_opt_t get_command_option(int argc, const char *opt)
 
 static void print_version(struct cli_io const *io)
 {
-	const char *ver = system_get_version_string();
+	const char *ver = board_get_version_string();
 	io->write(ver, strlen(ver));
 	io->write("\r\n", 2);
 }
 
 static void print_sn(struct cli_io const *io)
 {
-	const char *sn = system_get_serial_number_string();
+	const char *sn = board_get_serial_number_string();
 	io->write(sn, strlen(sn));
 	io->write("\r\n", 2);
 }
 
 static void print_build_date(struct cli_io const *io)
 {
-	const char *build_date = system_get_build_date_string();
+	const char *build_date = board_get_build_date_string();
 	io->write(build_date, strlen(build_date));
 	io->write("\r\n", 2);
 }

@@ -7,17 +7,17 @@
 #include "CppUTest/TestHarness.h"
 #include <string.h>
 #include <stdlib.h>
-#include "libmcu/system.h"
+#include "libmcu/board.h"
 #include "libmcu/cli.h"
 #include "cli_commands.h"
 
-const char *system_get_version_string(void) {
+const char *board_get_version_string(void) {
 	return "version";
 }
-const char *system_get_build_date_string(void) {
+const char *board_get_build_date_string(void) {
 	return "build date";
 }
-const char *system_get_serial_number_string(void) {
+const char *board_get_serial_number_string(void) {
 	return "serial number";
 }
 
