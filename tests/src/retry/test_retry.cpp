@@ -8,15 +8,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include "libmcu/retry.h"
-#include "libmcu/system.h"
 
 static int nr_sleep_called;
-static void fake_sleep(unsigned int msec)
+void retry_sleep_ms(unsigned int msec)
 {
 	nr_sleep_called++;
 }
 
-int system_random(void)
+int retry_generate_random(void)
 {
 	return rand();
 }
@@ -30,7 +29,6 @@ TEST_GROUP(retry) {
 			.min_backoff_ms = 5000,
 			.max_jitter_ms = 5000,
 			.max_attempts = 5,
-			.sleep = fake_sleep,
 		};
 		srand((unsigned int)time(0));
 	}
