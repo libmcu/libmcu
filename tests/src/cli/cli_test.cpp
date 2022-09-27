@@ -156,3 +156,9 @@ TEST(cli, cli_ShouldIgnoreInput_WhenDefaultMaxLen62Reached) {
 	cli_run(&cli);
 	then("$ 12345678901234567890123456789012345678901234567890123456789012\r\n");
 }
+
+TEST(cli, ShouldNotSplitArguments_WhenQuotedWordGiven) {
+	given("args first \"2 second\"\nexit\n");
+	cli_run(&cli);
+	then("$ args first \"2 second\"\r\n1: args\r\n2: first\r\n3: 2 second\r\n");
+}
