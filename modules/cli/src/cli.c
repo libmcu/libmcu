@@ -5,7 +5,7 @@
  */
 
 #include "libmcu/cli.h"
-#include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include "libmcu/assert.h"
 #include "libmcu/compiler.h"
@@ -77,17 +77,42 @@ static bool readline(struct cli *cli)
 	return rc;
 }
 
+static bool is_delimeter(char ch, char *delimeter)
+{
+	bool rc = false;
+
+	if (ch == '\"') {
+		*delimeter = *delimeter == '\"'? ' ' : '\"';
+		rc = true;
+		goto out;
+	}
+
+	if (*delimeter == '\"') {
+		goto out;
+	}
+
+	if (ch == ' ' || ch == '\n') {
+		rc = true;
+	}
+
+out:
+	return rc;
+}
+
 static int parse_command(char *str, char const *argv[], size_t maxargs)
 {
+	char delimeter = ' ';
 	int argc = 0;
 	argv[0] = str;
 
 	for (int i = 1; str[i] != '\0'; i++) {
-		if (str[i] != ' ' && str[i] != '\n') {
+		if (!is_delimeter(str[i], &delimeter)) {
 			continue;
 		}
 
-		argc += 1;
+		if ((uintptr_t)argv[argc] != (uintptr_t)(str + i)) {
+			argc += 1;
+		}
 
 		if ((size_t)argc < maxargs) {
 			argv[argc] = str + i + 1;
