@@ -11,9 +11,7 @@
 extern "C" {
 #endif
 
-#include "libmcu/compiler.h"
-
-#define assert(exp)			(unused(exp))
+#define assert(exp)		((void)(exp))
 
 #if defined(__cplusplus)
 }
