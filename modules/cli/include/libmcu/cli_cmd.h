@@ -15,7 +15,7 @@ extern "C" {
 #define CLI_CMD_MAXLEN				62
 #endif
 #if !defined(CLI_CMD_ARGS_MAXLEN)
-#define CLI_CMD_ARGS_MAXLEN			4
+#define CLI_CMD_ARGS_MAXLEN			8
 #endif
 
 typedef enum {
