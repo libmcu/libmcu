@@ -27,10 +27,10 @@ extern "C" {
 #define LOGGING_TAG				__FILE__
 #endif
 
-#define logging_set_level_current(level)	\
-	logging_set_level(LOGGING_TAG, level)
-#define logging_get_level_current()		\
-	logging_get_level(LOGGING_TAG)
+#define logging_set_level(level)	\
+	logging_set_level_tag(LOGGING_TAG, level)
+#define logging_get_level()		\
+	logging_get_level_tag(LOGGING_TAG)
 
 enum logging_type {
 	LOGGING_TYPE_NONE			= 0,
@@ -112,8 +112,8 @@ const char *logging_stringify(char *buf, size_t bufsize, const void *log);
  * @param tag module tag
  * @param min_log_level one of @ref logging_t
  */
-void logging_set_level(const char *tag, logging_t min_log_level);
-logging_t logging_get_level(const char *tag);
+void logging_set_level_tag(const char *tag, logging_t min_log_level);
+logging_t logging_get_level_tag(const char *tag);
 void logging_set_level_global(logging_t min_log_level);
 logging_t logging_get_level_global(void);
 

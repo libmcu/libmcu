@@ -158,7 +158,8 @@ static bool is_logging_type_enabled(const struct logging_tag *tag,
 	if (!is_global_tag(tag) && type < get_global_tag()->min_log_level) {
 		return false;
 	}
-	if (type < tag->min_log_level) {
+	if (type < tag->min_log_level ||
+			tag->min_log_level == LOGGING_TYPE_NONE) {
 		return false;
 	}
 	return true;
@@ -260,7 +261,6 @@ size_t logging_write_with_backend(logging_t type,
 	logging_data_t *log = (logging_data_t *)buf;
 	pack_log(log, type, ctx->pc, ctx->lr);
 	pack_message(log, ctx);
-	// TODO: logging_encode(log)
 
 	if (backend) {
 		result = backend->write(log, get_log_length(log));
