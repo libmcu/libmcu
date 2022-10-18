@@ -96,6 +96,8 @@ TEST_GROUP(logging) {
 		mock().ignoreOtherCalls();
 
 		logging_init();
+		logging_set_level(LOGGING_TYPE_DEBUG);
+		logging_set_level_global(LOGGING_TYPE_DEBUG);
 		logging_add_backend(&backend);
 	}
 	void teardown() {
@@ -105,8 +107,8 @@ TEST_GROUP(logging) {
 	}
 };
 
-TEST(logging, get_level_ShouldReturnNone_WhenInitialStateGiven) {
-	LONGS_EQUAL(LOGGING_TYPE_NONE, logging_get_level_current());
+TEST(logging, get_level_ShouldReturnDebug) {
+	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level());
 }
 TEST(logging, get_level_ShouldReturnGlobalLogLevel_WhenTagFull) {
 	logging_set_level_global(LOGGING_TYPE_DEBUG);
@@ -126,24 +128,24 @@ TEST(logging, get_level_ShouldReturnGlobalLogLevel_WhenTagFull) {
 	logging_write(LOGGING_TYPE_INFO, &l6, "");
 	logging_write(LOGGING_TYPE_INFO, &l7, "");
 	logging_write(LOGGING_TYPE_INFO, &l8, "");
-	logging_set_level("NEW", LOGGING_TYPE_ERROR);
-	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level("NEW"));
+	logging_set_level_tag("NEW", LOGGING_TYPE_ERROR);
+	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level_tag("NEW"));
 }
-TEST(logging, get_level_global_ShouldReturnVerbose_WhenInitialStateGiven) {
-	LONGS_EQUAL(LOGGING_TYPE_NONE, logging_get_level_global());
+TEST(logging, get_level_global_ShouldReturnDebug) {
+	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level_global());
 }
 
 TEST(logging, set_level_ShouldSetLogLevel_WhenLogInfoGiven) {
-	logging_set_level_current(LOGGING_TYPE_INFO);
-	LONGS_EQUAL(LOGGING_TYPE_INFO, logging_get_level_current());
+	logging_set_level(LOGGING_TYPE_INFO);
+	LONGS_EQUAL(LOGGING_TYPE_INFO, logging_get_level());
 }
 TEST(logging, set_level_ShouldSetLogLevel_WhenLogErrorGiven) {
-	logging_set_level_current(LOGGING_TYPE_ERROR);
-	LONGS_EQUAL(LOGGING_TYPE_ERROR, logging_get_level_current());
+	logging_set_level(LOGGING_TYPE_ERROR);
+	LONGS_EQUAL(LOGGING_TYPE_ERROR, logging_get_level());
 }
 TEST(logging, set_level_ShouldDoNothing_WhenInvalidParamGiven) {
-	logging_set_level_current(LOGGING_TYPE_MAX);
-	LONGS_EQUAL(LOGGING_TYPE_NONE, logging_get_level_current());
+	logging_set_level(LOGGING_TYPE_MAX);
+	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level());
 }
 
 TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
@@ -165,11 +167,12 @@ TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
 		.pc = (const void *)0xc0decafe,
 		.lr = (const void *)0xfeedbeef,
 	};
+	logging_set_level_tag("mytag", LOGGING_TYPE_INFO);
 	logging_write(LOGGING_TYPE_INFO, &l, "The first test");
 }
 TEST(logging, save_ShouldNotWriteLog_WhenLogLevelIsError) {
 	mock().expectNoCall("backend_write");
-	logging_set_level_current(LOGGING_TYPE_ERROR);
+	logging_set_level(LOGGING_TYPE_ERROR);
 	info("Should not write");
 }
 TEST(logging, save_ShouldNotWriteLog_WhenGlobalLogLevelIsError) {
@@ -186,7 +189,7 @@ IGNORE_TEST(logging, save_ShouldTakeCareOfNullPointer_WhenNullMessageDelivered) 
 }
 TEST(logging, save_ShouldReturnZero_WhenLogLevelIsLowerThanMinLogLevel) {
 	const logging_context default_logctx = { .tag = TAG, };
-	logging_set_level_current(LOGGING_TYPE_ERROR);
+	logging_set_level(LOGGING_TYPE_ERROR);
 	LONGS_EQUAL(0, logging_write(LOGGING_TYPE_INFO, &default_logctx, ""));
 }
 TEST(logging, save_ShouldReturnZero_WhenLogLevelIsInvalid) {
@@ -232,16 +235,16 @@ TEST(logging, stringify_ShouldReturnString_WhenLogGiven) {
 	STRNCMP_EQUAL(expected, buf, strlen(expected));
 }
 
-TEST(logging, count_tags_ShouldReturnZero_WhenInitialStateGiven) {
-	LONGS_EQUAL(0, logging_count_tags());
+TEST(logging, count_tags_ShouldReturnOne_WhenOneLoggingTagExists) {
+	LONGS_EQUAL(1, logging_count_tags());
 }
 TEST(logging, count_tags_ShouldReturnNumberOfTags) {
 	const logging_context l1 = { .tag = "#1", };
 	const logging_context l2 = { .tag = "#2", };
 	logging_write(LOGGING_TYPE_INFO, &l1, "");
-	LONGS_EQUAL(1, logging_count_tags());
+	LONGS_EQUAL(1+1, logging_count_tags());
 	logging_write(LOGGING_TYPE_INFO, &l2, "");
-	LONGS_EQUAL(2, logging_count_tags());
+	LONGS_EQUAL(2+1, logging_count_tags());
 }
 
 TEST(logging, iterate_tag_ShouldRunCallback) {
@@ -249,9 +252,12 @@ TEST(logging, iterate_tag_ShouldRunCallback) {
 	const logging_context l2 = { .tag = "#2", };
 	logging_write(LOGGING_TYPE_INFO, &l1, "");
 	logging_write(LOGGING_TYPE_INFO, &l2, "");
-	logging_set_level("#1", LOGGING_TYPE_INFO);
-	logging_set_level("#2", LOGGING_TYPE_ERROR);
+	logging_set_level_tag("#1", LOGGING_TYPE_INFO);
+	logging_set_level_tag("#2", LOGGING_TYPE_ERROR);
 
+	mock().expectOneCall("tag_callback")
+		.withParameterOfType("stringType", "tag", "logging")
+		.withParameter("min_log_level", LOGGING_TYPE_DEBUG);
 	mock().expectOneCall("tag_callback")
 		.withParameterOfType("stringType", "tag", "#1")
 		.withParameter("min_log_level", LOGGING_TYPE_INFO);
@@ -283,6 +289,9 @@ TEST(logging, count_ShouldReturnTotalNumberOfLogsSaved_WhenMultiTagsGiven) {
 	const logging_context l1 = { .tag = "#1", };
 	const logging_context l2 = { .tag = "#2", };
 	const logging_context l3 = { .tag = "#3", };
+	logging_set_level_tag("#1", LOGGING_TYPE_INFO);
+	logging_set_level_tag("#2", LOGGING_TYPE_INFO);
+	logging_set_level_tag("#3", LOGGING_TYPE_INFO);
 	logging_write(LOGGING_TYPE_INFO, &l1, "");
 	logging_write(LOGGING_TYPE_INFO, &l2, "");
 	logging_write(LOGGING_TYPE_INFO, &l3, "");
