@@ -31,15 +31,20 @@ Any feedback would be appreciated.
 * [timext](modules/timext)
 
 ## Integration Guide
-### Include `libmcu` into your project
+The library can be intergrated in your project as a [git
+submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) or using [CMake
+FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
+
+### git submodule
+#### Include `libmcu` into your project
 
 ```bash
 $ cd ${YOUR_PROJECT_DIR}
-$ git submodule add https://github.com/onkwon/libmcu.git ${THIRD_PARTY_DIR}/libmcu
+$ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libmcu
 ```
 
-### Add `libmcu` into your build system
-#### Make
+#### Add `libmcu` into your build system
+##### Make
 
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
@@ -50,7 +55,7 @@ include $(LIBMCU_ROOT)/projects/modules.mk
 <INC_PATHS> += $(LIBMCU_MODULES_INCS)
 ```
 
-#### CMake
+##### CMake
 
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
@@ -61,4 +66,15 @@ include(${LIBMCU_ROOT}/projects/modules.cmake)
 # Add ${LIBMCU_MODULES_INCS} to your target includes
 # e.g. add_library(libmcu STATIC ${LIBMCU_COMPONENTS_SRCS})
 #      target_include_directories(libmcu PUBLIC ${LIBMCU_COMPONENTS_INCS})
+```
+
+### CMake FetchContent
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(libmcu
+		     GIT_REPOSITORY https://github.com/libmcu/libmcu.git
+		     GIT_TAG main
+)
+FetchContent_MakeAvailable(libmcu)
 ```
