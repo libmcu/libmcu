@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include "libmcu/logging_storage.h"
+#include "libmcu/logging_backend.h"
 #include <stddef.h>
 
 const logging_storage_t *memory_storage_init(void *storage, size_t storage_size);
