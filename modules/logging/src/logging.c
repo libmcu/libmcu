@@ -186,7 +186,7 @@ static size_t get_log_length(const logging_data_t *entry)
 static size_t consume_internal(const struct logging_backend *backend,
 		size_t consume_size)
 {
-	if (!consume_size || backend == NULL) {
+	if (!consume_size || backend == NULL || backend->consume == NULL) {
 		return 0;
 	}
 	return backend->consume(consume_size);
@@ -195,7 +195,8 @@ static size_t consume_internal(const struct logging_backend *backend,
 static size_t peek_internal(const struct logging_backend *backend,
 		void *buf, size_t bufsize)
 {
-	if (!buf || bufsize < sizeof(logging_data_t) || backend == NULL) {
+	if (!buf || bufsize < sizeof(logging_data_t) ||
+			backend == NULL || backend->peek == NULL) {
 		return 0;
 	}
 	return backend->peek(buf, bufsize);
@@ -292,7 +293,6 @@ size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 	logging_data_t *log = (logging_data_t *)buf;
 	pack_log(log, type, ctx->pc, ctx->lr);
 	pack_message(log, ctx);
-	// TODO: logging_encode(log)
 
 	for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
 		if (m.backends[i]) {
@@ -330,7 +330,7 @@ size_t logging_read(const struct logging_backend *backend,
 	if (backend == NULL) {
 		backend = m.backends[0];
 	}
-	if (backend == NULL) {
+	if (backend == NULL || backend->read == NULL) {
 		return 0;
 	}
 
@@ -347,6 +347,10 @@ void logging_init(void)
 
 int logging_add_backend(const struct logging_backend *backend)
 {
+	if (backend == NULL || backend->write == NULL) {
+		return -EINVAL;
+	}
+
 	for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
 		if (m.backends[i] == NULL) {
 			m.backends[i] = backend;
@@ -374,7 +378,7 @@ size_t logging_count(const struct logging_backend *backend)
 	if (backend == NULL) {
 		backend = m.backends[0];
 	}
-	if (backend == NULL) {
+	if (backend == NULL || backend->count == NULL) {
 		return 0;
 	}
 
