@@ -11,7 +11,7 @@
 #include <time.h>
 
 #include "libmcu/logging.h"
-#include "libmcu/logging_storage.h"
+#include "libmcu/logging_backend.h"
 
 static const char *TAG = "logging";
 
