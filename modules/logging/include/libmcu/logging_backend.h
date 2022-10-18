@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef LOGGING_STORAGE_H
-#define LOGGING_STORAGE_H
+#ifndef LOGGING_BACKEND_H
+#define LOGGING_BACKEND_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -13,7 +13,11 @@ extern "C" {
 
 #include <stddef.h>
 
-typedef struct logging_storage_ops {
+#if !defined(LOGGING_MAX_BACKENDS)
+#define LOGGING_MAX_BACKENDS			1
+#endif
+
+struct logging_backend {
 	size_t (*write)(const void *data, size_t size);
 	size_t (*peek)(void *buf, size_t bufsize);
 	/** Read up to `bufsize` bytes from the storage
@@ -24,10 +28,10 @@ typedef struct logging_storage_ops {
 	 * @return The number of bytes removed. */
 	size_t (*consume)(size_t size);
 	size_t (*count)(void);
-} logging_storage_t;
+};
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* LOGGING_STORAGE_H */
+#endif /* LOGGING_BACKEND_H */

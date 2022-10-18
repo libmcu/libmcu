@@ -9,16 +9,14 @@
 #include <stdarg.h>
 #include <time.h>
 
-size_t logging_save(logging_t type, const struct logging_context *ctx, ...)
+size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 {
 	int len = printf("%lu: [%s] <%p,%p> ", (unsigned long)time(0),
-			type == 0? "VERBOSE" :
+			type == 0? "NONE" :
 			type == 1? "DEBUG" :
 			type == 2? "INFO" :
-			type == 3? "NOTICE" :
-			type == 4? "WARN" :
-			type == 5? "ERROR" :
-			type == 6? "ALERT" : "UNKNOWN",
+			type == 3? "WARN" :
+			type == 4? "ERROR" : "UNKNOWN",
 			ctx->pc, ctx->lr);
 	va_list ap;
 	va_start(ap, ctx);
