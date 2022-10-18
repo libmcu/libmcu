@@ -145,13 +145,9 @@ static struct logging_tag *obtain_tag(const char *tag)
 {
 	struct logging_tag *p = NULL;
 
-	logging_lock();
-	{
-		if ((p = get_tag_from_string(tag)) == NULL) {
-			p = register_tag(tag);
-		}
+	if ((p = get_tag_from_string(tag)) == NULL) {
+		p = register_tag(tag);
 	}
-	logging_unlock();
 
 	return p;
 }
