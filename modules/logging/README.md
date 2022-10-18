@@ -34,7 +34,8 @@ static uint8_t logbuf[512];
 
 logging_init();
 logging_add_backend(memory_storage_init(logbuf, sizeof(logbuf)));
-logging_set_level(TAG, LOGGING_TYPE_DEBUG);
+logging_set_level_global(LOGGING_TYPE_DEBUG);
+logging_set_level(LOGGING_TYPE_DEBUG);
 
 debug("message");
 info("RSSI %d", rssi);
