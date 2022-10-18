@@ -96,8 +96,6 @@ TEST_GROUP(logging) {
 		mock().ignoreOtherCalls();
 
 		logging_init();
-		logging_set_level(LOGGING_TYPE_DEBUG);
-		logging_set_level_global(LOGGING_TYPE_DEBUG);
 		logging_add_backend(&backend);
 	}
 	void teardown() {
@@ -107,11 +105,10 @@ TEST_GROUP(logging) {
 	}
 };
 
-TEST(logging, get_level_ShouldReturnDebug) {
+TEST(logging, get_level_ShouldReturnVerbose_WhenInitialStateGiven) {
 	LONGS_EQUAL(LOGGING_TYPE_DEBUG, logging_get_level());
 }
 TEST(logging, get_level_ShouldReturnGlobalLogLevel_WhenTagFull) {
-	logging_set_level_global(LOGGING_TYPE_DEBUG);
 	const logging_context l1 = { .tag = "#1", };
 	const logging_context l2 = { .tag = "#2", };
 	const logging_context l3 = { .tag = "#3", };
@@ -153,7 +150,7 @@ TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
 		0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xfe, 0xca, 0xde, 0xc0, 0x00, 0x00, 0x00, 0x00,
 		0xef, 0xbe, 0xed, 0xfe, 0x00, 0x00, 0x00, 0x00,
-		0xb4, 0xd1, 0x0e, 0x00, 0x02, 0x54, 0x68, 0x65,
+		0xb4, 0xd1, 0x0e, 0x00, 0x01, 0x54, 0x68, 0x65,
 		0x20, 0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74,
 		0x65, 0x73, 0x74 };
 	mock().expectOneCall("time").andReturnValue(1);
@@ -167,7 +164,6 @@ TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
 		.pc = (const void *)0xc0decafe,
 		.lr = (const void *)0xfeedbeef,
 	};
-	logging_set_level_tag("mytag", LOGGING_TYPE_INFO);
 	logging_write(LOGGING_TYPE_INFO, &l, "The first test");
 }
 TEST(logging, save_ShouldNotWriteLog_WhenLogLevelIsError) {
@@ -205,7 +201,7 @@ TEST(logging, save_ShouldParseFormattedString) {
 		0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0xa5, 0xa5, 0x11, 0x00, 0x02, 0x66, 0x6d, 0x74,
+		0xa5, 0xa5, 0x11, 0x00, 0x01, 0x66, 0x6d, 0x74,
 		0x20, 0x31, 0x32, 0x33, 0x3a, 0x20, 0x6d, 0x79,
 		0x73, 0x74, 0x72, 0x69, 0x6e, 0x67 };
 	mock().expectOneCall("time").andReturnValue(1);
@@ -224,7 +220,7 @@ TEST(logging, stringify_ShouldReturnString_WhenLogGiven) {
 		0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0xfe, 0xca, 0xde, 0xc0, 0x00, 0x00, 0x00, 0x00,
 		0xef, 0xbe, 0xed, 0xfe, 0x00, 0x00, 0x00, 0x00,
-		0xb4, 0xd1, 0x0e, 0x00, 0x02, 0x54, 0x68, 0x65,
+		0xb4, 0xd1, 0x0e, 0x00, 0x01, 0x54, 0x68, 0x65,
 		0x20, 0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74,
 		0x65, 0x73, 0x74 };
 	const char *expected =
@@ -235,16 +231,16 @@ TEST(logging, stringify_ShouldReturnString_WhenLogGiven) {
 	STRNCMP_EQUAL(expected, buf, strlen(expected));
 }
 
-TEST(logging, count_tags_ShouldReturnOne_WhenOneLoggingTagExists) {
-	LONGS_EQUAL(1, logging_count_tags());
+TEST(logging, count_tags_ShouldReturnZero_WhenInitialStateGiven) {
+	LONGS_EQUAL(0, logging_count_tags());
 }
 TEST(logging, count_tags_ShouldReturnNumberOfTags) {
 	const logging_context l1 = { .tag = "#1", };
 	const logging_context l2 = { .tag = "#2", };
 	logging_write(LOGGING_TYPE_INFO, &l1, "");
-	LONGS_EQUAL(1+1, logging_count_tags());
+	LONGS_EQUAL(1, logging_count_tags());
 	logging_write(LOGGING_TYPE_INFO, &l2, "");
-	LONGS_EQUAL(2+1, logging_count_tags());
+	LONGS_EQUAL(2, logging_count_tags());
 }
 
 TEST(logging, iterate_tag_ShouldRunCallback) {
@@ -255,9 +251,6 @@ TEST(logging, iterate_tag_ShouldRunCallback) {
 	logging_set_level_tag("#1", LOGGING_TYPE_INFO);
 	logging_set_level_tag("#2", LOGGING_TYPE_ERROR);
 
-	mock().expectOneCall("tag_callback")
-		.withParameterOfType("stringType", "tag", "logging")
-		.withParameter("min_log_level", LOGGING_TYPE_DEBUG);
 	mock().expectOneCall("tag_callback")
 		.withParameterOfType("stringType", "tag", "#1")
 		.withParameter("min_log_level", LOGGING_TYPE_INFO);
@@ -289,9 +282,6 @@ TEST(logging, count_ShouldReturnTotalNumberOfLogsSaved_WhenMultiTagsGiven) {
 	const logging_context l1 = { .tag = "#1", };
 	const logging_context l2 = { .tag = "#2", };
 	const logging_context l3 = { .tag = "#3", };
-	logging_set_level_tag("#1", LOGGING_TYPE_INFO);
-	logging_set_level_tag("#2", LOGGING_TYPE_INFO);
-	logging_set_level_tag("#3", LOGGING_TYPE_INFO);
 	logging_write(LOGGING_TYPE_INFO, &l1, "");
 	logging_write(LOGGING_TYPE_INFO, &l2, "");
 	logging_write(LOGGING_TYPE_INFO, &l3, "");

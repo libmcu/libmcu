@@ -155,13 +155,6 @@ static struct logging_tag *obtain_tag(const char *tag)
 static bool is_logging_type_enabled(const struct logging_tag *tag,
 		const logging_t type)
 {
-	logging_t global_level = get_global_tag()->min_log_level;
-	logging_t local_level = tag->min_log_level;
-
-	if (global_level == LOGGING_TYPE_NONE ||
-			local_level == LOGGING_TYPE_NONE) {
-		return false;
-	}
 	if (!is_global_tag(tag) && type < get_global_tag()->min_log_level) {
 		return false;
 	}

@@ -33,11 +33,11 @@ extern "C" {
 	logging_get_level_tag(LOGGING_TAG)
 
 enum logging_type {
-	LOGGING_TYPE_NONE			= 0,
-	LOGGING_TYPE_DEBUG,
+	LOGGING_TYPE_DEBUG			= 0,
 	LOGGING_TYPE_INFO,
 	LOGGING_TYPE_WARN,
 	LOGGING_TYPE_ERROR,
+	LOGGING_TYPE_NONE,
 	LOGGING_TYPE_MAX,
 };
 typedef uint8_t logging_t;

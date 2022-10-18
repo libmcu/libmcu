@@ -12,11 +12,11 @@
 size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 {
 	int len = printf("%lu: [%s] <%p,%p> ", (unsigned long)time(0),
-			type == 0? "NONE" :
-			type == 1? "DEBUG" :
-			type == 2? "INFO" :
-			type == 3? "WARN" :
-			type == 4? "ERROR" : "UNKNOWN",
+			type == 0? "DEBUG" :
+			type == 1? "INFO" :
+			type == 2? "WARN" :
+			type == 3? "ERROR" :
+			type == 4? "NONE" : "UNKNOWN",
 			ctx->pc, ctx->lr);
 	va_list ap;
 	va_start(ap, ctx);
