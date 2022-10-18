@@ -358,26 +358,42 @@ int logging_add_backend(const struct logging_backend *backend)
 		return -EINVAL;
 	}
 
-	for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
-		if (m.backends[i] == NULL) {
-			m.backends[i] = backend;
-			return 0;
+	int rc = -ENOSPC;
+
+	logging_lock();
+	{
+		for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
+			if (m.backends[i] == NULL) {
+				m.backends[i] = backend;
+				rc = 0;
+				goto out;
+			}
 		}
 	}
+out:
+	logging_unlock();
 
-	return -ENOSPC;
+	return rc;
 }
 
 int logging_remove_backend(const struct logging_backend *backend)
 {
-	for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
-		if (m.backends[i] == backend) {
-			m.backends[i] = NULL;
-			return 0;
+	int rc = -ENOENT;
+
+	logging_lock();
+	{
+		for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
+			if (m.backends[i] == backend) {
+				m.backends[i] = NULL;
+				rc = 0;
+				goto out;
+			}
 		}
 	}
+out:
+	logging_unlock();
 
-	return -ENOENT;
+	return rc;
 }
 
 size_t logging_count(const struct logging_backend *backend)
