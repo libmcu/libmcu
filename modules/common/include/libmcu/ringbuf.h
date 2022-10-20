@@ -16,6 +16,8 @@ extern "C" {
 #include <stdbool.h>
 #include <limits.h>
 
+#include "libmcu/compiler.h"
+
 struct ringbuf {
 	size_t capacity;
 	size_t index;
@@ -23,22 +25,15 @@ struct ringbuf {
 	uint8_t *buffer;
 };
 
-/**
- * @brief Define a ring buffer initialized
- *
- * @param[in] _name name of variable
- * @param[in] _buf buffer
- * @param[in] _bufsize size of buffer
- *
- * @note @ref _bufsize should be power of 2.
- */
 #define DEFINE_RINGBUF(_name, _buf, _bufsize) \
 	struct ringbuf _name = { \
 		.capacity = _bufsize, \
 		.index = 0, \
 		.outdex = 0, \
 		.buffer = _buf, \
-	}
+	} \
+	LIBMCU_STATIC_ASSERT(_bufsize & (_bufsize - 1) == 0, \
+			      "_bufsize should be power of 2.");
 
 size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize);
 size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size);
