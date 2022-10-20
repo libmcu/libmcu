@@ -14,6 +14,7 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include "libmcu/logging_backend.h"
+#include "libmcu/compiler.h"
 
 #if !defined(LOGGING_MESSAGE_MAXLEN)
 /** Message itself only. `logging_data_t` type size overhead should also take
@@ -48,22 +49,8 @@ struct logging_context {
 	const void *lr;
 };
 
-/* helpers for convenience */
 #if !defined(get_program_counter)
-	#if defined(__GNUC__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpedantic"
-	#pragma GCC diagnostic ignored "-Wreturn-local-addr"
-	static inline void *get_program_counter(void)
-	{
-		__label__ l;
-	l:
-		return &&l;
-	}
-	#pragma GCC diagnostic pop
-	#else /* !__GNUC__ */
-	#define get_program_counter()		((void *)0xfeedc0de)
-	#endif
+#define get_program_counter()		libmcu_get_pc()
 #endif
 
 #define LOGGING_WRAPPER(type, ...) do { 		\
