@@ -51,16 +51,7 @@ struct logging_context {
 /* helpers for convenience */
 #if !defined(get_program_counter)
 	#if defined(__GNUC__)
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpedantic"
-	#pragma GCC diagnostic ignored "-Wreturn-local-addr"
-	static inline void *get_program_counter(void)
-	{
-		__label__ l;
-	l:
-		return &&l;
-	}
-	#pragma GCC diagnostic pop
+	#define get_program_counter()		({ __label__ _l; _l: &&_l;})
 	#else /* !__GNUC__ */
 	#define get_program_counter()		((void *)0xfeedc0de)
 	#endif

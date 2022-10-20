@@ -16,30 +16,43 @@ extern "C" {
 #include <stdbool.h>
 #include <limits.h>
 
-typedef union {
-#if defined(__SIZE_WIDTH__) && __SIZE_WIDTH__ == 64
-	char _size[32];
-#else
-	char _size[16];
-#endif
-	long _align;
-} ringbuf_static_t;
+struct ringbuf {
+	size_t capacity;
+	size_t index;
+	size_t outdex;
+	uint8_t *buffer;
+};
 
-typedef ringbuf_static_t ringbuf_t;
+/**
+ * @brief Define a ring buffer initialized
+ *
+ * @param[in] _name name of variable
+ * @param[in] _buf buffer
+ * @param[in] _bufsize size of buffer
+ *
+ * @note @ref _bufsize should be power of 2.
+ */
+#define DEFINE_RINGBUF(_name, _buf, _bufsize) \
+	struct ringbuf _name = { \
+		.capacity = _bufsize, \
+		.index = 0, \
+		.outdex = 0, \
+		.buffer = _buf, \
+	}
 
-size_t ringbuf_write(ringbuf_t *handle, const void *data, size_t datasize);
-size_t ringbuf_write_cancel(ringbuf_t *handle, size_t size);
-size_t ringbuf_peek(const ringbuf_t *handle,
+size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize);
+size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size);
+size_t ringbuf_peek(const struct ringbuf *handle,
 		size_t offset, void *buf, size_t bufsize);
-bool ringbuf_consume(ringbuf_t *handle, size_t consume_size);
-size_t ringbuf_read(ringbuf_t *handle,
+bool ringbuf_consume(struct ringbuf *handle, size_t consume_size);
+size_t ringbuf_read(struct ringbuf *handle,
 		size_t offset, void *buf, size_t bufsize);
-size_t ringbuf_length(const ringbuf_t *handle);
-size_t ringbuf_capacity(const ringbuf_t *handle);
+size_t ringbuf_length(const struct ringbuf *handle);
+size_t ringbuf_capacity(const struct ringbuf *handle);
 
-bool ringbuf_create_static(ringbuf_t *handle, void *buf, size_t bufsize);
-ringbuf_t *ringbuf_create(size_t space_size);
-void ringbuf_destroy(ringbuf_t *handle);
+bool ringbuf_create_static(struct ringbuf *handle, void *buf, size_t bufsize);
+struct ringbuf *ringbuf_create(size_t space_size);
+void ringbuf_destroy(struct ringbuf *handle);
 
 #if defined(__cplusplus)
 }

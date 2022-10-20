@@ -8,7 +8,7 @@
 #include "CppUTest/TestHarness_c.h"
 #include "libmcu/ringbuf.h"
 
-static inline size_t ringbuf_left(ringbuf_t *handle)
+static inline size_t ringbuf_left(struct ringbuf *handle)
 {
 	return ringbuf_capacity(handle) - ringbuf_length(handle);
 }
@@ -20,7 +20,7 @@ TEST_GROUP(RingBuffer) {
 	void teardown(void) {
 	}
 
-	ringbuf_t ringbuf_obj;
+	struct ringbuf ringbuf_obj;
 	uint8_t ringbuf_space[SPACE_SIZE];
 	void prepare_test(void) {
 		ringbuf_create_static(&ringbuf_obj,
@@ -29,14 +29,14 @@ TEST_GROUP(RingBuffer) {
 };
 
 TEST(RingBuffer, init_ShouldReturnFalse_WhenObjectIsNullOrSpaceIsNull) {
-	ringbuf_t ringbuf;
+	struct ringbuf ringbuf;
 	uint8_t buf[2];
 	CHECK_EQUAL(false, ringbuf_create_static(NULL, buf, sizeof(buf)));
 	CHECK_EQUAL(false, ringbuf_create_static(&ringbuf, NULL, sizeof(buf)));
 }
 
 TEST(RingBuffer, init_ShouldReturnTrue_WhenInitializeSuccessfully) {
-	ringbuf_t ringbuf;
+	struct ringbuf ringbuf;
 	uint8_t buf[2];
 	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
 }
@@ -190,7 +190,7 @@ TEST(RingBuffer, write_cancel_ShouldReturnCanceledSize_WhenSuccessful) {
 }
 
 TEST(RingBuffer, new_ShouldReturnNewObject) {
-	ringbuf_t *handle = ringbuf_create(32);
+	struct ringbuf *handle = ringbuf_create(32);
 	CHECK(handle);
 
 	const uint8_t test_data[] = "1234567890123";
