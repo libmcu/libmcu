@@ -5,7 +5,10 @@
  */
 
 #include "libmcu/ringbuf.h"
+
 #include <string.h>
+#include <stdlib.h>
+
 #include "libmcu/compiler.h"
 #include "libmcu/bitops.h"
 
@@ -14,116 +17,100 @@
 #define MIN(a, b)			(((a) > (b)) ? (b) : (a))
 #endif
 
-struct ringbuf {
-	size_t capacity;
-	size_t index;
-	size_t outdex;
-	uint8_t *buffer;
-};
-LIBMCU_STATIC_ASSERT(sizeof(struct ringbuf) == sizeof(ringbuf_static_t), "");
-
-static inline size_t get_capacity(const struct ringbuf *instance)
+static inline size_t get_capacity(const struct ringbuf *handle)
 {
-	return instance->capacity;
+	return handle->capacity;
 }
 
-static inline size_t get_length(const struct ringbuf *instance)
+static inline size_t get_length(const struct ringbuf *handle)
 {
-	return instance->index - instance->outdex;
+	return handle->index - handle->outdex;
 }
 
-static inline size_t get_available(const struct ringbuf *instance)
+static inline size_t get_available(const struct ringbuf *handle)
 {
-	return get_capacity(instance) - get_length(instance);
+	return get_capacity(handle) - get_length(handle);
 }
 
-static void initialize_instance(struct ringbuf *instance, size_t bufsize)
+static void initialize(struct ringbuf *handle, size_t bufsize)
 {
-	memset(instance->buffer, 0, bufsize);
+	memset(handle->buffer, 0, bufsize);
 
-	instance->capacity = 1U << (flsl((long)bufsize) - 1); /* should be
-								 power of 2 */
-	instance->index = 0;
-	instance->outdex = 0;
+	handle->capacity = 1U << (flsl((long)bufsize) - 1); /* should be
+							       power of 2 */
+	handle->index = 0;
+	handle->outdex = 0;
 }
 
-static size_t read_core(const ringbuf_t *handle,
+static size_t read_core(const struct ringbuf *handle,
 		size_t offset, void *buf, size_t bufsize)
 {
-	const struct ringbuf *instance = (const struct ringbuf *)handle;
+	bufsize = MIN(get_length(handle), bufsize);
 
-	bufsize = MIN(get_length(instance), bufsize);
-
-	size_t index = GET_INDEX(instance->outdex + offset, instance->capacity);
-	size_t contiguous = instance->capacity - index;
+	size_t index = GET_INDEX(handle->outdex + offset, handle->capacity);
+	size_t contiguous = handle->capacity - index;
 	size_t remained = (contiguous < bufsize)? bufsize - contiguous : 0;
 	size_t cut = bufsize - remained;
 
-	memcpy(buf, &instance->buffer[index], cut);
-	memcpy((uint8_t *)buf + cut, instance->buffer, remained);
+	memcpy(buf, &handle->buffer[index], cut);
+	memcpy((uint8_t *)buf + cut, handle->buffer, remained);
 
 	return bufsize;
 }
 
-static bool consume_core(ringbuf_t *handle, size_t consume_size)
+static bool consume_core(struct ringbuf *handle, size_t consume_size)
 {
-	struct ringbuf *instance = (struct ringbuf *)handle;
-
-	if (get_length(instance) < consume_size) {
+	if (get_length(handle) < consume_size) {
 		return false;
 	}
 
-	instance->outdex += consume_size;
+	handle->outdex += consume_size;
 
 	return true;
 }
 
-size_t ringbuf_write(ringbuf_t *handle, const void *data, size_t datasize)
+size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize)
 {
-	struct ringbuf *instance = (struct ringbuf *)handle;
-
-	if (get_available(instance) < datasize) {
+	if (get_available(handle) < datasize) {
 		return 0;
 	}
 
-	size_t index = GET_INDEX(instance->index, instance->capacity);
-	size_t contiguous = instance->capacity - index;
+	size_t index = GET_INDEX(handle->index, handle->capacity);
+	size_t contiguous = handle->capacity - index;
 	size_t remained = (contiguous < datasize)? datasize - contiguous : 0;
 
-	memcpy(instance->buffer + index, data, datasize - remained);
-	memcpy(instance->buffer, ((const uint8_t *)data + datasize - remained),
+	memcpy(handle->buffer + index, data, datasize - remained);
+	memcpy(handle->buffer, ((const uint8_t *)data + datasize - remained),
 			remained);
 
-	instance->index += datasize;
+	handle->index += datasize;
 
 	return datasize;
 }
 
-size_t ringbuf_write_cancel(ringbuf_t *handle, size_t size)
+size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size)
 {
-	struct ringbuf *instance = (struct ringbuf *)handle;
-
-	if (get_length(instance) < size) {
+	if (get_length(handle) < size) {
 		return 0;
 	}
 
-	instance->index -= size;
+	handle->index -= size;
 
 	return size;
 }
 
-size_t ringbuf_peek(const ringbuf_t *handle,
+size_t ringbuf_peek(const struct ringbuf *handle,
 		size_t offset, void *buf, size_t bufsize)
 {
 	return read_core(handle, offset, buf, bufsize);
 }
 
-bool ringbuf_consume(ringbuf_t *handle, size_t consume_size)
+bool ringbuf_consume(struct ringbuf *handle, size_t consume_size)
 {
 	return consume_core(handle, consume_size);
 }
 
-size_t ringbuf_read(ringbuf_t *handle,
+size_t ringbuf_read(struct ringbuf *handle,
 		size_t offset, void *buf, size_t bufsize)
 {
 	size_t bytes_read = read_core(handle, offset, buf, bufsize);
@@ -135,35 +122,31 @@ size_t ringbuf_read(ringbuf_t *handle,
 	return bytes_read;
 }
 
-size_t ringbuf_length(const ringbuf_t *handle)
+size_t ringbuf_length(const struct ringbuf *handle)
 {
 	return get_length((const struct ringbuf *)handle);
 }
 
-size_t ringbuf_capacity(const ringbuf_t *handle)
+size_t ringbuf_capacity(const struct ringbuf *handle)
 {
 	return get_capacity((const struct ringbuf *)handle);
 }
 
-bool ringbuf_create_static(ringbuf_t *handle, void *buf, size_t bufsize)
+bool ringbuf_create_static(struct ringbuf *handle, void *buf, size_t bufsize)
 {
 	if (handle == NULL || buf == NULL || bufsize == 0) {
 		return false;
 	}
 
-	struct ringbuf *p = (struct ringbuf *)handle;
-
-	p->buffer = (uint8_t *)buf;
-	initialize_instance(p, bufsize);
+	handle->buffer = (uint8_t *)buf;
+	initialize(handle, bufsize);
 
 	return true;
 }
 
-#include <stdlib.h>
-
-ringbuf_t *ringbuf_create(size_t space_size)
+struct ringbuf *ringbuf_create(size_t space_size)
 {
-	struct ringbuf *instance;
+	struct ringbuf *instance = NULL;
 
 	if (space_size == 0) {
 		return NULL;
@@ -176,14 +159,17 @@ ringbuf_t *ringbuf_create(size_t space_size)
 		return NULL;
 	}
 
-	initialize_instance(instance, space_size);
+	initialize(instance, space_size);
 
-	return (ringbuf_t *)instance;
+	return instance;
 }
 
-void ringbuf_destroy(ringbuf_t *handle)
+void ringbuf_destroy(struct ringbuf *handle)
 {
-	struct ringbuf *instance = (struct ringbuf *)handle;
-	free(instance->buffer);
-	free(instance);
+	if (handle == NULL) {
+		return;
+	}
+
+	free(handle->buffer);
+	free(handle);
 }
