@@ -8,6 +8,7 @@
 #include "CppUTest/TestHarness_c.h"
 #include "CppUTestExt/MockSupport.h"
 
+#include <string.h>
 #include "libmcu/trace.h"
 
 static void callback(const struct trace *entry, void *ctx) {

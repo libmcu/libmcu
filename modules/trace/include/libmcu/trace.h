@@ -18,11 +18,12 @@ extern "C" {
 #if !defined(TRACE_MAXLEN)
 #define TRACE_MAXLEN			128
 #endif
-LIBMCU_ASSERT((TRACE_MAXLEN & (TRACE_MAXLEN - 1)) == 0);
 
 struct trace {
 	uint32_t timestamp;
+	/* TODO: Be aware of threads */
 	void *callee;
+	void *caller;
 	uint8_t depth;
 };
 

@@ -12,6 +12,8 @@
 #define MIN(a, b)			(((a) > (b))? (b) : (a))
 #endif
 
+LIBMCU_ASSERT((TRACE_MAXLEN & (TRACE_MAXLEN - 1)) == 0);
+
 static struct {
 	struct trace tracing[TRACE_MAXLEN];
 	atomic_uint_least8_t call_depth;
@@ -66,7 +68,10 @@ void __cyg_profile_func_enter(void *callee, void *caller)
 	struct trace *entry = &m.tracing[index];
 
 	entry->callee = callee;
+	entry->caller = caller;
 	entry->depth = call_depth;
+
+	unused(caller);
 }
 
 LIBMCU_NO_INSTRUMENT

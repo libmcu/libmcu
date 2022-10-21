@@ -28,7 +28,8 @@ extern "C" {
 #define LIBMCU_NO_INSTRUMENT		__attribute__((no_instrument_function))
 
 #define LIBMCU_STATIC_ASSERT(exp, msg)	__extension__ _Static_assert(exp, msg)
-#define LIBMCU_ASSERT(exp)		__extension__ _Static_assert(exp, #exp)
+#define LIBMCU_ASSERT(exp)		\
+	__extension__ _Static_assert(exp, stringify((exp)))
 
 #define barrier()			__asm__ __volatile__("" ::: "memory")
 #define ACCESS_ONCE(x)			(*(volatile __typeof__(x) *)&(x))
