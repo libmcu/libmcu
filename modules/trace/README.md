@@ -9,5 +9,5 @@ Add the following line to your CMake file:
 
 or `CFLAGS += -finstrument-functions` in case of Makefile.
 
-The default buffer size for tracing is 1024 bytes which can hold up to about
-113 function calls. The buffer size can be changed by `TRACE_BUFSIZE` define.
+The default number of tracing slots is 128 which can hold up to 128 function
+calls. The maximum number of slots can be changed by `TRACE_MAXLEN` define.

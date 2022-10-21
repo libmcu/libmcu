@@ -34,7 +34,7 @@ struct ringbuf {
 		.buffer = LIBMCU_CONCAT(_name, _buf), \
 	}; \
 	LIBMCU_STATIC_ASSERT((_bufsize & (_bufsize - 1)) == 0, \
-			      "_bufsize should be power of 2.");
+			      "_bufsize should be power of 2.")
 
 size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize);
 size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size);

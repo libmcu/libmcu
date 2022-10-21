@@ -13,10 +13,12 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include "libmcu/compiler.h"
 
-#if !defined(TRACE_BUFSIZE)
-#define TRACE_BUFSIZE			1024
+#if !defined(TRACE_MAXLEN)
+#define TRACE_MAXLEN			128
 #endif
+LIBMCU_ASSERT((TRACE_MAXLEN & (TRACE_MAXLEN - 1)) == 0);
 
 struct trace {
 	uint32_t timestamp;
@@ -40,8 +42,12 @@ void trace_clear(void);
  * @return The number of tracing
  */
 size_t trace_count(void);
-size_t trace_read(void *buf, size_t bufsize);
-void trace_iterate(trace_callback_t callback, void *ctx);
+void trace_iterate(trace_callback_t callback, void *ctx, int maxlen);
+
+#if defined(UNIT_TEST)
+void __cyg_profile_func_enter(void *callee, void *caller);
+void __cyg_profile_func_exit(void *callee, void *caller);
+#endif
 
 #if defined(__cplusplus)
 }

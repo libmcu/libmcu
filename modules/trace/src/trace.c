@@ -5,83 +5,75 @@
  */
 
 #include "libmcu/trace.h"
-#include <string.h>
-#include "libmcu/ringbuf.h"
-#include "libmcu/compiler.h"
+#include <stdatomic.h>
 
-DEFINE_RINGBUF(trace_buffer, TRACE_BUFSIZE);
-static uint8_t call_depth;
+#define GET_INDEX(i, n)			((i) & ((n) - 1))
+#if !defined(MIN)
+#define MIN(a, b)			(((a) > (b))? (b) : (a))
+#endif
+
+static struct {
+	struct trace tracing[TRACE_MAXLEN];
+	atomic_uint_least8_t call_depth;
+	atomic_uint_least16_t index;
+	atomic_uint_least16_t outdex;
+} m;
 
 LIBMCU_NO_INSTRUMENT
 void trace_reset(void)
 {
-	ringbuf_consume(&trace_buffer, ringbuf_length(&trace_buffer));
-	call_depth = 0;
+	atomic_store(&m.call_depth, 0);
+	atomic_store(&m.index, 0);
+	atomic_store(&m.outdex, 0);
 }
 
 LIBMCU_NO_INSTRUMENT
 void trace_clear(void)
 {
-	ringbuf_consume(&trace_buffer, ringbuf_length(&trace_buffer));
+	atomic_store(&m.index, 0);
+	atomic_store(&m.outdex, 0);
 }
 
 LIBMCU_NO_INSTRUMENT
 size_t trace_count(void)
 {
-	return ringbuf_length(&trace_buffer) / sizeof(struct trace);
+	uint16_t start = atomic_load(&m.outdex);
+	uint16_t end = atomic_load(&m.index);
+
+	return (size_t)MIN(end - start, TRACE_MAXLEN);
 }
 
 LIBMCU_NO_INSTRUMENT
-size_t trace_read(void *buf, size_t bufsize)
+void trace_iterate(trace_callback_t callback, void *ctx, int maxlen)
 {
-	unused(buf);
-	unused(bufsize);
-	return 0;
-}
+	uint16_t start = atomic_load(&m.outdex);
+	uint16_t end = atomic_load(&m.index);
+	unsigned int len = (unsigned int)maxlen;
 
-LIBMCU_NO_INSTRUMENT
-void trace_iterate(trace_callback_t callback, void *ctx)
-{
-	struct trace entry;
-	size_t offset = 0;
-	size_t bytes_read;
-
-	while ((bytes_read = ringbuf_read(&trace_buffer, offset,
-				&entry, sizeof(entry))) >= sizeof(entry)) {
+	for (unsigned int i = 0; i < len && start != end; i++, start++) {
 		if (callback) {
-			(*callback)(&entry, ctx);
+			uint16_t index = GET_INDEX(start, TRACE_MAXLEN);
+			(*callback)(&m.tracing[index], ctx);
 		}
-
-		offset += bytes_read;
 	}
 }
 
 LIBMCU_NO_INSTRUMENT
 void __cyg_profile_func_enter(void *callee, void *caller)
 {
-	call_depth++;
+	uint8_t call_depth = atomic_fetch_add(&m.call_depth, 1);
+	uint16_t index = GET_INDEX(atomic_fetch_add(&m.index, 1), TRACE_MAXLEN);
+	struct trace *entry = &m.tracing[index];
 
-	if (caller == __cyg_profile_func_enter ||
-			caller == trace_iterate ||
-			caller == trace_read ||
-			caller == trace_count ||
-			caller == trace_clear ||
-			caller == trace_reset) {
-		return;
-	}
-
-	struct trace entry = {
-		.callee = callee,
-		.depth = call_depth,
-	};
-	ringbuf_write(&trace_buffer, &entry, sizeof(entry));
+	entry->callee = callee;
+	entry->depth = call_depth;
 }
 
 LIBMCU_NO_INSTRUMENT
 void __cyg_profile_func_exit(void *callee, void *caller)
 {
+	atomic_fetch_sub(&m.call_depth, 1);
+
 	unused(callee);
 	unused(caller);
-
-	call_depth--;
 }
