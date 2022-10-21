@@ -71,14 +71,38 @@ void __cyg_profile_func_enter(void *callee, void *caller)
 	entry->caller = caller;
 	entry->depth = call_depth;
 
+	trace_enter_hook(entry);
+
 	unused(caller);
 }
 
 LIBMCU_NO_INSTRUMENT
 void __cyg_profile_func_exit(void *callee, void *caller)
 {
+	struct trace entry = {
+		.callee = callee,
+		.caller = caller,
+		.depth = atomic_load(&m.call_depth),
+	};
+
+	trace_leave_hook(&entry);
+
 	atomic_fetch_sub(&m.call_depth, 1);
 
 	unused(callee);
 	unused(caller);
+}
+
+LIBMCU_NO_INSTRUMENT
+LIBMCU_WEAK
+void trace_enter_hook(const struct trace *entry)
+{
+	unused(entry);
+}
+
+LIBMCU_NO_INSTRUMENT
+LIBMCU_WEAK
+void trace_leave_hook(const struct trace *entry)
+{
+	unused(entry);
 }

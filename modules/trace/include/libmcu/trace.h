@@ -44,6 +44,8 @@ void trace_clear(void);
  */
 size_t trace_count(void);
 void trace_iterate(trace_callback_t callback, void *ctx, int maxlen);
+void trace_enter_hook(const struct trace *entry);
+void trace_leave_hook(const struct trace *entry);
 
 #if defined(UNIT_TEST)
 void __cyg_profile_func_enter(void *callee, void *caller);

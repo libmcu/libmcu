@@ -29,6 +29,7 @@ Any feedback would be appreciated.
 * [pubsub_tiny](modules/pubsub_tiny)
 * [retry](modules/retry)
 * [timext](modules/timext)
+* [trace](modules/trace)
 
 ## Integration Guide
 The library can be intergrated in your project as a [git
