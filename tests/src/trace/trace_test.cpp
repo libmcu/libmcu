@@ -10,6 +10,15 @@
 
 #include <string.h>
 #include "libmcu/trace.h"
+#include "libmcu/board.h"
+
+// stubs for dependancies
+extern "C" {
+LIBMCU_NO_INSTRUMENT unsigned long board_get_tick(void) { return 0; }
+LIBMCU_NO_INSTRUMENT
+unsigned long board_get_current_stack_watermark(void) { return 0; }
+LIBMCU_NO_INSTRUMENT void *board_get_current_thread(void) { return 0; }
+}
 
 static void callback(const struct trace *entry, void *ctx) {
 	mock().actualCall(__func__)

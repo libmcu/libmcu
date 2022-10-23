@@ -70,6 +70,9 @@ void __cyg_profile_func_enter(void *callee, void *caller)
 	entry->callee = callee;
 	entry->caller = caller;
 	entry->depth = call_depth;
+	entry->thread = trace_get_current_thread(),
+	entry->timestamp = trace_get_time(),
+	entry->stack_usage = trace_get_stack_watermark(),
 
 	trace_enter_hook(entry);
 
@@ -83,9 +86,6 @@ void __cyg_profile_func_exit(void *callee, void *caller)
 		.callee = callee,
 		.caller = caller,
 		.depth = atomic_load(&m.call_depth),
-		.thread = trace_get_current_thread(),
-		.timestamp = trace_get_time(),
-		.stack_usage = trace_get_stack_watermark(),
 	};
 
 	trace_leave_hook(&entry);
@@ -94,39 +94,4 @@ void __cyg_profile_func_exit(void *callee, void *caller)
 
 	unused(callee);
 	unused(caller);
-}
-
-LIBMCU_NO_INSTRUMENT
-LIBMCU_WEAK
-void trace_enter_hook(const struct trace *entry)
-{
-	unused(entry);
-}
-
-LIBMCU_NO_INSTRUMENT
-LIBMCU_WEAK
-void trace_leave_hook(const struct trace *entry)
-{
-	unused(entry);
-}
-
-LIBMCU_NO_INSTRUMENT
-LIBMCU_WEAK
-uint32_t trace_get_time(void)
-{
-	return 0;
-}
-
-LIBMCU_NO_INSTRUMENT
-LIBMCU_WEAK
-size_t trace_get_stack_watermark(void)
-{
-	return 0;
-}
-
-LIBMCU_NO_INSTRUMENT
-LIBMCU_WEAK
-void *trace_get_current_thread(void)
-{
-	return 0;
 }
