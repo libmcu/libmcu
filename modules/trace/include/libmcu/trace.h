@@ -21,9 +21,10 @@ extern "C" {
 
 struct trace {
 	uint32_t timestamp;
-	/* TODO: Be aware of threads */
+	void *thread;
 	void *callee;
 	void *caller;
+	size_t stack_usage;
 	uint8_t depth;
 };
 
@@ -44,8 +45,13 @@ void trace_clear(void);
  */
 size_t trace_count(void);
 void trace_iterate(trace_callback_t callback, void *ctx, int maxlen);
+
 void trace_enter_hook(const struct trace *entry);
 void trace_leave_hook(const struct trace *entry);
+
+uint32_t trace_get_time(void);
+size_t trace_get_stack_watermark(void);
+void *trace_get_current_thread(void);
 
 #if defined(UNIT_TEST)
 void __cyg_profile_func_enter(void *callee, void *caller);

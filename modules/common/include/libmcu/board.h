@@ -21,10 +21,14 @@ const char *board_get_build_date_string(void);
 const char *board_get_serial_number_string(void);
 const char *board_get_reboot_reason_string(void);
 
-unsigned int board_get_free_heap_bytes(void);
-unsigned int board_get_total_heap_bytes(void);
-unsigned int board_get_heap_watermark(void);
-unsigned int board_get_current_stack_watermark(void);
+unsigned long board_get_free_heap_bytes(void);
+unsigned long board_get_total_heap_bytes(void);
+unsigned long board_get_heap_watermark(void);
+unsigned long board_get_current_stack_watermark(void);
+
+unsigned long board_get_tick(void);
+
+void *board_get_current_thread(void);
 
 #if defined(__cplusplus)
 }

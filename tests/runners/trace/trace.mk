@@ -3,7 +3,8 @@
 COMPONENT_NAME = trace
 
 SRC_FILES = \
-	../modules/trace/src/trace.c
+	../modules/trace/src/trace.c \
+	../modules/trace/src/trace_impl.c
 
 TEST_SRC_FILES = \
 	src/trace/trace_test.cpp \
