@@ -17,17 +17,17 @@
 #define MIN(a, b)			(((a) > (b)) ? (b) : (a))
 #endif
 
-static inline size_t get_capacity(const struct ringbuf *handle)
+static size_t get_capacity(const struct ringbuf *handle)
 {
 	return handle->capacity;
 }
 
-static inline size_t get_length(const struct ringbuf *handle)
+static size_t get_length(const struct ringbuf *handle)
 {
 	return handle->index - handle->outdex;
 }
 
-static inline size_t get_available(const struct ringbuf *handle)
+static size_t get_available(const struct ringbuf *handle)
 {
 	return get_capacity(handle) - get_length(handle);
 }
