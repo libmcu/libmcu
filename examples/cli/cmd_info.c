@@ -41,21 +41,21 @@ static void print_version(struct cli_io const *io)
 {
 	const char *ver = board_get_version_string();
 	io->write(ver, strlen(ver));
-	io->write("\r\n", 2);
+	io->write("\n", 1);
 }
 
 static void print_sn(struct cli_io const *io)
 {
 	const char *sn = board_get_serial_number_string();
 	io->write(sn, strlen(sn));
-	io->write("\r\n", 2);
+	io->write("\n", 1);
 }
 
 static void print_build_date(struct cli_io const *io)
 {
 	const char *build_date = board_get_build_date_string();
 	io->write(build_date, strlen(build_date));
-	io->write("\r\n", 2);
+	io->write("\n", 1);
 }
 
 cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)

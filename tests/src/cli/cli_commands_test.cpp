@@ -52,7 +52,7 @@ TEST(cli_commands, exit_ShouldReturnShellCmdExit) {
 
 TEST(cli_commands, info_ShouldReturnAllInfo_WhenNoArgsGiven) {
 	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(1, NULL, &cli));
-	STRCMP_EQUAL("version\r\nserial number\r\nbuild date\r\n", write_spy_buffer);
+	STRCMP_EQUAL("version\nserial number\nbuild date\n", write_spy_buffer);
 }
 
 TEST(cli_commands, info_ShouldReturnInvalidParam_WhenMoreThan2ArgsGiven) {
@@ -62,19 +62,19 @@ TEST(cli_commands, info_ShouldReturnInvalidParam_WhenMoreThan2ArgsGiven) {
 TEST(cli_commands, info_ShouldReturnVersion_WhenSecondArgumentGivenAsVersion) {
 	const char *argv[] = { "info", "version", };
 	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &cli));
-	STRCMP_EQUAL("version\r\n", write_spy_buffer);
+	STRCMP_EQUAL("version\n", write_spy_buffer);
 }
 
 TEST(cli_commands, info_ShouldReturnSerialNumber_WhenSecondArgumentGivenAsSn) {
 	const char *argv[] = { "info", "sn", };
 	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &cli));
-	STRCMP_EQUAL("serial number\r\n", write_spy_buffer);
+	STRCMP_EQUAL("serial number\n", write_spy_buffer);
 }
 
 TEST(cli_commands, info_ShouldReturnBuildDate_WhenSecondArgumentGiven) {
 	const char *argv[] = { "info", "build", };
 	LONGS_EQUAL(CLI_CMD_SUCCESS, cli_cmd_info(2, argv, &cli));
-	STRCMP_EQUAL("build date\r\n", write_spy_buffer);
+	STRCMP_EQUAL("build date\n", write_spy_buffer);
 }
 
 TEST_GROUP(memdump) {

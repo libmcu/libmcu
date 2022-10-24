@@ -23,7 +23,7 @@ cli_cmd_error_t cli_cmd_help(int argc, const char *argv[], const void *env)
 			cli->io->write("\t: ", 3);
 			cli->io->write(cmd->desc, strlen(cmd->desc));
 		}
-		cli->io->write("\r\n", 2);
+		cli->io->write("\n", 1);
 	}
 
 	return CLI_CMD_SUCCESS;

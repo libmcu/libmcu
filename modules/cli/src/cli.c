@@ -17,17 +17,17 @@
 #define CLI_PROMPT_OK				""
 #endif
 #if !defined(CLI_PROMPT_ERROR)
-#define CLI_PROMPT_ERROR			"ERROR\r\n"
+#define CLI_PROMPT_ERROR			"ERROR\n"
 #endif
 #if !defined(CLI_PROMPT_NOT_FOUND)
-#define CLI_PROMPT_NOT_FOUND			"command not found\r\n"
+#define CLI_PROMPT_NOT_FOUND			"command not found\n"
 #endif
 #if !defined(CLI_PROMPT_START_MESSAGE)
 #define CLI_PROMPT_START_MESSAGE		\
-	"\r\n\r\nType 'help' to get a list of available commands.\r\n"
+	"\n\nType 'help' to get a list of available commands.\n"
 #endif
 #if !defined(CLI_PROMPT_EXIT_MESSAGE)
-#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\r\n"
+#define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
 #endif
 
 static bool readline(struct cli *cli)
@@ -52,7 +52,7 @@ static bool readline(struct cli *cli)
 		cli->cmdbuf[cli->cmdbuf_index++] = '\0';
 		cli->cmdbuf_index = 0;
 
-		cli->io->write("\r\n", 2);
+		cli->io->write("\n", 1);
 		rc = true;
 		break;
 	case '\b': /* back space */
@@ -99,28 +99,40 @@ out:
 	return rc;
 }
 
+static int count_leading_spaces(char const *str)
+{
+	for (int i = 0; str[i] != '\0'; i++) {
+		if (str[i] != ' ') {
+			return i;
+		}
+	}
+
+	return 0;
+}
+
 static int parse_command(char *str, char const *argv[], size_t maxargs)
 {
-	char delimeter = ' ';
 	int argc = 0;
-	argv[0] = str;
+	int i = count_leading_spaces(str);
+	argv[0] = &str[i];
 
-	for (int i = 1; str[i] != '\0'; i++) {
+	for (char delimeter = ' '; str[i] != '\0'; i++) {
 		if (!is_delimeter(str[i], &delimeter)) {
 			continue;
 		}
 
-		if ((uintptr_t)argv[argc] != (uintptr_t)(str + i)) {
+		str[i] = '\0';
+		i += count_leading_spaces(&str[i+1]);
+
+		if ((uintptr_t)argv[argc] != (uintptr_t)(str + i) &&
+				(size_t)argc < maxargs) {
 			argc += 1;
 		}
 
-		if ((size_t)argc < maxargs) {
-			argv[argc] = str + i + 1;
-		}
-		str[i] = '\0';
+		argv[argc] = str + i + 1;
 	}
 
-	return (size_t)argc > maxargs? (int)maxargs : argc;
+	return argc;
 }
 
 static void report_result(struct cli_io const *io, cli_cmd_error_t err,
@@ -133,7 +145,7 @@ static void report_result(struct cli_io const *io, cli_cmd_error_t err,
 	case CLI_CMD_INVALID_PARAM:
 		if (cmd && cmd->desc) {
 			io->write(cmd->desc, strlen(cmd->desc));
-			io->write("\r\n", 2);
+			io->write("\n", 1);
 		}
 		break;
 	case CLI_CMD_NOT_FOUND:
