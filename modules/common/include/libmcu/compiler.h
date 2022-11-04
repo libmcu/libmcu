@@ -55,7 +55,9 @@ extern "C" {
 	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
 
 #define libmcu_get_lr()			__builtin_return_address(0)
-#if defined(__GNUC__)
+#if defined(__clang__) || defined(__CC_ARM) || defined(__ICCARM__)
+#define libmcu_get_pc()			((void *)0xfeedc0de)
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wreturn-local-addr"
@@ -68,7 +70,7 @@ l:
 }
 #pragma GCC diagnostic pop
 #else
-#define libmcu_get_pc()			((void *)0xfeedc0de)
+#error "Unsupported compiler"
 #endif
 
 #if !defined(LIBMCU_NOINIT)
