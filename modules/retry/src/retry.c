@@ -5,7 +5,7 @@
  */
 
 #include "libmcu/retry.h"
-#include "libmcu/compiler.h"
+#include "libmcu/retry_overrides.h"
 
 #if !defined(RETRY_DEFAULT_MAX_BACKOFF_MS)
 #define RETRY_DEFAULT_MAX_BACKOFF_MS		300000U // 5-min
@@ -28,7 +28,7 @@ static void reset_backoff(struct retry_params *param)
 	param->previous_backoff_ms = 0;
 }
 
-static unsigned int get_backoff_time(const struct retry_params *param)
+static unsigned int calc_backoff_time(const struct retry_params *param)
 {
 	uint16_t jitter = get_jitter(param->max_jitter_ms);
 
@@ -66,7 +66,7 @@ retry_error_t retry_backoff(struct retry_params *param)
 		return RETRY_EXHAUSTED;
 	}
 
-	unsigned int backoff_time = get_backoff_time(param);
+	unsigned int backoff_time = calc_backoff_time(param);
 	RETRY_DEBUG("Retry in %u ms, %u/%u", backoff_time,
 			param->attempts+1, param->max_attempts);
 	param->attempts++;
@@ -80,14 +80,4 @@ retry_error_t retry_backoff(struct retry_params *param)
 void retry_reset(struct retry_params *param)
 {
 	reset_backoff(param);
-}
-
-int LIBMCU_WEAK retry_generate_random(void)
-{
-	return 0;
-}
-
-void LIBMCU_WEAK retry_sleep_ms(unsigned int msec)
-{
-	unused(msec);
 }

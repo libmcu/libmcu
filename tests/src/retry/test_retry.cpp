@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "libmcu/retry.h"
+#include "libmcu/retry_overrides.h"
 
 static int nr_sleep_called;
 void retry_sleep_ms(unsigned int msec)

@@ -49,8 +49,6 @@ struct retry_params {
  */
 retry_error_t retry_backoff(struct retry_params *param);
 void retry_reset(struct retry_params *param);
-int retry_generate_random(void);
-void retry_sleep_ms(unsigned int msec);
 
 #if defined(__cplusplus)
 }

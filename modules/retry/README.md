@@ -7,7 +7,7 @@
 `retry_generate_random()` and `retry_sleep_ms()` should be implemented first.
 
 ```c
-struct retry_params retry = { 0, };
+struct retry_params retry = { .max_attempts = 10, };
 do {
 	if (do_something() == true) {
 		break;
