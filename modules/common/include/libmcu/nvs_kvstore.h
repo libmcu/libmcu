@@ -9,6 +9,13 @@
 
 #include "libmcu/kvstore.h"
 
+/**
+ * @brief Create a non-volatile storage instance
+ *
+ * @note Initialization of the storage must be done before calling this function.
+ *
+ * @return an instance
+ */
 struct kvstore *nvs_kvstore_new(void);
 int nvs_kvstore_count(void);
 
