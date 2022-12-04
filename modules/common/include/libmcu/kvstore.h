@@ -18,6 +18,7 @@ struct kvstore {
 			char const *key, void const *value, size_t size);
 	int (*read)(struct kvstore *self,
 			char const *key, void *buf, size_t size);
+	int (*clear)(struct kvstore *self, char const *key);
 	int (*open)(struct kvstore *self, char const *ns);
 	void (*close)(struct kvstore *self);
 };
@@ -42,6 +43,11 @@ static inline int kvstore_read(struct kvstore *self,
 		char const *key, void *buf, size_t size)
 {
 	return self->read(self, key, buf, size);
+}
+
+static inline int kvstore_clear(struct kvstore *self, char const *key)
+{
+	return self->clear(self, key);
 }
 
 #if defined(__cplusplus)

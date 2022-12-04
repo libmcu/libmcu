@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "nrf.h"
 #include "nordic_common.h"
@@ -167,6 +168,19 @@ static int nvs_kvstore_read(struct kvstore *self, char const *key, void *buf, si
 	return size;
 }
 
+static int nvs_kvstore_delete(struct kvstore *self, char const *key)
+{
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+	uint16_t record_key = (uint16_t)strtol(key, NULL, 16);
+        fds_flash_record_t config = { 0, };
+
+	if (!has_record(self, record_key)) {
+		return -ENOENT;
+	}
+
+	return fds_record_delete(&nvs_kvstore->desc);
+}
+
 static int nvs_kvstore_open(struct kvstore *self, char const *namespace)
 {
 	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
@@ -191,6 +205,7 @@ struct kvstore *nvs_kvstore_new(void)
 	struct kvstore *kvstore = (struct kvstore *)nvs_kvstore;
 	kvstore->write = nvs_kvstore_write;
 	kvstore->read = nvs_kvstore_read;
+	kvstore->clear = nvs_kvstore_delete;
 	kvstore->open = nvs_kvstore_open;
 	kvstore->close = nvs_kvstore_close;
 

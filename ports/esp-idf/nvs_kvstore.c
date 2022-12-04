@@ -48,6 +48,12 @@ static int nvs_kvstore_read(struct kvstore *self, char const *key, void *buf, si
 	return !nvs_get_blob(nvs_kvstore->handle, key, buf, &size)? size : 0;
 }
 
+static int nvs_kvstore_erase(struct kvstore *self, char const *key)
+{
+	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
+	return nvs_erase_key(nvs_kvstore->handle, key);
+}
+
 static int nvs_kvstore_open(struct kvstore *self, char const *namespace)
 {
 	struct nvs_kvstore *nvs_kvstore = (struct nvs_kvstore *)self;
@@ -70,6 +76,7 @@ struct kvstore *nvs_kvstore_new(void)
 	struct kvstore *kvstore = (struct kvstore *)nvs_kvstore;
 	kvstore->write = nvs_kvstore_write;
 	kvstore->read = nvs_kvstore_read;
+	kvstore->clear = nvs_kvstore_erase;
 	kvstore->open = nvs_kvstore_open;
 	kvstore->close = nvs_kvstore_close;
 
