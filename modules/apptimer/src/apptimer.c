@@ -24,7 +24,7 @@
 #define MIN(x, y)			((x) > (y)? (y) : (x))
 #endif
 
-#define time_before(goal, chasing)	(((int)(chasing) - (int)(goal)) < 0)
+#define time_before(goal, chasing)	((int)((chasing) - (goal)) < 0)
 
 #define SLOTS_BITS			(flsl(NR_SLOTS) - 1)
 #define SLOTS_MASK			((1UL << SLOTS_BITS) - 1)
