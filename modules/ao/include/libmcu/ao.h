@@ -13,6 +13,8 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 #if !defined(AO_EVENT_MAXLEN)
 /** The maximum event queue length. It should be power of 2 or some of space
@@ -26,7 +28,29 @@ struct ao_event;
 typedef void (*ao_dispatcher_t)(struct ao * const ao,
 		const struct ao_event * const event);
 
-struct ao *ao_create(size_t stack_size_bytes, int priority);
+
+struct ao_event_queue {
+	const struct ao_event *events[AO_EVENT_MAXLEN];
+	uint16_t index;
+	uint16_t outdex;
+};
+
+struct ao {
+	ao_dispatcher_t dispatch;
+
+	sem_t event;
+
+	pthread_mutex_t lock;
+	struct ao_event_queue queue;
+
+	pthread_t thread;
+	pthread_attr_t attr;
+	int priority;
+};
+
+struct ao *ao_create(struct ao * const ao,
+		size_t stack_size_bytes, int priority);
+struct ao *ao_create_static(size_t stack_size_bytes, int priority);
 void ao_destroy(struct ao * const ao);
 
 int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher);
@@ -45,6 +69,11 @@ int ao_stop(struct ao * const ao);
  * internally. This function does not hard-copy the event.
  */
 int ao_post(struct ao * const ao, const struct ao_event * const event);
+int ao_post_isr(struct ao * const ao, const struct ao_event * const event);
+int ao_post_defer(struct ao * const ao, const struct ao_event * const event,
+		uint32_t timeout_ms, uint32_t interval_ms);
+int ao_post_defer_isr(struct ao * const ao, const struct ao_event * const event,
+		uint32_t timeout_ms, uint32_t interval_ms);
 
 #if defined(__cplusplus)
 }

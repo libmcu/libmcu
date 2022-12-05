@@ -5,10 +5,9 @@
  */
 
 #include "libmcu/ao.h"
+#include "libmcu/ao_timer.h"
 
 #include <errno.h>
-#include <pthread.h>
-#include <semaphore.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -26,25 +25,6 @@ LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
 #if !defined(AO_ERROR)
 #define AO_ERROR(...)
 #endif
-
-struct ao_event_queue {
-	const struct ao_event *events[AO_EVENT_MAXLEN];
-	uint16_t index;
-	uint16_t outdex;
-};
-
-struct ao {
-	ao_dispatcher_t dispatch;
-
-	sem_t event;
-
-	pthread_mutex_t lock;
-	struct ao_event_queue queue;
-
-	pthread_t thread;
-	pthread_attr_t attr;
-	int priority;
-};
 
 static uint16_t get_index(uint16_t index)
 {
@@ -99,9 +79,24 @@ static bool push_event(struct ao_event_queue * const q,
 	return true;
 }
 
+static int post_event(struct ao * const ao, const struct ao_event * const event)
+{
+	AO_DEBUG("%p received event: %p\n", ao, event);
+
+	bool ok = push_event(&ao->queue, event);
+
+	if (ok) {
+		sem_post(&ao->event);
+	} else {
+		AO_WARN("%p queue full\n", ao);
+	}
+
+	return ok? 0 : -ENOSPC;
+}
+
 static void *ao_task(void *e)
 {
-	AO_DEBUG("%p task started", e);
+	AO_DEBUG("%p task started\n", e);
 
 	struct ao * const ao = (struct ao * const)e;
 	ao_post(ao, 0);
@@ -111,30 +106,76 @@ static void *ao_task(void *e)
 
 		const struct ao_event * const event = pop_event(&ao->queue);
 
-		AO_DEBUG("%p dispatch event: %p", ao, event);
+		AO_DEBUG("%p dispatch event: %p\n", ao, event);
 		(*ao->dispatch)(ao, event);
 	}
 
-	AO_DEBUG("%p task termination", ao);
+	AO_DEBUG("%p task termination\n", ao);
 	pthread_exit(NULL);
 	return NULL;
 }
 
-int ao_post(struct ao * const ao, const struct ao_event * const event)
+static struct ao *create_ao(struct ao * const ao,
+		size_t stack_size_bytes, int priority)
 {
-	AO_DEBUG("%p received event: %p", ao, event);
+	memset(ao, 0, sizeof(*ao));
 
-	pthread_mutex_lock(&ao->lock);
-	bool ok = push_event(&ao->queue, event);
-	pthread_mutex_unlock(&ao->lock);
+	pthread_attr_init(&ao->attr);
+	pthread_attr_setstacksize(&ao->attr, stack_size_bytes);
+	pthread_attr_setdetachstate(&ao->attr, PTHREAD_CREATE_DETACHED);
 
-	if (ok) {
-		sem_post(&ao->event);
-	} else {
-		AO_WARN("%p queue full", ao);
+	/* TODO: apply the requested task priority to the task */
+	ao->priority = priority;
+
+	pthread_mutex_init(&ao->lock, NULL);
+
+	if (sem_init(&ao->event, 0, 0) != 0) {
+		return NULL;
 	}
 
-	return ok? 0 : -ENOSPC;
+	return ao;
+}
+
+int ao_post(struct ao * const ao, const struct ao_event * const event)
+{
+	int rc;
+
+	pthread_mutex_lock(&ao->lock);
+	rc = post_event(ao, event);
+	pthread_mutex_unlock(&ao->lock);
+
+	return rc;
+}
+
+int ao_post_isr(struct ao * const ao, const struct ao_event * const event)
+{
+	return post_event(ao, event);
+}
+
+int ao_post_defer(struct ao * const ao, const struct ao_event * const event,
+		uint32_t timeout_ms, uint32_t interval_ms)
+{
+	int rc;
+
+	if (timeout_ms == 0) { /* one-shot immediate event */
+		pthread_mutex_lock(&ao->lock);
+		rc = post_event(ao, event);
+		pthread_mutex_unlock(&ao->lock);
+
+		return rc;
+	}
+
+	return ao_timer_add(ao, event, timeout_ms, interval_ms);
+}
+
+int ao_post_defer_isr(struct ao * const ao, const struct ao_event * const event,
+		uint32_t timeout_ms, uint32_t interval_ms)
+{
+	if (timeout_ms == 0) { /* one-shot immediate event */
+		return post_event(ao, event);
+	}
+
+	return ao_timer_add_isr(ao, event, timeout_ms, interval_ms);
 }
 
 int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)
@@ -152,7 +193,7 @@ int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)
 int ao_stop(struct ao * const ao)
 {
 	/* FIXME: make sure no events in the queue to be processed */
-	AO_DEBUG("%p task termination", ao);
+	AO_DEBUG("%p task termination\n", ao);
 	pthread_cancel(ao->thread);
 	return 0;
 }
@@ -162,22 +203,15 @@ void ao_destroy(struct ao * const ao)
 	memset(ao, 0, sizeof(*ao));
 }
 
-struct ao *ao_create(size_t stack_size_bytes, int priority)
+struct ao *ao_create_static(size_t stack_size_bytes, int priority)
 {
-	static struct ao ao = { 0, };
+	static struct ao ao;
 
-	pthread_attr_init(&ao.attr);
-	pthread_attr_setstacksize(&ao.attr, stack_size_bytes);
-	pthread_attr_setdetachstate(&ao.attr, PTHREAD_CREATE_DETACHED);
+	return create_ao(&ao, stack_size_bytes, priority);
+}
 
-	/* TODO: apply the requested task priority to the task */
-	ao.priority = priority;
-
-	pthread_mutex_init(&ao.lock, NULL);
-
-	if (sem_init(&ao.event, 0, 0) != 0) {
-		return NULL;
-	}
-
-	return &ao;
+struct ao *ao_create(struct ao * const ao,
+		size_t stack_size_bytes, int priority)
+{
+	return create_ao(ao, stack_size_bytes, priority);
 }

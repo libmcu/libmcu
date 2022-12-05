@@ -4,6 +4,7 @@ COMPONENT_NAME = ao
 
 SRC_FILES = \
 	../modules/ao/src/ao.c \
+	../modules/ao/src/ao_timer.c \
 	../modules/common/src/bitops.c
 
 TEST_SRC_FILES = \
