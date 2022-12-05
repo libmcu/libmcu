@@ -9,10 +9,10 @@ jobs:
   build:
     name: Create Release
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.7
+    container: libmcu/ci:latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 0

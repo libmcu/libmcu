@@ -10,10 +10,10 @@ jobs:
   build:
     name: Compile and Test
     runs-on: ubuntu-latest
-    container: onkwon/yaos:0.8
+    container: libmcu/ci:latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
         with:
           submodules: 'recursive'
       - name: Host Compile
@@ -30,43 +30,6 @@ jobs:
           mkdir -p coverage_report
           cd coverage_report
           cp -R ../tests/gcov/*.gcov ./
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v1
-        with:
-          name: code-coverage-report
-          path: coverage_report
       - name: codecov
         run: |
           bash -c "bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}"
-
-  sonarCloud:
-    name: SonarCloud Scan
-    needs: build
-    runs-on: ubuntu-latest
-    container: onkwon/yaos:0.7
-    steps:
-      - name: Clone Repository
-        uses: actions/checkout@v1
-        with:
-          submodules: 'recursive'
-      - name: Download code coverage results
-        uses: actions/download-artifact@v1
-        with:
-          name: code-coverage-report
-          path: coverage_report
-      - name: Analyze with SonarCloud
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          build-wrapper-linux-x86-64 --out-dir bw-output \
-              make STACK_LIMIT=512
-          sonar-scanner \
-              -Dsonar.organization=onkwon-github \
-              -Dsonar.projectKey=onkwon_libmcu \
-              -Dsonar.sources=modules,ports \
-              -Dsonar.tests=tests \
-              -Dsonar.test.inclusions=**/test_*.cpp \
-              -Dsonar.cfamily.gcov.reportsPath=coverage_report \
-              -Dsonar.cfamily.build-wrapper-output=bw-output \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.login=${{ secrets.SONAR_TOKEN }}
