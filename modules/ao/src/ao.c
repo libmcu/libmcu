@@ -27,17 +27,19 @@ LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
 #define AO_ERROR(...)
 #endif
 
+struct ao_event_queue {
+	const struct ao_event *events[AO_EVENT_MAXLEN];
+	uint16_t index;
+	uint16_t outdex;
+};
+
 struct ao {
 	ao_dispatcher_t dispatch;
 
 	sem_t event;
 
 	pthread_mutex_t lock;
-	struct ao_event_queue {
-		const struct ao_event *events[AO_EVENT_MAXLEN];
-		uint16_t index;
-		uint16_t outdex;
-	} queue;
+	struct ao_event_queue queue;
 
 	pthread_t thread;
 	pthread_attr_t attr;
@@ -46,18 +48,18 @@ struct ao {
 
 static uint16_t get_index(uint16_t index)
 {
-	const uint16_t cap = (uint16_t)(1U << (flsl(AO_EVENT_MAXLEN) - 1));
-	return index & (cap - 1);
+	const uint16_t cap = (uint16_t)(1U << (flsl(AO_EVENT_MAXLEN) - 1U));
+	return index & (uint16_t)(cap - 1U);
 }
 
 static void increse_index(uint16_t * const index)
 {
-	*index = *index + 1;
+	*index = (uint16_t)(*index + 1U);
 }
 
 static uint16_t get_queue_len(const struct ao_event_queue * const q)
 {
-	return q->index - q->outdex;
+	return (uint16_t)(q->index - q->outdex);
 }
 
 static bool is_queue_empty(const struct ao_event_queue * const q)
