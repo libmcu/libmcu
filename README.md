@@ -17,20 +17,20 @@ examples can also be found under [examples](examples) and [test cases](tests/src
 Any feedback would be appreciated.
 
 ## Modules
-* [ao](modules/ao)
-* [apptimer](modules/apptimer)
-* [bitmap](modules/bitmap)
-* [button](modules/button)
-* [cli](modules/cli)
+* [Active Objects](modules/ao)
+* [Applicatin Timer](modules/apptimer)
+* [Bitmap](modules/bitmap)
+* [Button](modules/button)
+* [Command Line Interface](modules/cli)
 * [common](modules/common)
 * [jobqueue](modules/jobqueue)
-* [logging](modules/logging)
-* [metrics](modules/metrics)
-* [pubsub](modules/pubsub)
+* [Logging](modules/logging)
+* [Metrics](modules/metrics)
+* [PubSub](modules/pubsub)
 * [pubsub_tiny](modules/pubsub_tiny)
-* [retry](modules/retry)
-* [timext](modules/timext)
-* [trace](modules/trace)
+* [Retry with exponential backoff](modules/retry)
+* [Time Extension](modules/timext)
+* [Trace](modules/trace)
 
 ## Integration Guide
 The library can be intergrated in your project as a [git

@@ -48,7 +48,8 @@ struct ao {
 
 static uint16_t get_index(uint16_t index)
 {
-	const uint16_t cap = (uint16_t)(1U << (flsl(AO_EVENT_MAXLEN) - 1U));
+	const uint16_t cap = (uint16_t)
+			(1U << ((uint16_t)flsl(AO_EVENT_MAXLEN) - 1U));
 	return index & (uint16_t)(cap - 1U);
 }
 
