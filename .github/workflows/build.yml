@@ -7,6 +7,28 @@ on:
     branches: [ main ]
 
 jobs:
+  unit-test:
+    name: Unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Install test framework
+        run: make -C tests install
+      - name: Test
+        run: make -C tests
+      - name: Build coverage results
+        run: |
+          make -C tests gcov
+          mkdir -p coverage_report
+          cd coverage_report
+          cp -R ../tests/gcov/*.gcov ./
+      - name: codecov
+        run: |
+          bash -c "bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}"
+
   build:
     name: Compile and Test
     runs-on: ubuntu-latest
@@ -22,16 +44,3 @@ jobs:
         run: STACK_LIMIT=512 make clean all
       - name: Cross Compile
         run: CROSS_COMPILE=arm-none-eabi make clean all
-      - name: Install test framework
-        run: make -C tests install
-      - name: Test
-        run: make -C tests
-      - name: Build coverage results
-        run: |
-          make -C tests gcov
-          mkdir -p coverage_report
-          cd coverage_report
-          cp -R ../tests/gcov/*.gcov ./
-      - name: codecov
-        run: |
-          bash -c "bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}"
