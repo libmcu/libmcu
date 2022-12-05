@@ -30,7 +30,7 @@ jobs:
           bash -c "bash <(curl -s https://codecov.io/bash) -t ${{ secrets.CODECOV_TOKEN }}"
 
   build:
-    name: Compile and Test
+    name: Build
     runs-on: ubuntu-latest
     container: libmcu/ci:latest
     steps:
