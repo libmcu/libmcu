@@ -17,6 +17,7 @@ examples can also be found under [examples](examples) and [test cases](tests/src
 Any feedback would be appreciated.
 
 ## Modules
+* [ao](modules/ao)
 * [apptimer](modules/apptimer)
 * [bitmap](modules/bitmap)
 * [button](modules/button)
@@ -49,7 +50,7 @@ $ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libm
 
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
-LIBMCU_MODULES := logging pubsub metrics
+LIBMCU_MODULES := ao logging metrics pubsub
 include $(LIBMCU_ROOT)/projects/modules.mk
 
 <SRC_FILES> += $(LIBMCU_MODULES_SRCS)
@@ -60,7 +61,7 @@ include $(LIBMCU_ROOT)/projects/modules.mk
 
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
-list(APPEND LIBMCU_MODULES logging pubsub metrics)
+list(APPEND LIBMCU_MODULES ao logging metrics pubsub)
 include(${LIBMCU_ROOT}/projects/modules.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
