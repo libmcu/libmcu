@@ -82,7 +82,7 @@ int ao_post_repeat(struct ao * const ao, const struct ao_event * const event,
  *
  * @return number of events canceled out if >= 0. or a negative error code
  */
-int ao_cancel(struct ao * const ao, const struct ao_event * const event);
+int ao_cancel(const struct ao * const ao, const struct ao_event * const event);
 
 #if defined(__cplusplus)
 }

@@ -59,13 +59,16 @@ static void free_timer(struct ao_timer * const timer)
 	AO_DEBUG("%p free\n", timer);
 }
 
-static int free_timers_by_event(const struct ao_event * const event)
+static int free_timers_by_event(const struct ao_event * const event,
+		const struct ao * const ao)
 {
 	int count = 0;
 
 	for (unsigned int i = 0; i < AO_TIMER_MAXLEN; i++) {
 		struct ao_timer *timer = &timer_pool[i];
-		if (is_allocated(timer) && timer->event == event) {
+		if (is_allocated(timer) &&
+				timer->event == event &&
+				timer->ao == ao) {
 			free_timer(timer);
 			count++;
 		}
@@ -157,14 +160,13 @@ int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 	return rc;
 }
 
-int ao_timer_cancel(struct ao * const ao, const struct ao_event * const event)
+int ao_timer_cancel(const struct ao * const ao,
+		const struct ao_event * const event)
 {
-	(void)ao;
-
 	int rc;
 
 	pthread_mutex_lock(&pool_lock);
-	rc = free_timers_by_event(event);
+	rc = free_timers_by_event(event, ao);
 	pthread_mutex_unlock(&pool_lock);
 
 	return rc;

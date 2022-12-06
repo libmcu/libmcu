@@ -157,7 +157,7 @@ int ao_post_repeat(struct ao * const ao, const struct ao_event * const event,
 	return ao_timer_add(ao, event, millisec_delay, millisec_interval);
 }
 
-int ao_cancel(struct ao * const ao, const struct ao_event * const event)
+int ao_cancel(const struct ao * const ao, const struct ao_event * const event)
 {
 	return ao_timer_cancel(ao, event);
 }
