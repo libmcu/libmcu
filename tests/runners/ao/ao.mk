@@ -10,6 +10,7 @@ SRC_FILES = \
 TEST_SRC_FILES = \
 	src/ao/ao_test.cpp \
 	src/test_all.cpp \
+	fakes/fake_semaphore_ios.c
 
 INCLUDE_DIRS = \
 	../modules/common/include \

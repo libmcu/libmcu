@@ -58,11 +58,9 @@ export CPPUTEST_WARNINGFLAGS = \
 
 ifeq ($(shell uname), Darwin)
 CPPUTEST_WARNINGFLAGS += \
+	-Wno-error=deprecated-declarations \
 	-Wno-error=zero-as-null-pointer-constant \
-	-Wno-error=poison-system-directories \
-	-Wno-error=covered-switch-default \
-	-Wno-error=format-nonliteral \
-	-Wno-error=pedantic
+	-Wno-error=format-nonliteral
 else
 #TARGET_PLATFORM ?= $(shell gcc -dumpmachine)
 endif
