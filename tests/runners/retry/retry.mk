@@ -3,9 +3,7 @@
 COMPONENT_NAME = retry
 
 SRC_FILES = \
-	stubs/logging.c \
-	../modules/retry/src/retry.c \
-	../modules/retry/src/retry_overrides.c
+	../modules/retry/src/retry.c
 
 TEST_SRC_FILES = \
 	src/retry/retry_test.cpp \

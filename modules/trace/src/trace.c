@@ -70,9 +70,9 @@ void __cyg_profile_func_enter(void *callee, void *caller)
 	entry->callee = callee;
 	entry->caller = caller;
 	entry->depth = call_depth;
-	entry->thread = trace_get_current_thread(),
-	entry->timestamp = trace_get_time(),
-	entry->stack_usage = trace_get_stack_watermark(),
+	entry->thread = trace_get_current_thread();
+	entry->timestamp = trace_get_time();
+	entry->stack_usage = trace_get_stack_watermark();
 
 	trace_enter_hook(entry);
 
