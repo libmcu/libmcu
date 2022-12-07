@@ -16,13 +16,15 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum {
-	RETRY_SUCCESS		= 0,
+	RETRY_RUNNING		= 0,
 	RETRY_EXHAUSTED,
 } retry_error_t;
 
-struct retry_params {
+/** Do not touch manually. */
+struct retry {
 	uint32_t max_backoff_ms;
 	uint16_t min_backoff_ms;
 	uint16_t max_jitter_ms;
@@ -31,24 +33,40 @@ struct retry_params {
 	uint32_t previous_backoff_ms;
 };
 
+void retry_init(struct retry *self, uint16_t max_attempts,
+		uint32_t max_backoff_ms, uint16_t min_backoff_ms,
+		uint16_t max_jitter_ms);
+
+void retry_reset(struct retry *self);
+
 /**
- * Backoff for an amount of time
+ * @brief Calculate the next backoff time in the unit of milli seconds
  *
- * The sleep callback must be set first before calling `retry_backoff()`. The
- * default parameters are taken if the argument is zero initialized. Don't
- * forget that a stack variable has gabage value before initializing.
+ * @param self instance
  *
- * Below is the minimal usage:
- *
- * 	struct retry_params retry = { .sleep = sleep_ms, };
- * 	do {
- * 		if (do_something() == true) {
- * 			break;
- * 		}
- * 	} while (retry_backoff(&retry) != RETRY_EXHAUSTED);
+ * @return the next backoff time in the unit of milli seconds
  */
-retry_error_t retry_backoff(struct retry_params *param);
-void retry_reset(struct retry_params *param);
+uint32_t retry_backoff_next(struct retry *self);
+
+/**
+ * @brief Calculate the next backoff time in the unit of milli seconds
+ *
+ * @param self instance
+ *
+ * @return true if exhausted. false otherwise
+ */
+bool retry_exhausted(const struct retry *self);
+
+/**
+ * @brief Backoff for an amount of time
+ *
+ * @param self instance
+ *
+ * @note This is a blocking function sleeping for the backoff time.
+ *
+ * @return @ref retry_error_t
+ */
+retry_error_t retry_backoff(struct retry *self);
 
 #if defined(__cplusplus)
 }

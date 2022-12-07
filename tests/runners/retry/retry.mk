@@ -8,7 +8,7 @@ SRC_FILES = \
 	../modules/retry/src/retry_overrides.c
 
 TEST_SRC_FILES = \
-	src/retry/test_retry.cpp \
+	src/retry/retry_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \

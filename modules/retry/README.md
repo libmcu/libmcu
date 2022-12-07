@@ -4,16 +4,35 @@
 
 ## Integration Guide
 
-`retry_generate_random()` and `retry_sleep_ms()` should be implemented first.
+`retry_generate_random()` and `retry_sleep_ms()` should be implemented first:
 
 ```c
-struct retry_params retry = { .max_attempts = 10, };
+#include "retry_overrides.h"
+
+int retry_generate_random(void) {
+	return your_random_function();
+}
+void retry_sleep_ms(unsigned int msec) {
+	your_sleep_function(msec);
+}
+```
+
+## Usage
+
+```c
+struct retry retry;
+retry_init(&retry, 5, 30000, 5000, 5000);
 do {
-	if (do_something() == true) {
+	if (connect() == SUCCESS) {
 		break;
 	}
 } while (retry_backoff(&retry) != RETRY_EXHAUSTED);
 ```
 
-The default can be set by defining `RETRY_DEFAULT_MAX_BACKOFF_MS`,
-`RETRY_DEFAULT_MIN_BACKOFF_MS`, and `RETRY_DEFAULT_MAX_JITTER_MS`.
+or
+
+```c
+struct retry retry;
+retry_init(&retry, 5, 30000, 5000, 5000);
+uint32_t next_backoff_ms = retry_backoff_next(&retry));
+```

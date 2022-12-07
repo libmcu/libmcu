@@ -156,7 +156,7 @@ TEST(AO, step_ShouldKeepEventsAndTryPostAgainInTheNextStep_WhenPostFailed) {
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventsGiven) {
-	struct ao_event evt1;
+	struct ao_event evt1 = { 0, };
 	struct ao_event evt2;
 	struct ao_event evt3;
 
@@ -170,7 +170,7 @@ TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventsGiven) {
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventGiven) {
-	struct ao_event evt;
+	struct ao_event evt = { 0, };
 
 	ao_post_defer(ao, &evt, 1000);
 	ao_post_defer(ao, &evt, 1000);
