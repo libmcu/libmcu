@@ -47,6 +47,7 @@ TEST_GROUP(AO) {
 };
 
 TEST(AO, start_ShouldDispatchNullEvent) {
+printf("#10\n");
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
 
 	ao_start(ao, dispatch);
@@ -55,6 +56,7 @@ TEST(AO, start_ShouldDispatchNullEvent) {
 }
 
 TEST(AO, post_ShouldDispatchTheEventGiven) {
+printf("#9\n");
 	struct ao_event evt = { .type = 1234 };
 
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
@@ -68,6 +70,7 @@ TEST(AO, post_ShouldDispatchTheEventGiven) {
 }
 
 TEST(AO, post_ShouldReturnENOSPC_WhenQueueIsFull) {
+printf("#8\n");
 	for (unsigned int i = 0; i < AO_EVENT_MAXLEN; i++) {
 		LONGS_EQUAL(0, ao_post(ao, 0));
 	}
@@ -75,6 +78,7 @@ TEST(AO, post_ShouldReturnENOSPC_WhenQueueIsFull) {
 }
 
 TEST(AO, post_ShouldDispatchEvents_WhenSpcificEventsGiven) {
+printf("#7\n");
 	struct ao_event evt[AO_EVENT_MAXLEN];
 
 	for (unsigned int i = 0; i < AO_EVENT_MAXLEN; i++) {
@@ -92,6 +96,7 @@ TEST(AO, post_ShouldDispatchEvents_WhenSpcificEventsGiven) {
 }
 
 TEST(AO, post_defer_ShouldPostAfterTimeout_WhenTimeoutGiven) {
+printf("#6\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 	ao_post_defer(ao, &evt, timeout_ms);
@@ -106,6 +111,7 @@ TEST(AO, post_defer_ShouldPostAfterTimeout_WhenTimeoutGiven) {
 }
 
 TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
+printf("#5\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -124,6 +130,7 @@ TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
 }
 
 TEST(AO, post_defer_ShouldReturnENOSPC_WhenAllocationFailed) {
+printf("#4\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -134,6 +141,7 @@ TEST(AO, post_defer_ShouldReturnENOSPC_WhenAllocationFailed) {
 }
 
 TEST(AO, step_ShouldKeepEventsAndTryPostAgainInTheNextStep_WhenPostFailed) {
+printf("#3\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -156,6 +164,7 @@ TEST(AO, step_ShouldKeepEventsAndTryPostAgainInTheNextStep_WhenPostFailed) {
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventsGiven) {
+printf("#2\n");
 	struct ao_event evt1 = { 0, };
 	struct ao_event evt2;
 	struct ao_event evt3;
@@ -170,6 +179,7 @@ TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventsGiven) {
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventGiven) {
+printf("#1\n");
 	struct ao_event evt = { 0, };
 
 	ao_post_defer(ao, &evt, 1000);
