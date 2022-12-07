@@ -74,7 +74,7 @@ TEST(SinglyLinkedList, del_ShouldDeleteNodeFromTheList_WhenNodeAddedOutOfOrder) 
 }
 
 TEST(SinglyLinkedList, del_ShouldFailDeleting_WhenThereIsNoMatchingNode) {
-	struct list node;
+	struct list node = { 0, };
 	list_del(&node, &head);
 }
 
