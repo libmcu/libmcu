@@ -7,77 +7,97 @@
 #include "libmcu/retry.h"
 #include "libmcu/retry_overrides.h"
 
-#if !defined(RETRY_DEFAULT_MAX_BACKOFF_MS)
-#define RETRY_DEFAULT_MAX_BACKOFF_MS		300000U // 5-min
-#endif
-#if !defined(RETRY_DEFAULT_MIN_BACKOFF_MS)
-#define RETRY_DEFAULT_MIN_BACKOFF_MS		5000U // 5-sec
-#endif
-#if !defined(RETRY_DEFAULT_MAX_JITTER_MS)
-#define RETRY_DEFAULT_MAX_JITTER_MS		RETRY_DEFAULT_MIN_BACKOFF_MS
-#endif
-
 static uint16_t get_jitter(uint16_t max_jitter_ms)
 {
-	return (uint16_t)retry_generate_random() % max_jitter_ms;
+	if (max_jitter_ms) {
+		return (uint16_t)retry_generate_random() % max_jitter_ms;
+	}
+	return 0;
 }
 
-static void reset_backoff(struct retry_params *param)
+static void reset_backoff(struct retry *self)
 {
-	param->attempts = 0;
-	param->previous_backoff_ms = 0;
+	self->attempts = 0;
+	self->previous_backoff_ms = 0;
 }
 
-static unsigned int calc_backoff_time(const struct retry_params *param)
+static bool is_exhausted(const struct retry *self)
 {
-	uint16_t jitter = get_jitter(param->max_jitter_ms);
+	return self->attempts >= self->max_attempts;
+}
 
-	unsigned int backoff;
-	if (param->previous_backoff_ms == 0) {
-		backoff = (unsigned int)param->min_backoff_ms + jitter;
-	} else {
-		backoff = param->previous_backoff_ms * 2 + jitter;
+static uint32_t calc_backoff_time(const struct retry *self)
+{
+	uint16_t jitter = get_jitter(self->max_jitter_ms);
+	uint32_t backoff = self->previous_backoff_ms * 2 + jitter;
+
+	if (self->previous_backoff_ms == 0) {
+		backoff = (uint32_t)self->min_backoff_ms + jitter;
 	}
 
-	if (backoff > param->max_backoff_ms) {
-		backoff = param->max_backoff_ms - param->max_jitter_ms + jitter;
+	if (backoff > self->max_backoff_ms) {
+		backoff = self->max_backoff_ms - self->max_jitter_ms + jitter;
 	}
 
 	return backoff;
 }
 
-static void adjust_params(struct retry_params *param)
+static uint32_t next_backoff(struct retry *self)
 {
-	if (param->max_backoff_ms == 0) {
-		param->max_backoff_ms = RETRY_DEFAULT_MAX_BACKOFF_MS;
-	}
-	if (param->max_jitter_ms == 0) {
-		param->max_jitter_ms = param->min_backoff_ms > 0?
-			param->min_backoff_ms : RETRY_DEFAULT_MAX_JITTER_MS;
-	}
+	unsigned int backoff_time = calc_backoff_time(self);
+
+	self->attempts++;
+	self->previous_backoff_ms = backoff_time;
+
+	return backoff_time;
 }
 
-retry_error_t retry_backoff(struct retry_params *param)
+retry_error_t retry_backoff(struct retry *self)
 {
-	adjust_params(param);
-
-	if (param->attempts >= param->max_attempts) {
-		reset_backoff(param);
+	if (is_exhausted(self)) {
 		return RETRY_EXHAUSTED;
 	}
 
-	unsigned int backoff_time = calc_backoff_time(param);
+	unsigned int backoff_time = next_backoff(self);
 	RETRY_DEBUG("Retry in %u ms, %u/%u", backoff_time,
-			param->attempts+1, param->max_attempts);
-	param->attempts++;
-	param->previous_backoff_ms = backoff_time;
+			self->attempts, self->max_attempts);
 
-	retry_sleep_ms(backoff_time);
+	if (backoff_time) {
+		retry_sleep_ms(backoff_time);
+	}
 
-	return RETRY_SUCCESS;
+	return RETRY_RUNNING;
 }
 
-void retry_reset(struct retry_params *param)
+void retry_reset(struct retry *self)
 {
-	reset_backoff(param);
+	reset_backoff(self);
+}
+
+bool retry_exhausted(const struct retry *self)
+{
+	return is_exhausted(self);
+}
+
+uint32_t retry_backoff_next(struct retry *self)
+{
+	return next_backoff(self);
+}
+
+void retry_init(struct retry *self, uint16_t max_attempts,
+		uint32_t max_backoff_ms, uint16_t min_backoff_ms,
+		uint16_t max_jitter_ms)
+{
+	if (min_backoff_ms > max_backoff_ms) {
+		max_backoff_ms = min_backoff_ms;
+	}
+
+	*self = (struct retry) {
+		.max_backoff_ms = max_backoff_ms,
+		.min_backoff_ms = min_backoff_ms,
+		.max_jitter_ms = max_jitter_ms,
+		.max_attempts = max_attempts,
+		.attempts = 0,
+		.previous_backoff_ms = 0,
+	};
 }
