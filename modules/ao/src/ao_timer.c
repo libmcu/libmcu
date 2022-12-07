@@ -10,6 +10,10 @@
 #include <errno.h>
 #include <string.h>
 
+#if !defined(AO_ASSERT)
+#include <assert.h>
+#define AO_ASSERT(...)		assert(__VA_ARGS__)
+#endif
 #if !defined(AO_DEBUG)
 #define AO_DEBUG(...)
 #endif
@@ -28,12 +32,14 @@ static volatile bool initialized;
 static pthread_mutex_t pool_lock;
 static struct ao_timer timer_pool[AO_TIMER_MAXLEN];
 
-static void initialize(void)
+static bool initialize(void)
 {
 	AO_DEBUG("initializing ao_timer\n");
-	pthread_mutex_init(&pool_lock, NULL);
-	memset(timer_pool, 0, sizeof(timer_pool));
-	initialized = true;
+	if (pthread_mutex_init(&pool_lock, NULL) == 0) {
+		memset(timer_pool, 0, sizeof(timer_pool));
+		initialized = true;
+	}
+	return initialized;
 }
 
 static bool is_allocated(const struct ao_timer * const timer)
@@ -147,8 +153,8 @@ static void do_step(uint32_t elapsed_ms)
 int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 		uint32_t timeout_ms, uint32_t interval_ms)
 {
-	if (!initialized) {
-		initialize();
+	if (!initialized && !initialize()) {
+		return -EFAULT;
 	}
 
 	int rc;
@@ -181,5 +187,7 @@ void ao_timer_step(uint32_t elapsed_ms)
 
 void ao_timer_reset(void)
 {
-	initialize();
+	if (!initialize()) {
+		AO_ASSERT(0);
+	}
 }
