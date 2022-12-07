@@ -181,5 +181,6 @@ void ao_timer_step(uint32_t elapsed_ms)
 
 void ao_timer_reset(void)
 {
+	pthread_mutex_destroy(&pool_lock);
 	initialize();
 }

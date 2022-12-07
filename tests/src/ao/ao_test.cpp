@@ -105,7 +105,7 @@ TEST(AO, post_defer_ShouldPostAfterTimeout_WhenTimeoutGiven) {
 	ao_stop(ao);
 }
 
-IGNORE_TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
+TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
