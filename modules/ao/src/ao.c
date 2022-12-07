@@ -14,8 +14,10 @@
 #include "libmcu/compiler.h"
 #include "libmcu/bitops.h"
 
-LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
-
+#if !defined(AO_ASSERT)
+#include <assert.h>
+#define AO_ASSERT(...)		assert(__VA_ARGS__)
+#endif
 #if !defined(AO_DEBUG)
 #define AO_DEBUG(...)
 #endif
@@ -25,6 +27,8 @@ LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
 #if !defined(AO_ERROR)
 #define AO_ERROR(...)
 #endif
+
+LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
 
 static uint16_t get_index(uint16_t index)
 {
@@ -86,7 +90,9 @@ static int post_event(struct ao * const ao, const struct ao_event * const event)
 	bool ok = push_event(&ao->queue, event);
 
 	if (ok) {
-		sem_post(&ao->event);
+		if (sem_post(&ao->event) != 0) {
+			AO_ASSERT(0);
+		}
 	} else {
 		AO_WARN("%p queue full\n", ao);
 	}
@@ -138,9 +144,13 @@ int ao_post(struct ao * const ao, const struct ao_event * const event)
 {
 	int rc;
 
-	pthread_mutex_lock(&ao->lock);
+	if (pthread_mutex_lock(&ao->lock) != 0) {
+		AO_ASSERT(0);
+	}
 	rc = post_event(ao, event);
-	pthread_mutex_unlock(&ao->lock);
+	if (pthread_mutex_unlock(&ao->lock) != 0) {
+		AO_ASSERT(0);
+	}
 
 	return rc;
 }
