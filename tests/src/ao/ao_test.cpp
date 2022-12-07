@@ -47,7 +47,6 @@ TEST_GROUP(AO) {
 };
 
 TEST(AO, start_ShouldDispatchNullEvent) {
-printf("#10\n");
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
 
 	ao_start(ao, dispatch);
@@ -56,7 +55,6 @@ printf("#10\n");
 }
 
 TEST(AO, post_ShouldDispatchTheEventGiven) {
-printf("#9\n");
 	struct ao_event evt = { .type = 1234 };
 
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
@@ -70,7 +68,6 @@ printf("#9\n");
 }
 
 TEST(AO, post_ShouldReturnENOSPC_WhenQueueIsFull) {
-printf("#8\n");
 	for (unsigned int i = 0; i < AO_EVENT_MAXLEN; i++) {
 		LONGS_EQUAL(0, ao_post(ao, 0));
 	}
@@ -78,7 +75,6 @@ printf("#8\n");
 }
 
 TEST(AO, post_ShouldDispatchEvents_WhenSpcificEventsGiven) {
-printf("#7\n");
 	struct ao_event evt[AO_EVENT_MAXLEN];
 
 	for (unsigned int i = 0; i < AO_EVENT_MAXLEN; i++) {
@@ -96,7 +92,6 @@ printf("#7\n");
 }
 
 TEST(AO, post_defer_ShouldPostAfterTimeout_WhenTimeoutGiven) {
-printf("#6\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 	ao_post_defer(ao, &evt, timeout_ms);
@@ -111,7 +106,6 @@ printf("#6\n");
 }
 
 TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
-printf("#5\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -130,7 +124,6 @@ printf("#5\n");
 }
 
 TEST(AO, post_defer_ShouldReturnENOSPC_WhenAllocationFailed) {
-printf("#4\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -141,7 +134,6 @@ printf("#4\n");
 }
 
 TEST(AO, step_ShouldKeepEventsAndTryPostAgainInTheNextStep_WhenPostFailed) {
-printf("#3\n");
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
@@ -164,7 +156,6 @@ printf("#3\n");
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventsGiven) {
-printf("#2\n");
 	struct ao_event evt1 = { 0, };
 	struct ao_event evt2;
 	struct ao_event evt3;
@@ -179,7 +170,6 @@ printf("#2\n");
 }
 
 TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventGiven) {
-printf("#1\n");
 	struct ao_event evt = { 0, };
 
 	ao_post_defer(ao, &evt, 1000);

@@ -159,13 +159,9 @@ int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 
 	int rc;
 
-	if (pthread_mutex_lock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_lock(&pool_lock);
 	rc = add_timer(ao, event, timeout_ms, interval_ms);
-	if (pthread_mutex_unlock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_unlock(&pool_lock);
 
 	return rc;
 }
@@ -175,26 +171,18 @@ int ao_timer_cancel(const struct ao * const ao,
 {
 	int rc;
 
-	if (pthread_mutex_lock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_lock(&pool_lock);
 	rc = free_timers_by_event(event, ao);
-	if (pthread_mutex_unlock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_unlock(&pool_lock);
 
 	return rc;
 }
 
 void ao_timer_step(uint32_t elapsed_ms)
 {
-	if (pthread_mutex_lock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_lock(&pool_lock);
 	do_step(elapsed_ms);
-	if (pthread_mutex_unlock(&pool_lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_unlock(&pool_lock);
 }
 
 void ao_timer_reset(void)

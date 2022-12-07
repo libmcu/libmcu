@@ -14,10 +14,6 @@
 #include "libmcu/compiler.h"
 #include "libmcu/bitops.h"
 
-#if !defined(AO_ASSERT)
-#include <assert.h>
-#define AO_ASSERT(...)		assert(__VA_ARGS__)
-#endif
 #if !defined(AO_DEBUG)
 #define AO_DEBUG(...)
 #endif
@@ -90,9 +86,7 @@ static int post_event(struct ao * const ao, const struct ao_event * const event)
 	bool ok = push_event(&ao->queue, event);
 
 	if (ok) {
-		if (sem_post(&ao->event) != 0) {
-			AO_ASSERT(0);
-		}
+		sem_post(&ao->event);
 	} else {
 		AO_WARN("%p queue full\n", ao);
 	}
@@ -111,11 +105,17 @@ static void *ao_task(void *e)
 		sem_wait(&ao->event);
 
 		const struct ao_event * const event = pop_event(&ao->queue);
+#if defined(__APPLE__) /* does not support pthread_cancel */
+		if ((intptr_t)event == -ESTALE) {
+			break;
+		}
+#endif
 
 		AO_DEBUG("%p dispatch event: %p\n", ao, event);
 		(*ao->dispatch)(ao, event);
 	}
 
+	pthread_exit(NULL);
 	return NULL;
 }
 
@@ -124,18 +124,20 @@ static struct ao *create_ao(struct ao * const ao,
 {
 	memset(ao, 0, sizeof(*ao));
 
+	if (pthread_mutex_init(&ao->lock, NULL) != 0 ||
+			sem_init(&ao->event, 0, 0) != 0) {
+		return NULL;
+	}
+
 	pthread_attr_init(&ao->attr);
 	pthread_attr_setstacksize(&ao->attr, stack_size_bytes);
+#if 0 /* XXX: if not joinable, the task sometimes misses a signal waiting for
+	      the semaphore. 10-20% probability. tested on Ubuntu 22.04.1 LTS. */
 	pthread_attr_setdetachstate(&ao->attr, PTHREAD_CREATE_DETACHED);
+#endif
 
 	/* TODO: apply the requested task priority to the task */
 	ao->priority = priority;
-
-	pthread_mutex_init(&ao->lock, NULL);
-
-	if (sem_init(&ao->event, 0, 0) != 0) {
-		return NULL;
-	}
 
 	return ao;
 }
@@ -144,13 +146,9 @@ int ao_post(struct ao * const ao, const struct ao_event * const event)
 {
 	int rc;
 
-	if (pthread_mutex_lock(&ao->lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_lock(&ao->lock);
 	rc = post_event(ao, event);
-	if (pthread_mutex_unlock(&ao->lock) != 0) {
-		AO_ASSERT(0);
-	}
+	pthread_mutex_unlock(&ao->lock);
 
 	return rc;
 }
@@ -188,12 +186,17 @@ int ao_stop(struct ao * const ao)
 {
 	/* FIXME: make sure no events in the queue to be processed */
 	AO_DEBUG("%p task termination\n", ao);
+#if defined(__APPLE__)
+	ao_post(ao, (const struct ao_event * const)-ESTALE);
+#endif
 	pthread_cancel(ao->thread);
+	pthread_join(ao->thread, 0);
 	return 0;
 }
 
 void ao_destroy(struct ao * const ao)
 {
+	sem_destroy(&ao->event);
 	memset(ao, 0, sizeof(*ao));
 }
 
