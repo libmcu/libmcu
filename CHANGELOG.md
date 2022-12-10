@@ -1,4 +1,10 @@
 # Changelog
+## v0.2.1 - December 10, 2022
+- Add trace module
+- cli: trim leading spaces
+- kvstore: add clear functionality
+- kvstore: remove nvs initialization in esp-idf port
+- Add active object module
 
 ## v0.2.0 - October 18, 2022
 - Add the ring buffer module
