@@ -100,7 +100,6 @@ static void *ao_task(void *e)
 	AO_DEBUG("%p task started\n", e);
 
 	struct ao * const ao = (struct ao * const)e;
-	ao_post(ao, 0);
 
 	while (1) {
 		sem_wait(&ao->event);
