@@ -106,7 +106,7 @@ static void *ao_task(void *e)
 
 		const struct ao_event * const event = pop_event(&ao->queue);
 #if defined(__APPLE__) /* does not support pthread_cancel */
-		if ((intptr_t)event == -ESTALE) {
+		if ((intptr_t)event == -ECANCELED) {
 			break;
 		}
 #endif
@@ -187,7 +187,7 @@ int ao_stop(struct ao * const ao)
 	/* FIXME: make sure no events in the queue to be processed */
 	AO_DEBUG("%p task termination\n", ao);
 #if defined(__APPLE__)
-	ao_post(ao, (const struct ao_event * const)-ESTALE);
+	ao_post(ao, (const struct ao_event * const)-ECANCELED);
 #endif
 	pthread_cancel(ao->thread);
 	pthread_join(ao->thread, 0);
