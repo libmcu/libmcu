@@ -6,6 +6,7 @@
 
 #include "libmcu/ao.h"
 #include "libmcu/ao_timer.h"
+#include "libmcu/ao_overrides.h"
 
 #include <errno.h>
 #include <string.h>
@@ -99,17 +100,15 @@ static void *ao_task(void *e)
 	AO_DEBUG("%p task started\n", e);
 
 	struct ao * const ao = (struct ao * const)e;
-	ao_post(ao, 0);
 
 	while (1) {
 		sem_wait(&ao->event);
 
 		const struct ao_event * const event = pop_event(&ao->queue);
-#if defined(__APPLE__) /* does not support pthread_cancel */
-		if ((intptr_t)event == -ESTALE) {
+
+		if ((intptr_t)event == -ECANCELED) {
 			break;
 		}
-#endif
 
 		AO_DEBUG("%p dispatch event: %p\n", ao, event);
 		(*ao->dispatch)(ao, event);
@@ -124,7 +123,7 @@ static struct ao *create_ao(struct ao * const ao,
 {
 	memset(ao, 0, sizeof(*ao));
 
-	if (pthread_mutex_init(&ao->lock, NULL) != 0 ||
+	if (ao_lock_init(&ao->lock, NULL) != 0 ||
 			sem_init(&ao->event, 0, 0) != 0) {
 		return NULL;
 	}
@@ -146,9 +145,9 @@ int ao_post(struct ao * const ao, const struct ao_event * const event)
 {
 	int rc;
 
-	pthread_mutex_lock(&ao->lock);
+	ao_lock(&ao->lock);
 	rc = post_event(ao, event);
-	pthread_mutex_unlock(&ao->lock);
+	ao_unlock(&ao->lock);
 
 	return rc;
 }
@@ -184,12 +183,8 @@ int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)
 
 int ao_stop(struct ao * const ao)
 {
-	/* FIXME: make sure no events in the queue to be processed */
 	AO_DEBUG("%p task termination\n", ao);
-#if defined(__APPLE__)
-	ao_post(ao, (const struct ao_event * const)-ESTALE);
-#endif
-	pthread_cancel(ao->thread);
+	ao_post(ao, (const struct ao_event * const)-ECANCELED);
 	pthread_join(ao->thread, 0);
 	return 0;
 }

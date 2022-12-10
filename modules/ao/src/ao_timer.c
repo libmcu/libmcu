@@ -5,6 +5,7 @@
  */
 
 #include "libmcu/ao_timer.h"
+#include "libmcu/ao_overrides.h"
 
 #include <stdbool.h>
 #include <errno.h>
@@ -35,7 +36,7 @@ static struct ao_timer timer_pool[AO_TIMER_MAXLEN];
 static bool initialize(void)
 {
 	AO_DEBUG("initializing ao_timer\n");
-	if (pthread_mutex_init(&pool_lock, NULL) == 0) {
+	if (ao_lock_init(&pool_lock, NULL) == 0) {
 		memset(timer_pool, 0, sizeof(timer_pool));
 		initialized = true;
 	}
@@ -159,9 +160,9 @@ int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 
 	int rc;
 
-	pthread_mutex_lock(&pool_lock);
+	ao_lock(&pool_lock);
 	rc = add_timer(ao, event, timeout_ms, interval_ms);
-	pthread_mutex_unlock(&pool_lock);
+	ao_unlock(&pool_lock);
 
 	return rc;
 }
@@ -171,18 +172,18 @@ int ao_timer_cancel(const struct ao * const ao,
 {
 	int rc;
 
-	pthread_mutex_lock(&pool_lock);
+	ao_lock(&pool_lock);
 	rc = free_timers_by_event(event, ao);
-	pthread_mutex_unlock(&pool_lock);
+	ao_unlock(&pool_lock);
 
 	return rc;
 }
 
 void ao_timer_step(uint32_t elapsed_ms)
 {
-	pthread_mutex_lock(&pool_lock);
+	ao_lock(&pool_lock);
 	do_step(elapsed_ms);
-	pthread_mutex_unlock(&pool_lock);
+	ao_unlock(&pool_lock);
 }
 
 void ao_timer_reset(void)
