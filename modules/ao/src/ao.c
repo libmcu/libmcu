@@ -105,11 +105,10 @@ static void *ao_task(void *e)
 		sem_wait(&ao->event);
 
 		const struct ao_event * const event = pop_event(&ao->queue);
-#if defined(__APPLE__) /* does not support pthread_cancel */
+
 		if ((intptr_t)event == -ECANCELED) {
 			break;
 		}
-#endif
 
 		AO_DEBUG("%p dispatch event: %p\n", ao, event);
 		(*ao->dispatch)(ao, event);
@@ -184,12 +183,8 @@ int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)
 
 int ao_stop(struct ao * const ao)
 {
-	/* FIXME: make sure no events in the queue to be processed */
 	AO_DEBUG("%p task termination\n", ao);
-#if defined(__APPLE__)
 	ao_post(ao, (const struct ao_event * const)-ECANCELED);
-#endif
-	pthread_cancel(ao->thread);
 	pthread_join(ao->thread, 0);
 	return 0;
 }

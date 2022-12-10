@@ -46,22 +46,17 @@ TEST_GROUP(AO) {
 	}
 };
 
-TEST(AO, start_ShouldDispatchNullEvent) {
-	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
-
+TEST(AO, start_ShouldDispatchNothing) {
 	ao_start(ao, dispatch);
-	sem_wait(&done);
 	ao_stop(ao);
 }
 
 TEST(AO, post_ShouldDispatchTheEventGiven) {
 	struct ao_event evt = { .type = 1234 };
 
-	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)&evt);
 
 	ao_start(ao, dispatch);
-	sem_wait(&done);
 	ao_post(ao, &evt);
 	sem_wait(&done);
 	ao_stop(ao);
@@ -97,10 +92,8 @@ TEST(AO, post_defer_ShouldPostAfterTimeout_WhenTimeoutGiven) {
 	ao_post_defer(ao, &evt, timeout_ms);
 
 	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)&evt);
-	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
 	ao_start(ao, dispatch);
 	ao_timer_step(timeout_ms);
-	sem_wait(&done);
 	sem_wait(&done);
 	ao_stop(ao);
 }
@@ -109,9 +102,7 @@ TEST(AO, post_defer_ShouldPostRepeatly_WhenIntervalGiven) {
 	struct ao_event evt = { .type = 1 };
 	uint32_t timeout_ms = 10;
 
-	mock().expectOneCall("dispatch").withParameter("event", (const struct ao_event *)0);
 	ao_start(ao, dispatch);
-	sem_wait(&done);
 
 	ao_post_repeat(ao, &evt, timeout_ms, timeout_ms);
 	for (int i = 0; i < 10; i++) {
