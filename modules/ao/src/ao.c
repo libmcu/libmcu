@@ -6,6 +6,7 @@
 
 #include "libmcu/ao.h"
 #include "libmcu/ao_timer.h"
+#include "libmcu/ao_overrides.h"
 
 #include <errno.h>
 #include <string.h>
@@ -124,7 +125,7 @@ static struct ao *create_ao(struct ao * const ao,
 {
 	memset(ao, 0, sizeof(*ao));
 
-	if (pthread_mutex_init(&ao->lock, NULL) != 0 ||
+	if (ao_lock_init(&ao->lock, NULL) != 0 ||
 			sem_init(&ao->event, 0, 0) != 0) {
 		return NULL;
 	}
@@ -146,9 +147,9 @@ int ao_post(struct ao * const ao, const struct ao_event * const event)
 {
 	int rc;
 
-	pthread_mutex_lock(&ao->lock);
+	ao_lock(&ao->lock);
 	rc = post_event(ao, event);
-	pthread_mutex_unlock(&ao->lock);
+	ao_unlock(&ao->lock);
 
 	return rc;
 }
