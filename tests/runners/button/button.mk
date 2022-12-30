@@ -3,7 +3,8 @@
 COMPONENT_NAME = button
 
 SRC_FILES = \
-	../modules/button/src/button.c
+	../modules/button/src/button.c \
+	../modules/button/src/button_overrides.c \
 
 TEST_SRC_FILES = \
 	src/button/button_test.cpp \

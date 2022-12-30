@@ -34,8 +34,20 @@ struct button_handlers {
 };
 
 void button_init(unsigned int (*get_time_ms)(void));
-bool button_register(const struct button_handlers *handlers,
+
+/**
+ * Register a button
+ *
+ * @param[in] handlers @ref struct button_handlers
+ * @param[in] get_button_state a function to get the button state
+ *
+ * @return a handle if registered successfully. NULL otherwise
+ */
+const void *button_register(const struct button_handlers *handlers,
 		int (*get_button_state)(void));
+
+bool button_is_pressed(const void *handle);
+
 /**
  * Scan all buttons and update the states
  *
