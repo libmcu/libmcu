@@ -171,7 +171,7 @@ TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventGiven) {
 }
 
 TEST(AO, post_if_unique_ShouldDispatchTheEvent_WhenNotTheSameEventQueuedAndArmed) {
-	struct ao_event evt;
+	struct ao_event evt = { 0, };
 
 	mock().expectOneCall("dispatch")
 		.withParameter("event", (const struct ao_event *)&evt);
@@ -183,13 +183,43 @@ TEST(AO, post_if_unique_ShouldDispatchTheEvent_WhenNotTheSameEventQueuedAndArmed
 }
 
 TEST(AO, post_if_unique_ShouldReturnEEXIT_WhenTheSameEventIsAlreadyInTheQueue) {
-	struct ao_event evt;
+	struct ao_event evt = { 0, };
 	ao_post_if_unique(ao, &evt);
 	LONGS_EQUAL(-EEXIST, ao_post_if_unique(ao, &evt));
 }
 
 TEST(AO, post_if_unique_ShouldReturnEEXIT_WhenTheSameEventIsArmedAlready) {
-	struct ao_event evt;
+	struct ao_event evt = { 0, };
 	ao_post_defer(ao, &evt, 1000);
 	LONGS_EQUAL(-EEXIST, ao_post_if_unique(ao, &evt));
+}
+
+TEST(AO, post_defer_if_unique_ShouldPostAfterTimeout_WhenTimeoutGiven) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+	ao_post_defer_if_unique(ao, &evt, timeout_ms);
+
+	mock().expectOneCall("dispatch")
+		.withParameter("event", (const struct ao_event *)&evt);
+
+	ao_start(ao, dispatch);
+	ao_timer_step(timeout_ms);
+	sem_wait(&done);
+	ao_stop(ao);
+}
+
+TEST(AO, post_defer_if_unique_ShouldReturnEEXIST_WhenTheSameEventIsAlreadyIn) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+
+	ao_post(ao, &evt);
+	LONGS_EQUAL(-EEXIST, ao_post_defer_if_unique(ao, &evt, timeout_ms));
+}
+
+TEST(AO, post_defer_if_unique_ShouldReturnEEXIST_WhenTheSameEventArmedAlready) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+
+	ao_post_defer(ao, &evt, timeout_ms);
+	LONGS_EQUAL(-EEXIST, ao_post_defer_if_unique(ao, &evt, timeout_ms));
 }

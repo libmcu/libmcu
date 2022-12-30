@@ -72,6 +72,17 @@ static bool is_event_already_queued(const struct ao_event_queue * const q,
 	return false;
 }
 
+static bool is_event_unique(const struct ao * const ao,
+		const struct ao_event * const event)
+{
+	if (is_event_already_queued(&ao->queue, event) ||
+			ao_timer_is_armed(ao, event)) {
+		return false;
+	}
+
+	return true;
+}
+
 static const struct ao_event *pop_event(struct ao_event_queue * const q)
 {
 	if (is_queue_empty(q)) {
@@ -194,15 +205,26 @@ int ao_post_if_unique(struct ao * const ao, const struct ao_event * const event)
 
 	ao_lock(ao);
 
-	if (is_event_already_queued(&ao->queue, event)) {
-		goto out;
-	}
-	if (ao_timer_is_armed(ao, event)) {
-		goto out;
+	if (is_event_unique(ao, event)) {
+		rc = post_event(ao, event);
 	}
 
-	rc = post_event(ao, event);
-out:
+	ao_unlock(ao);
+
+	return rc;
+}
+
+int ao_post_defer_if_unique(struct ao * const ao,
+		const struct ao_event * const event, uint32_t millisec_delay)
+{
+	int rc = -EEXIST;
+
+	ao_lock(ao);
+
+	if (is_event_unique(ao, event)) {
+		rc = ao_timer_add(ao, event, millisec_delay, 0);
+	}
+
 	ao_unlock(ao);
 
 	return rc;
