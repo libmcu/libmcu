@@ -230,6 +230,23 @@ int ao_post_defer_if_unique(struct ao * const ao,
 	return rc;
 }
 
+int ao_post_repeat_if_unique(struct ao * const ao,
+		const struct ao_event * const event,
+		uint32_t millisec_delay, uint32_t millisec_interval)
+{
+	int rc = -EEXIST;
+
+	ao_lock(ao);
+
+	if (is_event_unique(ao, event)) {
+		rc = ao_timer_add(ao, event, millisec_delay, millisec_interval);
+	}
+
+	ao_unlock(ao);
+
+	return rc;
+}
+
 int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)
 {
 	ao->dispatch = dispatcher;

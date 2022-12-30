@@ -223,3 +223,38 @@ TEST(AO, post_defer_if_unique_ShouldReturnEEXIST_WhenTheSameEventArmedAlready) {
 	ao_post_defer(ao, &evt, timeout_ms);
 	LONGS_EQUAL(-EEXIST, ao_post_defer_if_unique(ao, &evt, timeout_ms));
 }
+
+TEST(AO, post_repeat_if_unique_ShouldPostRepeatly) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+
+	ao_start(ao, dispatch);
+
+	ao_post_repeat_if_unique(ao, &evt, timeout_ms, timeout_ms);
+	for (int i = 0; i < 10; i++) {
+		mock().expectOneCall("dispatch")
+			.withParameter("event", (const struct ao_event *)&evt);
+		ao_timer_step(timeout_ms);
+		sem_wait(&done);
+	}
+
+	ao_stop(ao);
+}
+
+TEST(AO, post_repeat_if_unique_ShouldReturnEEXIST_WhenTheSameEventIsAlreadyIn) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+
+	ao_post(ao, &evt);
+	LONGS_EQUAL(-EEXIST, ao_post_repeat_if_unique(ao, &evt,
+				timeout_ms, timeout_ms));
+}
+
+TEST(AO, post_repeat_if_unique_ShouldReturnEEXIST_WhenTheSameEventArmedAlready) {
+	struct ao_event evt = { 0, };
+	uint32_t timeout_ms = 10;
+
+	ao_post_repeat(ao, &evt, timeout_ms, timeout_ms);
+	LONGS_EQUAL(-EEXIST, ao_post_repeat_if_unique(ao, &evt,
+				timeout_ms, timeout_ms));
+}
