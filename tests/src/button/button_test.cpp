@@ -62,15 +62,15 @@ TEST(button, register_ShouldReturnFalse_WhenInvalidParamsGiven) {
 	LONGS_EQUAL(0, button_register(NULL, get_button_state));
 }
 
-TEST(button, register_ShouldReturnFalse_WhenNoSlotsLeft) {
-	LONGS_EQUAL(1, button_register(&handlers, get_button_state));
-	LONGS_EQUAL(1, button_register(&handlers, get_button_state));
-	LONGS_EQUAL(1, button_register(&handlers, get_button_state));
-	LONGS_EQUAL(0, button_register(&handlers, get_button_state));
+TEST(button, register_ShouldReturnNull_WhenNoSlotsLeft) {
+	CHECK(button_register(&handlers, get_button_state) != NULL);
+	CHECK(button_register(&handlers, get_button_state) != NULL);
+	CHECK(button_register(&handlers, get_button_state) != NULL);
+	CHECK(button_register(&handlers, get_button_state) == NULL);
 }
 
-TEST(button, register_ShouldReturnTrue) {
-	LONGS_EQUAL(1, button_register(&handlers, get_button_state));
+TEST(button, register_ShouldReturnHandle) {
+	CHECK(button_register(&handlers, get_button_state) != NULL);
 }
 
 TEST(button, poll_ShouldDoNothing_WhenNoiseGiven) {
