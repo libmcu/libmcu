@@ -117,7 +117,7 @@ bool jobpool_schedule(void (*job)(void *context), void *job_context)
 	p->context = job_context;
 	p->state = PENDING;
 
-	sem_post_nointr(&m.sema);
+	sem_post(&m.sema);
 
 	return true;
 }

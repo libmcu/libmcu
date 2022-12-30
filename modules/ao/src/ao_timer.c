@@ -30,16 +30,17 @@ struct ao_timer {
 };
 
 static volatile bool initialized;
-static pthread_mutex_t pool_lock;
 static struct ao_timer timer_pool[AO_TIMER_MAXLEN];
 
 static bool initialize(void)
 {
 	AO_DEBUG("initializing ao_timer\n");
-	if (ao_lock_init(&pool_lock, NULL) == 0) {
-		memset(timer_pool, 0, sizeof(timer_pool));
-		initialized = true;
-	}
+
+	ao_timer_lock_init();
+	memset(timer_pool, 0, sizeof(timer_pool));
+
+	initialized = true;
+
 	return initialized;
 }
 
@@ -160,9 +161,9 @@ int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 
 	int rc;
 
-	ao_lock(&pool_lock);
+	ao_timer_lock();
 	rc = add_timer(ao, event, timeout_ms, interval_ms);
-	ao_unlock(&pool_lock);
+	ao_timer_unlock();
 
 	return rc;
 }
@@ -172,18 +173,18 @@ int ao_timer_cancel(const struct ao * const ao,
 {
 	int rc;
 
-	ao_lock(&pool_lock);
+	ao_timer_lock();
 	rc = free_timers_by_event(event, ao);
-	ao_unlock(&pool_lock);
+	ao_timer_unlock();
 
 	return rc;
 }
 
 void ao_timer_step(uint32_t elapsed_ms)
 {
-	ao_lock(&pool_lock);
+	ao_timer_lock();
 	do_step(elapsed_ms);
-	ao_unlock(&pool_lock);
+	ao_timer_unlock();
 }
 
 void ao_timer_reset(void)

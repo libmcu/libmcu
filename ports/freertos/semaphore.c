@@ -63,11 +63,10 @@ int sem_getvalue(sem_t *sem, int *sval)
 int sem_post(sem_t *sem)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
-	return xSemaphoreGive(psem->handle) == pdPASS? 0 : -1;
-}
 
-int sem_post_nointr(sem_t *sem)
-{
-	struct semaphore *psem = (struct semaphore *)sem;
+	if (!xPortInIsrContext()) {
+		return xSemaphoreGive(psem->handle) == pdPASS? 0 : -1;
+	}
+
 	return xSemaphoreGiveFromISR(psem->handle, NULL) == pdPASS? 0 : -1;
 }

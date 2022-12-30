@@ -11,9 +11,12 @@
 extern "C" {
 #endif
 
-void ao_lock(void *lock_handle);
-void ao_unlock(void *lock_handle);
-int ao_lock_init(void *lock_handle, void *arg);
+void ao_lock(void *ctx);
+void ao_unlock(void *ctx);
+
+void ao_timer_lock(void);
+void ao_timer_unlock(void);
+void ao_timer_lock_init(void);
 
 #if defined(__cplusplus)
 }

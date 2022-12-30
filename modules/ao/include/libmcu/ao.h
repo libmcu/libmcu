@@ -37,11 +37,9 @@ struct ao_event_queue {
 
 struct ao {
 	ao_dispatcher_t dispatch;
+	struct ao_event_queue queue;
 
 	sem_t event;
-
-	pthread_mutex_t lock;
-	struct ao_event_queue queue;
 
 	pthread_t thread;
 	pthread_attr_t attr;
