@@ -1,5 +1,5 @@
 # Changelog
-## v0.2.2 - December 30, 2022
+## v0.2.2 - December 31, 2022
 - button: replace `pthread_mutex` with `xxx_lock/unlock` wrapper
 - ports: freertos: remove `sem_post_nointr()`
 - ao: add `ao_post_if_unique()`
