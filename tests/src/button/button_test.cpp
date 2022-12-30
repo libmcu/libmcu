@@ -157,3 +157,17 @@ TEST(button, poll_ShouldCallHolding_WhenHoldingButtonPressed) {
 		while (!button_poll(NULL)) ;
 	}
 }
+
+TEST(button, is_pressed_ShouldReturnTrue_WhenStateIsFluctuate) {
+	mock().expectOneCall("get_button_state").andReturnValue(1);
+	const void *btn_handle = button_register(&handlers, get_button_state);
+	while (!button_poll(NULL)) ;
+	LONGS_EQUAL(1, button_is_pressed(btn_handle));
+}
+
+TEST(button, is_pressed_ShouldReturnFalse_WhenButtonIsUp) {
+	mock().expectOneCall("get_button_state").andReturnValue(0);
+	const void *btn_handle = button_register(&handlers, get_button_state);
+	while (!button_poll(NULL)) ;
+	LONGS_EQUAL(0, button_is_pressed(btn_handle));
+}
