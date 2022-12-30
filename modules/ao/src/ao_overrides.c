@@ -2,21 +2,37 @@
 #include "libmcu/compiler.h"
 #include <pthread.h>
 
+static pthread_mutex_t fallback_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t timer_lock;
+
 LIBMCU_WEAK
-void ao_lock(void *lock_handle)
+void ao_lock(void *ctx)
 {
-	pthread_mutex_lock((pthread_mutex_t *)lock_handle);
+	unused(ctx);
+	pthread_mutex_lock(&fallback_lock);
 }
 
 LIBMCU_WEAK
-void ao_unlock(void *lock_handle)
+void ao_unlock(void *ctx)
 {
-	pthread_mutex_unlock((pthread_mutex_t *)lock_handle);
+	unused(ctx);
+	pthread_mutex_unlock(&fallback_lock);
 }
 
 LIBMCU_WEAK
-int ao_lock_init(void *lock_handle, void *arg)
+void ao_timer_lock(void)
 {
-	return pthread_mutex_init((pthread_mutex_t *)lock_handle,
-			(const pthread_mutexattr_t *)arg);
+	pthread_mutex_lock(&timer_lock);
+}
+
+LIBMCU_WEAK
+void ao_timer_unlock(void)
+{
+	pthread_mutex_unlock(&timer_lock);
+}
+
+LIBMCU_WEAK
+void ao_timer_lock_init(void)
+{
+	pthread_mutex_init(&timer_lock, NULL);
 }
