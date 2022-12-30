@@ -5,8 +5,8 @@
  */
 
 #include "libmcu/button.h"
+#include "libmcu/button_overrides.h"
 #include <string.h>
-#include <pthread.h>
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
@@ -60,7 +60,6 @@ struct button {
 static struct {
 	unsigned int (*get_time_ms)(void);
 
-	pthread_mutex_t lock;
 	struct button buttons[BUTTON_MAX];
 } m;
 
@@ -196,46 +195,47 @@ static bool button_poll_internal(void *context)
 
 bool button_poll(void *context)
 {
-	bool rc;
-
-	pthread_mutex_lock(&m.lock);
-	{
-		rc = button_poll_internal(context);
-	}
-	pthread_mutex_unlock(&m.lock);
+	button_lock();
+	bool rc = button_poll_internal(context);
+	button_unlock();
 
 	return rc;
 }
 
-bool button_register(const struct button_handlers *handlers,
+const void *button_register(const struct button_handlers *handlers,
 		int (*get_button_state)(void))
 {
 	if (handlers == NULL || get_button_state == NULL) {
-		return false;
+		return NULL;
 	}
 
-	bool rc = false;
+	struct button *btn = NULL;
 
-	pthread_mutex_lock(&m.lock);
-	{
-		struct button *btn = get_unused_button();
+	button_lock();
 
-		if (btn == NULL) {
-			goto out;
-		}
-
-		btn->ops = handlers;
-		btn->get_state = get_button_state;
-		btn->pressed = false;
-		btn->holding = false;
-		memset(&btn->data, 0, sizeof(btn->data));
-		btn->active = true;
+	if ((btn = get_unused_button()) == NULL) {
+		goto out;
 	}
-	pthread_mutex_unlock(&m.lock);
 
-	rc = true;
+	btn->ops = handlers;
+	btn->get_state = get_button_state;
+	btn->pressed = false;
+	btn->holding = false;
+	memset(&btn->data, 0, sizeof(btn->data));
+	btn->active = true;
 out:
-	return rc;
+	button_unlock();
+
+	return btn;
+}
+
+bool button_is_pressed(const void *handle)
+{
+	button_lock();
+	bool pressed = !is_button_up((const struct button *)handle);
+	button_unlock();
+
+	return pressed;
 }
 
 void button_init(unsigned int (*get_time_ms)(void))
@@ -244,6 +244,4 @@ void button_init(unsigned int (*get_time_ms)(void))
 	m.get_time_ms = get_time_ms;
 
 	memset(m.buttons, 0, sizeof(m.buttons));
-
-	pthread_mutex_init(&m.lock, NULL);
 }
