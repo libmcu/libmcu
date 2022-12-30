@@ -71,6 +71,10 @@ int ao_post_defer(struct ao * const ao, const struct ao_event * const event,
 		uint32_t millisec_delay);
 int ao_post_repeat(struct ao * const ao, const struct ao_event * const event,
 		uint32_t millisec_delay, uint32_t millisec_interval);
+int ao_post_if_unique(struct ao * const ao,
+		const struct ao_event * const event);
+int ao_post_defer_if_unique(struct ao * const ao,
+		const struct ao_event * const event, uint32_t millisec_delay);
 
 /**
  * @brief Cancel out deferred events in the queue

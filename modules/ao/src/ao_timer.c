@@ -68,7 +68,7 @@ static void free_timer(struct ao_timer * const timer)
 }
 
 static int free_timers_by_event(const struct ao_event * const event,
-		const struct ao * const ao)
+		const struct ao * const ao, bool dryrun)
 {
 	int count = 0;
 
@@ -77,7 +77,9 @@ static int free_timers_by_event(const struct ao_event * const event,
 		if (is_allocated(timer) &&
 				timer->event == event &&
 				timer->ao == ao) {
-			free_timer(timer);
+			if (!dryrun) {
+				free_timer(timer);
+			}
 			count++;
 		}
 	}
@@ -174,10 +176,22 @@ int ao_timer_cancel(const struct ao * const ao,
 	int rc;
 
 	ao_timer_lock();
-	rc = free_timers_by_event(event, ao);
+	rc = free_timers_by_event(event, ao, false);
 	ao_timer_unlock();
 
 	return rc;
+}
+
+bool ao_timer_is_armed(const struct ao * const ao,
+		const struct ao_event * const event)
+{
+	int rc;
+
+	ao_timer_lock();
+	rc = free_timers_by_event(event, ao, true);
+	ao_timer_unlock();
+
+	return rc != 0;
 }
 
 void ao_timer_step(uint32_t elapsed_ms)

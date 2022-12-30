@@ -169,3 +169,27 @@ TEST(AO, cancel_ShouldCancelTimersInQueue_WhenEventGiven) {
 
 	LONGS_EQUAL(3, ao_cancel(ao, &evt));
 }
+
+TEST(AO, post_if_unique_ShouldDispatchTheEvent_WhenNotTheSameEventQueuedAndArmed) {
+	struct ao_event evt;
+
+	mock().expectOneCall("dispatch")
+		.withParameter("event", (const struct ao_event *)&evt);
+
+	ao_start(ao, dispatch);
+	LONGS_EQUAL(0, ao_post_if_unique(ao, &evt));
+	sem_wait(&done);
+	ao_stop(ao);
+}
+
+TEST(AO, post_if_unique_ShouldReturnEEXIT_WhenTheSameEventIsAlreadyInTheQueue) {
+	struct ao_event evt;
+	ao_post_if_unique(ao, &evt);
+	LONGS_EQUAL(-EEXIST, ao_post_if_unique(ao, &evt));
+}
+
+TEST(AO, post_if_unique_ShouldReturnEEXIT_WhenTheSameEventIsArmedAlready) {
+	struct ao_event evt;
+	ao_post_defer(ao, &evt, 1000);
+	LONGS_EQUAL(-EEXIST, ao_post_if_unique(ao, &evt));
+}
