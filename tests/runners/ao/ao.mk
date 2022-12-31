@@ -6,7 +6,8 @@ SRC_FILES = \
 	../modules/ao/src/ao.c \
 	../modules/ao/src/ao_timer.c \
 	../modules/ao/src/ao_overrides.c \
-	../modules/common/src/bitops.c
+	../modules/common/src/bitops.c \
+	../modules/common/src/assert.c \
 
 TEST_SRC_FILES = \
 	src/ao/ao_test.cpp \
