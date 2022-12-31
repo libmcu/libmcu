@@ -9,13 +9,8 @@
 #include "cbor/cbor.h"
 #include "cbor/encoder.h"
 
-static pthread_mutex_t lock;
 static cbor_writer_t writer;
-
-void metrics_lock_init(void)
-{
-	pthread_mutex_init(&lock, NULL);
-}
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void metrics_lock(void)
 {

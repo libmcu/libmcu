@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 enum {
-#define METRICS_DEFINE(id, key)		key = id,
+#define METRICS_DEFINE(key)		key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };
@@ -37,30 +37,10 @@ void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 size_t metrics_collect(void *buf, size_t bufsize);
 size_t metrics_count(void);
 
-/**
- * @brief It creates an encoding header.
- *
- * This function is called internally in `metrics_collect()`.
- *
- * @param[in] buf buffer
- * @param[in] bufsize buffer size
- * @param[in] nr_total the number of metrics declared in metrics.def
- * @param[in] nr_updated the number of metrics with non-zero value
- * @return the number of bytes written
- */
-size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated);
-size_t metrics_encode_each(void *buf, size_t bufsize,
-		metric_key_t key, int32_t value);
-
-void metrics_lock_init(void);
-void metrics_lock(void);
-void metrics_unlock(void);
-
 void metrics_init(bool force);
 
 #if defined(METRICS_KEY_STRING)
-char const *metrics_stringify_key(metric_key_t key);
+const char *metrics_stringify_key(metric_key_t key);
 #endif
 
 #if defined(__cplusplus)

@@ -12,7 +12,7 @@
 #include <string.h>
 
 #if !defined(AO_ASSERT)
-#include <assert.h>
+#include "libmcu/assert.h"
 #define AO_ASSERT(...)		assert(__VA_ARGS__)
 #endif
 #if !defined(AO_DEBUG)
