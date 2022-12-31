@@ -11,9 +11,11 @@
 LIBMCU_WEAK
 void button_lock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK
 void button_unlock(void)
 {
+	/* platform specific implementation */
 }

@@ -10,10 +10,12 @@
 
 LIBMCU_WEAK void metrics_lock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK void metrics_unlock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,

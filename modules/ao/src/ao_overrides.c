@@ -10,26 +10,31 @@
 LIBMCU_WEAK
 void ao_lock(void *ctx)
 {
+	/* platform specific implementation */
 	unused(ctx);
 }
 
 LIBMCU_WEAK
 void ao_unlock(void *ctx)
 {
+	/* platform specific implementation */
 	unused(ctx);
 }
 
 LIBMCU_WEAK
 void ao_timer_lock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK
 void ao_timer_unlock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK
 void ao_timer_lock_init(void)
 {
+	/* platform specific implementation */
 }
