@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 enum {
-#define METRICS_DEFINE(id, key)		key = id,
+#define METRICS_DEFINE(key)		key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 };

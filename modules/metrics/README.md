@@ -20,14 +20,12 @@ stream.
 
 ### Syncronization
 
-Implement `metrics_lock_init()`, `metrics_lock()` and `metrics_unlock()` in case
-of multi threaded environment.
+Implement `metrics_lock()` and `metrics_unlock()` in case of multi threaded
+environment.
 
 ```c
-static pthread_mutex_t lock;
-void metrics_lock_init(void) {
-	pthread_mutex_init(&lock, NULL);
-}
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 void metircs_lock(void) {
 	pthread_mutex_lock(&lock);
 }
