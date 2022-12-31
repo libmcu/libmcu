@@ -6,7 +6,6 @@
 
 #include "libmcu/metrics.h"
 #include "libmcu/metrics_overrides.h"
-#include <string.h>
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 

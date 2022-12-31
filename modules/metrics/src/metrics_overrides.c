@@ -7,18 +7,13 @@
 #include "libmcu/metrics_overrides.h"
 #include "libmcu/compiler.h"
 #include <string.h>
-#include <pthread.h>
-
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 LIBMCU_WEAK void metrics_lock(void)
 {
-	pthread_mutex_lock(&lock);
 }
 
 LIBMCU_WEAK void metrics_unlock(void)
 {
-	pthread_mutex_unlock(&lock);
 }
 
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,

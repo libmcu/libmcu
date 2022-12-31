@@ -5,10 +5,22 @@
  */
 
 #include "libmcu/metrics.h"
+#include <pthread.h>
 #include "cbor/cbor.h"
 #include "cbor/encoder.h"
 
 static cbor_writer_t writer;
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+void metrics_lock(void)
+{
+	pthread_mutex_lock(&lock);
+}
+
+void metrics_unlock(void)
+{
+	pthread_mutex_unlock(&lock);
+}
 
 size_t metrics_encode_header(void *buf, size_t bufsize,
 		uint32_t nr_total, uint32_t nr_updated)
