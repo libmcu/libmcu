@@ -34,15 +34,15 @@ static char const *key_strings[] = {
 };
 #endif
 
-static struct metrics *get_obj_from_index(uint32_t index)
+static struct metrics *get_item_by_index(uint32_t index)
 {
 	return &metrics[index];
 }
 
-static uint32_t get_index_from_key(metric_key_t key)
+static uint32_t get_index_by_key(metric_key_t key)
 {
 	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
-		if (get_obj_from_index(i)->key == key) {
+		if (get_item_by_index(i)->key == key) {
 			return i;
 		}
 	}
@@ -53,14 +53,14 @@ static uint32_t get_index_from_key(metric_key_t key)
 
 static struct metrics *get_obj_from_key(metric_key_t key)
 {
-	return get_obj_from_index(get_index_from_key(key));
+	return get_item_by_index(get_index_by_key(key));
 }
 
 static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
 					      void *ctx), void *ctx)
 {
 	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
-		struct metrics const *p = get_obj_from_index(i);
+		struct metrics const *p = get_item_by_index(i);
 		callback_each(p->key, p->value, ctx);
 	}
 }
@@ -68,7 +68,7 @@ static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
 static void reset_all(void)
 {
 	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
-		get_obj_from_index(i)->value = 0;
+		get_item_by_index(i)->value = 0;
 	}
 }
 
@@ -77,7 +77,7 @@ static uint32_t count_metrics_with_nonzero_value(void)
 	uint32_t nr_updated = 0;
 
 	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
-		struct metrics const *p = get_obj_from_index(i);
+		struct metrics const *p = get_item_by_index(i);
 		if (p->value != 0) {
 			nr_updated++;
 		}
@@ -92,7 +92,7 @@ static size_t encode_all(uint8_t *buf, size_t bufsize)
 			METRICS_KEY_MAX, count_metrics_with_nonzero_value());
 
 	for (uint32_t i = 0; i < METRICS_KEY_MAX; i++) {
-		struct metrics const *p = get_obj_from_index(i);
+		struct metrics const *p = get_item_by_index(i);
 		written += metrics_encode_each(&buf[written], bufsize - written,
 				p->key, p->value);
 	}
