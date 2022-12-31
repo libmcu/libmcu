@@ -1,4 +1,9 @@
 # Changelog
+## v0.2.2 - December 31, 2022
+- button: replace `pthread_mutex` with `xxx_lock/unlock` wrapper
+- ports: freertos: remove `sem_post_nointr()`
+- ao: add `ao_post_if_unique()`
+
 ## v0.2.1 - December 10, 2022
 - Add trace module
 - cli: trim leading spaces

@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include "libmcu/ao.h"
+#include <stdbool.h>
 
 #if !defined(AO_TIMER_MAXLEN)
 #define AO_TIMER_MAXLEN			8U
@@ -20,6 +21,8 @@ extern "C" {
 int ao_timer_add(struct ao * const ao, const struct ao_event * const event,
 		uint32_t timeout_ms, uint32_t interval_ms);
 int ao_timer_cancel(const struct ao * const ao,
+		const struct ao_event * const event);
+bool ao_timer_is_armed(const struct ao * const ao,
 		const struct ao_event * const event);
 void ao_timer_step(uint32_t elapsed_ms);
 void ao_timer_reset(void);

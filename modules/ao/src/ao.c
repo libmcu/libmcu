@@ -36,6 +36,7 @@ static uint16_t get_index(uint16_t index)
 
 static void increse_index(uint16_t * const index)
 {
+	/* NOTE: lock-free can be achived by doing atomic operation here. */
 	*index = (uint16_t)(*index + 1U);
 }
 
@@ -52,6 +53,34 @@ static bool is_queue_empty(const struct ao_event_queue * const q)
 static bool is_queue_full(const struct ao_event_queue * const q)
 {
 	return get_queue_len(q) >= AO_EVENT_MAXLEN;
+}
+
+static bool is_event_already_queued(const struct ao_event_queue * const q,
+		const struct ao_event *event)
+{
+	const uint16_t index = q->index;
+	uint16_t outdex = q->outdex;
+
+	while ((index - outdex) != 0) {
+		const struct ao_event *armed = q->events[get_index(outdex)];
+		if (armed == event) {
+			return true;
+		}
+		outdex++;
+	}
+
+	return false;
+}
+
+static bool is_event_unique(const struct ao * const ao,
+		const struct ao_event * const event)
+{
+	if (is_event_already_queued(&ao->queue, event) ||
+			ao_timer_is_armed(ao, event)) {
+		return false;
+	}
+
+	return true;
 }
 
 static const struct ao_event *pop_event(struct ao_event_queue * const q)
@@ -104,7 +133,9 @@ static void *ao_task(void *e)
 	while (1) {
 		sem_wait(&ao->event);
 
+		ao_lock(ao);
 		const struct ao_event * const event = pop_event(&ao->queue);
+		ao_unlock(ao);
 
 		if ((intptr_t)event == -ECANCELED) {
 			break;
@@ -166,6 +197,54 @@ int ao_post_repeat(struct ao * const ao, const struct ao_event * const event,
 int ao_cancel(const struct ao * const ao, const struct ao_event * const event)
 {
 	return ao_timer_cancel(ao, event);
+}
+
+int ao_post_if_unique(struct ao * const ao, const struct ao_event * const event)
+{
+	int rc = -EEXIST;
+
+	ao_lock(ao);
+
+	if (is_event_unique(ao, event)) {
+		rc = post_event(ao, event);
+	}
+
+	ao_unlock(ao);
+
+	return rc;
+}
+
+int ao_post_defer_if_unique(struct ao * const ao,
+		const struct ao_event * const event, uint32_t millisec_delay)
+{
+	int rc = -EEXIST;
+
+	ao_lock(ao);
+
+	if (is_event_unique(ao, event)) {
+		rc = ao_timer_add(ao, event, millisec_delay, 0);
+	}
+
+	ao_unlock(ao);
+
+	return rc;
+}
+
+int ao_post_repeat_if_unique(struct ao * const ao,
+		const struct ao_event * const event,
+		uint32_t millisec_delay, uint32_t millisec_interval)
+{
+	int rc = -EEXIST;
+
+	ao_lock(ao);
+
+	if (is_event_unique(ao, event)) {
+		rc = ao_timer_add(ao, event, millisec_delay, millisec_interval);
+	}
+
+	ao_unlock(ao);
+
+	return rc;
 }
 
 int ao_start(struct ao * const ao, ao_dispatcher_t dispatcher)

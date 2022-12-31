@@ -73,6 +73,23 @@ int ao_post_repeat(struct ao * const ao, const struct ao_event * const event,
 		uint32_t millisec_delay, uint32_t millisec_interval);
 
 /**
+ * @brief Post an event if the same event not already in the queue and not
+ *        armed yet
+ *
+ * @param ao instance
+ * @param event to dispatch
+ *
+ * @return 0 on success otherwise a negative error code
+ */
+int ao_post_if_unique(struct ao * const ao,
+		const struct ao_event * const event);
+int ao_post_defer_if_unique(struct ao * const ao,
+		const struct ao_event * const event, uint32_t millisec_delay);
+int ao_post_repeat_if_unique(struct ao * const ao,
+		const struct ao_event * const event,
+		uint32_t millisec_delay, uint32_t millisec_interval);
+
+/**
  * @brief Cancel out deferred events in the queue
  *
  * @param ao instance
