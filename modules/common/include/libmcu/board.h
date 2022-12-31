@@ -26,7 +26,7 @@ unsigned long board_get_total_heap_bytes(void);
 unsigned long board_get_heap_watermark(void);
 unsigned long board_get_current_stack_watermark(void);
 
-unsigned long board_get_tick(void);
+unsigned long board_get_time_since_boot_ms(void);
 
 void *board_get_current_thread(void);
 

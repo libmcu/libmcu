@@ -19,7 +19,7 @@ LIBMCU_WEAK
 LIBMCU_NO_INSTRUMENT
 uint32_t trace_get_time(void)
 {
-	return (uint32_t)board_get_tick();
+	return (uint32_t)board_get_time_since_boot_ms();
 }
 
 LIBMCU_WEAK
