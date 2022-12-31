@@ -40,7 +40,7 @@ size_t metrics_count(void);
 void metrics_init(bool force);
 
 #if defined(METRICS_KEY_STRING)
-char const *metrics_stringify_key(metric_key_t key);
+const char *metrics_stringify_key(metric_key_t key);
 #endif
 
 #if defined(__cplusplus)

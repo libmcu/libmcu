@@ -171,7 +171,7 @@ size_t metrics_count(void)
 }
 
 #if defined(METRICS_KEY_STRING)
-char const *metrics_stringify_key(metric_key_t key)
+const char *metrics_stringify_key(metric_key_t key)
 {
 	return key_strings[key];
 }
