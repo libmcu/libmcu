@@ -5,6 +5,7 @@
  */
 
 #include "libmcu/metrics.h"
+#include "libmcu/metrics_overrides.h"
 #include <string.h>
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
@@ -116,9 +117,7 @@ static void initialize_metrics(void)
 void metrics_set(metric_key_t key, int32_t val)
 {
 	metrics_lock();
-	{
-		get_obj_from_key(key)->value = val;
-	}
+	get_obj_from_key(key)->value = val;
 	metrics_unlock();
 }
 
@@ -127,9 +126,7 @@ int32_t metrics_get(metric_key_t key)
 	int32_t value;
 
 	metrics_lock();
-	{
-		value = get_obj_from_key(key)->value;
-	}
+	value = get_obj_from_key(key)->value;
 	metrics_unlock();
 
 	return value;
@@ -138,27 +135,21 @@ int32_t metrics_get(metric_key_t key)
 void metrics_increase(metric_key_t key)
 {
 	metrics_lock();
-	{
-		get_obj_from_key(key)->value++;
-	}
+	get_obj_from_key(key)->value++;
 	metrics_unlock();
 }
 
 void metrics_increase_by(metric_key_t key, int32_t n)
 {
 	metrics_lock();
-	{
-		get_obj_from_key(key)->value += n;
-	}
+	get_obj_from_key(key)->value += n;
 	metrics_unlock();
 }
 
 void metrics_reset(void)
 {
 	metrics_lock();
-	{
-		reset_all();
-	}
+	reset_all();
 	metrics_unlock();
 }
 
@@ -167,9 +158,7 @@ size_t metrics_collect(void *buf, size_t bufsize)
 	size_t written;
 
 	metrics_lock();
-	{
-		written = encode_all((uint8_t *)buf, bufsize);
-	}
+	written = encode_all((uint8_t *)buf, bufsize);
 	metrics_unlock();
 
 	return written;
@@ -179,9 +168,7 @@ void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 					   void *ctx), void *ctx)
 {
 	metrics_lock();
-	{
-		iterate_all(callback_each, ctx);
-	}
+	iterate_all(callback_each, ctx);
 	metrics_unlock();
 }
 
@@ -199,46 +186,8 @@ char const *metrics_stringify_key(metric_key_t key)
 
 void metrics_init(bool force)
 {
-	metrics_lock_init();
-
 	if (force || magic != MAGIC_CODE) {
 		initialize_metrics();
 		magic = MAGIC_CODE;
 	}
-}
-
-LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated)
-{
-	unused(buf);
-	unused(bufsize);
-	unused(nr_total);
-	unused(nr_updated);
-	return 0;
-}
-
-LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
-		metric_key_t key, int32_t value)
-{
-	unused(key);
-
-	if (bufsize < sizeof(value)) {
-		return 0;
-	}
-
-	memcpy(buf, &value, sizeof(value));
-
-	return sizeof(value);
-}
-
-LIBMCU_WEAK void metrics_lock_init(void)
-{
-}
-
-LIBMCU_WEAK void metrics_lock(void)
-{
-}
-
-LIBMCU_WEAK void metrics_unlock(void)
-{
 }

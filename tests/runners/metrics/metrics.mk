@@ -4,7 +4,8 @@ COMPONENT_NAME = metrics
 
 SRC_FILES = \
 	stubs/logging.c \
-	../modules/metrics/src/metrics.c
+	../modules/metrics/src/metrics.c \
+	../modules/metrics/src/metrics_overrides.c \
 
 TEST_SRC_FILES = \
 	src/metrics/test_metrics.cpp \
