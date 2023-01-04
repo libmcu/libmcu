@@ -1,4 +1,9 @@
 # Changelog
+## v0.2.3 - January 4, 2023
+### **Breaking Changes**
+- metrics: change to not designate key ID when defining a metric
+- cli: add convenient macros to define/register commands
+
 ## v0.2.2 - December 31, 2022
 - button: replace `pthread_mutex` with `xxx_lock/unlock` wrapper
 - ports: freertos: remove `sem_post_nointr()`
