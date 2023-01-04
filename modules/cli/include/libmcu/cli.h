@@ -33,7 +33,6 @@ struct cli {
 
 void cli_init(struct cli *cli, struct cli_io const *io,
 		const struct cli_cmd **cmdlist);
-struct cli_io const *cli_io_create(void);
 void cli_run(struct cli *cli);
 void cli_step(struct cli *cli);
 

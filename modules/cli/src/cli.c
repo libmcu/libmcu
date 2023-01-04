@@ -7,8 +7,6 @@
 #include "libmcu/cli.h"
 #include <stdint.h>
 #include <string.h>
-#include "libmcu/assert.h"
-#include "libmcu/compiler.h"
 
 #if !defined(CLI_PROMPT)
 #define CLI_PROMPT				"$ "
@@ -220,7 +218,7 @@ void cli_run(struct cli *cli)
 void cli_init(struct cli *cli, struct cli_io const *io,
 	      struct cli_cmd const **cmdlist)
 {
-	assert(cli != NULL && io != NULL && cmdlist != NULL);
+	CLI_ASSERT(cli != NULL && io != NULL && cmdlist != NULL);
 
 	cli->io = io;
 	cli->cmdlist = cmdlist;
@@ -228,9 +226,4 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));
-}
-
-struct cli_io const * LIBMCU_WEAK cli_io_create(void)
-{
-	return NULL;
 }
