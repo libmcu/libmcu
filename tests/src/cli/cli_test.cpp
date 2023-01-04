@@ -8,12 +8,10 @@
 #include <string.h>
 #include "libmcu/cli.h"
 
-static cli_cmd_error_t cmd_exit(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(exit, "Exit the CLI") {
 	return CLI_CMD_EXIT;
 }
-static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(args, "") {
 	struct cli const *cli = (struct cli const *)env;
 	char buf[1024];
 	int len = 0;
@@ -24,21 +22,12 @@ static cli_cmd_error_t cmd_args(int argc, const char *argv[], const void *env)
 	cli->io->write(buf, (size_t)len);
 	return CLI_CMD_SUCCESS;
 }
-static cli_cmd_error_t cmd_error(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(error, NULL) {
 	return CLI_CMD_ERROR;
 }
-static cli_cmd_error_t cmd_invalid(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(invalid, "desc") {
 	return CLI_CMD_INVALID_PARAM;
 }
-
-static struct cli_cmd const commands[] = {
-	{ "exit", cmd_exit, "Exit the CLI" },
-	{ "args", cmd_args, "" },
-	{ "error", cmd_error, NULL },
-	{ "invalid", cmd_invalid, "desc" },
-};
 
 static char writebuf[256];
 static char readbuf[256];
@@ -72,8 +61,8 @@ TEST_GROUP(cli) {
 		write_index = 0;
 		read_index = 0;
 
-		cli_init(&cli, &io, commands,
-				sizeof(commands) / sizeof(commands[0]));
+		DEFINE_CLI_CMD_LIST(cmd_list, exit, args, error, invalid);
+		cli_init(&cli, &io, cmd_list);
 	}
 	void teardown() {
 	}

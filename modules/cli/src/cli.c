@@ -169,8 +169,8 @@ static cli_cmd_error_t process_command(struct cli const *cli,
 	cli_cmd_error_t rc = CLI_CMD_NOT_FOUND;
 	struct cli_cmd const *cmd = NULL;
 
-	for (size_t i = 0; i < cli->cmdlist_len; i++) {
-		cmd = &cli->cmdlist[i];
+	for (size_t i = 0; cli->cmdlist[i]; i++) {
+		cmd = cli->cmdlist[i];
 		if (strcmp(cmd->name, argv[0]) == 0) {
 			rc = cmd->func(argc, argv, env);
 			break;
@@ -218,13 +218,12 @@ void cli_run(struct cli *cli)
 }
 
 void cli_init(struct cli *cli, struct cli_io const *io,
-	      struct cli_cmd const *cmdlist, size_t cmdlist_len)
+	      struct cli_cmd const **cmdlist)
 {
 	assert(cli != NULL && io != NULL && cmdlist != NULL);
 
 	cli->io = io;
 	cli->cmdlist = cmdlist;
-	cli->cmdlist_len = cmdlist_len;
 	cli->cmdbuf_index = 0;
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));

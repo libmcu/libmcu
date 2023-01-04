@@ -9,7 +9,7 @@
 A toolkit for firmware development.
 
 Simplicity and code size are considered first while trying to avoid dynamic
-allocation as much as possible.
+allocation as much as possible. No linker script tweak required.
 
 The documentation of each modules are under the subdirectories. Some usage
 examples can also be found under [examples](examples) and [test cases](tests/src).

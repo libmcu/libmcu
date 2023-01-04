@@ -36,6 +36,8 @@ struct cli_cmd {
 	char const *desc;
 };
 
+#include "cli_cmd_macro.h"
+
 #if defined(__cplusplus)
 }
 #endif

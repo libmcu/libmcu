@@ -15,6 +15,10 @@ extern "C" {
 #include <stdbool.h>
 #include "cli_cmd.h"
 
+#if !defined(CLI_ASSERT)
+#define CLI_ASSERT(exp)
+#endif
+
 struct cli_io {
 	size_t (*read)(void *buf, size_t bufsize);
 	size_t (*write)(void const *data, size_t datasize);
@@ -22,14 +26,13 @@ struct cli_io {
 
 struct cli {
 	struct cli_io const *io;
-	struct cli_cmd const *cmdlist;
-	size_t cmdlist_len;
+	struct cli_cmd const **cmdlist;
 	char cmdbuf[CLI_CMD_MAXLEN + 1/*linefeed*/ + 1/*null*/];
 	size_t cmdbuf_index;
 };
 
 void cli_init(struct cli *cli, struct cli_io const *io,
-	      struct cli_cmd const *cmdlist, size_t cmdlist_len);
+		const struct cli_cmd **cmdlist);
 struct cli_io const *cli_io_create(void);
 void cli_run(struct cli *cli);
 void cli_step(struct cli *cli);
