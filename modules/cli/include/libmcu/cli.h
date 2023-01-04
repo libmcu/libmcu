@@ -14,6 +14,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 #include "cli_cmd.h"
+#include "cli_overrides.h"
 
 #if !defined(CLI_ASSERT)
 #define CLI_ASSERT(exp)
