@@ -20,21 +20,10 @@ static const cli_io_t io = {
 	.write = cli_write,
 };
 
-static struct cli_cmd cmds[] = {
-	{
-		.name = "help",
-		.func = help_func,
-		.desc = "your description",
-	},
-	{
-		.name = "test",
-		.func = test_func,
-	},
-};
-
 struct cli cli;
 
-cli_init(&cli, &io, cmds, sizeof(cmds) / sizeof(cmds[0]));
+DEFINE_CLI_CMD_LIST(cli_commands, test_cmd, your_cmd);
+cli_init(&cli, &io, cli_commands);
 #if never_return_unless_exit_command_received
 cli_run(&cli);
 #else
@@ -46,11 +35,17 @@ while (1) {
 
 ### Adding new command
 
-cli_cmd_error_t help_func(int argc, const char *argv[], const void *env)
-{
+```c
+DEFINE_CLI_CMD(your_cmd, "Description for your command") {
 	...
 	return CLI_CMD_SUCCESS;
 }
+
+DEFINE_CLI_CMD(test_cmd, "Description for test command") {
+	...
+	return CLI_CMD_SUCCESS;
+}
+```
 
 ### Increasing the command buffer size
 

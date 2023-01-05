@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "cli_commands.h"
+#include "libmcu/cli.h"
 #include "libmcu/compiler.h"
 
-cli_cmd_error_t cli_cmd_exit(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(exit, "Exit the CLI") {
 	unused(argc);
 	unused(argv);
 	unused(env);
