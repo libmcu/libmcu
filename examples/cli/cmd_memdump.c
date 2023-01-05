@@ -105,7 +105,7 @@ static void memdump(uintptr_t addr, int len, int width, struct cli_io const *io)
 }
 
 DEFINE_CLI_CMD(md, "Dump memory: md <addr> <len>") {
-	static uintptr_t addr = (uintptr_t)&cli_cmd_memdump;
+	static uintptr_t addr = (uintptr_t)&cli_cmd_md_handler;
 	static int length = BYTES_PER_LINE;
 
 	struct cli const *cli = (struct cli const *)env;
