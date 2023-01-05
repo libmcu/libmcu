@@ -4,20 +4,18 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "cli_commands.h"
-#include <string.h>
 #include "libmcu/cli.h"
+#include <string.h>
 #include "libmcu/compiler.h"
 
-cli_cmd_error_t cli_cmd_help(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(help, "List available commands") {
 	unused(argc);
 	unused(argv);
 
 	struct cli const *cli = (struct cli const *)env;
 
-	for (size_t i = 0; i < cli->cmdlist_len; i++) {
-		struct cli_cmd const *cmd = &cli->cmdlist[i];
+	for (size_t i = 0; cli->cmdlist[i]; i++) {
+		struct cli_cmd const *cmd = cli->cmdlist[i];
 		cli->io->write(cmd->name, strlen(cmd->name));
 		if (cmd->desc) {
 			cli->io->write("\t: ", 3);

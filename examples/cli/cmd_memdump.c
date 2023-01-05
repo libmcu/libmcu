@@ -4,12 +4,11 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "cli_commands.h"
+#include "libmcu/cli.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "libmcu/cli.h"
 
 #define BUFSIZE				32
 #define BYTES_PER_LINE			16
@@ -105,9 +104,8 @@ static void memdump(uintptr_t addr, int len, int width, struct cli_io const *io)
 	}
 }
 
-cli_cmd_error_t cli_cmd_memdump(int argc, const char *argv[], const void *env)
-{
-	static uintptr_t addr = (uintptr_t)&cli_cmd_memdump;
+DEFINE_CLI_CMD(md, "Dump memory: md <addr> <len>") {
+	static uintptr_t addr = (uintptr_t)&cli_cmd_md_handler;
 	static int length = BYTES_PER_LINE;
 
 	struct cli const *cli = (struct cli const *)env;

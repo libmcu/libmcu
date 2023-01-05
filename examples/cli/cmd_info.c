@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "cli_commands.h"
-#include <string.h>
 #include "libmcu/cli.h"
+#include <string.h>
 #include "libmcu/board.h"
 
 typedef enum {
@@ -14,11 +13,18 @@ typedef enum {
 	CMD_OPT_VERSION			= 0x01,
 	CMD_OPT_BUILD_DATE		= 0x02,
 	CMD_OPT_SERIAL_NUMBER		= 0x04,
+	CMD_OPT_HELP			= 0x08,
 	CMD_OPT_ALL			= (
 			CMD_OPT_VERSION |
 			CMD_OPT_BUILD_DATE |
 			CMD_OPT_SERIAL_NUMBER),
 } cmd_opt_t;
+
+static void println(const struct cli_io *io, const char *str)
+{
+	io->write(str, strlen(str));
+	io->write("\n", 1);
+}
 
 static cmd_opt_t get_command_option(int argc, const char *opt)
 {
@@ -26,6 +32,8 @@ static cmd_opt_t get_command_option(int argc, const char *opt)
 		return CMD_OPT_ALL;
 	} else if (opt == NULL) {
 		return CMD_OPT_NONE;
+	} else if (strcmp(opt, "help") == 0) {
+		return CMD_OPT_HELP;
 	} else if (strcmp(opt, "version") == 0) {
 		return CMD_OPT_VERSION;
 	} else if (strcmp(opt, "sn") == 0) {
@@ -37,29 +45,27 @@ static cmd_opt_t get_command_option(int argc, const char *opt)
 	return CMD_OPT_ALL;
 }
 
+static void print_help(struct cli_io const *io)
+{
+	println(io, "subcommands:\n\n\tversion\n\tsn\n\tbuild");
+}
+
 static void print_version(struct cli_io const *io)
 {
-	const char *ver = board_get_version_string();
-	io->write(ver, strlen(ver));
-	io->write("\n", 1);
+	println(io, board_get_version_string());
 }
 
 static void print_sn(struct cli_io const *io)
 {
-	const char *sn = board_get_serial_number_string();
-	io->write(sn, strlen(sn));
-	io->write("\n", 1);
+	println(io, board_get_serial_number_string());
 }
 
 static void print_build_date(struct cli_io const *io)
 {
-	const char *build_date = board_get_build_date_string();
-	io->write(build_date, strlen(build_date));
-	io->write("\n", 1);
+	println(io, board_get_build_date_string());
 }
 
-cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)
-{
+DEFINE_CLI_CMD(info, "Display device info") {
 	if (argc > 2) {
 		return CLI_CMD_INVALID_PARAM;
 	}
@@ -68,6 +74,9 @@ cli_cmd_error_t cli_cmd_info(int argc, const char *argv[], const void *env)
 
 	cmd_opt_t options = get_command_option(argc, argv? argv[1] : NULL);
 
+	if (options & CMD_OPT_HELP) {
+		print_help(cli->io);
+	}
 	if (options & CMD_OPT_VERSION) {
 		print_version(cli->io);
 	}
