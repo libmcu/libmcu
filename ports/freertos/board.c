@@ -6,6 +6,8 @@
 
 #include "libmcu/board.h"
 #include "libmcu/compiler.h"
+#include "libmcu/assert.h"
+#include "libmcu/logging.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -49,4 +51,11 @@ LIBMCU_NO_INSTRUMENT
 unsigned long board_get_free_heap_bytes(void)
 {
 	return (unsigned long)xPortGetFreeHeapSize();
+}
+
+LIBMCU_NO_INSTRUMENT
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+	error("Stack overflow! %s", pcTaskName);
+	assert(0);
 }
