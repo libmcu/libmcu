@@ -58,7 +58,7 @@ struct button {
 };
 
 static struct {
-	unsigned int (*get_time_ms)(void);
+	unsigned long (*get_time_ms)(void);
 
 	struct button buttons[BUTTON_MAX];
 } m;
@@ -104,7 +104,7 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-static void do_pressed(struct button *btn, void *context, unsigned int t)
+static void do_pressed(struct button *btn, void *context, unsigned long t)
 {
 	if (btn->pressed) {
 		return;
@@ -117,7 +117,7 @@ static void do_pressed(struct button *btn, void *context, unsigned int t)
 	}
 }
 
-static void do_released(struct button *btn, void *context, unsigned int t)
+static void do_released(struct button *btn, void *context, unsigned long t)
 {
 	if (!btn->pressed) {
 		return;
@@ -131,7 +131,7 @@ static void do_released(struct button *btn, void *context, unsigned int t)
 	}
 }
 
-static void do_holding(struct button *btn, void *context, unsigned int t)
+static void do_holding(struct button *btn, void *context, unsigned long t)
 {
 	if (btn->holding) {
 		return;
@@ -146,7 +146,7 @@ static void do_holding(struct button *btn, void *context, unsigned int t)
 }
 
 static button_state_t scan_button(struct button *btn, void *context,
-		unsigned int t)
+		unsigned long t)
 {
 	if (!btn->active) {
 		return BUTTON_STATE_INACTIVE;
@@ -170,7 +170,7 @@ static button_state_t scan_button(struct button *btn, void *context,
 	return BUTTON_STATE_UNKNOWN;
 }
 
-static void scan_all(void *context, unsigned int t)
+static void scan_all(void *context, unsigned long t)
 {
 	for (int i = 0; i < BUTTON_MAX; i++) {
 		scan_button(&m.buttons[i], context, t);
@@ -179,8 +179,8 @@ static void scan_all(void *context, unsigned int t)
 
 static bool button_poll_internal(void *context)
 {
-	static unsigned int t0;
-	unsigned int t = m.get_time_ms();
+	static unsigned long t0;
+	unsigned long t = m.get_time_ms();
 
 	if ((t - t0) < BUTTON_SAMPLING_PERIOD_MS) {
 		return false;
@@ -238,7 +238,7 @@ bool button_is_pressed(const void *handle)
 	return pressed;
 }
 
-void button_init(unsigned int (*get_time_ms)(void))
+void button_init(unsigned long (*get_time_ms)(void))
 {
 	assert(get_time_ms != NULL);
 	m.get_time_ms = get_time_ms;

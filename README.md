@@ -57,14 +57,18 @@ include $(LIBMCU_ROOT)/projects/modules.mk
 ##### CMake
 
 ```cmake
+add_subdirectory(<THIRD_PARTY_DIR>/libmcu)
+```
+
+or
+
+```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
 list(APPEND LIBMCU_MODULES ao logging metrics pubsub)
 include(${LIBMCU_ROOT}/projects/modules.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
 # Add ${LIBMCU_MODULES_INCS} to your target includes
-# e.g. add_library(libmcu STATIC ${LIBMCU_COMPONENTS_SRCS})
-#      target_include_directories(libmcu PUBLIC ${LIBMCU_COMPONENTS_INCS})
 ```
 
 ### CMake FetchContent

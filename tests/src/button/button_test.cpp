@@ -31,9 +31,9 @@ static void holding(const struct button_data *btn, void *context)
 	mock().actualCall(__func__);
 }
 
-static unsigned int fake_time;
+static unsigned long fake_time;
 
-static unsigned int fake_get_time_ms(void)
+static unsigned long fake_get_time_ms(void)
 {
 	return fake_time++;
 }

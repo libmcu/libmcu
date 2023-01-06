@@ -15,8 +15,8 @@ extern "C" {
 
 struct button_data {
 	unsigned int history;
-	unsigned int time_pressed;
-	unsigned int time_released;
+	unsigned long time_pressed;
+	unsigned long time_released;
 };
 
 struct button_handlers {
@@ -26,7 +26,7 @@ struct button_handlers {
 	void (*clicked)(const struct button_data *btn, void *context);
 };
 
-void button_init(unsigned int (*get_time_ms)(void));
+void button_init(unsigned long (*get_time_ms)(void));
 
 /**
  * Register a button
