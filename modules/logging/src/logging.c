@@ -5,6 +5,7 @@
  */
 
 #include "libmcu/logging.h"
+#include "libmcu/logging_overrides.h"
 
 #include <stdbool.h>
 #include <stdarg.h>
@@ -476,31 +477,20 @@ void logging_iterate_tag(void (*callback_each)(const char *tag,
 	logging_unlock();
 }
 
-const char *logging_stringify(char *buf, size_t bufsize, const void *log)
+size_t logging_stringify(char *buf, size_t bufsize, const void *log)
 {
 	const logging_data_t *p = (const logging_data_t *)log;
-	int len = snprintf(buf, bufsize-2, "%lu: [%s] <%p,%p> ",
+	size_t msglen = 0;
+	size_t len = (size_t)snprintf(buf, bufsize-2, "%lu: [%s] <%p,%p> ",
 			(unsigned long)p->timestamp, stringify_type(p->type),
 			(void *)p->pc, (void *)p->lr);
 	buf[bufsize-1] = '\0';
 
 	if (len > 0) {
-		size_t msglen = MIN(bufsize - (size_t)len - 1, p->message_length);
+		msglen = MIN(bufsize - len - 1, p->message_length);
 		memcpy(&buf[len], p->message, msglen);
-		buf[msglen + (size_t)len] = '\0';
+		buf[msglen + len] = '\0';
 	}
 
-	return buf;
-}
-
-LIBMCU_WEAK void logging_lock_init(void)
-{
-}
-
-LIBMCU_WEAK void logging_lock(void)
-{
-}
-
-LIBMCU_WEAK void logging_unlock(void)
-{
+	return msglen + len;
 }

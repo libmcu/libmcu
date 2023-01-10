@@ -88,7 +88,7 @@ size_t logging_consume(const struct logging_backend *backend,
 		size_t consume_size);
 size_t logging_count(const struct logging_backend *backend);
 
-const char *logging_stringify(char *buf, size_t bufsize, const void *log);
+size_t logging_stringify(char *buf, size_t bufsize, const void *log);
 
 /**
  * @brief Change the minimum log level to be saved for the tag
@@ -107,10 +107,6 @@ logging_t logging_get_level_global(void);
 size_t logging_count_tags(void);
 void logging_iterate_tag(void (*callback_each)(const char *tag,
 			logging_t min_log_level));
-
-void logging_lock_init(void);
-void logging_lock(void);
-void logging_unlock(void);
 
 #if defined(__cplusplus)
 }
