@@ -9,12 +9,15 @@
 
 LIBMCU_WEAK void logging_lock_init(void)
 {
+	/* Platform specific implementation */
 }
 
 LIBMCU_WEAK void logging_lock(void)
 {
+	/* Platform specific implementation */
 }
 
 LIBMCU_WEAK void logging_unlock(void)
 {
+	/* Platform specific implementation */
 }
