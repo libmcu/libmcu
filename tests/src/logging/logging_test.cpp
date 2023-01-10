@@ -227,7 +227,7 @@ TEST(logging, stringify_ShouldReturnString_WhenLogGiven) {
 		"1: [INFO] <0xc0decafe,0xfeedbeef> The first test";
 	char buf[256];
 
-	POINTERS_EQUAL(buf, logging_stringify(buf, sizeof(buf), fixed_log));
+	POINTERS_EQUAL(48, logging_stringify(buf, sizeof(buf), fixed_log));
 	STRNCMP_EQUAL(expected, buf, strlen(expected));
 }
 
