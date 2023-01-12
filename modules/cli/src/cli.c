@@ -236,7 +236,7 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	cli->io = io;
 	cli->cmdlist = NULL;
 	cli->cursor_pos = 0;
-	cli->buf = buf;
+	cli->buf = (char *)buf;
 	cli->bufsize = bufsize;
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
