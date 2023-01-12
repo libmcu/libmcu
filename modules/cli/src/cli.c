@@ -28,9 +28,121 @@
 #define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
 #endif
 
+enum cli_special_key {
+	CTRL_B = 0x02, /* left */
+	CTRL_F = 0x06, /* right */
+	TAB    = 0x09,
+	CTRL_N = 0x0E, /* down */
+	CTRL_P = 0x10, /* up */
+	ESC    = 0x1B,
+};
+
+enum cli_escape_char {
+	UP    = 0x5B41, /* [A */
+	DOWN  = 0x5B42, /* [B */
+	RIGHT = 0x5B43, /* [C */
+	LEFT  = 0x5B44, /* [D */
+};
+
+static uint16_t history_cap(const struct cli *cli)
+{
+	/* Index 0 buffer is used for scratch */
+	return (uint16_t)(cli->bufsize / CLI_CMD_MAXLEN - 1);
+}
+
+static char *get_history_buffer(const struct cli *cli, uint16_t index)
+{
+	if (history_cap(cli) == 0) {
+		return cli->buf;
+	}
+
+	return &cli->buf[(index + 1) * CLI_CMD_MAXLEN];
+}
+
+static uint16_t get_active_history_index(const struct cli *cli, int distance)
+{
+	uint16_t cap = history_cap(cli);
+	if (cap == 0) {
+		return 0;
+	}
+	return (uint16_t)(cap + distance + cli->history_active) % cap;
+}
+
+static char *get_history(struct cli *cli, int distance)
+{
+	uint16_t index = get_active_history_index(cli, distance);
+	return get_history_buffer(cli, index);
+}
+
+static void update_active_history(struct cli *cli, int distance)
+{
+	uint16_t index = get_active_history_index(cli, distance);
+	cli->history_active = index;
+}
+
+static uint16_t get_history_and_update_active(struct cli *cli,
+		char *buf, int distance)
+{
+	uint16_t index = get_active_history_index(cli, distance);
+	uint16_t len = 0;
+
+	char *p = get_history_buffer(cli, index);
+	len = (uint16_t)strlen(p);
+
+	if (len) {
+		memcpy(buf, p, len);
+
+		cli->history_active = index;
+	}
+
+	return len;
+}
+
+static void set_history(struct cli *cli, const char *line)
+{
+	cli->history_active = cli->history_next;
+
+	/* 1. skip if same to the previous history */
+	if (strcmp(get_history(cli, -1), line) == 0) {
+		update_active_history(cli, -1);
+		return;
+	}
+
+	/* 2. copy it to history buffer */
+	char *p = get_history_buffer(cli, cli->history_next);
+	strncpy(p, line, CLI_CMD_MAXLEN-1);
+
+	/* 3. increse history next index */
+	if (history_cap(cli)) {
+		cli->history_next = (uint16_t)
+			((cli->history_next + 1) % history_cap(cli));
+		cli->history_active = cli->history_next;
+	}
+}
+
+static void replace_line_with_history(struct cli *cli,
+		char *buf, uint16_t *pos, int history)
+{
+	uint16_t len = get_history_and_update_active(cli, buf, history);
+
+	if (len) {
+		cli->io->write("\r"CLI_PROMPT, 1 + sizeof(CLI_PROMPT) - 1);
+		cli->io->write(buf, len);
+
+		for (uint16_t i = len; i < *pos; i++) {
+			cli->io->write(" ", 1);
+		}
+		for (uint16_t i = len; i < *pos; i++) {
+			cli->io->write("\b", 1);
+		}
+
+		*pos = len;
+	}
+}
+
 static char *readline(struct cli *cli)
 {
-	static char prev;
+	char *prev = &cli->previous_input;
 	char *res = NULL;
 	char ch;
 
@@ -44,7 +156,7 @@ static char *readline(struct cli *cli)
 	switch (ch) {
 	case '\n': /* fall through */
 	case '\r': /* carriage return */
-		if (ch != prev && (prev == '\n' || prev == '\r')) {
+		if (ch != *prev && (*prev == '\n' || *prev == '\r')) {
 			ch = 0; /* to deal with consecutive empty lines */
 			break;
 		}
@@ -63,6 +175,12 @@ static char *readline(struct cli *cli)
 		break;
 	case '\t': /* tab */
 		break;
+	case CTRL_P:
+		replace_line_with_history(cli, buf, pos, -1);
+		break;
+	case CTRL_N:
+		replace_line_with_history(cli, buf, pos, 1);
+		break;
 	default:
 		if (*pos >= CLI_CMD_MAXLEN) {
 			break;
@@ -73,7 +191,7 @@ static char *readline(struct cli *cli)
 		break;
 	}
 
-	prev = ch;
+	*prev = ch;
 	return res;
 }
 
@@ -190,6 +308,8 @@ static cli_cmd_error_t cli_step_core(struct cli *cli)
 		return CLI_CMD_SUCCESS;
 	}
 
+	set_history(cli, line);
+
 	char const *argv[CLI_CMD_ARGS_MAXLEN];
 	int argc = parse_command(line, argv, CLI_CMD_ARGS_MAXLEN);
 
@@ -235,8 +355,12 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	cli->io = io;
 	cli->cmdlist = NULL;
 	cli->cursor_pos = 0;
+	cli->history_next = 0;
+	cli->history_active = 0;
 	cli->buf = (char *)buf;
 	cli->bufsize = bufsize;
+
+	memset(buf, 0, bufsize);
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));

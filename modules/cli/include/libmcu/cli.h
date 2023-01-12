@@ -31,6 +31,9 @@ struct cli {
 	struct cli_cmd const **cmdlist;
 
 	uint16_t cursor_pos;
+	uint16_t history_next;
+	uint16_t history_active;
+	char previous_input;
 
 	char *buf;
 	size_t bufsize;
