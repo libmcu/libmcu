@@ -63,7 +63,6 @@ static char *readline(struct cli *cli)
 		break;
 	case '\t': /* tab */
 		break;
-		break;
 	default:
 		if (*pos >= CLI_CMD_MAXLEN) {
 			break;
