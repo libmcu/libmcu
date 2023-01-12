@@ -137,6 +137,26 @@ static void replace_line_with_history(struct cli *cli,
 	}
 }
 
+static void process_escape(struct cli *cli, char *buf, uint16_t *pos)
+{
+	uint16_t key;
+
+	if (cli->io->read(&key, 2) != 2) {
+		return;
+	}
+
+	switch (key) {
+	case UP:
+		replace_line_with_history(cli, buf, pos, -1);
+		break;
+	case DOWN:
+		replace_line_with_history(cli, buf, pos, 1);
+		break;
+	default:
+		break;
+	}
+}
+
 static char *readline(struct cli *cli)
 {
 	char *prev = &cli->previous_input;
@@ -167,7 +187,7 @@ static char *readline(struct cli *cli)
 		cli->io->write("\n", 1);
 		res = buf;
 		break;
-	case '\b': /* back space */
+	case '\b': /* backspace */
 		if (*pos > 0) {
 			(*pos)--;
 			cli->io->write("\b \b", 3);
@@ -180,6 +200,9 @@ static char *readline(struct cli *cli)
 		break;
 	case CTRL_N:
 		replace_line_with_history(cli, buf, pos, 1);
+		break;
+	case ESC:
+		process_escape(cli, buf, pos);
 		break;
 	default:
 		if (*pos >= CLI_CMD_MAXLEN) {
