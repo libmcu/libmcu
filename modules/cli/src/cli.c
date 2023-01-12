@@ -28,15 +28,18 @@
 #define CLI_PROMPT_EXIT_MESSAGE			"EXIT\n"
 #endif
 
-static bool readline(struct cli *cli)
+static char *readline(struct cli *cli)
 {
 	static char prev;
+	char *res = NULL;
 	char ch;
-	bool rc = false;
 
 	if (cli->io->read(&ch, 1) != 1) {
-		return false;
+		return NULL;
 	}
+
+	char *buf = cli->buf;
+	uint16_t *pos = &cli->cursor_pos;
 
 	switch (ch) {
 	case '\n': /* fall through */
@@ -46,33 +49,33 @@ static bool readline(struct cli *cli)
 			break;
 		}
 
-		cli->cmdbuf[cli->cmdbuf_index++] = '\n';
-		cli->cmdbuf[cli->cmdbuf_index++] = '\0';
-		cli->cmdbuf_index = 0;
+		buf[(*pos)++] = '\0';
+		*pos = 0;
 
 		cli->io->write("\n", 1);
-		rc = true;
+		res = buf;
 		break;
 	case '\b': /* back space */
-		if (cli->cmdbuf_index > 0) {
-			cli->cmdbuf_index--;
+		if (*pos > 0) {
+			(*pos)--;
 			cli->io->write("\b \b", 3);
 		}
 		break;
 	case '\t': /* tab */
 		break;
+		break;
 	default:
-		if (cli->cmdbuf_index >= CLI_CMD_MAXLEN) {
+		if (*pos >= CLI_CMD_MAXLEN) {
 			break;
 		}
 
-		cli->cmdbuf[cli->cmdbuf_index++] = ch;
+		buf[(*pos)++] = ch;
 		cli->io->write(&ch, 1);
 		break;
 	}
 
 	prev = ch;
-	return rc;
+	return res;
 }
 
 static bool is_delimeter(char ch, char *delimeter)
@@ -130,7 +133,7 @@ static int parse_command(char *str, char const *argv[], size_t maxargs)
 		argv[argc] = str + i + 1;
 	}
 
-	return argc;
+	return argc + !!i;
 }
 
 static void report_result(struct cli_io const *io, cli_cmd_error_t err,
@@ -167,7 +170,7 @@ static cli_cmd_error_t process_command(struct cli const *cli,
 	cli_cmd_error_t rc = CLI_CMD_NOT_FOUND;
 	struct cli_cmd const *cmd = NULL;
 
-	for (size_t i = 0; cli->cmdlist[i]; i++) {
+	for (size_t i = 0; cli->cmdlist && cli->cmdlist[i]; i++) {
 		cmd = cli->cmdlist[i];
 		if (strcmp(cmd->name, argv[0]) == 0) {
 			rc = cmd->func(argc, argv, env);
@@ -182,12 +185,14 @@ static cli_cmd_error_t process_command(struct cli const *cli,
 
 static cli_cmd_error_t cli_step_core(struct cli *cli)
 {
-	if (!readline(cli)) {
+	char *line;
+
+	if (!(line = readline(cli))) {
 		return CLI_CMD_SUCCESS;
 	}
 
 	char const *argv[CLI_CMD_ARGS_MAXLEN];
-	int argc = parse_command(cli->cmdbuf, argv, CLI_CMD_ARGS_MAXLEN);
+	int argc = parse_command(line, argv, CLI_CMD_ARGS_MAXLEN);
 
 	cli_cmd_error_t err = process_command(cli, argc, argv, cli);
 
@@ -215,14 +220,24 @@ void cli_run(struct cli *cli)
 			strlen(CLI_PROMPT_EXIT_MESSAGE));
 }
 
-void cli_init(struct cli *cli, struct cli_io const *io,
-	      struct cli_cmd const **cmdlist)
+void cli_register_cmdlist(struct cli *cli, const struct cli_cmd **cmdlist)
 {
-	CLI_ASSERT(cli != NULL && io != NULL && cmdlist != NULL);
+	CLI_ASSERT(cli != NULL && cmdlist != NULL);
+
+	cli->cmdlist = cmdlist;
+}
+
+void cli_init(struct cli *cli, struct cli_io const *io,
+		void *buf, size_t bufsize)
+{
+	CLI_ASSERT(cli != NULL && io != NULL &&
+			buf != NULL && bufsize >= CLI_CMD_MAXLEN);
 
 	cli->io = io;
-	cli->cmdlist = cmdlist;
-	cli->cmdbuf_index = 0;
+	cli->cmdlist = NULL;
+	cli->cursor_pos = 0;
+	cli->buf = buf;
+	cli->bufsize = bufsize;
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));

@@ -56,13 +56,15 @@ static struct cli_io io = {
 
 TEST_GROUP(cli) {
 	struct cli cli;
+	char cli_buffer[CLI_CMD_MAXLEN * 4];
 
 	void setup(void) {
 		write_index = 0;
 		read_index = 0;
 
 		DEFINE_CLI_CMD_LIST(cmd_list, exit, args, error, invalid);
-		cli_init(&cli, &io, cmd_list);
+		cli_init(&cli, &io, cli_buffer, sizeof(cli_buffer));
+		cli_register_cmdlist(&cli, cmd_list);
 	}
 	void teardown() {
 	}

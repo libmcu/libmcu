@@ -13,6 +13,7 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "cli_cmd.h"
 #include "cli_overrides.h"
 
@@ -28,12 +29,16 @@ struct cli_io {
 struct cli {
 	struct cli_io const *io;
 	struct cli_cmd const **cmdlist;
-	char cmdbuf[CLI_CMD_MAXLEN + 1/*linefeed*/ + 1/*null*/];
-	size_t cmdbuf_index;
+
+	uint16_t cursor_pos;
+
+	char *buf;
+	size_t bufsize;
 };
 
 void cli_init(struct cli *cli, struct cli_io const *io,
-		const struct cli_cmd **cmdlist);
+		void *buf, size_t bufsize);
+void cli_register_cmdlist(struct cli *cli, const struct cli_cmd **cmdlist);
 void cli_run(struct cli *cli);
 void cli_step(struct cli *cli);
 
