@@ -69,6 +69,12 @@ static uint16_t get_active_history_index(const struct cli *cli, int distance)
 	return (uint16_t)(cap + distance + cli->history_active) % cap;
 }
 
+static void update_active_history(struct cli *cli, int distance)
+{
+	uint16_t index = get_active_history_index(cli, distance);
+	cli->history_active = index;
+}
+
 static char *get_history(const struct cli *cli, int distance)
 {
 	uint16_t index = get_active_history_index(cli, distance);
@@ -114,36 +120,45 @@ static void set_history(struct cli *cli, const char *line)
 	}
 }
 
+static void delete_line(const struct cli *cli, int n)
+{
+	for (int i = 0; i < n; i++) {
+		cli->io->write("\b", 1);
+	}
+	for (int i = 0; i < n; i++) {
+		cli->io->write(" ", 1);
+	}
+	for (int i = 0; i < n; i++) {
+		cli->io->write("\b", 1);
+	}
+}
+
 static void replace_line_with_history(struct cli *cli,
 		char *buf, uint16_t *pos, int history)
 {
 	uint16_t len = get_history_and_update_active(cli, buf, history);
 
 	if (len) {
-		for (uint16_t i = 0; i < *pos; i++) {
-			cli->io->write("\b", 1);
-		}
-
+		delete_line(cli, *pos);
 		cli->io->write(buf, len);
-
-		for (uint16_t i = len; i < *pos; i++) {
-			cli->io->write(" ", 1);
-		}
-		for (uint16_t i = len; i < *pos; i++) {
-			cli->io->write("\b", 1);
-		}
-
 		*pos = len;
+	} else if (history > 0 && *pos) { /* scratch buffer for new command */
+		delete_line(cli, *pos);
+		update_active_history(cli, 1);
+		*pos = 0;
 	}
 }
 
 static void process_escape(struct cli *cli, char *buf, uint16_t *pos)
 {
-	uint16_t key;
+	uint8_t in[2];
 
-	if (cli->io->read(&key, 2) != 2) {
+	if (cli->io->read(&in[0], 1) != 1 ||
+			cli->io->read(&in[1], 1) != 1) {
 		return;
 	}
+
+	uint16_t key = (uint16_t)((in[0] << 8) | in[1]);
 
 	switch (key) {
 	case UP:

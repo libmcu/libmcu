@@ -185,13 +185,13 @@ TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterTypingGiven) {
 	char input[] = { 'a','r','g','s','\n', 't',CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
 	cli_run(&cli);
-	then("$ args\n1: args\n$ t\bargs\n1: args\n");
+	then("$ args\n1: args\n$ t\b \bargs\n1: args\n");
 }
 TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterLongerTypingGiven) {
 	char input[] = { 'a','r','g','s','\n', '1','2','3','4','5','6',CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
 	cli_run(&cli);
-	then("$ args\n1: args\n$ 123456\b\b\b\b\b\bargs  \b\b\n1: args\n");
+	then("$ args\n1: args\n$ 123456\b\b\b\b\b\b      \b\b\b\b\b\bargs\n1: args\n");
 }
 TEST(cli, ShouldPrintPreviousHistory_WhenOnlyOneHistoryGiven) {
 	char input[] = { 'a','r','g','s','\n', CTRL_P, CTRL_P,'\n', 'e','x','i','t','\n' };
