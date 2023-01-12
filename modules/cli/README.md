@@ -20,10 +20,12 @@ static const cli_io_t io = {
 	.write = cli_write,
 };
 
+static char cli_buffer[CLI_CMD_MAXLEN * 1/* the number of history to keep*/];
 struct cli cli;
 
 DEFINE_CLI_CMD_LIST(cli_commands, test_cmd, your_cmd);
-cli_init(&cli, &io, cli_commands);
+cli_init(&cli, &io, cli_buffer, sizeof(cli_buffer));
+cli_register_cmdlist(&cli, cli_commands);
 #if never_return_unless_exit_command_received
 cli_run(&cli);
 #else
@@ -48,6 +50,8 @@ DEFINE_CLI_CMD(test_cmd, "Description for test command") {
 ```
 
 ### Increasing the command buffer size
+
+It should count the null character.
 
 `-DCLI_CMD_MAXLEN=128`
 
