@@ -68,7 +68,7 @@ static uint16_t get_active_history_index(const struct cli *cli, int distance)
 	return (uint16_t)(cap + distance + cli->history_active) % cap;
 }
 
-static char *get_history(struct cli *cli, int distance)
+static char *get_history(const struct cli *cli, int distance)
 {
 	uint16_t index = get_active_history_index(cli, distance);
 	return get_history_buffer(cli, index);
@@ -86,7 +86,7 @@ static uint16_t get_history_and_update_active(struct cli *cli,
 	uint16_t index = get_active_history_index(cli, distance);
 	uint16_t len = 0;
 
-	char *p = get_history_buffer(cli, index);
+	const char *p = get_history_buffer(cli, index);
 	len = (uint16_t)strlen(p);
 
 	if (len) {
@@ -103,8 +103,7 @@ static void set_history(struct cli *cli, const char *line)
 	cli->history_active = cli->history_next;
 
 	/* 1. skip if same to the previous history */
-	if (strcmp(get_history(cli, -1), line) == 0) {
-		update_active_history(cli, -1);
+	if (strlen(line) == 0 || strcmp(get_history(cli, -1), line) == 0) {
 		return;
 	}
 
@@ -126,7 +125,10 @@ static void replace_line_with_history(struct cli *cli,
 	uint16_t len = get_history_and_update_active(cli, buf, history);
 
 	if (len) {
-		cli->io->write("\r"CLI_PROMPT, 1 + sizeof(CLI_PROMPT) - 1);
+		for (uint16_t i = 0; i < *pos; i++) {
+			cli->io->write("\b", 1);
+		}
+
 		cli->io->write(buf, len);
 
 		for (uint16_t i = len; i < *pos; i++) {
