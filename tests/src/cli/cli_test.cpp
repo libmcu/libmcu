@@ -8,6 +8,9 @@
 #include <string.h>
 #include "libmcu/cli.h"
 
+#define CTRL_C 0x03
+#define CTRL_P 0x10
+
 DEFINE_CLI_CMD(exit, "Exit the CLI") {
 	return CLI_CMD_EXIT;
 }
@@ -170,4 +173,36 @@ TEST(cli, ShouldTrimLeadingSpaces) {
 	given("  args     first\nexit\n");
 	cli_run(&cli);
 	then("$   args     first\n1: args\n2: first\n");
+}
+
+TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPGiven) {
+	char input[] = { 'a','r','g','s','\n', CTRL_P,'\n', 'e','x','i','t','\n' };
+	given(input);
+	cli_run(&cli);
+	then("$ args\n1: args\n$ args\n1: args\n");
+}
+TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterTypingGiven) {
+	char input[] = { 'a','r','g','s','\n', 't',CTRL_P,'\n', 'e','x','i','t','\n' };
+	given(input);
+	cli_run(&cli);
+	then("$ args\n1: args\n$ t\bargs\n1: args\n");
+}
+TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterLongerTypingGiven) {
+	char input[] = { 'a','r','g','s','\n', '1','2','3','4','5','6',CTRL_P,'\n', 'e','x','i','t','\n' };
+	given(input);
+	cli_run(&cli);
+	then("$ args\n1: args\n$ 123456\b\b\b\b\b\bargs  \b\b\n1: args\n");
+}
+TEST(cli, ShouldPrintPreviousHistory_WhenOnlyOneHistoryGiven) {
+	char input[] = { 'a','r','g','s','\n', CTRL_P, CTRL_P,'\n', 'e','x','i','t','\n' };
+	given(input);
+	cli_run(&cli);
+	then("$ args\n1: args\n$ args\n1: args\n");
+}
+
+TEST(cli, ShouldPrintNewLine_WhenCtrlCGiven) {
+	char input[] = { 'a','r','g', CTRL_C, 'e','x','i','t','\n' };
+	given(input);
+	cli_run(&cli);
+	then("$ arg\n");
 }

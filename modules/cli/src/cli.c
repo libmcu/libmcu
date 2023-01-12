@@ -30,6 +30,7 @@
 
 enum cli_special_key {
 	CTRL_B = 0x02, /* left */
+	CTRL_C = 0x03,
 	CTRL_F = 0x06, /* right */
 	TAB    = 0x09,
 	CTRL_N = 0x0E, /* down */
@@ -72,12 +73,6 @@ static char *get_history(const struct cli *cli, int distance)
 {
 	uint16_t index = get_active_history_index(cli, distance);
 	return get_history_buffer(cli, index);
-}
-
-static void update_active_history(struct cli *cli, int distance)
-{
-	uint16_t index = get_active_history_index(cli, distance);
-	cli->history_active = index;
 }
 
 static uint16_t get_history_and_update_active(struct cli *cli,
@@ -156,6 +151,9 @@ static char *readline(struct cli *cli)
 	uint16_t *pos = &cli->cursor_pos;
 
 	switch (ch) {
+	case CTRL_C:
+		*pos = 0;
+		/* fall through */
 	case '\n': /* fall through */
 	case '\r': /* carriage return */
 		if (ch != *prev && (*prev == '\n' || *prev == '\r')) {
