@@ -278,6 +278,11 @@ static int parse_command(char *str, char const *argv[], size_t maxargs)
 		}
 
 		str[i] = '\0';
+
+		if (str[i+1] == '\0') {
+			break;
+		}
+
 		i += count_leading_spaces(&str[i+1]);
 
 		if ((uintptr_t)argv[argc] != (uintptr_t)(str + i) &&
