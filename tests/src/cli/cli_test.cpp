@@ -158,9 +158,9 @@ TEST(cli, ShouldNotSplitArguments_WhenQuotedWordGiven) {
 }
 
 TEST(cli, ShouldTrimTrailingSpaces) {
-	given("args first   \nexit\n");
+	given("args first   second \nexit\n");
 	cli_run(&cli);
-	then("$ args first   \n1: args\n2: first\n");
+	then("$ args first   second \n1: args\n2: first\n3: second\n$");
 }
 
 TEST(cli, ShouldTrimParameterLeadingSpaces) {
