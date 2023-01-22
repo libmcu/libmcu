@@ -27,7 +27,7 @@ struct metrics {
 LIBMCU_NOINIT static uintptr_t magic;
 LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX];
 
-#if defined(METRICS_KEY_STRING)
+#if !defined(METRICS_NO_KEY_STRING)
 static char const *key_strings[] = {
 #define METRICS_DEFINE(keystr) #keystr,
 #include METRICS_USER_DEFINES
@@ -170,7 +170,7 @@ size_t metrics_count(void)
 	return METRICS_KEY_MAX;
 }
 
-#if defined(METRICS_KEY_STRING)
+#if !defined(METRICS_NO_KEY_STRING)
 const char *metrics_stringify_key(metric_key_t key)
 {
 	return key_strings[key];
