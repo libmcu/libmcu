@@ -28,7 +28,7 @@
 typedef uint16_t logging_magic_t;
 
 typedef struct {
-	time_t timestamp;
+	unsigned long timestamp;
 	uintptr_t pc;
 	uintptr_t lr;
 	logging_magic_t magic;
@@ -54,6 +54,8 @@ static struct {
 	struct logging_tag global_tag;
 
 	const struct logging_backend *backends[LOGGING_MAX_BACKENDS];
+
+	logging_time_func_t time;
 } m;
 
 static const char *stringify_type(logging_t type)
@@ -223,13 +225,18 @@ static void pack_log(logging_data_t *entry, logging_t type,
 		const void *pc, const void *lr)
 {
 	*entry = (logging_data_t) {
-		.timestamp = time(NULL),
+		.timestamp = 0,
 		.type = type,
 		.pc = (uintptr_t)pc,
 		.lr = (uintptr_t)lr,
 		.magic = LOGGING_MAGIC,
 		.message_length = 0,
 	};
+
+	if (m.time) {
+		entry->timestamp = (*m.time)();
+	}
+
 	entry->magic = compute_magic(entry);
 }
 
@@ -338,12 +345,14 @@ size_t logging_read(const struct logging_backend *backend,
 	return backend->read(buf, bufsize);
 }
 
-void logging_init(void)
+void logging_init(logging_time_func_t time_func)
 {
 	logging_lock_init();
 
 	clear_tags();
 	clear_backends();
+
+	m.time = time_func;
 }
 
 int logging_add_backend(const struct logging_backend *backend)

@@ -8,16 +8,15 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include <string.h>
-#include <time.h>
 
 #include "libmcu/logging.h"
 #include "libmcu/logging_backend.h"
 
 static const char *TAG = "logging";
 
-time_t time(time_t *ptr) {
-	(void)ptr;
-	return mock().actualCall(__func__).returnLongIntValueOrDefault(0);
+static unsigned long get_time(void) {
+	return (unsigned long)mock().actualCall(__func__)
+		.returnLongIntValueOrDefault(0);
 }
 static size_t backend_write(const void *data, size_t datasize) {
 	return mock().actualCall(__func__)
@@ -95,7 +94,7 @@ TEST_GROUP(logging) {
 		mock().installComparator("stringType", strComparator);
 		mock().ignoreOtherCalls();
 
-		logging_init();
+		logging_init(get_time);
 		logging_add_backend(&backend);
 	}
 	void teardown() {
@@ -153,7 +152,7 @@ TEST(logging, save_ShouldWriteLogWithMessage_WhenMessageGiven) {
 		0xb4, 0xd1, 0x0e, 0x00, 0x01, 0x54, 0x68, 0x65,
 		0x20, 0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74,
 		0x65, 0x73, 0x74 };
-	mock().expectOneCall("time").andReturnValue(1);
+	mock().expectOneCall("get_time").andReturnValue(1);
 	mock().expectOneCall("backend_write")
 		.withParameterOfType("logDataType", "data", expected)
 		.withParameter("datasize", 43);
@@ -204,7 +203,7 @@ TEST(logging, save_ShouldParseFormattedString) {
 		0xa5, 0xa5, 0x11, 0x00, 0x01, 0x66, 0x6d, 0x74,
 		0x20, 0x31, 0x32, 0x33, 0x3a, 0x20, 0x6d, 0x79,
 		0x73, 0x74, 0x72, 0x69, 0x6e, 0x67 };
-	mock().expectOneCall("time").andReturnValue(1);
+	mock().expectOneCall("get_time").andReturnValue(1);
 	mock().expectOneCall("backend_write")
 		.withParameterOfType("logDataType", "data", expected)
 		.withParameter("datasize", 46);
