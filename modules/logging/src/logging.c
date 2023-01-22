@@ -491,7 +491,7 @@ size_t logging_stringify(char *buf, size_t bufsize, const void *log)
 	const logging_data_t *p = (const logging_data_t *)log;
 	size_t msglen = 0;
 	size_t len = (size_t)snprintf(buf, bufsize-2, "%lu: [%s] <%p,%p> ",
-			(unsigned long)p->timestamp, stringify_type(p->type),
+			p->timestamp, stringify_type(p->type),
 			(void *)p->pc, (void *)p->lr);
 	buf[bufsize-1] = '\0';
 
