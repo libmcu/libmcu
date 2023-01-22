@@ -39,7 +39,7 @@ size_t metrics_count(void);
 
 void metrics_init(bool force);
 
-#if defined(METRICS_KEY_STRING)
+#if !defined(METRICS_NO_KEY_STRING)
 const char *metrics_stringify_key(metric_key_t key);
 #endif
 
