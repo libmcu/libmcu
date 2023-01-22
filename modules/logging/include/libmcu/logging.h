@@ -49,6 +49,8 @@ struct logging_context {
 	const void *lr;
 };
 
+typedef unsigned long (*logging_time_func_t)(void);
+
 #if !defined(get_program_counter)
 #define get_program_counter()		libmcu_get_pc()
 #endif
@@ -71,7 +73,7 @@ struct logging_context {
 #define error(...) \
 	LOGGING_WRAPPER(LOGGING_TYPE_ERROR, __VA_ARGS__)
 
-void logging_init(void);
+void logging_init(logging_time_func_t time_func);
 
 int logging_add_backend(const struct logging_backend *backend);
 int logging_remove_backend(const struct logging_backend *backend);
