@@ -13,4 +13,3 @@ LIBMCU_MODULES_SRCS := $(foreach d, \
 	$(shell find $(d)/src -maxdepth 1 -type f -regex ".*\.c"))
 LIBMCU_MODULES_INCS := $(foreach d, $(LIBMCU_MODULES), \
 	$(addprefix $(libmcu-basedir)modules/, $(d))/include)
-LIBMCU_MODULES_INCS += $(libmcu-basedir)modules/common/include/libmcu/posix

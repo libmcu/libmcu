@@ -5,6 +5,7 @@ include projects/toolchain.mk
 
 LIBMCU_MODULES ?= $(patsubst modules/%, %, $(wildcard modules/*))
 include projects/modules.mk
+LIBMCU_MODULES_INCS += $(libmcu-basedir)modules/common/include/libmcu/posix
 
 SRCS += $(LIBMCU_MODULES_SRCS)
 INCS += $(LIBMCU_MODULES_INCS)
