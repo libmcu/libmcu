@@ -8,9 +8,9 @@ endif()
 
 foreach(module ${LIBMCU_MODULES})
 	file(GLOB LIBMCU_${module}_SRCS
-		${LIBMCU_ROOT}/modules/${module}/src/*.c)
+		${CMAKE_CURRENT_LIST_DIR}/../modules/${module}/src/*.c)
 	file(GLOB LIBMCU_${module}_INCS
-		${LIBMCU_ROOT}/modules/${module}/include)
+		${CMAKE_CURRENT_LIST_DIR}/../modules/${module}/include)
 	list(APPEND LIBMCU_MODULES_SRCS_LIST ${LIBMCU_${module}_SRCS})
 	list(APPEND LIBMCU_MODULES_INCS_LIST ${LIBMCU_${module}_INCS})
 endforeach()
