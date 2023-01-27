@@ -60,7 +60,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	ctx->arg = arg;
 
 	if (attr != NULL) {
-		stack_size = (size_t)attr->stacksize;
+		stack_size = (size_t)(attr->stacksize / sizeof(StackType_t));
 		pri = attr->schedparam.sched_priority;
 	}
 
