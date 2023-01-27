@@ -5,6 +5,7 @@
  */
 
 #include "libmcu/ao_overrides.h"
+#include "libmcu/ao_timer.h"
 #include "libmcu/compiler.h"
 
 LIBMCU_WEAK
@@ -37,4 +38,10 @@ LIBMCU_WEAK
 void ao_timer_lock_init(void)
 {
 	/* platform specific implementation */
+}
+
+LIBMCU_WEAK
+int ao_timer_init(void)
+{
+	return 0;
 }

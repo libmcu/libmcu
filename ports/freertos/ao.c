@@ -7,15 +7,15 @@
 #include "libmcu/ao_overrides.h"
 #include "libmcu/ao_timer.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_timer.h"
+#include <errno.h>
 
-static portMUX_TYPE ao_spinlock = portMUX_INITIALIZER_UNLOCKED;
+#include "FreeRTOS.h"
+#include "task.h"
+#include "timers.h"
 
-static void on_ao_timeout(void *arg)
+static void on_ao_timeout(TimerHandle_t xTimer)
 {
-	(void)arg;
+	(void)xTimer;
 
 	static TickType_t previous_tick_count;
 	TickType_t current_tick_count = xTaskGetTickCount();
@@ -33,35 +33,41 @@ int ao_timer_init(void)
 {
 	ao_timer_reset();
 
-	const esp_timer_create_args_t timer_args = {
-		.callback = on_ao_timeout,
-	};
-	esp_timer_handle_t ao_timer;
-	esp_timer_create(&timer_args, &ao_timer);
-	esp_timer_start_periodic(ao_timer,
-			AO_TIMER_SCAN_INTERVAL_MS * 1000/*usec*/);
+	TimerHandle_t ao_timer_handle = xTimerCreate("AO Timer",
+			pdMS_TO_TICKS(AO_TIMER_SCAN_INTERVAL_MS), pdTRUE,
+			(void *)0, on_ao_timeout);
+
+	if (ao_timer_handle == NULL) {
+		return -ENOMEM;
+	}
+
+	if (xTimerStart(ao_timer_handle, 0) != pdPASS) {
+		return -EFAULT;
+	}
 
 	return 0;
 }
 
 void ao_lock(void *lock_handle)
 {
-	taskENTER_CRITICAL(&ao_spinlock);
+	(void)lock_handle;
+	taskENTER_CRITICAL();
 }
 
 void ao_unlock(void *lock_handle)
 {
-	taskEXIT_CRITICAL(&ao_spinlock);
+	(void)lock_handle;
+	taskEXIT_CRITICAL();
 }
 
 void ao_timer_lock(void)
 {
-	taskENTER_CRITICAL(&ao_spinlock);
+	taskENTER_CRITICAL();
 }
 
 void ao_timer_unlock(void)
 {
-	taskEXIT_CRITICAL(&ao_spinlock);
+	taskEXIT_CRITICAL();
 }
 
 void ao_timer_lock_init(void)
