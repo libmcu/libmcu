@@ -64,7 +64,7 @@ int sem_post(sem_t *sem)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
 
-	if (!xPortInIsrContext()) {
+	if (!xPortIsInsideInterrupt()) {
 		return xSemaphoreGive(psem->handle) == pdPASS? 0 : -1;
 	}
 
