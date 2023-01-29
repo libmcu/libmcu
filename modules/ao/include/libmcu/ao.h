@@ -43,7 +43,6 @@ struct ao {
 
 	pthread_t thread;
 	pthread_attr_t attr;
-	int priority;
 };
 
 struct ao *ao_create(struct ao * const ao,

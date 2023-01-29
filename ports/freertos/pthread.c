@@ -6,6 +6,7 @@
 
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
 
 #include "libmcu/assert.h"
 #include "FreeRTOS.h"
@@ -167,12 +168,19 @@ int pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 	return 0;
 }
 
-#if 0
 int pthread_attr_setschedparam(pthread_attr_t *attr,
 		const struct sched_param *param)
+{
+	memcpy(&attr->schedparam, param, sizeof(*param));
+	return 0;
+}
+
 int pthread_attr_getschedparam(const pthread_attr_t *attr,
 		struct sched_param *param)
-#endif
+{
+	memcpy(param, &attr->schedparam, sizeof(*param));
+	return 0;
+}
 
 #if 0
 // not posix

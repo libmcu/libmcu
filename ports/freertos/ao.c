@@ -13,6 +13,9 @@
 #include "task.h"
 #include "timers.h"
 
+static unsigned long intctx;
+static unsigned long intctx_timer;
+
 static void on_ao_timeout(TimerHandle_t xTimer)
 {
 	(void)xTimer;
@@ -51,23 +54,41 @@ int ao_timer_init(void)
 void ao_lock(void *lock_handle)
 {
 	(void)lock_handle;
-	taskENTER_CRITICAL();
+
+	if (xPortIsInsideInterrupt()) {
+		intctx = taskENTER_CRITICAL_FROM_ISR();
+	} else {
+		taskENTER_CRITICAL();
+	}
 }
 
 void ao_unlock(void *lock_handle)
 {
 	(void)lock_handle;
-	taskEXIT_CRITICAL();
+
+	if (xPortIsInsideInterrupt()) {
+		taskEXIT_CRITICAL_FROM_ISR(intctx);
+	} else {
+		taskEXIT_CRITICAL();
+	}
 }
 
 void ao_timer_lock(void)
 {
-	taskENTER_CRITICAL();
+	if (xPortIsInsideInterrupt()) {
+		intctx_timer = taskENTER_CRITICAL_FROM_ISR();
+	} else {
+		taskENTER_CRITICAL();
+	}
 }
 
 void ao_timer_unlock(void)
 {
-	taskEXIT_CRITICAL();
+	if (xPortIsInsideInterrupt()) {
+		taskEXIT_CRITICAL_FROM_ISR(intctx_timer);
+	} else {
+		taskEXIT_CRITICAL();
+	}
 }
 
 void ao_timer_lock_init(void)
