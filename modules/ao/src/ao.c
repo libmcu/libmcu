@@ -158,15 +158,16 @@ static struct ao *create_ao(struct ao * const ao,
 		return NULL;
 	}
 
+	struct sched_param param;
 	pthread_attr_init(&ao->attr);
+	pthread_attr_getschedparam(&ao->attr, &param);
+	param.sched_priority = priority;
+	pthread_attr_setschedparam(&ao->attr, &param);
 	pthread_attr_setstacksize(&ao->attr, stack_size_bytes);
 #if 0 /* XXX: if not joinable, the task sometimes misses a signal waiting for
 	      the semaphore. 10-20% probability. tested on Ubuntu 22.04.1 LTS. */
 	pthread_attr_setdetachstate(&ao->attr, PTHREAD_CREATE_DETACHED);
 #endif
-
-	/* TODO: apply the requested task priority to the task */
-	ao->priority = priority;
 
 	return ao;
 }
