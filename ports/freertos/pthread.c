@@ -52,7 +52,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (thread == NULL || start_routine == NULL) {
 		return -EINVAL;
 	}
-	if ((ctx = pvPortMalloc(sizeof(*ctx))) == NULL) {
+	if ((ctx = (struct task_ctx *)pvPortMalloc(sizeof(*ctx))) == NULL) {
 		return -ENOMEM;
 	}
 
@@ -60,7 +60,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	ctx->arg = arg;
 
 	if (attr != NULL) {
-		stack_size = (size_t)(attr->stacksize / sizeof(StackType_t));
+		stack_size = (size_t)attr->stacksize / sizeof(StackType_t);
 		pri = attr->schedparam.sched_priority;
 	}
 
