@@ -53,9 +53,13 @@ unsigned long board_get_free_heap_bytes(void)
 	return (unsigned long)xPortGetFreeHeapSize();
 }
 
+#if (configCHECK_FOR_STACK_OVERFLOW > 0)
+extern void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
 LIBMCU_NO_INSTRUMENT
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
+	unused(xTask);
 	error("Stack overflow! %s", pcTaskName);
 	assert(0);
 }
+#endif
