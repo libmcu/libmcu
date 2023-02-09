@@ -22,8 +22,8 @@ extern "C" {
 #endif
 
 struct cli_io {
-	size_t (*read)(void *buf, size_t bufsize);
-	size_t (*write)(void const *data, size_t datasize);
+	int (*read)(void *buf, size_t bufsize);
+	int (*write)(void const *data, size_t datasize);
 };
 
 struct cli {
