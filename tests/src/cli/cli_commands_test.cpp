@@ -22,11 +22,11 @@ const char *board_get_serial_number_string(void) {
 
 static char write_spy_buffer[1024];
 static size_t write_spy_buffer_index;
-static size_t write_spy(const void *data, size_t data_size) {
+static int write_spy(const void *data, size_t data_size) {
 	memcpy(write_spy_buffer + write_spy_buffer_index, data, data_size);
 	write_spy_buffer_index += data_size;
 	write_spy_buffer[write_spy_buffer_index] = '\0';
-	return data_size;
+	return (int)data_size;
 }
 static struct cli_io io = {
 	.read = NULL,

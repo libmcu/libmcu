@@ -37,16 +37,16 @@ static char readbuf[256];
 static size_t write_index;
 static size_t read_index;
 
-static size_t myread(void *buf, size_t bufsize) {
+static int myread(void *buf, size_t bufsize) {
 	memcpy(buf, writebuf + write_index, bufsize);
 	write_index += bufsize;
-	return bufsize;
+	return (int)bufsize;
 }
-static size_t mywrite(const void *data, size_t data_size) {
+static int mywrite(const void *data, size_t data_size) {
 	memcpy(readbuf + read_index, data, data_size);
 	read_index += data_size;
 	readbuf[read_index] = '\0';
-	return data_size;
+	return (int)data_size;
 }
 static void set_write_data(const char *s) {
 	strncpy(writebuf, s, sizeof(writebuf));
