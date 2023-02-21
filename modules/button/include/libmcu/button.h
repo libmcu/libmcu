@@ -11,44 +11,72 @@
 extern "C" {
 #endif
 
-#include <stdbool.h>
+#include <stdint.h>
+
+typedef enum {
+	BUTTON_BUSY, /**< Too many calls in a sampling period */
+	BUTTON_SCANNING, /**< Activity detected on buttons. Scanning for state */
+	BUTTON_NO_ACTIVITY, /**< No activity detected on buttons */
+} button_rc_t;
+
+enum button_event {
+	BUTTON_EVT_PRESSED,
+	BUTTON_EVT_RELEASED,
+	BUTTON_EVT_HOLDING,
+	BUTTON_EVT_CLICK,
+};
 
 struct button_data {
 	unsigned int history;
 	unsigned long time_pressed;
 	unsigned long time_released;
+	unsigned long time_repeat;
+	uint8_t click; /**< the number of clicks */
 };
 
-struct button_handlers {
-	void (*pressed)(const struct button_data *btn, void *context);
-	void (*released)(const struct button_data *btn, void *context);
-	void (*holding)(const struct button_data *btn, void *context);
-	void (*clicked)(const struct button_data *btn, void *context);
-};
+typedef void (*button_handler_t)(enum button_event event,
+		const struct button_data *info, void *ctx);
 
 void button_init(unsigned long (*get_time_ms)(void));
 
 /**
  * Register a button
  *
- * @param[in] handlers @ref struct button_handlers
  * @param[in] get_button_state a function to get the button state
+ * @param[in] handlers @ref struct button_handlers
+ * @param[in] ctx user context
  *
  * @return a handle if registered successfully. NULL otherwise
  */
-const void *button_register(const struct button_handlers *handlers,
-		int (*get_button_state)(void));
+const void *button_register(int (*get_button_state)(void),
+		button_handler_t handler, void *ctx);
 
-bool button_is_pressed(const void *handle);
+/**
+ * Replace the button handler
+ *
+ * @param[in] btn a button handle which is given by @ref button_register
+ * @param[in] handler @ref button_handler_t
+ * @param[in] ctx user context
+ *
+ * @return a handle if registered successfully. NULL otherwise
+ */
+void button_update_handler(void *btn, button_handler_t handler, void *ctx);
 
 /**
  * Scan all buttons and update the states
  *
  * @param[in] context user context
  *
- * @return false when waiting for the next period. true otherwise
+ * @return @ref button_rc_t
+ *
+ * @note On 32-bit systems the millisecond time cycles approximately every 50
+ * days. In case of the wraparound, clicks may resulted in false-positive if
+ * not button_step() called periodic until BUTTON_NO_ACTIVITY returned.
+ *
+ * @warn The millisecond time wraparound may add latency by @ref
+ * BUTTON_SAMPLIING_PERIOD_MS.
  */
-bool button_poll(void *context);
+button_rc_t button_step(void);
 
 #if defined(__cplusplus)
 }
