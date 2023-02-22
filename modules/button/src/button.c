@@ -113,9 +113,9 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-static bool is_click_window_expired(struct button *btn)
+static bool is_click_window_closed(const struct button *btn)
 {
-	return (btn->data.time_pressed - btn->data.time_released)
+	return (btn->data.time_pressed - btn->data.s.time_previously_released)
 		> BUTTON_CLICK_WINDOW_MS;
 }
 
@@ -139,6 +139,7 @@ static void do_released(struct button *btn, unsigned long t)
 	}
 
 	btn->data.click++;
+	btn->data.s.time_previously_released = btn->data.time_released;
 
 	btn->data.time_released = t;
 	btn->pressed = false;
@@ -155,7 +156,7 @@ static void do_holding(struct button *btn, unsigned long t)
 	if (!btn->holding) {
 		if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
 			btn->holding = true;
-			btn->data.time_repeat = t;
+			btn->data.s.time_repeat = t;
 			if (btn->handler) {
 				btn->handler(BUTTON_EVT_HOLDING,
 						&btn->data, btn->user_ctx);
@@ -164,8 +165,8 @@ static void do_holding(struct button *btn, unsigned long t)
 		return;
 	}
 
-	if ((t - btn->data.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
-		btn->data.time_repeat = t;
+	if ((t - btn->data.s.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
+		btn->data.s.time_repeat = t;
 		if (btn->handler) {
 			btn->handler(BUTTON_EVT_HOLDING,
 					&btn->data, btn->user_ctx);
@@ -212,7 +213,7 @@ static button_rc_t scan_all(unsigned long t)
 		if (state & activity_mask) {
 			keep_scanning = true;
 		} else {
-			if (is_click_window_expired(btn)) {
+			if (is_click_window_closed(btn)) {
 				btn->data.click = 0;
 			} else if (btn->data.click > 0) {
 				keep_scanning = true;
@@ -227,7 +228,7 @@ static button_rc_t scan_all(unsigned long t)
 	return BUTTON_NO_ACTIVITY;
 }
 
-static button_rc_t button_poll_internal(void)
+static button_rc_t do_step(void)
 {
 	/* NOTE: Time counter wraparound may add latency by
 	 * BUTTON_SAMPLING_PERIOD_MS */
@@ -248,7 +249,7 @@ static button_rc_t button_poll_internal(void)
 button_rc_t button_step(void)
 {
 	button_lock();
-	button_rc_t rc = button_poll_internal();
+	button_rc_t rc = do_step();
 	button_unlock();
 
 	return rc;
