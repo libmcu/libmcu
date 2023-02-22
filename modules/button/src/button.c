@@ -24,10 +24,10 @@
 #define BUTTON_REPEAT_DELAY_MS			300U
 #endif
 #if !defined(BUTTON_REPEAT_RATE_MS)
-#define BUTTON_REPEAT_RATE_MS			100U
+#define BUTTON_REPEAT_RATE_MS			200U
 #endif
 #if !defined(BUTTON_CLICK_WINDOW_MS)
-#define BUTTON_CLICK_WINDOW_MS			1000U
+#define BUTTON_CLICK_WINDOW_MS			500U
 #endif
 LIBMCU_STATIC_ASSERT(BUTTON_MAX < 8*sizeof(unsigned int),
 		"BUTTON_MAX must be less than bitmap data type size.");

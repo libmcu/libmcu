@@ -197,7 +197,7 @@ TEST(button, step_ShouldCallHolding_WhenHoldingButtonPressed) {
 
 TEST(button, poll_ShouldCallHoldingRepeat_WhenButtonPressedKept) {
 	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(10, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(20, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_EVT_PRESSED)
@@ -211,12 +211,12 @@ TEST(button, poll_ShouldCallHoldingRepeat_WhenButtonPressedKept) {
 
 	button_register(get_button_state, on_button_event, 0);
 
-	step(36+10);
+	step(36+20);
 }
 
 TEST(button, poll_ShouldCallHoldingRepeat_WhenButtonPressedKeptLonger) {
 	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(100, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(200, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_EVT_PRESSED)
@@ -230,7 +230,7 @@ TEST(button, poll_ShouldCallHoldingRepeat_WhenButtonPressedKeptLonger) {
 
 	button_register(get_button_state, on_button_event, 0);
 
-	step(36+100);
+	step(36+200);
 }
 
 TEST(button, step_ShouldHandleClick_WhenTwoClickGiven) {
@@ -264,10 +264,10 @@ TEST(button, step_ShouldHandleClick_WhenOneClickGivenTwice) {
 	struct button_data oneClick = { .click = 1, };
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
 
 	mock().expectNCalls(2, "on_button_event")
 		.withParameter("event", BUTTON_EVT_PRESSED)
@@ -284,8 +284,8 @@ TEST(button, step_ShouldHandleClick_WhenOneClickGivenTwice) {
 
 	button_register(get_button_state, on_button_event, 0);
 
-	LONGS_EQUAL(112, step_until_inactivity_detected());
-	LONGS_EQUAL(112, step_until_inactivity_detected());
+	LONGS_EQUAL(62, step_until_inactivity_detected());
+	LONGS_EQUAL(62, step_until_inactivity_detected());
 }
 
 TEST(button, step_ShouldReturnScanning_WhenButtonActivityDetected) {
@@ -339,7 +339,7 @@ TEST(button, step_ShouldReturnNoActivity_WhenClickWindowExpired) {
 	struct button_data oneClick = { .click = 1, };
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
 
 	mock().expectNCalls(1, "on_button_event")
 		.withParameter("event", BUTTON_EVT_PRESSED)
@@ -353,5 +353,5 @@ TEST(button, step_ShouldReturnNoActivity_WhenClickWindowExpired) {
 
 	button_register(get_button_state, on_button_event, 0);
 
-	LONGS_EQUAL(112, step_until_inactivity_detected());
+	LONGS_EQUAL(62, step_until_inactivity_detected());
 }
