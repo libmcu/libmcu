@@ -8,12 +8,18 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
 * `BUTTON_MAX`
   - The maximum number of buttons. The default is 1.
 * `BUTTON_SAMPLING_PERIOD_MS`
-  - The sampling period. The default is 10 milli seconds.
+  - The sampling period. The default is 10 milliseconds.
 * `BUTTON_MIN_PRESS_TIME_MS`
-  - The default is 60 milli seconds.
+  - The default is 60 milliseconds.
+* `BUTTON_REPEAT_DELAY_MS`
+  - The repeat handler is called after the defined delay while button holding. The default is 300 milliseconds.
+* `BUTTON_REPEAT_RATE_MS`
+  - The repeat handler is called every BUTTON_REPEAT_RATE_MS while button holding. The default is 200 milliseconds.
+* `BUTTON_CLICK_WINDOW_MS`
+  - The click handler is called with the number of clicks when another click comes in the time window. The default is 500 milliseconds.
  
 ### Initialize GPIO to be used for button
-This is platform specific, somthing like in case of NRF5:
+This is platform specific, something like in case of NRF5:
 
 ```c
 int testbtn_get_state(void) {
@@ -42,26 +48,33 @@ unsigned int get_time_ms(void) {
 ### Register buttons
 
 ```c
-static void btn_pressed(const struct button_data *btn, void *context) {
-	debug("pressed %d, %x", btn->time_pressed, btn->history);
-}
-static void btn_released(const struct button_data *btn, void *context) {
-	debug("released %d, %x", btn->time_released, btn->history);
+static void on_button_event(enum button_event event,
+		const struct button_data *info, void *ctx) {
+	switch (event) {
+	case BUTTON_EVT_CLICK:
+		debug("%d click(s)", info->click);
+		break;
+	case BUTTON_EVT_PRESSED:
+		debug("pressed at %lu", info->time_pressed);
+		break;
+	case BUTTON_EVT_RELEASED:
+		debug("released at %lu", info->time_released);
+		break;
+	case BUTTON_EVT_HOLDING:
+		debug("holding at %lu", info->time_repeat);
+		break;
+	}
 }
 
 void register_buttons(void) {
-	static button_handlers_t mybtn = {
-		.pressed = btn_pressed,
-		.released = btn_released,
-	};
-	button_register(&mybtn, testbtn_get_state);
+	button_register(testbtn_get_state, on_button_event, 0);
 }
 ```
 
 ### And scan
 
 ```c
-button_poll(NULL);
+button_step();
 ```
 
-then registered callback will be called when button activity detected.
+then registered handler will be called when button activity detected.
