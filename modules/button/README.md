@@ -14,9 +14,9 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
 * `BUTTON_REPEAT_DELAY_MS`
   - The repeat handler is called after the defined delay while button holding. The default is 300 milliseconds.
 * `BUTTON_REPEAT_RATE_MS`
-  - The repeat handler is called every BUTTON_REPEAT_RATE_MS while button holding. The default is 100 milliseconds.
+  - The repeat handler is called every BUTTON_REPEAT_RATE_MS while button holding. The default is 200 milliseconds.
 * `BUTTON_CLICK_WINDOW_MS`
-  - The click handler is called with the number of clicks when another click comes in the time window. The default is 1 second.
+  - The click handler is called with the number of clicks when another click comes in the time window. The default is 500 milliseconds.
  
 ### Initialize GPIO to be used for button
 This is platform specific, something like in case of NRF5:
@@ -55,10 +55,13 @@ static void on_button_event(enum button_event event,
 		debug("%d click(s)", info->click);
 		break;
 	case BUTTON_EVT_PRESSED:
-		debug("pressed %d, %x", info->time_pressed, info->history);
+		debug("pressed at %lu", info->time_pressed);
 		break;
 	case BUTTON_EVT_RELEASED:
-		debug("released %d, %x", info->time_released, info->history);
+		debug("released at %lu", info->time_released);
+		break;
+	case BUTTON_EVT_HOLDING:
+		debug("holding at %lu", info->time_repeat);
 		break;
 	}
 }
