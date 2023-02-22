@@ -30,10 +30,7 @@ struct button_data {
 	unsigned int history;
 	unsigned long time_pressed;
 	unsigned long time_released;
-	union {
-		unsigned long time_repeat;
-		unsigned long time_previously_released;
-	} s;
+	unsigned long time_repeat;
 	uint8_t click; /**< the number of clicks */
 };
 

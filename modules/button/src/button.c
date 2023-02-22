@@ -67,7 +67,7 @@ static struct {
 	struct button buttons[BUTTON_MAX];
 } m;
 
-static void update_button(struct button *btn)
+static void update_history(struct button *btn)
 {
 	unsigned int history = ACCESS_ONCE(btn->data.history);
 	history <<= 1;
@@ -113,10 +113,9 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-static bool is_click_window_closed(const struct button *btn)
+static bool is_click_window_closed(const struct button *btn, unsigned long t)
 {
-	return (btn->data.time_pressed - btn->data.s.time_previously_released)
-		> BUTTON_CLICK_WINDOW_MS;
+	return (t - btn->data.time_released) >= BUTTON_CLICK_WINDOW_MS;
 }
 
 static void do_pressed(struct button *btn, unsigned long t)
@@ -139,7 +138,6 @@ static void do_released(struct button *btn, unsigned long t)
 	}
 
 	btn->data.click++;
-	btn->data.s.time_previously_released = btn->data.time_released;
 
 	btn->data.time_released = t;
 	btn->pressed = false;
@@ -156,7 +154,7 @@ static void do_holding(struct button *btn, unsigned long t)
 	if (!btn->holding) {
 		if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
 			btn->holding = true;
-			btn->data.s.time_repeat = t;
+			btn->data.time_repeat = t;
 			if (btn->handler) {
 				btn->handler(BUTTON_EVT_HOLDING,
 						&btn->data, btn->user_ctx);
@@ -165,8 +163,8 @@ static void do_holding(struct button *btn, unsigned long t)
 		return;
 	}
 
-	if ((t - btn->data.s.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
-		btn->data.s.time_repeat = t;
+	if ((t - btn->data.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
+		btn->data.time_repeat = t;
 		if (btn->handler) {
 			btn->handler(BUTTON_EVT_HOLDING,
 					&btn->data, btn->user_ctx);
@@ -180,7 +178,7 @@ static button_state_t scan_button(struct button *btn, unsigned long t)
 		return BUTTON_STATE_INACTIVATED;
 	}
 
-	update_button(btn);
+	update_history(btn);
 
 	if (is_button_pressed(btn)) {
 		do_pressed(btn, t);
@@ -206,14 +204,16 @@ static button_rc_t scan_all(unsigned long t)
 
 	for (int i = 0; i < BUTTON_MAX; i++) {
 		struct button *btn = &m.buttons[i];
-		button_state_t state = scan_button(btn, t);
 		unsigned int activity_mask = BUTTON_STATE_PRESSED |
 			BUTTON_STATE_DOWN | BUTTON_STATE_DEBOUNCING;
+		button_state_t state = scan_button(btn, t);
 
-		if (state & activity_mask) {
+		if (state == BUTTON_STATE_INACTIVATED) {
+			continue;
+		} else if (state & activity_mask) {
 			keep_scanning = true;
-		} else {
-			if (is_click_window_closed(btn)) {
+		} else { /* button is up */
+			if (is_click_window_closed(btn, t)) {
 				btn->data.click = 0;
 			} else if (btn->data.click > 0) {
 				keep_scanning = true;

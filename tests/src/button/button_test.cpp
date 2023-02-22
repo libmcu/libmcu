@@ -69,6 +69,22 @@ TEST_GROUP(button) {
 
 		return rc;
 	}
+
+	int step_until_inactivity_detected(void) {
+		unsigned long t = 0;
+		int cnt = 0;
+		button_rc_t rc;
+
+		do {
+			cnt++;
+			do {
+				mock().expectOneCall("fake_get_time_ms")
+					.andReturnValue(t++);
+			} while ((rc = button_step()) == BUTTON_BUSY) ;
+		} while (rc != BUTTON_NO_ACTIVITY);
+
+		return cnt;
+	}
 };
 
 TEST(button, register_ShouldReturnFalse_WhenInvalidParamsGiven) {
@@ -244,6 +260,34 @@ TEST(button, step_ShouldHandleClick_WhenTwoClickGiven) {
 	step(6+6+6+6);
 }
 
+TEST(button, step_ShouldHandleClick_WhenOneClickGivenTwice) {
+	struct button_data oneClick = { .click = 1, };
+
+	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+
+	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+
+	mock().expectNCalls(2, "on_button_event")
+		.withParameter("event", BUTTON_EVT_PRESSED)
+		.ignoreOtherParameters();
+	mock().expectNCalls(2, "on_button_event")
+		.withParameter("event", BUTTON_EVT_RELEASED)
+		.ignoreOtherParameters();
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_EVT_CLICK)
+		.withParameterOfType("clickType", "info", &oneClick);
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_EVT_CLICK)
+		.withParameterOfType("clickType", "info", &oneClick);
+
+	button_register(get_button_state, on_button_event, 0);
+
+	LONGS_EQUAL(112, step_until_inactivity_detected());
+	LONGS_EQUAL(112, step_until_inactivity_detected());
+}
+
 TEST(button, step_ShouldReturnScanning_WhenButtonActivityDetected) {
 	mock().expectNCalls(1, "get_button_state").andReturnValue(1);
 	mock().expectOneCall("fake_get_time_ms").andReturnValue(10);
@@ -270,10 +314,44 @@ TEST(button, step_ShouldReturnNoActivity_WhenNoActivityOnButtonDetected) {
 	CHECK(button_step() == BUTTON_NO_ACTIVITY);
 }
 
-TEST(button, step_ShouldReturnBusy_WhenCallingManyInOnePeriod) {
+TEST(button, step_ShouldReturnBusy_WhenCalledMoreThanOnceInOnePeriod) {
 	mock().expectOneCall("fake_get_time_ms").andReturnValue(9);
 
 	button_register(get_button_state, on_button_event, 0);
 
 	CHECK(button_step() == BUTTON_BUSY);
+}
+
+TEST(button, step_ShouldReturnNoActivity_WhenZeroInput) {
+	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
+	button_register(get_button_state, on_button_event, 0);
+	LONGS_EQUAL(1, step_until_inactivity_detected());
+}
+
+TEST(button, step_ShouldReturnNoActivity_WhenDebouncingFiltered) {
+	mock().expectNCalls(1, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
+	button_register(get_button_state, on_button_event, 0);
+	LONGS_EQUAL(7, step_until_inactivity_detected());
+}
+
+TEST(button, step_ShouldReturnNoActivity_WhenClickWindowExpired) {
+	struct button_data oneClick = { .click = 1, };
+
+	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(106, "get_button_state").andReturnValue(0);
+
+	mock().expectNCalls(1, "on_button_event")
+		.withParameter("event", BUTTON_EVT_PRESSED)
+		.ignoreOtherParameters();
+	mock().expectNCalls(1, "on_button_event")
+		.withParameter("event", BUTTON_EVT_RELEASED)
+		.ignoreOtherParameters();
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_EVT_CLICK)
+		.withParameterOfType("clickType", "info", &oneClick);
+
+	button_register(get_button_state, on_button_event, 0);
+
+	LONGS_EQUAL(112, step_until_inactivity_detected());
 }
