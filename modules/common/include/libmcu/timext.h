@@ -13,10 +13,10 @@ extern "C" {
 
 #include <stdbool.h>
 
-void timeout_set(unsigned int *goal, unsigned int msec);
-bool timeout_is_expired(unsigned int goal);
+void timeout_set(unsigned long *goal, unsigned long msec);
+bool timeout_is_expired(unsigned long goal);
 
-void sleep_ms(unsigned int msec);
+void sleep_ms(unsigned long msec);
 
 #if defined(__cplusplus)
 }
