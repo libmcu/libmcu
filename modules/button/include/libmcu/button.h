@@ -13,6 +13,25 @@ extern "C" {
 
 #include <stdint.h>
 
+#if !defined(BUTTON_MAX)
+#define BUTTON_MAX				1
+#endif
+#if !defined(BUTTON_SAMPLING_PERIOD_MS)
+#define BUTTON_SAMPLING_PERIOD_MS		10U
+#endif
+#if !defined(BUTTON_MIN_PRESS_TIME_MS)
+#define BUTTON_MIN_PRESS_TIME_MS		60U
+#endif
+#if !defined(BUTTON_REPEAT_DELAY_MS)
+#define BUTTON_REPEAT_DELAY_MS			300U
+#endif
+#if !defined(BUTTON_REPEAT_RATE_MS)
+#define BUTTON_REPEAT_RATE_MS			200U
+#endif
+#if !defined(BUTTON_CLICK_WINDOW_MS)
+#define BUTTON_CLICK_WINDOW_MS			500U
+#endif
+
 typedef enum {
 	BUTTON_BUSY, /**< Too many calls in a sampling period */
 	BUTTON_SCANNING, /**< Activity detected on buttons. Scanning for state */
