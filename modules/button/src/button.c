@@ -11,24 +11,6 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#if !defined(BUTTON_MAX)
-#define BUTTON_MAX				1
-#endif
-#if !defined(BUTTON_SAMPLING_PERIOD_MS)
-#define BUTTON_SAMPLING_PERIOD_MS		10U
-#endif
-#if !defined(BUTTON_MIN_PRESS_TIME_MS)
-#define BUTTON_MIN_PRESS_TIME_MS		60U
-#endif
-#if !defined(BUTTON_REPEAT_DELAY_MS)
-#define BUTTON_REPEAT_DELAY_MS			300U
-#endif
-#if !defined(BUTTON_REPEAT_RATE_MS)
-#define BUTTON_REPEAT_RATE_MS			200U
-#endif
-#if !defined(BUTTON_CLICK_WINDOW_MS)
-#define BUTTON_CLICK_WINDOW_MS			500U
-#endif
 LIBMCU_STATIC_ASSERT(BUTTON_MAX < 8*sizeof(unsigned int),
 		"BUTTON_MAX must be less than bitmap data type size.");
 LIBMCU_STATIC_ASSERT(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_PERIOD_MS,
@@ -57,7 +39,6 @@ struct button {
 	int (*get_state)(void);
 	bool pressed;
 	bool active;
-	bool holding;
 	void *user_ctx;
 };
 
@@ -141,34 +122,32 @@ static void do_released(struct button *btn, unsigned long t)
 
 	btn->data.time_released = t;
 	btn->pressed = false;
-	btn->holding = false;
 
 	if (btn->handler) {
 		btn->handler(BUTTON_EVT_RELEASED, &btn->data, btn->user_ctx);
 		btn->handler(BUTTON_EVT_CLICK, &btn->data, btn->user_ctx);
 	}
+
+	btn->data.time_repeat = 0;
 }
 
 static void do_holding(struct button *btn, unsigned long t)
 {
-	if (!btn->holding) {
-		if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
-			btn->holding = true;
-			btn->data.time_repeat = t;
-			if (btn->handler) {
-				btn->handler(BUTTON_EVT_HOLDING,
-						&btn->data, btn->user_ctx);
-			}
+	bool notify = false;
+
+	if (btn->data.time_repeat) {
+		if ((t - btn->data.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
+			notify = true;
 		}
-		return;
+	} else {
+		if ((t - btn->data.time_pressed) >= BUTTON_REPEAT_DELAY_MS) {
+			notify = true;
+		}
 	}
 
-	if ((t - btn->data.time_repeat) >= BUTTON_REPEAT_RATE_MS) {
+	if (notify && btn->handler) {
 		btn->data.time_repeat = t;
-		if (btn->handler) {
-			btn->handler(BUTTON_EVT_HOLDING,
-					&btn->data, btn->user_ctx);
-		}
+		btn->handler(BUTTON_EVT_HOLDING, &btn->data, btn->user_ctx);
 	}
 }
 
@@ -273,7 +252,6 @@ const void *button_register(int (*get_button_state)(void),
 	btn->handler = handler;
 	btn->get_state = get_button_state;
 	btn->pressed = false;
-	btn->holding = false;
 	memset(&btn->data, 0, sizeof(btn->data));
 	btn->active = true;
 	btn->user_ctx = ctx;
