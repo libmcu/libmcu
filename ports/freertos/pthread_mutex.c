@@ -64,6 +64,26 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 	return pthread_mutex_lock_internal(sema, portMAX_DELAY);
 }
 
+int pthread_mutex_trylock(pthread_mutex_t *mutex)
+{
+	return pthread_mutex_lock(mutex);
+}
+
+int pthread_mutex_unlock(pthread_mutex_t *mutex)
+{
+	if (mutex == NULL) {
+		return -EINVAL;
+	}
+
+	SemaphoreHandle_t sema = (SemaphoreHandle_t)*mutex;
+
+        int ok = xSemaphoreGive(sema);
+	assert(ok == pdTRUE);
+
+	return 0;
+}
+
+#if defined(_POSIX_TIMEOUTS)
 int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 {
 	if (mutex == NULL || timeout == NULL) {
@@ -84,22 +104,4 @@ int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeo
 
 	return 0;
 }
-
-int pthread_mutex_trylock(pthread_mutex_t *mutex)
-{
-	return pthread_mutex_lock(mutex);
-}
-
-int pthread_mutex_unlock(pthread_mutex_t *mutex)
-{
-	if (mutex == NULL) {
-		return -EINVAL;
-	}
-
-	SemaphoreHandle_t sema = (SemaphoreHandle_t)*mutex;
-
-        int ok = xSemaphoreGive(sema);
-	assert(ok == pdTRUE);
-
-	return 0;
-}
+#endif
