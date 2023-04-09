@@ -37,7 +37,7 @@ int pm_unregister_entry_callback(pm_mode_t mode, int8_t priority,
 		pm_callback_t func);
 int pm_unregister_exit_callback(pm_mode_t mode, int8_t priority,
 		pm_callback_t func);
-void pm_reset(void);
+void pm_init(void);
 
 #if defined(__cplusplus)
 }
