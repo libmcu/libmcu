@@ -73,15 +73,12 @@ static int register_entry(bool on_exit, pm_mode_t mode, int8_t priority,
 
 	for (unsigned int i = 0; i < PM_CALLBACK_MAXLEN; i++) {
 		struct pm_item *p = &slots[i];
-		if (!p->func) { /* no empty slot in the middle guaranteed */
+		if (!p->func || p->priority < priority) {
+			move_right(p, PM_CALLBACK_MAXLEN - i);
 			slot = p;
 			break;
 		} else if (p->mode != mode) {
 			continue;
-		} else if (p->priority < priority) {
-			move_right(p, PM_CALLBACK_MAXLEN - i);
-			slot = p;
-			break;
 		} else if (p->mode == mode && p->on_exit == on_exit &&
 				p->priority == priority && p->func == func) {
 			return -EEXIST;
