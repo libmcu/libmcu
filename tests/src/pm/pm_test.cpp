@@ -9,7 +9,7 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include "libmcu/pm.h"
-#include "libmcu/board/pm.h"
+#include "libmcu/port/pm.h"
 
 static int cnt;
 
@@ -31,7 +31,7 @@ static void cb_3(void *ctx) {
 	mock().actualCall(__func__).withParameter("ctx", ctx);
 }
 
-int pm_board_enter(pm_mode_t mode)
+int pm_port_enter(pm_mode_t mode)
 {
 	(void)mode;
 	return 0;
