@@ -12,15 +12,16 @@
 #include <errno.h>
 #include <pthread.h>
 
-static struct pm_item {
+struct pm_item {
 	pm_callback_t func;
 	void *ctx;
 	pm_mode_t mode;
 	int8_t priority;
 	bool on_exit;
-} slots[PM_CALLBACK_MAXLEN];
+};
 
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static struct pm_item slots[PM_CALLBACK_MAXLEN];
+static pthread_mutex_t slot_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static int count_empty_slots(void)
 {
@@ -151,11 +152,11 @@ static int register_callback(pm_mode_t mode, int8_t priority,
 		return -EINVAL;
 	}
 
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&slot_lock);
 	if (count_empty_slots() > 0) {
 		rc = register_entry(on_exit, mode, priority, func, arg);
 	}
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&slot_lock);
 
 	return rc;
 }
@@ -163,9 +164,9 @@ static int register_callback(pm_mode_t mode, int8_t priority,
 static int unregister_callback(pm_mode_t mode, int8_t priority,
 		pm_callback_t func, bool on_exit)
 {
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&slot_lock);
 	int rc = unregister_entry(on_exit, mode, priority, func);
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&slot_lock);
 	return rc;
 }
 
@@ -195,20 +196,20 @@ int pm_unregister_exit_callback(pm_mode_t mode, int8_t priority,
 
 int pm_enter(pm_mode_t mode)
 {
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&slot_lock);
 	dispatch_entries(mode);
 
 	int rc = pm_board_enter(mode);
 
 	dispatch_exits(mode);
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&slot_lock);
 
 	return rc;
 }
 
 void pm_init(void)
 {
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&slot_lock);
 	memset(slots, 0, sizeof(slots));
-	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&slot_lock, NULL);
 }
