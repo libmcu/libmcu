@@ -19,4 +19,4 @@ INCLUDE_DIRS = \
 CPPUTEST_CPPFLAGS = -DLOGGING_TAG=TAG
 MOCKS_SRC_DIRS =
 
-include MakefileRunner.mk
+include runners/MakefileRunner

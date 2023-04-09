@@ -19,4 +19,4 @@ CPPUTEST_CPPFLAGS = -DPUBSUB_MIN_SUBSCRIPTION_CAPACITY=1
 
 MOCKS_SRC_DIRS =
 
-include MakefileRunner.mk
+include runners/MakefileRunner
