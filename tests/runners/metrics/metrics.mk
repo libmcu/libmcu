@@ -26,4 +26,4 @@ CPPUTEST_CPPFLAGS = \
 
 MOCKS_SRC_DIRS =
 
-include MakefileRunner.mk
+include runners/MakefileRunner

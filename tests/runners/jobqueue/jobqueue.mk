@@ -25,4 +25,4 @@ INCLUDE_DIRS = \
 MOCKS_SRC_DIRS =
 CPPUTEST_CPPFLAGS = -DUNITTEST
 
-include MakefileRunner.mk
+include runners/MakefileRunner

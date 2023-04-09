@@ -22,4 +22,4 @@ CPPUTEST_CPPFLAGS = \
 	-DBUTTON_MIN_PRESS_TIME_MS=60 \
 	-DBUTTON_REPEAT_DELAY_MS=300 \
 
-include MakefileRunner.mk
+include runners/MakefileRunner
