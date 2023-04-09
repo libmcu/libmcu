@@ -51,7 +51,19 @@ static void move_right(struct pm_item *p, unsigned int n)
 		}
 	}
 }
-//static void move_left
+
+static void move_left(struct pm_item *p, unsigned int n)
+{
+	while (n--) {
+		if (!p[1].func) { /* clean the last one */
+			memset(p, 0, sizeof(*p));
+			break;
+		}
+
+		p[0] = p[1];
+		p++;
+	}
+}
 
 static int register_entry(bool on_exit, pm_mode_t mode, int8_t priority,
 		pm_callback_t func, void *arg)
@@ -69,6 +81,9 @@ static int register_entry(bool on_exit, pm_mode_t mode, int8_t priority,
 			move_right(p, PM_CALLBACK_MAXLEN - i);
 			slot = p;
 			break;
+		} else if (p->mode == mode && p->on_exit == on_exit &&
+				p->priority == priority && p->func == func) {
+			return -EEXIST;
 		}
 	}
 
@@ -83,6 +98,24 @@ static int register_entry(bool on_exit, pm_mode_t mode, int8_t priority,
 	slot->ctx = arg;
 
 	return 0;
+}
+
+static int unregister_entry(bool on_exit, pm_mode_t mode, int8_t priority,
+		pm_callback_t func)
+{
+	for (unsigned int i = 0; i < PM_CALLBACK_MAXLEN; i++) {
+		struct pm_item *p = &slots[i];
+		if (!p->func) { /* no entry found */
+			break;
+		} else if (p->func == func && p->mode == mode &&
+				p->priority == priority &&
+				p->on_exit == on_exit) {
+			move_left(p, PM_CALLBACK_MAXLEN - i);
+			return 0;
+		}
+	}
+
+	return -ENOENT;
 }
 
 static void dispatch_entries(pm_mode_t mode)
@@ -109,6 +142,57 @@ static void dispatch_exits(pm_mode_t mode)
 	}
 }
 
+static int register_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func, void *arg, bool on_exit)
+{
+	int rc = -ENOSPC;
+
+	if (!func) {
+		return -EINVAL;
+	}
+
+	pthread_mutex_lock(&lock);
+	if (count_empty_slots() > 0) {
+		rc = register_entry(on_exit, mode, priority, func, arg);
+	}
+	pthread_mutex_unlock(&lock);
+
+	return rc;
+}
+
+static int unregister_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func, bool on_exit)
+{
+	pthread_mutex_lock(&lock);
+	int rc = unregister_entry(on_exit, mode, priority, func);
+	pthread_mutex_unlock(&lock);
+	return rc;
+}
+
+int pm_register_entry_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func, void *arg)
+{
+	return register_callback(mode, priority, func, arg, false);
+}
+
+int pm_register_exit_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func, void *arg)
+{
+	return register_callback(mode, priority, func, arg, true);
+}
+
+int pm_unregister_entry_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func)
+{
+	return unregister_callback(mode, priority, func, false);
+}
+
+int pm_unregister_exit_callback(pm_mode_t mode, int8_t priority,
+		pm_callback_t func)
+{
+	return unregister_callback(mode, priority, func, true);
+}
+
 int pm_enter(pm_mode_t mode)
 {
 	pthread_mutex_lock(&lock);
@@ -117,42 +201,6 @@ int pm_enter(pm_mode_t mode)
 	int rc = pm_board_enter(mode);
 
 	dispatch_exits(mode);
-	pthread_mutex_unlock(&lock);
-
-	return rc;
-}
-
-int pm_register_entry_callback(pm_mode_t mode, int8_t priority,
-		pm_callback_t func, void *arg)
-{
-	int rc = -ENOSPC;
-
-	if (!func) {
-		return -EINVAL;
-	}
-
-	pthread_mutex_lock(&lock);
-	if (count_empty_slots() > 0) {
-		rc = register_entry(false, mode, priority, func, arg);
-	}
-	pthread_mutex_unlock(&lock);
-
-	return rc;
-}
-
-int pm_register_exit_callback(pm_mode_t mode, int8_t priority,
-		pm_callback_t func, void *arg)
-{
-	int rc = -ENOSPC;
-
-	if (!func) {
-		return -EINVAL;
-	}
-
-	pthread_mutex_lock(&lock);
-	if (count_empty_slots() > 0) {
-		rc = register_entry(true, mode, priority, func, arg);
-	}
 	pthread_mutex_unlock(&lock);
 
 	return rc;

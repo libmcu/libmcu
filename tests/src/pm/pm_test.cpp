@@ -48,7 +48,7 @@ TEST_GROUP(PM) {
 	}
 };
 
-TEST(PM, register_callback_ShouldSortEntriesInOrderOfPriority_WhenMixPrioiryGiven) {
+TEST(PM, register_ShouldSortEntriesInOrderOfPriority_WhenMixedPrioirtiesGiven) {
 	int t1, t2, t3;
 	mock().expectOneCall("cb_1").withParameter("ctx", &t1);
 	mock().expectOneCall("cb_2").withParameter("ctx", &t2);
@@ -62,4 +62,45 @@ TEST(PM, register_callback_ShouldSortEntriesInOrderOfPriority_WhenMixPrioiryGive
 	LONGS_EQUAL(0, t2);
 	LONGS_EQUAL(1, t3);
 	LONGS_EQUAL(2, t1);
+}
+
+TEST(PM, unregister_ShouldRemoveEntry_WhenExists) {
+	int t1, t2, t3;
+	mock().expectOneCall("cb_1").withParameter("ctx", &t1);
+	mock().expectOneCall("cb_3").withParameter("ctx", &t3);
+	pm_register_entry_callback(PM_SLEEP, 0, cb_1, &t1);
+	pm_register_entry_callback(PM_SLEEP, 1, cb_2, &t2);
+	pm_register_entry_callback(PM_SLEEP, 2, cb_3, &t3);
+	pm_unregister_entry_callback(PM_SLEEP, 1, cb_2);
+
+	pm_enter(PM_SLEEP);
+}
+
+TEST(PM, register_ShouldReturnEINVAL_WhenNullFuncGiven) {
+	LONGS_EQUAL(-EINVAL, pm_register_entry_callback(PM_SLEEP, 0, 0, 0));
+}
+
+TEST(PM, unregister_ShouldReturnNOENT_WhenNoEntryFound) {
+	LONGS_EQUAL(-ENOENT, pm_unregister_entry_callback(PM_SLEEP, 0, cb_1));
+}
+
+TEST(PM, unregister_ShouldReturnNOENT_WhenNullEntryGiven) {
+	LONGS_EQUAL(-ENOENT, pm_unregister_entry_callback(PM_SLEEP, 0, 0));
+}
+
+TEST(PM, register_ShouldReturnNOSPC_WhenFull) {
+	pm_callback_t cb[PM_CALLBACK_MAXLEN];
+	pm_callback_t cb_extra = (pm_callback_t)(PM_CALLBACK_MAXLEN + 1);
+
+	for (unsigned int i = 0; i < PM_CALLBACK_MAXLEN; i++) {
+		cb[i] = (pm_callback_t)(uintptr_t)(i+1);
+		LONGS_EQUAL(0, pm_register_entry_callback(PM_SLEEP, 0, cb[i], 0));
+	}
+
+	LONGS_EQUAL(-ENOSPC, pm_register_entry_callback(PM_SLEEP, 0, cb_extra, 0));
+}
+
+TEST(PM, register_ShouldReturnEXIST_WhenDuplicated) {
+	LONGS_EQUAL(0, pm_register_entry_callback(PM_SLEEP, 0, cb_1, 0));
+	LONGS_EQUAL(-EEXIST, pm_register_entry_callback(PM_SLEEP, 0, cb_1, 0));
 }
