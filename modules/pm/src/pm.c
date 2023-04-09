@@ -28,7 +28,7 @@ static int count_empty_slots(void)
 	int cnt = 0;
 
 	for (unsigned int i = 0; i < PM_CALLBACK_MAXLEN; i++) {
-		struct pm_item *p = &slots[i];
+		const struct pm_item *p = &slots[i];
 		if (!p->func) {
 			cnt++;
 		}
