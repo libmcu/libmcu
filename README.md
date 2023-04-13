@@ -36,8 +36,10 @@ Any feedback would be appreciated.
 
 ## Integration Guide
 The library can be intergrated in your project as a [git
-submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) or using [CMake
-FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
+submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules), using [CMake
+FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html), or
+[downloading](https://github.com/libmcu/libmcu/archive/refs/heads/main.zip)
+manually.
 
 ### git submodule
 #### Include `libmcu` into your project
@@ -53,10 +55,12 @@ $ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libm
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
 LIBMCU_MODULES := ao logging metrics pubsub
+LIBMCU_INTERFACES := i2c l4
 include $(LIBMCU_ROOT)/projects/modules.mk
+include $(LIBMCU_ROOT)/projects/interfaces.mk
 
-<SRC_FILES> += $(LIBMCU_MODULES_SRCS)
-<INC_PATHS> += $(LIBMCU_MODULES_INCS)
+<SRC_FILES> += $(LIBMCU_MODULES_SRCS) $(LIBMCU_INTERFACES_SRCS)
+<INC_PATHS> += $(LIBMCU_MODULES_INCS) $(LIBMCU_INTERFACES_INCS)
 ```
 
 ##### CMake

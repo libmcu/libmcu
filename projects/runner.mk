@@ -4,11 +4,13 @@ include projects/version.mk
 include projects/toolchain.mk
 
 LIBMCU_MODULES ?= $(patsubst modules/%, %, $(wildcard modules/*))
+LIBMCU_INTERFACES ?= $(patsubst interfaces/%, %, $(wildcard interfaces/*))
 include projects/modules.mk
+include projects/interfaces.mk
 LIBMCU_MODULES_INCS += $(libmcu-basedir)modules/common/include/libmcu/posix
 
-SRCS += $(LIBMCU_MODULES_SRCS)
-INCS += $(LIBMCU_MODULES_INCS)
+SRCS += $(LIBMCU_MODULES_SRCS) $(LIBMCU_INTERFACES_SRCS)
+INCS += $(LIBMCU_MODULES_INCS) $(LIBMCU_INTERFACES_INCS)
 DEFS += \
 	METRICS_USER_DEFINES=\"../metrics.def\" \
 	_POSIX_C_SOURCE=200809L \
