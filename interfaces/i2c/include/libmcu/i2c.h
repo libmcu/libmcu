@@ -16,8 +16,8 @@ extern "C" {
 
 struct i2c;
 
-int i2c_init(struct i2c *self);
-int i2c_deinit(struct i2c *self);
+struct i2c *i2c_create(uint8_t id);
+void i2c_delete(struct i2c *self);
 int i2c_write(struct i2c *self, uint8_t addr, uint8_t reg,
 		const void *data, size_t data_len);
 int i2c_read(struct i2c *self, uint8_t addr, uint8_t reg,

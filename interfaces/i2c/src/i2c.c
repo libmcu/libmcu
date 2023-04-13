@@ -1,14 +1,14 @@
 #include "libmcu/i2c.h"
 #include "libmcu/port/i2c.h"
 
-int i2c_init(struct i2c *self)
+struct i2c *i2c_create(uint8_t id)
 {
-	return i2c_port_init(self);
+	return i2c_port_create(id);
 }
 
-int i2c_deinit(struct i2c *self)
+void i2c_delete(struct i2c *self)
 {
-	return i2c_port_deinit(self);
+	i2c_port_delete(self);
 }
 
 int i2c_write(struct i2c *self, uint8_t addr, uint8_t reg,
