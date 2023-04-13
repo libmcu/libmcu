@@ -36,13 +36,6 @@ struct l4_conn_param {
 };
 
 struct l4;
-struct l4_api {
-	int (*connect)(struct l4 *self);
-	int (*disconnect)(struct l4 *self);
-	int (*write)(struct l4 *self,
-			const void *data, size_t data_len);
-	int (*read)(struct l4 *self, void *buf, size_t bufsize);
-};
 
 #define l4_create_default	tls_create
 #define l4_destroy_default	tls_destroy
