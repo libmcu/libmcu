@@ -5,7 +5,7 @@
  */
 
 #include "libmcu/pm.h"
-#include "libmcu/board/pm.h"
+#include "libmcu/port/pm.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -196,7 +196,7 @@ int pm_enter(pm_mode_t mode)
 	pthread_mutex_lock(&slot_lock);
 	dispatch_entries(mode);
 
-	int rc = pm_board_enter(mode);
+	int rc = pm_port_enter(mode);
 
 	dispatch_exits(mode);
 	pthread_mutex_unlock(&slot_lock);

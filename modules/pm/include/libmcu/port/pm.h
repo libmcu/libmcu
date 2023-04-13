@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef LIBMCU_BOARD_PM_H
-#define LIBMCU_BOARD_PM_H
+#ifndef LIBMCU_PORT_PM_H
+#define LIBMCU_PORT_PM_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -13,10 +13,10 @@ extern "C" {
 
 #include "libmcu/pm.h"
 
-int pm_board_enter(pm_mode_t mode);
+int pm_port_enter(pm_mode_t mode);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* LIBMCU_BOARD_PM_H */
+#endif /* LIBMCU_PORT_PM_H */

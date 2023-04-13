@@ -5,7 +5,7 @@
 The callback function should be as simple and fast as possible since it runs in
 the context of a caller(publisher) in sequence, one by one.
 
-![pubsub simple usecase](../../docs/images/pubsub_simple.png)
+![pubsub simple usecase](pubsub_simple.png)
 
 ```c
 static void hello_callback(void *context, const void *msg, size_t msglen) {
@@ -19,7 +19,7 @@ pubsub_publish("mytopic", "Hello, World!", strlen("Hello, World!"));
 Each subscriber runs concurrently as a job while a publisher has the
 responsiblility to publish a message for jobs to each queues.
 
-![pubsub usecase](../../docs/images/pubsub_queue.png)
+![pubsub usecase](pubsub_queue.png)
 
 ```c
 static void event_callback(void *context, const void *msg, size_t msglen)
@@ -53,7 +53,7 @@ pubsub_publish("mytopic", data, data_size);
 Jobqueue is used as a broker. Both of publishing and subscribing can be done
 concurrently in another context.
 
-![pubsub usecase](../../docs/images/pubsub_jobqueue.png)
+![pubsub usecase](pubsub_jobqueue.png)
 
 ## Integration Guide
 
