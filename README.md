@@ -30,6 +30,9 @@ Any feedback would be appreciated.
 * [Time Extension](modules/timext)
 * [Trace](modules/trace)
 
+## Interfaces
+* [I2C](interfaces/i2c)
+
 ## Integration Guide
 The library can be intergrated in your project as a [git
 submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) or using [CMake
