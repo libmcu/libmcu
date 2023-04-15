@@ -9,13 +9,15 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#define MAGIC_CODE			((uintptr_t)metrics)
+#define MAGIC_KEY			0xffU
+#define MAGIC_VALUE			((int32_t)(intptr_t)metrics)
 
 enum {
 #define METRICS_DEFINE(key)		METRICS_##key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 	METRICS_KEY_MAX,
+	METRICS_KEY_MAGIC = METRICS_KEY_MAX,
 };
 LIBMCU_ASSERT(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8));
 
@@ -24,8 +26,7 @@ struct metrics {
 	int32_t value;
 } LIBMCU_PACKED;
 
-LIBMCU_NOINIT static uintptr_t magic;
-LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX];
+LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX+1/*magic*/];
 
 #if !defined(METRICS_NO_KEY_STRING)
 static char const *key_strings[] = {
@@ -179,8 +180,11 @@ const char *metrics_stringify_key(metric_key_t key)
 
 void metrics_init(bool force)
 {
-	if (force || magic != MAGIC_CODE) {
+	struct metrics *p = get_item_by_index(METRICS_KEY_MAGIC);
+
+	if (force || p->key != MAGIC_KEY || p->value != MAGIC_VALUE) {
 		initialize_metrics();
-		magic = MAGIC_CODE;
+		p->key = MAGIC_KEY;
+		p->value = MAGIC_VALUE;
 	}
 }
