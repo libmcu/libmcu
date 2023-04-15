@@ -40,7 +40,7 @@ typedef enum {
 	ADC_CH_18		= 0x00020000UL,
 	ADC_CH_19		= 0x00040000UL,
 	ADC_CH_20		= 0x00080000UL,
-	ADC_CH_ALL		= 0xffffffffUL,
+	ADC_CH_ALL		= 0x7fffffffUL,
 } adc_channel_t;
 
 struct adc;

@@ -17,6 +17,8 @@ extern "C" {
 #define PM_CALLBACK_MAXLEN		8U
 #endif
 
+#define pm_init				libmcu_pm_init
+
 typedef enum pm_mode {
 	PM_SLEEP,
 	PM_SLEEP_DEEP,
