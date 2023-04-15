@@ -31,8 +31,10 @@ Any feedback would be appreciated.
 * [Trace](modules/trace)
 
 ## Interfaces
+* [ADC](interfaces/adc)
 * [I2C](interfaces/i2c)
 * [Transport](interfaces/l4)
+* [UART](interfaces/uart)
 
 ## Integration Guide
 The library can be intergrated in your project as a [git
