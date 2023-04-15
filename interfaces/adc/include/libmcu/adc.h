@@ -13,6 +13,11 @@ extern "C" {
 
 #include <stdint.h>
 
+#define adc_enable		libmcu_adc_enable
+#define adc_disable		libmcu_adc_disable
+#define adc_channel_init	libmcu_adc_channel_init
+#define adc_calibrate		libmcu_adc_calibrate
+
 struct adc;
 
 struct adc *adc_create(uint8_t adc_num);
