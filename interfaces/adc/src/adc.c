@@ -27,7 +27,7 @@ int adc_disable(struct adc *self)
 	return adc_port_disable(self);
 }
 
-int adc_channel_init(struct adc *self, uint16_t channel)
+int adc_channel_init(struct adc *self, adc_channel_t channel)
 {
 	return adc_port_channel_init(self, channel);
 }
@@ -40,6 +40,11 @@ int adc_calibrate(struct adc *self)
 int adc_measure(struct adc *self)
 {
 	return adc_port_measure(self);
+}
+
+int adc_read(struct adc *self, adc_channel_t channel)
+{
+	return adc_port_read(self, channel);
 }
 
 int adc_convert_to_millivolts(struct adc *self, int value)

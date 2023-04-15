@@ -17,9 +17,10 @@ struct adc *adc_port_create(uint8_t adc_num);
 int adc_port_delete(struct adc *self);
 int adc_port_enable(struct adc *self);
 int adc_port_disable(struct adc *self);
-int adc_port_channel_init(struct adc *self, uint16_t channel);
+int adc_port_channel_init(struct adc *self, adc_channel_t channel);
 int adc_port_calibrate(struct adc *self);
 int adc_port_measure(struct adc *self);
+int adc_port_read(struct adc *self, adc_channel_t channel);
 int adc_port_convert_to_millivolts(struct adc *self, int value);
 
 #if defined(__cplusplus)
