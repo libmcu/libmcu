@@ -9,17 +9,17 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-#define MAGIC_KEY			0xffU
-#define MAGIC_VALUE			((int32_t)(intptr_t)metrics)
-
 enum {
 #define METRICS_DEFINE(key)		METRICS_##key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 	METRICS_KEY_MAX,
-	METRICS_KEY_MAGIC = METRICS_KEY_MAX,
 };
 LIBMCU_ASSERT(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8));
+
+#define METRICS_KEY_MAGIC		METRICS_KEY_MAX
+#define MAGIC_KEY			0xffU
+#define MAGIC_VALUE			((int32_t)(intptr_t)metrics)
 
 struct metrics {
 	metric_key_t key;
