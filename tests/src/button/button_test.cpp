@@ -16,8 +16,8 @@ static int get_button_state(void)
 	return mock().actualCall(__func__).returnIntValueOrDefault(0);
 }
 
-static void on_button_event(enum button_event event,
-		const struct button_data *info, void *ctx)
+static void on_button_event(button_event_t event,
+		const struct button *info, void *ctx)
 {
 	mock().actualCall(__func__)
 		.withParameter("event", event)
@@ -33,8 +33,8 @@ class ClickComparator : public MockNamedValueComparator
 {
 public:
 	virtual bool isEqual(const void* object1, const void* object2) {
-		const struct button_data *p1 = (const struct button_data *)object1;
-		const struct button_data *p2 = (const struct button_data *)object2;
+		const struct button *p1 = (const struct button *)object1;
+		const struct button *p2 = (const struct button *)object2;
 		return p1->click == p2->click;
 	}
 	virtual SimpleString valueToString(const void* object) {
@@ -234,8 +234,8 @@ TEST(button, poll_ShouldCallHoldingRepeat_WhenButtonPressedKeptLonger) {
 }
 
 TEST(button, step_ShouldHandleClick_WhenTwoClickGiven) {
-	struct button_data oneClick = { .click = 1, };
-	struct button_data twoClicks = { .click = 2, };
+	struct button oneClick = { .click = 1, };
+	struct button twoClicks = { .click = 2, };
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
@@ -261,7 +261,7 @@ TEST(button, step_ShouldHandleClick_WhenTwoClickGiven) {
 }
 
 TEST(button, step_ShouldHandleClick_WhenOneClickGivenTwice) {
-	struct button_data oneClick = { .click = 1, };
+	struct button oneClick = { .click = 1, };
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
@@ -336,7 +336,7 @@ TEST(button, step_ShouldReturnNoActivity_WhenDebouncingFiltered) {
 }
 
 TEST(button, step_ShouldReturnNoActivity_WhenClickWindowExpired) {
-	struct button_data oneClick = { .click = 1, };
+	struct button oneClick = { .click = 1, };
 
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(56, "get_button_state").andReturnValue(0);

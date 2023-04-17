@@ -33,8 +33,8 @@ typedef enum {
 	BUTTON_STATE_INACTIVATED	= 0x40U,
 } button_state_t;
 
-struct button {
-	struct button_data data;
+struct button_meta {
+	struct button data;
 	button_handler_t handler;
 	int (*get_state)(void);
 	bool pressed;
@@ -45,10 +45,10 @@ struct button {
 static struct {
 	unsigned long (*get_time_ms)(void);
 
-	struct button buttons[BUTTON_MAX];
+	struct button_meta buttons[BUTTON_MAX];
 } m;
 
-static void update_history(struct button *btn)
+static void update_history(struct button_meta *btn)
 {
 	unsigned int history = ACCESS_ONCE(btn->data.history);
 	history <<= 1;
@@ -56,34 +56,34 @@ static void update_history(struct button *btn)
 	btn->data.history = history;
 }
 
-static unsigned int get_history(const struct button *btn)
+static unsigned int get_history(const struct button_meta *btn)
 {
 	return btn->data.history & HISTORY_MASK;
 }
 
-static bool is_button_pressed(const struct button *btn)
+static bool is_button_pressed(const struct button_meta *btn)
 {
 	unsigned int expected = (1U << MIN_PRESSED_HISTORY) - 1; /* 0b0111111 */
 	return get_history(btn) == expected;
 }
 
-static bool is_button_released(const struct button *btn)
+static bool is_button_released(const struct button_meta *btn)
 {
 	unsigned int expected = 1U << MIN_PRESSED_HISTORY; /* 0b1000000 */
 	return get_history(btn) == expected;
 }
 
-static bool is_button_up(const struct button *btn)
+static bool is_button_up(const struct button_meta *btn)
 {
 	return get_history(btn) == 0;
 }
 
-static bool is_button_down(const struct button *btn)
+static bool is_button_down(const struct button_meta *btn)
 {
 	return get_history(btn) == HISTORY_MASK;
 }
 
-static struct button *get_unused_button(void)
+static struct button_meta *get_unused_button(void)
 {
 	for (int i = 0; i < BUTTON_MAX; i++) {
 		if (!m.buttons[i].active) {
@@ -94,12 +94,12 @@ static struct button *get_unused_button(void)
 	return NULL;
 }
 
-static bool is_click_window_closed(const struct button *btn, unsigned long t)
+static bool is_click_window_closed(const struct button_meta *btn, unsigned long t)
 {
 	return (t - btn->data.time_released) >= BUTTON_CLICK_WINDOW_MS;
 }
 
-static void do_pressed(struct button *btn, unsigned long t)
+static void do_pressed(struct button_meta *btn, unsigned long t)
 {
 	if (btn->pressed) {
 		return;
@@ -112,7 +112,7 @@ static void do_pressed(struct button *btn, unsigned long t)
 	}
 }
 
-static void do_released(struct button *btn, unsigned long t)
+static void do_released(struct button_meta *btn, unsigned long t)
 {
 	if (!btn->pressed) {
 		return;
@@ -131,7 +131,7 @@ static void do_released(struct button *btn, unsigned long t)
 	btn->data.time_repeat = 0;
 }
 
-static void do_holding(struct button *btn, unsigned long t)
+static void do_holding(struct button_meta *btn, unsigned long t)
 {
 	bool notify = false;
 
@@ -151,7 +151,7 @@ static void do_holding(struct button *btn, unsigned long t)
 	}
 }
 
-static button_state_t scan_button(struct button *btn, unsigned long t)
+static button_state_t scan_button(struct button_meta *btn, unsigned long t)
 {
 	if (!btn->active) {
 		return BUTTON_STATE_INACTIVATED;
@@ -182,7 +182,7 @@ static button_rc_t scan_all(unsigned long t)
 	bool keep_scanning = false;
 
 	for (int i = 0; i < BUTTON_MAX; i++) {
-		struct button *btn = &m.buttons[i];
+		struct button_meta *btn = &m.buttons[i];
 		unsigned int activity_mask = BUTTON_STATE_PRESSED |
 			BUTTON_STATE_DOWN | BUTTON_STATE_DEBOUNCING;
 		button_state_t state = scan_button(btn, t);
@@ -241,7 +241,7 @@ const void *button_register(int (*get_button_state)(void),
 		return NULL;
 	}
 
-	struct button *btn = NULL;
+	struct button_meta *btn = NULL;
 
 	button_lock();
 

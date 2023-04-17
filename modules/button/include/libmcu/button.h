@@ -38,14 +38,14 @@ typedef enum {
 	BUTTON_NO_ACTIVITY, /**< No activity detected on buttons */
 } button_rc_t;
 
-enum button_event {
+typedef enum button_event {
 	BUTTON_EVT_PRESSED,
 	BUTTON_EVT_RELEASED,
 	BUTTON_EVT_HOLDING,
 	BUTTON_EVT_CLICK,
-};
+} button_event_t;
 
-struct button_data {
+struct button {
 	unsigned int history;
 	unsigned long time_pressed;
 	unsigned long time_released;
@@ -53,8 +53,8 @@ struct button_data {
 	uint8_t click; /**< the number of clicks */
 };
 
-typedef void (*button_handler_t)(enum button_event event,
-		const struct button_data *info, void *ctx);
+typedef void (*button_handler_t)(button_event_t event,
+		const struct button *button, void *ctx);
 
 void button_init(unsigned long (*get_time_ms)(void));
 
