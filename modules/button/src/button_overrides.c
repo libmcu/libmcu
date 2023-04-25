@@ -6,7 +6,6 @@
 
 #include "libmcu/button_overrides.h"
 #include "libmcu/compiler.h"
-#include <pthread.h>
 
 LIBMCU_WEAK
 void button_lock(void)
