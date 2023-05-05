@@ -38,7 +38,7 @@ unsigned long board_get_time_since_boot_ms(void)
 LIBMCU_NO_INSTRUMENT
 unsigned long board_get_current_stack_watermark(void)
 {
-	return (unsigned long)uxTaskGetStackHighWaterMark(NULL);
+	return (unsigned long)uxTaskGetStackHighWaterMark(NULL) * sizeof(long);
 }
 
 LIBMCU_NO_INSTRUMENT
