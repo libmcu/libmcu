@@ -64,9 +64,12 @@ int sem_post(sem_t *sem)
 {
 	struct semaphore *psem = (struct semaphore *)sem;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
 	if (!xPortIsInsideInterrupt()) {
 		return xSemaphoreGive(psem->handle) == pdPASS? 0 : -1;
 	}
+#pragma GCC diagnostic pop
 
 	return xSemaphoreGiveFromISR(psem->handle, NULL) == pdPASS? 0 : -1;
 }

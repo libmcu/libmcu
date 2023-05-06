@@ -8,6 +8,7 @@
 #include "libmcu/ao_timer.h"
 
 #include <errno.h>
+#include <stdbool.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -15,6 +16,14 @@
 
 static unsigned long intctx;
 static unsigned long intctx_timer;
+
+static bool in_interrupt(void)
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
+	return xPortIsInsideInterrupt();
+#pragma GCC diagnostic pop
+}
 
 static void on_ao_timeout(TimerHandle_t xTimer)
 {
@@ -55,7 +64,7 @@ void ao_lock(void *lock_handle)
 {
 	(void)lock_handle;
 
-	if (xPortIsInsideInterrupt()) {
+	if (in_interrupt()) {
 		intctx = taskENTER_CRITICAL_FROM_ISR();
 	} else {
 		taskENTER_CRITICAL();
@@ -66,7 +75,7 @@ void ao_unlock(void *lock_handle)
 {
 	(void)lock_handle;
 
-	if (xPortIsInsideInterrupt()) {
+	if (in_interrupt()) {
 		taskEXIT_CRITICAL_FROM_ISR(intctx);
 	} else {
 		taskEXIT_CRITICAL();
@@ -75,7 +84,7 @@ void ao_unlock(void *lock_handle)
 
 void ao_timer_lock(void)
 {
-	if (xPortIsInsideInterrupt()) {
+	if (in_interrupt()) {
 		intctx_timer = taskENTER_CRITICAL_FROM_ISR();
 	} else {
 		taskENTER_CRITICAL();
@@ -84,7 +93,7 @@ void ao_timer_lock(void)
 
 void ao_timer_unlock(void)
 {
-	if (xPortIsInsideInterrupt()) {
+	if (in_interrupt()) {
 		taskEXIT_CRITICAL_FROM_ISR(intctx_timer);
 	} else {
 		taskEXIT_CRITICAL();
