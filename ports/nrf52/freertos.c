@@ -1,6 +1,8 @@
 #include "FreeRTOS.h"
 #include <stdint.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
 BaseType_t xPortIsInsideInterrupt(void)
 {
 	uint32_t is_in_intr;
@@ -13,3 +15,4 @@ BaseType_t xPortIsInsideInterrupt(void)
 
 	return pdFALSE;
 }
+#pragma GCC diagnostic pop
