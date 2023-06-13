@@ -76,7 +76,9 @@ or
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
 list(APPEND LIBMCU_MODULES ao logging metrics pubsub)
+list(APPEND LIBMCU_INTERFACES i2c l4)
 include(${LIBMCU_ROOT}/projects/modules.cmake)
+include(${LIBMCU_ROOT}/projects/interfaces.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
 # Add ${LIBMCU_MODULES_INCS} to your target includes
