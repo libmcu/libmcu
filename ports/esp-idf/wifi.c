@@ -56,8 +56,10 @@ static void handle_scan_result_core(struct wifi *self,
 	struct wifi_scan_result res = { 0, };
 
 	for (int i = 0; i < n; i++) {
-		res.ssid_len = strnlen(scanned[i].ssid, WIFI_SSID_MAX_LEN);
-		strncpy(res.ssid, scanned[i].ssid, res.ssid_len);
+		res.ssid_len = strnlen((const char *)scanned[i].ssid,
+				WIFI_SSID_MAX_LEN);
+		strncpy((char *)res.ssid, (const char *)scanned[i].ssid,
+				res.ssid_len);
 		res.rssi = scanned[i].rssi;
 		res.channel = scanned[i].primary;
 		res.security = WIFI_SEC_TYPE_NONE;
@@ -104,8 +106,8 @@ static void handle_scan_done(struct wifi *self)
 static void handle_connected_event(struct wifi *ctx, ip_event_got_ip_t *ip)
 {
 	ctx->state = ESP32_STATE_STA_CONNECTED;
-	memcpy(&ctx->base.ip, &ip->ip_info.ip, sizeof(ctx->base.ip));
-	raise_event_with_data(&ctx->base, WIFI_EVT_CONNECTED, 0);
+	memcpy(&ctx->ip, &ip->ip_info.ip, sizeof(ctx->ip));
+	raise_event_with_data(ctx, WIFI_EVT_CONNECTED, 0);
 }
 
 
@@ -324,8 +326,8 @@ struct wifi *wifi_port_create(int id)
 		return NULL;
 	}
 
-	esp_read_mac(esp_iface.base.status.mac, ESP_MAC_WIFI_STA);
-	esp_iface.base.status.mac_len = WIFI_MAC_ADDR_LEN;
+	esp_read_mac(esp_iface.status.mac, ESP_MAC_WIFI_STA);
+	esp_iface.status.mac_len = WIFI_MAC_ADDR_LEN;
 
 	return &esp_iface;
 }
