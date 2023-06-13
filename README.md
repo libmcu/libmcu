@@ -35,6 +35,7 @@ Any feedback would be appreciated.
 * [I2C](interfaces/i2c)
 * [Transport](interfaces/l4)
 * [UART](interfaces/uart)
+* [WiFi](interfaces/wifi)
 
 ## Integration Guide
 The library can be intergrated in your project as a [git
@@ -57,12 +58,16 @@ $ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libm
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
 LIBMCU_MODULES := ao logging metrics pubsub
-LIBMCU_INTERFACES := i2c l4
 include $(LIBMCU_ROOT)/projects/modules.mk
+
+<SRC_FILES> += $(LIBMCU_MODULES_SRCS)
+<INC_PATHS> += $(LIBMCU_MODULES_INCS)
+
+LIBMCU_INTERFACES := i2c l4
 include $(LIBMCU_ROOT)/projects/interfaces.mk
 
-<SRC_FILES> += $(LIBMCU_MODULES_SRCS) $(LIBMCU_INTERFACES_SRCS)
-<INC_PATHS> += $(LIBMCU_MODULES_INCS) $(LIBMCU_INTERFACES_INCS)
+<SRC_FILES> += $(LIBMCU_INTERFACES_SRCS)
+<INC_PATHS> += $(LIBMCU_INTERFACES_INCS)
 ```
 
 ##### CMake
@@ -76,8 +81,9 @@ or
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
 list(APPEND LIBMCU_MODULES ao logging metrics pubsub)
-list(APPEND LIBMCU_INTERFACES i2c l4)
 include(${LIBMCU_ROOT}/projects/modules.cmake)
+
+list(APPEND LIBMCU_INTERFACES i2c l4)
 include(${LIBMCU_ROOT}/projects/interfaces.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
