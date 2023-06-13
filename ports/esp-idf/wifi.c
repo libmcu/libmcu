@@ -332,8 +332,9 @@ struct wifi *wifi_port_create(int id)
 	return &esp_iface;
 }
 
-void wifi_port_delete(struct wifi *self)
+int wifi_port_delete(struct wifi *self)
 {
 	deinitialize_wifi(self);
 	self->state = ESP32_STATE_UNKNOWN;
+	return 0;
 }
