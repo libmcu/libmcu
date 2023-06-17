@@ -7,9 +7,9 @@
 #include "libmcu/gpio.h"
 #include "libmcu/port/gpio.h"
 
-struct gpio *gpio_create(uint8_t channel)
+struct gpio *gpio_create(uint16_t pin)
 {
-	return gpio_port_create(channel);
+	return gpio_port_create(pin);
 }
 
 void gpio_delete(struct gpio *self)

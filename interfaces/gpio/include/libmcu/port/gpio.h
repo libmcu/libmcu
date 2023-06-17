@@ -13,7 +13,7 @@ extern "C" {
 
 #include "libmcu/gpio.h"
 
-struct gpio *gpio_port_create(uint8_t channel);
+struct gpio *gpio_port_create(uint16_t pin);
 void gpio_port_delete(struct gpio *self);
 int gpio_port_enable(struct gpio *self);
 int gpio_port_disable(struct gpio *self);
