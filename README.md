@@ -32,6 +32,7 @@ Any feedback would be appreciated.
 
 ## Interfaces
 * [ADC](interfaces/adc)
+* [ADC](interfaces/gpio)
 * [I2C](interfaces/i2c)
 * [SPI](interfaces/spi)
 * [Transport](interfaces/l4)
