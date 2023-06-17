@@ -33,6 +33,7 @@ Any feedback would be appreciated.
 ## Interfaces
 * [ADC](interfaces/adc)
 * [I2C](interfaces/i2c)
+* [SPI](interfaces/spi)
 * [Transport](interfaces/l4)
 * [UART](interfaces/uart)
 * [WiFi](interfaces/wifi)
