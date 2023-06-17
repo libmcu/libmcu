@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(libmcu LANGUAGES C CXX)
 
 set(LIBMCU_MODULES ao apptimer bitmap button cli common jobqueue logging metrics pubsub retry pm)
-set(LIBMCU_INTERFACES adc i2c l4 uart wifi)
+set(LIBMCU_INTERFACES adc i2c l4 spi uart wifi)
 include(${CMAKE_CURRENT_LIST_DIR}/projects/modules.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/projects/interfaces.cmake)
 
