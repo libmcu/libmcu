@@ -28,6 +28,7 @@ enum wifi_event {
 	WIFI_EVT_SCAN_DONE,
 	WIFI_EVT_STARTED,
 	WIFI_EVT_STOPPED,
+	WIFI_EVT_ANY,
 };
 
 enum wifi_frequency_band {
@@ -95,7 +96,13 @@ struct wifi_scan_result {
 
 struct wifi;
 typedef void (*wifi_event_callback_t)(const struct wifi *iface,
-				    enum wifi_event evt, const void *data);
+		enum wifi_event evt, const void *data, void *user_ctx);
+
+struct wifi_event_callback {
+	wifi_event_callback_t func;
+	enum wifi_event event_type;
+	void *user_ctx;
+};
 
 struct wifi *wifi_create(int id);
 int wifi_delete(struct wifi *self);
@@ -105,8 +112,8 @@ int wifi_scan(struct wifi *self);
 int wifi_enable(struct wifi *self);
 int wifi_disable(struct wifi *self);
 int wifi_get_status(struct wifi *self, struct wifi_iface_info *info);
-int wifi_register_event_callback(struct wifi *self,
-		const wifi_event_callback_t cb);
+int wifi_register_event_callback(struct wifi *self, enum wifi_event event_type,
+		const wifi_event_callback_t cb, void *user_ctx);
 
 #if defined(__cplusplus)
 }
