@@ -15,7 +15,7 @@ extern "C" {
 #include <stdbool.h>
 
 #if !defined(AO_TIMER_MAXLEN)
-#define AO_TIMER_MAXLEN				8U
+#define AO_TIMER_MAXLEN				AO_EVENT_MAXLEN
 #endif
 #if !defined(AO_TIMER_SCAN_INTERVAL_MS)
 #define AO_TIMER_SCAN_INTERVAL_MS		50U

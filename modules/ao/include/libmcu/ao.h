@@ -19,7 +19,7 @@ extern "C" {
 #if !defined(AO_EVENT_MAXLEN)
 /** The maximum event queue length. It should be power of 2 or some of space
  * will be wasted. */
-#define AO_EVENT_MAXLEN			8U
+#define AO_EVENT_MAXLEN			16U
 #endif
 
 struct ao;
