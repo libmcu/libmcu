@@ -22,7 +22,8 @@ int wifi_port_enable(struct wifi *self);
 int wifi_port_disable(struct wifi *self);
 int wifi_port_get_status(struct wifi *self, struct wifi_iface_info *info);
 int wifi_port_register_event_callback(struct wifi *self,
-		const wifi_event_callback_t cb);
+		enum wifi_event event_type, const wifi_event_callback_t cb,
+		void *user_ctx);
 
 #if defined(__cplusplus)
 }

@@ -47,8 +47,9 @@ int wifi_get_status(struct wifi *self, struct wifi_iface_info *info)
 	return wifi_port_get_status(self, info);
 }
 
-int wifi_register_event_callback(struct wifi *self,
-		const wifi_event_callback_t cb)
+int wifi_register_event_callback(struct wifi *self, enum wifi_event event_type,
+		const wifi_event_callback_t cb, void *user_ctx)
 {
-	return wifi_port_register_event_callback(self, cb);
+	return wifi_port_register_event_callback(self,
+			event_type, cb, user_ctx);
 }

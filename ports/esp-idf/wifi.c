@@ -14,6 +14,10 @@
 #include "esp_event.h"
 #include "esp_mac.h"
 
+#if !defined(WIFI_EVENT_CALLBACK_CAP)
+#define WIFI_EVENT_CALLBACK_CAPACITY		2U
+#endif
+
 enum esp32_state {
 	ESP32_STATE_UNKNOWN,
 	ESP32_STATE_STARTING,
@@ -27,7 +31,7 @@ enum esp32_state {
 };
 
 struct wifi {
-	wifi_event_callback_t callback;
+	struct wifi_event_callback callbacks[WIFI_EVENT_CALLBACK_CAPACITY];
 
 	struct wifi_iface_info status;
 
@@ -45,8 +49,14 @@ struct wifi {
 static void raise_event_with_data(struct wifi *iface,
 				  enum wifi_event evt, const void *data)
 {
-	if (iface->callback) {
-		(*iface->callback)(iface, evt, data);
+	for (unsigned int i = 0; i < WIFI_EVENT_CALLBACK_CAPACITY; i++) {
+		struct wifi_event_callback *cb = &iface->callbacks[i];
+
+		if (evt == cb->event_type || cb->event_type == WIFI_EVT_ANY) {
+			if (cb->func) {
+				(*cb->func)(iface, evt, data, cb->user_ctx);
+			}
+		}
 	}
 }
 
@@ -304,15 +314,34 @@ int wifi_port_get_status(struct wifi *self, struct wifi_iface_info *info)
 }
 
 int wifi_port_register_event_callback(struct wifi *self,
-		const wifi_event_callback_t cb)
+		enum wifi_event event_type, const wifi_event_callback_t cb,
+		void *user_ctx)
 {
-	self->callback = cb;
+	struct wifi_event_callback *p = NULL;
+
+	for (unsigned int i = 0; i < WIFI_EVENT_CALLBACK_CAPACITY; i++) {
+		if (self->callbacks[i].func == NULL) {
+			p = &self->callbacks[i];
+			break;
+		}
+	}
+
+	if (!p) {
+		return -ENOBUFS;
+	}
+
+	p->func = cb;
+	p->event_type = event_type;
+	p->user_ctx = user_ctx;
+
 	return 0;
 }
 
 struct wifi *wifi_port_create(int id)
 {
 	static struct wifi esp_iface;
+
+	memset(&esp_iface, 0, sizeof(esp_iface));
 
 	if (esp_iface.state != ESP32_STATE_UNKNOWN) {
 		return NULL;
