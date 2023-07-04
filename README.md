@@ -34,6 +34,7 @@ Any feedback would be appreciated.
 * [ADC](interfaces/adc)
 * [GPIO](interfaces/gpio)
 * [I2C](interfaces/i2c)
+* [PWM](interfaces/pwm)
 * [SPI](interfaces/spi)
 * [Timer](interfaces/timer)
 * [Transport](interfaces/l4)
