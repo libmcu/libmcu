@@ -27,7 +27,7 @@ Any feedback would be appreciated.
 * [Power Management](modules/pm)
 * [PubSub](modules/pubsub)
 * [Retry with exponential backoff](modules/retry)
-* [Time Extension](modules/timext)
+* [Time Extension](modules/common)
 * [Trace](modules/trace)
 
 ## Interfaces
@@ -35,6 +35,7 @@ Any feedback would be appreciated.
 * [GPIO](interfaces/gpio)
 * [I2C](interfaces/i2c)
 * [SPI](interfaces/spi)
+* [Timer](interfaces/timer)
 * [Transport](interfaces/l4)
 * [UART](interfaces/uart)
 * [WiFi](interfaces/wifi)
