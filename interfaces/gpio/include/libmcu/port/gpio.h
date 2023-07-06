@@ -19,6 +19,8 @@ int gpio_port_enable(struct gpio *self);
 int gpio_port_disable(struct gpio *self);
 int gpio_port_set(struct gpio *self, int value);
 int gpio_port_get(struct gpio *self);
+int gpio_port_register_handler(struct gpio *self,
+		gpio_handler_t handler, void *ctx);
 
 #if defined(__cplusplus)
 }

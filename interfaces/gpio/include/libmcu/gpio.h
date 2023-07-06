@@ -16,12 +16,15 @@ extern "C" {
 
 struct gpio;
 
+typedef void (*gpio_handler_t)(struct gpio *gpio, void *ctx);
+
 struct gpio *gpio_create(uint16_t pin);
 void gpio_delete(struct gpio *self);
 int gpio_enable(struct gpio *self);
 int gpio_disable(struct gpio *self);
 int gpio_set(struct gpio *self, int value);
 int gpio_get(struct gpio *self);
+int gpio_register_handler(struct gpio *self, gpio_handler_t handler, void *ctx);
 
 #if defined(__cplusplus)
 }
