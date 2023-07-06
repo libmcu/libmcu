@@ -36,3 +36,8 @@ int gpio_get(struct gpio *self)
 {
 	return gpio_port_get(self);
 }
+
+int gpio_register_handler(struct gpio *self, gpio_handler_t handler, void *ctx)
+{
+	return gpio_port_register_handler(self, handler, ctx);
+}
