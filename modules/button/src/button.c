@@ -36,7 +36,7 @@ typedef enum {
 struct button_meta {
 	struct button data;
 	button_handler_t handler;
-	int (*get_state)(void);
+	int (*get_state)(void *ctx);
 	bool pressed;
 	bool active;
 	void *user_ctx;
@@ -52,7 +52,7 @@ static void update_history(struct button_meta *btn)
 {
 	unsigned int history = ACCESS_ONCE(btn->data.history);
 	history <<= 1;
-	history |= (unsigned int)(btn->get_state() & 1);
+	history |= (unsigned int)(btn->get_state(btn->user_ctx) & 1);
 	btn->data.history = history;
 }
 
@@ -234,7 +234,7 @@ button_rc_t button_step(void)
 	return rc;
 }
 
-const void *button_register(int (*get_button_state)(void),
+const struct button *button_register(int (*get_button_state)(void *ctx),
 		button_handler_t handler, void *ctx)
 {
 	if (get_button_state == NULL) {
@@ -258,7 +258,7 @@ const void *button_register(int (*get_button_state)(void),
 out:
 	button_unlock();
 
-	return btn;
+	return &btn->data;
 }
 
 void button_init(unsigned long (*get_time_ms)(void))

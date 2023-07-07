@@ -67,7 +67,7 @@ void button_init(unsigned long (*get_time_ms)(void));
  *
  * @return a handle if registered successfully. NULL otherwise
  */
-const void *button_register(int (*get_button_state)(void),
+const struct button *button_register(int (*get_button_state)(void *ctx),
 		button_handler_t handler, void *ctx);
 
 /**
