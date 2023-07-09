@@ -11,7 +11,7 @@
 #include "libmcu/button.h"
 #include "libmcu/compiler.h"
 
-static int get_button_state(void)
+static int get_button_state(void *ctx)
 {
 	return mock().actualCall(__func__).returnIntValueOrDefault(0);
 }
