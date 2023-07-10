@@ -5,16 +5,18 @@
  */
 
 #include "libmcu/metrics.h"
-#include <pthread.h>
 
-static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+static portMUX_TYPE spinlock = portMUX_INITIALIZER_UNLOCKED;
 
 void metrics_lock(void)
 {
-	pthread_mutex_lock(&lock);
+	taskENTER_CRITICAL(&spinlock);
 }
 
 void metrics_unlock(void)
 {
-	pthread_mutex_unlock(&lock);
+	taskEXIT_CRITICAL(&spinlock);
 }
