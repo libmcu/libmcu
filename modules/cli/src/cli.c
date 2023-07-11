@@ -395,6 +395,9 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	CLI_ASSERT(cli != NULL && io != NULL &&
 			buf != NULL && bufsize >= CLI_CMD_MAXLEN);
 
+	memset(cli, 0, sizeof(*cli));
+	memset(buf, 0, bufsize);
+
 	cli->io = io;
 	cli->cmdlist = NULL;
 	cli->cursor_pos = 0;
@@ -402,8 +405,6 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	cli->history_active = 0;
 	cli->buf = (char *)buf;
 	cli->bufsize = bufsize;
-
-	memset(buf, 0, bufsize);
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));

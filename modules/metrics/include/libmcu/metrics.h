@@ -32,6 +32,15 @@ int32_t metrics_get(metric_key_t key);
 void metrics_increase(metric_key_t key);
 void metrics_increase_by(metric_key_t key, int32_t n);
 void metrics_reset(void);
+/**
+ * @brief Traversing all metrics firing callback
+ *
+ * @param callback_each callback to be fired every metric
+ * @param ctx context to be used
+ *
+ * @warn This function does not guarantee synchronization. Any metrics may be
+ *       updated while the callback is running.
+ */
 void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 					   void *ctx), void *ctx);
 size_t metrics_collect(void *buf, size_t bufsize);

@@ -161,9 +161,7 @@ size_t metrics_collect(void *buf, size_t bufsize)
 void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 					   void *ctx), void *ctx)
 {
-	metrics_lock();
 	iterate_all(callback_each, ctx);
-	metrics_unlock();
 }
 
 size_t metrics_count(void)
