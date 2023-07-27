@@ -13,7 +13,7 @@ extern "C" {
 
 #include "libmcu/pm.h"
 
-int pm_port_enter(pm_mode_t mode);
+int pm_port_enter(pm_mode_t mode, uint32_t duration_ms);
 
 #if defined(__cplusplus)
 }

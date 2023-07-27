@@ -191,12 +191,12 @@ int pm_unregister_exit_callback(pm_mode_t mode, int8_t priority,
 	return unregister_callback(mode, priority, func, true);
 }
 
-int pm_enter(pm_mode_t mode)
+int pm_enter(pm_mode_t mode, uint32_t duration_ms)
 {
 	pthread_mutex_lock(&slot_lock);
 	dispatch_entries(mode);
 
-	int rc = pm_port_enter(mode);
+	int rc = pm_port_enter(mode, duration_ms);
 
 	dispatch_exits(mode);
 	pthread_mutex_unlock(&slot_lock);

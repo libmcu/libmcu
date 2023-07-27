@@ -30,7 +30,7 @@ typedef enum pm_mode {
 
 typedef void (*pm_callback_t)(void *ctx);
 
-int pm_enter(pm_mode_t mode);
+int pm_enter(pm_mode_t mode, uint32_t duration_ms);
 int pm_register_entry_callback(pm_mode_t mode, int8_t priority,
 		pm_callback_t func, void *arg);
 int pm_register_exit_callback(pm_mode_t mode, int8_t priority,
