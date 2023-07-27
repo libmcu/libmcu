@@ -31,9 +31,10 @@ static void cb_3(void *ctx) {
 	mock().actualCall(__func__).withParameter("ctx", ctx);
 }
 
-int pm_port_enter(pm_mode_t mode)
+int pm_port_enter(pm_mode_t mode, uint32_t duration_ms)
 {
 	(void)mode;
+	(void)duration_ms;
 	return 0;
 }
 
@@ -57,7 +58,7 @@ TEST(PM, register_ShouldSortEntriesInOrderOfPriority_WhenMixedPrioirtiesGiven) {
 	pm_register_entry_callback(PM_SLEEP, 2, cb_2, &t2);
 	pm_register_entry_callback(PM_SLEEP, 1, cb_3, &t3);
 
-	pm_enter(PM_SLEEP);
+	pm_enter(PM_SLEEP, 0);
 
 	LONGS_EQUAL(0, t2);
 	LONGS_EQUAL(1, t3);
@@ -73,7 +74,7 @@ TEST(PM, unregister_ShouldRemoveEntry_WhenExists) {
 	pm_register_entry_callback(PM_SLEEP, 2, cb_3, &t3);
 	pm_unregister_entry_callback(PM_SLEEP, 1, cb_2);
 
-	pm_enter(PM_SLEEP);
+	pm_enter(PM_SLEEP, 0);
 }
 
 TEST(PM, register_ShouldReturnEINVAL_WhenNullFuncGiven) {
