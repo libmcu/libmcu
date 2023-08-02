@@ -25,7 +25,7 @@ enum {
 #undef METRICS_DEFINE
 };
 
-typedef uint8_t metric_key_t;
+typedef uint16_t metric_key_t;
 
 void metrics_set(metric_key_t key, int32_t val);
 int32_t metrics_get(metric_key_t key);
