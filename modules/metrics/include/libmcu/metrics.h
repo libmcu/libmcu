@@ -19,6 +19,8 @@ extern "C" {
 #define METRICS_USER_DEFINES		"metrics.def"
 #endif
 
+#define METRICS_VALUE(x)		((int32_t)(x))
+
 enum {
 #define METRICS_DEFINE(key)		key,
 #include METRICS_USER_DEFINES
