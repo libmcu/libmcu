@@ -1,6 +1,5 @@
 #include "CppUTestExt/MockSupport.h"
 #include "libmcu/wifi.h"
-#include "wifi.h"
 
 int wifi_enable(struct wifi *self) {
 	return mock().actualCall(__func__).returnIntValue();
