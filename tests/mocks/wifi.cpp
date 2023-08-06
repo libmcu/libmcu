@@ -16,8 +16,9 @@ int wifi_disable(struct wifi *self) {
 
 int wifi_connect(struct wifi *self, const struct wifi_conn_param *param) {
 	int rc = mock().actualCall(__func__).returnIntValue();
+	enum wifi_event evt = rc? WIFI_EVT_DISCONNECTED : WIFI_EVT_CONNECTED;
 	if (callback) {
-		(*callback)(iface, WIFI_EVT_CONNECTED, 0, callback_ctx);
+		(*callback)(iface, evt, 0, callback_ctx);
 	}
 	return rc;
 }
