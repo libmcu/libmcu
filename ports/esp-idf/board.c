@@ -59,30 +59,30 @@ const char *board_get_serial_number_string(void)
 	return sn;
 }
 
-const char *board_get_reboot_reason_string(void)
+board_reboot_reason_t board_get_reboot_reason(void)
 {
 	switch (esp_reset_reason()) {
 	case ESP_RST_POWERON:
-		return "Power On";
+		return BOARD_REBOOT_POWER;
 	case ESP_RST_EXT:
-		return "Power Pin";
+		return BOARD_REBOOT_PIN;
 	case ESP_RST_SW:
-		return "Software";
+		return BOARD_REBOOT_SOFT;
 	case ESP_RST_PANIC:
-		return "Panic";
+		return BOARD_REBOOT_PANIC;
 	case ESP_RST_INT_WDT:
-		return "Interrupt Watchdog";
+		return BOARD_REBOOT_WDT_INT;
 	case ESP_RST_TASK_WDT:
-		return "Task Watchdog";
+		return BOARD_REBOOT_WDT_TASK;
 	case ESP_RST_WDT:
-		return "Watchdog";
+		return BOARD_REBOOT_WDT;
 	case ESP_RST_DEEPSLEEP:
-		return "Deep Sleep";
+		return BOARD_REBOOT_DEEPSLEEP;
 	case ESP_RST_BROWNOUT:
-		return "Brownout";
+		return BOARD_REBOOT_BROWNOUT;
 	case ESP_RST_SDIO:
-		return "SDIO";
+		return BOARD_REBOOT_SDIO;
 	default:
-		return "Unknown";
+		return BOARD_REBOOT_UNKNOWN;
 	}
 }

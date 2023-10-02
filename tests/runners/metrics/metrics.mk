@@ -12,10 +12,10 @@ TEST_SRC_FILES = \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
-	stubs/overrides \
 	src/metrics \
 	../modules/logging/include \
 	../modules/metrics/include \
+	stubs/overrides \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
