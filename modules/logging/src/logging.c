@@ -258,9 +258,11 @@ size_t logging_write_with_backend(logging_t type,
 		const struct logging_tag *tag = obtain_tag(ctx->tag);
 
 		if (!is_logging_type_valid(type)) {
+			logging_unlock();
 			goto out;
 		}
 		if (!is_logging_type_enabled(tag, type)) {
+			logging_unlock();
 			goto out;
 		}
 	}
@@ -290,9 +292,11 @@ size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 		const struct logging_tag *tag = obtain_tag(ctx->tag);
 
 		if (!is_logging_type_valid(type)) {
+			logging_unlock();
 			goto out;
 		}
 		if (!is_logging_type_enabled(tag, type)) {
+			logging_unlock();
 			goto out;
 		}
 	}
