@@ -15,6 +15,7 @@ INCLUDE_DIRS = \
 	src/metrics \
 	../modules/logging/include \
 	../modules/metrics/include \
+	stubs/overrides \
 	../modules/common/include \
 	$(CPPUTEST_HOME)/include \
 
