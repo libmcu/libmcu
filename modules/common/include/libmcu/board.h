@@ -11,15 +11,30 @@
 extern "C" {
 #endif
 
+typedef enum {
+	BOARD_REBOOT_UNKNOWN,
+	BOARD_REBOOT_POWER,
+	BOARD_REBOOT_PIN,
+	BOARD_REBOOT_SOFT,
+	BOARD_REBOOT_PANIC,
+	BOARD_REBOOT_WDT,
+	BOARD_REBOOT_WDT_INT,
+	BOARD_REBOOT_WDT_TASK,
+	BOARD_REBOOT_DEEPSLEEP,
+	BOARD_REBOOT_BROWNOUT,
+	BOARD_REBOOT_SDIO,
+} board_reboot_reason_t;
+
 void board_init(void);
 void board_reboot(void);
 int board_reset_factory(void);
 
 const char *board_get_version_string(void);
 const char *board_get_build_date_string(void);
-
 const char *board_get_serial_number_string(void);
-const char *board_get_reboot_reason_string(void);
+
+board_reboot_reason_t board_get_reboot_reason(void);
+const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 
 unsigned long board_get_time_since_boot_ms(void);
 

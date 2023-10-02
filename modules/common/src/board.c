@@ -30,10 +30,23 @@ const char *board_get_serial_number_string(void)
 	return "S/N";
 }
 
-LIBMCU_WEAK
-const char *board_get_reboot_reason_string(void)
+const char *board_get_reboot_reason_string(board_reboot_reason_t reason)
 {
-	return "N/A";
+	static const char *reasons[] = {
+		"Unknown",
+		"Power On",
+		"Power Pin",
+		"Software",
+		"Panic",
+		"Watchdog",
+		"Interrupt Watchdog",
+		"Task Watchdog",
+		"Deep Sleep",
+		"Brownout",
+		"SDIO",
+	};
+
+	return reasons[reason];
 }
 
 LIBMCU_WEAK
