@@ -18,6 +18,16 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#define RETRY_INIT(a, bmax, bmin, j) \
+	{ \
+		.max_backoff_ms = bmax, \
+		.min_backoff_ms = bmin, \
+		.max_jitter_ms = j, \
+		.max_attempts = a, \
+		.attempts = 0, \
+		.previous_backoff_ms = 0, \
+	}
+
 typedef enum {
 	RETRY_RUNNING		= 0,
 	RETRY_EXHAUSTED,

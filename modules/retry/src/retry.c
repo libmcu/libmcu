@@ -97,7 +97,7 @@ void retry_init(struct retry *self, uint16_t max_attempts,
 		.min_backoff_ms = min_backoff_ms,
 		.max_jitter_ms = max_jitter_ms,
 		.max_attempts = max_attempts,
-		.attempts = 0,
-		.previous_backoff_ms = 0,
 	};
+
+	reset_backoff(self);
 }
