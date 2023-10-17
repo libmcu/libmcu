@@ -22,6 +22,8 @@ int spi_enable(struct spi *self);
 int spi_disable(struct spi *self);
 int spi_write(struct spi *self, const void *data, size_t data_len);
 int spi_read(struct spi *self, void *buf, size_t bufsize);
+int spi_writeread(struct spi *self, const void *txdata, size_t txdata_len,
+		void *rxbuf, size_t rxbuf_len);
 
 #if defined(__cplusplus)
 }

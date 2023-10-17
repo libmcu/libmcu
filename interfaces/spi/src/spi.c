@@ -36,3 +36,9 @@ int spi_read(struct spi *self, void *buf, size_t bufsize)
 {
 	return spi_port_read(self, buf, bufsize);
 }
+
+int spi_writeread(struct spi *self, const void *txdata, size_t txdata_len,
+		void *rxbuf, size_t rxbuf_len)
+{
+	return spi_port_writeread(self, txdata, txdata_len, rxbuf, rxbuf_len);
+}
