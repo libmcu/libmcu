@@ -219,6 +219,7 @@ void fault_process(struct core_registers *regs)
 	}
 
 	while (1) {
+		/* hang */
 	}
 }
 

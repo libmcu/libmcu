@@ -22,13 +22,23 @@ unsigned long board_get_time_since_boot_ms(void)
 	static uint64_t elapsed_ticks;
 	static uint32_t previous_count;
 
-	taskENTER_CRITICAL();
+	UBaseType_t intr_status;
+
+	if (xPortIsInsideInterrupt()) {
+		intr_status = taskENTER_CRITICAL_FROM_ISR();
+	} else {
+		taskENTER_CRITICAL();
+	}
 
 	const uint32_t count = xTaskGetTickCount();
 	elapsed_ticks += count - previous_count;
 	previous_count = count;
 
-	taskEXIT_CRITICAL();
+	if (xPortIsInsideInterrupt()) {
+		taskEXIT_CRITICAL_FROM_ISR(intr_status);
+	} else {
+		taskEXIT_CRITICAL();
+	}
 
 	return (unsigned long)((elapsed_ticks * 1000) / configTICK_RATE_HZ);
 }

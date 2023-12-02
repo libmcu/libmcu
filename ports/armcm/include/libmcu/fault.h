@@ -17,9 +17,9 @@ extern "C" {
 			"ite	eq			\n\t"	\
 			"mrseq	r3, msp			\n\t"	\
 			"mrsne	r3, psp			\n\t"	\
-			"push {r3-r11, lr}		\n\t"	\
-			"mov r0, sp			\n\t"	\
-			"b fault_process		\n\t"	\
+			"push	{r3-r11, lr}		\n\t"	\
+			"mov	r0, sp			\n\t"	\
+			"b	fault_process		\n\t"	\
 			::: "memory")
 
 struct core_registers;
