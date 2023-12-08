@@ -330,8 +330,7 @@ int actor_boot(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
 	assert(msgpool_size >= (sizeof(struct actor_msg) - remainder));
 
 	memset(&ctx, 0, sizeof(ctx));
-	ctx.msgpool.buf = (void *)(((uintptr_t)msgpool + (uintptr_t)mask) &
-			~(uintptr_t)mask);
+	ctx.msgpool.buf = (void *)(((uintptr_t)msgpool + mask) & ~mask);
 	ctx.msgpool.cap = msgpool_size - remainder;
 
 	struct list *free_list_head = &ctx.msgpool.free_list.head;
