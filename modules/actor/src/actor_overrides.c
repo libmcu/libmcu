@@ -10,9 +10,11 @@
 LIBMCU_WEAK
 void actor_lock(void)
 {
+	/* platform specific implementation */
 }
 
 LIBMCU_WEAK
 void actor_unlock(void)
 {
+	/* platform specific implementation */
 }
