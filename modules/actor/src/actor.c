@@ -303,7 +303,13 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 	return 0;
 }
 
-struct actor *actor_init(struct actor *actor, actor_handler_t handler,
+int actor_send_defer(struct actor *actor, struct actor_msg *msg,
+		uint32_t millisec_delay)
+{
+	return 0;
+}
+
+struct actor *actor_set(struct actor *actor, actor_handler_t handler,
 		int priority, struct actor_queue *queue)
 {
 	assert(actor);
@@ -321,7 +327,7 @@ struct actor *actor_init(struct actor *actor, actor_handler_t handler,
 	return actor;
 }
 
-int actor_boot(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
+int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
 {
 	const size_t mask = sizeof(uintptr_t) - 1;
 	const size_t remainder = (size_t)msgpool & mask;
@@ -352,7 +358,7 @@ int actor_boot(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
 	return initialize_scheduler(stack_size_bytes);
 }
 
-int actor_halt(void)
+int actor_deinit(void)
 {
 	return deinitialize_scheduler();
 }

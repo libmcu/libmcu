@@ -31,8 +31,8 @@ struct actor_queue {
 	struct list messages;
 };
 
-int actor_boot(void *msgpool, size_t msgpool_size, size_t stack_size_bytes);
-int actor_halt(void);
+int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes);
+int actor_deinit(void);
 
 int actor_queue_init(struct actor_queue *queue);
 
@@ -45,9 +45,9 @@ int actor_queue_init(struct actor_queue *queue);
  */
 int actor_queue_len(struct actor_queue *queue);
 
-struct actor *actor_init(struct actor *actor, actor_handler_t handler,
-		int priority, struct actor_queue *queue);
-struct actor *actor_new(struct actor *actor, actor_handler_t handler,
+struct actor *actor_new(actor_handler_t handler, int priority,
+		struct actor_queue *queue);
+struct actor *actor_set(struct actor *actor, actor_handler_t handler,
 		int priority, struct actor_queue *queue);
 
 /**
@@ -59,6 +59,8 @@ struct actor *actor_new(struct actor *actor, actor_handler_t handler,
  * @return 0 on success otherwise error
  */
 int actor_send(struct actor *actor, struct actor_msg *msg);
+int actor_send_defer(struct actor *actor, struct actor_msg *msg,
+		uint32_t millisec_delay);
 
 /**
  * @brief Allocate a memory block of requested size + header

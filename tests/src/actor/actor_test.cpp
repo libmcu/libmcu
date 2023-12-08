@@ -10,6 +10,7 @@
 
 #include <semaphore.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "libmcu/actor.h"
 #include "libmcu/actor_overrides.h"
@@ -50,11 +51,14 @@ TEST_GROUP(ACTOR) {
 		pthread_mutex_init(&lock, NULL);
 		sem_init(&done, 0, 0);
 
-		actor_boot(msgbuf, sizeof(msgbuf), 4096UL);
+		actor_init(msgbuf, sizeof(msgbuf), 4096UL);
 		actor_queue_init(&queue);
 	}
 	void teardown(void) {
-		actor_halt();
+                /* give some time space for new threads to take place to run
+                 * before killed */
+                usleep(10);
+                actor_deinit();
 
 		mock().checkExpectations();
 		mock().clear();
@@ -84,7 +88,7 @@ TEST(ACTOR, queue_len_ShouldReturnNumberOfMessagesInTheQueue) {
 	struct actor actor1;
 	struct actor_msg *msg1 = actor_alloc(sizeof(*msg1));
 	struct actor_msg *msg2 = actor_alloc(sizeof(*msg2));
-	actor_init(&actor1, actor_handler, 0, &queue);
+	actor_set(&actor1, actor_handler, 0, &queue);
 	actor_send(&actor1, msg1);
 	LONGS_EQUAL(1, actor_queue_len(&queue));
 	actor_send(&actor1, msg2);
@@ -98,7 +102,7 @@ TEST(ACTOR, actor_init_ShouldRegisterActorInTheQueueOnlyOnce) {
 TEST(ACTOR, send_ShouldIgnoreDuplicatedMessage) {
 	struct actor actor1;
 	struct actor_msg *msg1 = actor_alloc(sizeof(*msg1));
-	actor_init(&actor1, actor_handler, 0, &queue);
+	actor_set(&actor1, actor_handler, 0, &queue);
 
 	mock().expectOneCall("actor_handler")
 		.withParameter("self", &actor1)
@@ -115,8 +119,8 @@ TEST(ACTOR, send_ShouldDispatchHandlers) {
 	struct actor actor2;
 	struct actor_msg *msg1 = actor_alloc(sizeof(*msg1));
 	struct actor_msg *msg2 = actor_alloc(sizeof(*msg2));
-	actor_init(&actor1, actor_handler, 0, &queue);
-	actor_init(&actor2, actor_handler, 0, &queue);
+	actor_set(&actor1, actor_handler, 0, &queue);
+	actor_set(&actor2, actor_handler, 0, &queue);
 
 	mock().expectOneCall("actor_handler")
 		.withParameter("self", &actor1)
