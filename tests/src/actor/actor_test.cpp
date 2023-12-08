@@ -10,6 +10,7 @@
 
 #include <semaphore.h>
 #include <pthread.h>
+
 #include "libmcu/actor.h"
 #include "libmcu/actor_overrides.h"
 #include "libmcu/assert.h"

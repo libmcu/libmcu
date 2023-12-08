@@ -141,11 +141,11 @@ static void *dispatcher(void *e)
 
 		sem_wait(&core->dispatch_event);
 
-		ACTOR_DEBUG("dispatched!");
-
 		actor_lock();
 		actor = pop_actor(&core->runq);
 		actor_unlock();
+
+		ACTOR_DEBUG("dispatch(%d) %p", core->priority, actor);
 
 		if (actor && actor->handler) {
 			(*actor->handler)(actor, actor->mailbox);
