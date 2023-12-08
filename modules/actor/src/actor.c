@@ -120,6 +120,9 @@ static int schedule_actor(struct actor *actor)
 {
 	struct core *core = &ctx.core[actor->priority];
 
+	actor->mailbox = (struct actor_msg *)(void *)
+		pop_message(&actor->queue->messages)->payload;
+
 	if (add_to_list(&actor->link, &core->runq) == 0) {
 		sem_post(&core->dispatch_event);
 	}
@@ -132,30 +135,21 @@ static void *dispatcher(void *e)
 	struct core *core = (struct core *)e;
 
 	ACTOR_INFO("Dispatcher(%d) started", core->priority);
-	sem_post(&core->dispatch_event);
 
 	while (1) {
 		struct actor *actor = NULL;
-		struct sized_msg *message = NULL;
 
 		sem_wait(&core->dispatch_event);
 
 		ACTOR_DEBUG("dispatched!");
 
 		actor_lock();
-
-		if ((actor = pop_actor(&core->runq))) {
-			message = pop_message(&actor->queue->messages);
-		}
-
+		actor = pop_actor(&core->runq);
 		actor_unlock();
 
-		if (actor && message && actor->handler) {
-			(*actor->handler)(actor, (struct actor_msg *)
-					(void *)message->payload);
+		if (actor && actor->handler) {
+			(*actor->handler)(actor, actor->mailbox);
 		}
-
-		actor_free((struct actor_msg *)(void *)message->payload);
 	}
 
 	pthread_exit(NULL);
@@ -188,8 +182,19 @@ static int initialize_scheduler(size_t stack_size_bytes)
 		rc = pthread_create(&core->thread, &core->thread_attr,
 				dispatcher, core);
 		assert(rc == 0);
+	}
 
-		sem_wait(&core->dispatch_event);
+	return 0;
+}
+
+static int deinitialize_scheduler(void)
+{
+	for (int i = 0; i < ACTOR_PRIORITY_MAX; i++) {
+		struct core *core = &ctx.core[i];
+#if defined(UNIT_TEST)
+		pthread_cancel(core->thread);
+#endif
+		sem_destroy(&core->dispatch_event);
 	}
 
 	return 0;
@@ -277,15 +282,16 @@ int actor_queue_init(struct actor_queue *queue)
 
 int actor_send(struct actor *actor, struct actor_msg *msg)
 {
+	assert(actor);
+	assert(msg);
+
 	bool need_schedule = true;
 
 	actor_lock();
 
-	if (msg) {
-		struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
-		if (add_to_list(&p->header.link, &actor->queue->messages)) {
-			need_schedule = false;
-		}
+	struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
+	if (add_to_list(&p->header.link, &actor->queue->messages)) {
+		need_schedule = false;
 	}
 
 	if (need_schedule) {
@@ -345,4 +351,9 @@ int actor_boot(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
 	ACTOR_DEBUG("%lu bytes will not be used.", msgpool_size - ctx.msgpool.cap);
 
 	return initialize_scheduler(stack_size_bytes);
+}
+
+int actor_halt(void)
+{
+	return deinitialize_scheduler();
 }

@@ -23,6 +23,7 @@ Two ways to send a message to actors:
 - ACTOR_PRIORITY_MAX 설정으로 실행 컨텍스트(스레드) 갯수를 지정할 수 있음. 디폴트는 1
 - ACTOR_PRIORITY_BASE 를 기준으로 우선순위가 1씩 증가하거나 감소
 - 낮은 번호가 높은 우선순위일 경우 ACTOR_PRIORITY_DESCENDING 정의
+- 여러 액터가 하나의 큐를 사용해도 되지만, 이 경우 액터의 우선순위가 동일해야 함
 
 ```c
 struct actor_msg {
