@@ -17,6 +17,7 @@ examples can also be found under [examples](examples) and [test cases](tests/src
 Any feedback would be appreciated.
 
 ## Modules
+* [Actor](modules/actor)
 * [Active Objects](modules/ao)
 * [Applicatin Timer](modules/apptimer)
 * [Button](modules/button)
