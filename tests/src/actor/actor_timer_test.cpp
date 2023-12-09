@@ -97,25 +97,18 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	actor_timer_start(timer);
 	dont_free = true;
 
-printf("#1\n");
 	for (int i = 0; i < 10; i++) {
 		mock().expectOneCall("actor_handler")
 			.withParameter("self", &actor)
 			.withParameter("msg", msg);
-printf("#2\n");
 		actor_timer_step(defer_ms);
-printf("#2-1\n");
 		sem_wait(&done);
-printf("#2-2\n");
 	}
 
-printf("#3\n");
 	actor_timer_stop(timer);
 	LONGS_EQUAL(1, actor_timer_len());
-printf("#4\n");
 	actor_timer_delete(timer);
 	LONGS_EQUAL(0, actor_timer_len());
-printf("#5\n");
 }
 
 TEST(ACTOR_TIMER, new_ShouldReturnNull_WhenAllocationFailed) {
