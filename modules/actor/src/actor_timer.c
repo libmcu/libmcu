@@ -44,7 +44,7 @@ static int add_to_list(struct list *entry, struct list *head)
 
 	list_for_each(p, head) {
 		if (p == entry) {
-			ACTOR_WARN("the entry(%p) exists in the queue(%p)",
+			ACTOR_WARN("the timer(%p) exists in the queue(%p)",
 					entry, head);
 			return -EALREADY;
 		}
@@ -216,10 +216,10 @@ int actor_timer_init(void *mem, size_t memsize)
 
 	for (size_t i = 0; i < m.cap; i++) {
 		add_to_list(&timers[i].link, &m.timer_free);
-		ACTOR_DEBUG("free entry: %p", &timers[i].link);
+		ACTOR_DEBUG("free timer entry: %p", &timers[i].link);
 	}
 
-	ACTOR_INFO("%lu free entries initialized.", m.cap);
+	ACTOR_INFO("%lu free timer entries initialized.", m.cap);
 	ACTOR_DEBUG("%lu bytes wasted.", memsize - maxbytes);
 
 	return 0;
