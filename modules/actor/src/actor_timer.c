@@ -32,8 +32,11 @@ struct actor_timer {
 	uint32_t interval_ms;
 };
 
-static struct list timer_free;
-static struct list timer_armed;
+static struct {
+	struct list timer_free;
+	struct list timer_armed;
+	size_t cap;
+} m;
 
 static int add_to_list(struct list *entry, struct list *head)
 {
@@ -63,7 +66,7 @@ static struct actor_timer *alloc_timer(struct list *head)
 	list_del(p, head);
 
 	struct actor_timer *timer = list_entry(p, struct actor_timer, link);
-	ACTOR_INFO("Allocated: %p", timer);
+	ACTOR_INFO("timer allocated: %p", timer);
 
 	return timer;
 }
@@ -71,24 +74,7 @@ static struct actor_timer *alloc_timer(struct list *head)
 static void free_timer(struct actor_timer *timer, struct list *head)
 {
 	add_to_list(&timer->link, head);
-	ACTOR_INFO("Free: %p", timer);
-}
-
-static struct actor_timer *set_timer(struct actor *actor,
-		struct actor_msg *msg, uint32_t millisec_delay, bool repeat)
-{
-	struct actor_timer *timer = alloc_timer(&timer_free);
-
-	if (timer) {
-		timer->actor = actor;
-		timer->msg = msg;
-		timer->timeout_ms = millisec_delay;
-		timer->interval_ms = repeat? millisec_delay : 0;
-
-		add_to_list(&timer->link, &timer_armed);
-	}
-
-	return timer;
+	ACTOR_INFO("timer free: %p", timer);
 }
 
 static void update_timeout(struct actor_timer *timer, uint32_t elapsed_ms)
@@ -106,20 +92,42 @@ static bool is_timed_out(struct actor_timer *timer)
 	return timer->timeout_ms == 0;
 }
 
-int actor_timer_delete(struct actor_timer *timer)
+size_t actor_timer_cap(void)
+{
+	return m.cap;
+}
+
+size_t actor_timer_len(void)
+{
+	actor_lock();
+	size_t cnt = (size_t)list_count(&m.timer_free);
+	actor_unlock();
+
+	return m.cap - cnt;
+}
+
+int actor_timer_start(struct actor_timer *timer)
+{
+	actor_lock();
+	add_to_list(&timer->link, &m.timer_armed);
+	actor_unlock();
+
+	ACTOR_INFO("timer armed: %p", timer);
+	return 0;
+}
+
+int actor_timer_stop(struct actor_timer *timer)
 {
 	struct list *p;
 
 	actor_lock();
 
-	list_for_each(p, &timer_armed) {
+	list_for_each(p, &m.timer_armed) {
 		if (p == &timer->link) {
-			list_del(p, &timer_armed);
+			list_del(p, &m.timer_armed);
 			break;
 		}
 	}
-
-	free_timer(timer, &timer_free);
 
 	actor_unlock();
 
@@ -130,15 +138,28 @@ struct actor_timer *actor_timer_new(struct actor *actor,
 		struct actor_msg *msg, uint32_t millisec_delay, bool repeat)
 {
 	actor_lock();
-
-	struct actor_timer *timer =
-		set_timer(actor, msg, millisec_delay, repeat);
-
+	struct actor_timer *timer = alloc_timer(&m.timer_free);
 	actor_unlock();
 
-	ACTOR_INFO("%p armed", timer);
+	if (timer) {
+		timer->actor = actor;
+		timer->msg = msg;
+		timer->timeout_ms = millisec_delay;
+		timer->interval_ms = repeat? millisec_delay : 0;
+	}
 
 	return timer;
+}
+
+int actor_timer_delete(struct actor_timer *timer)
+{
+	actor_timer_stop(timer);
+
+	actor_lock();
+	free_timer(timer, &m.timer_free);
+	actor_unlock();
+
+	return 0;
 }
 
 int actor_timer_step(uint32_t elapsed_ms)
@@ -148,7 +169,7 @@ int actor_timer_step(uint32_t elapsed_ms)
 
 	actor_lock();
 
-	list_for_each_safe(p, t, &timer_armed) {
+	list_for_each_safe(p, t, &m.timer_armed) {
 		struct actor_timer *timer =
 			list_entry(p, struct actor_timer, link);
 		update_timeout(timer, elapsed_ms);
@@ -157,13 +178,15 @@ int actor_timer_step(uint32_t elapsed_ms)
 		}
 
 		actor_unlock();
+
 		actor_send(timer->actor, timer->msg);
+
 		actor_lock();
 
 		if (!timer->interval_ms) {
-			list_del(&timer->link, &timer_armed);
-			free_timer(timer, &timer_free);
-			ACTOR_INFO("%p disarmed", timer);
+			list_del(&timer->link, &m.timer_armed);
+			ACTOR_INFO("timer disarmed: %p", timer);
+			free_timer(timer, &m.timer_free);
 		}
 
 		timer->timeout_ms = timer->interval_ms;
@@ -183,20 +206,20 @@ int actor_timer_init(void *mem, size_t memsize)
 	assert(memsize >= (sizeof(struct actor_timer) + remainder));
 
 	const size_t maxbytes = memsize - remainder;
-	const size_t maxlen = maxbytes / sizeof(struct actor_timer);
+	m.cap = maxbytes / sizeof(struct actor_timer);
 
 	struct actor_timer *timers = (struct actor_timer *)
 		(((uintptr_t)mem + mask) & ~mask);
 
-	list_init(&timer_free);
-	list_init(&timer_armed);
+	list_init(&m.timer_free);
+	list_init(&m.timer_armed);
 
-	for (size_t i = 0; i < maxlen; i++) {
-		add_to_list(&timers[i].link, &timer_free);
+	for (size_t i = 0; i < m.cap; i++) {
+		add_to_list(&timers[i].link, &m.timer_free);
 		ACTOR_DEBUG("free entry: %p", &timers[i].link);
 	}
 
-	ACTOR_INFO("%lu free entries initialized.", maxlen);
+	ACTOR_INFO("%lu free entries initialized.", m.cap);
 	ACTOR_DEBUG("%lu bytes wasted.", memsize - maxbytes);
 
 	return 0;

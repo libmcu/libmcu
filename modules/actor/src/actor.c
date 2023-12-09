@@ -141,7 +141,7 @@ static void dispatch_actor(struct core *core)
 
 	actor_unlock();
 
-	ACTOR_DEBUG("dispatch(%d) %p", core->priority, actor);
+	ACTOR_DEBUG("dispatch(%d) %p: %p", core->priority, actor, message);
 
 	if (actor && actor->handler) {
 		(*actor->handler)(actor, message);
