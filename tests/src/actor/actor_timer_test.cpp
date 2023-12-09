@@ -82,7 +82,6 @@ TEST(ACTOR_TIMER, start_ShouldSendActor_WhenTimedout) {
 	LONGS_EQUAL(0, actor_timer_len());
 }
 
-#if 0
 TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	struct actor actor;
 	struct actor_msg *msg = actor_alloc(sizeof(*msg));
@@ -92,20 +91,26 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	struct actor_timer *timer = actor_timer_new(&actor, msg, defer_ms, true);
 	actor_timer_start(timer);
 
+printf("#1\n");
 	for (int i = 0; i < 10; i++) {
 		mock().expectOneCall("actor_handler")
 			.withParameter("self", &actor)
 			.withParameter("msg", msg);
+printf("#2\n");
 		actor_timer_step(defer_ms);
+printf("#2-1\n");
 		sem_wait(&done);
+printf("#2-2\n");
 	}
 
+printf("#3\n");
 	actor_timer_stop(timer);
 	LONGS_EQUAL(1, actor_timer_len());
+printf("#4\n");
 	actor_timer_delete(timer);
 	LONGS_EQUAL(0, actor_timer_len());
+printf("#5\n");
 }
-#endif
 
 TEST(ACTOR_TIMER, new_ShouldReturnNull_WhenAllocationFailed) {
 	for (size_t i = 0; i < actor_timer_cap(); i++) {

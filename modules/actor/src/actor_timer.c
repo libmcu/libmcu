@@ -87,7 +87,7 @@ static void update_timeout(struct actor_timer *timer, uint32_t elapsed_ms)
 	timer->timeout_ms -= elapsed_ms;
 }
 
-static bool is_timed_out(struct actor_timer *timer)
+static bool is_timed_out(const struct actor_timer *timer)
 {
 	return timer->timeout_ms == 0;
 }
@@ -116,7 +116,7 @@ int actor_timer_start(struct actor_timer *timer)
 	return 0;
 }
 
-int actor_timer_stop(struct actor_timer *timer)
+int actor_timer_stop(const struct actor_timer *timer)
 {
 	struct list *p;
 
