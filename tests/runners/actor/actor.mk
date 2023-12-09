@@ -9,8 +9,11 @@ SRC_FILES = \
 TEST_SRC_FILES = \
 	src/actor/actor_test.cpp \
 	stubs/logging.cpp \
-	src/test_all.cpp \
-	fakes/fake_semaphore_ios.c
+	src/test_all.cpp
+
+ifeq ($(shell uname), Darwin)
+TEST_SRC_FILES += fakes/fake_semaphore_ios.c
+endif
 
 INCLUDE_DIRS = \
 	../modules/common/include/libmcu/posix \
