@@ -24,7 +24,8 @@ INCLUDE_DIRS += ../modules/common/include/libmcu/posix
 endif
 
 MOCKS_SRC_DIRS =
-CPPUTEST_CPPFLAGS = -DUNITTEST -include libmcu/logging.h
+CPPUTEST_CPPFLAGS = -DUNITTEST -include libmcu/logging.h \
+		    -DACTOR_DEBUG=debug -DACTOR_INFO=info -DACTOR_WARN=warn
 CPPUTEST_LDFLAGS = -lpthread
 
 include runners/MakefileRunner
