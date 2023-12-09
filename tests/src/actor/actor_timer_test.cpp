@@ -102,11 +102,7 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 			.withParameter("self", &actor)
 			.withParameter("msg", msg);
 		actor_timer_step(defer_ms);
-		//sem_wait(&done);
-		struct timespec time;
-  time.tv_sec = 1;
-  time.tv_nsec = 0;
-		sem_timedwait(&done, &time);
+		sem_wait(&done);
 	}
 
 	actor_timer_stop(timer);
