@@ -18,7 +18,6 @@
 
 static pthread_mutex_t lock;
 static sem_t done;
-static bool dont_free;
 
 struct actor_msg {
 	int id;
@@ -40,9 +39,8 @@ static void actor_handler(struct actor *self, struct actor_msg *msg) {
 	mock().actualCall(__func__)
 		.withParameter("self", self)
 		.withParameter("msg", msg);
-	if (!dont_free) {
-		actor_free(msg);
-	}
+
+	actor_free(msg);
 	sem_post(&done);
 }
 
@@ -53,7 +51,6 @@ TEST_GROUP(ACTOR_TIMER) {
 	void setup(void) {
 		pthread_mutex_init(&lock, NULL);
 		sem_init(&done, 0, 0);
-		dont_free = false;
 
 		actor_init(memmsg, sizeof(memmsg), 4096UL);
 		actor_timer_init(memtimer, sizeof(memtimer));
@@ -95,15 +92,13 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	uint32_t defer_ms = 1000;
 	struct actor_timer *timer = actor_timer_new(&actor, msg, defer_ms, true);
 	actor_timer_start(timer);
-	dont_free = true;
 
 	for (int i = 0; i < 10; i++) {
 		mock().expectOneCall("actor_handler")
 			.withParameter("self", &actor)
 			.withParameter("msg", msg);
 		actor_timer_step(defer_ms);
-                usleep(1000000);
-		//sem_wait(&done);
+		sem_wait(&done);
 	}
 
 	actor_timer_stop(timer);
