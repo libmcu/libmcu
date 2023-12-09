@@ -45,19 +45,17 @@ static void actor_handler(struct actor *self, struct actor_msg *msg) {
 
 TEST_GROUP(ACTOR) {
 	uint8_t msgbuf[1024];
-	struct actor_queue queue;
 
 	void setup(void) {
 		pthread_mutex_init(&lock, NULL);
 		sem_init(&done, 0, 0);
 
 		actor_init(msgbuf, sizeof(msgbuf), 4096UL);
-		actor_queue_init(&queue);
 	}
 	void teardown(void) {
                 /* give some time space for new threads to take place to run
                  * before killed */
-                usleep(10);
+                usleep(50);
                 actor_deinit();
 
 		mock().checkExpectations();
@@ -102,7 +100,7 @@ TEST(ACTOR, actor_init_ShouldRegisterActorInTheQueueOnlyOnce) {
 TEST(ACTOR, send_ShouldIgnoreDuplicatedMessage) {
 	struct actor actor1;
 	struct actor_msg *msg1 = actor_alloc(sizeof(*msg1));
-	actor_set(&actor1, actor_handler, 0, &queue);
+	actor_set(&actor1, actor_handler, 0);
 
 	mock().expectOneCall("actor_handler")
 		.withParameter("self", &actor1)
@@ -119,8 +117,8 @@ TEST(ACTOR, send_ShouldDispatchHandlers) {
 	struct actor actor2;
 	struct actor_msg *msg1 = actor_alloc(sizeof(*msg1));
 	struct actor_msg *msg2 = actor_alloc(sizeof(*msg2));
-	actor_set(&actor1, actor_handler, 0, &queue);
-	actor_set(&actor2, actor_handler, 0, &queue);
+	actor_set(&actor1, actor_handler, 0);
+	actor_set(&actor2, actor_handler, 0);
 
 	mock().expectOneCall("actor_handler")
 		.withParameter("self", &actor1)

@@ -32,16 +32,17 @@ struct actor_msg {
 
 struct actor my_actor1;
 struct actor_queue my_queue1;
-uint8_t buf[256];
+uint8_t mem[256];
+uint8_t timer_mem[256];
 
 static void my_actor1_handler(struct actor *actor, struct actor_msg *msg) {
     struct my_msg *my_msg = (struct my_msg *)msg;
     printf("actor called %p with msg id: %d", actor, my_msg->id);
 }
 
-actor_boot(buf, sizeof(buf));
-actor_queue_init(&my_queue1);
-actor_init(&my_actor1, my_actor1_handler, 0, &my_queue1);
+actor_init(mem, sizeof(mem));
+actor_timer_init(timer_mem, sizeof(timer_mem));
+actor_set(&my_actor1, my_actor1_handler, 0);
 
 struct actor_msg *first_msg = actor_alloc(sizeof(*first_msg));
 first_msg->id = 1;

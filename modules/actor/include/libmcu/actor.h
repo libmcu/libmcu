@@ -21,34 +21,17 @@ typedef void (*actor_handler_t)(struct actor *self, struct actor_msg *msg);
 
 struct actor {
 	struct list link;
-	actor_handler_t handler;
-	struct actor_queue *queue;
-	struct actor_msg *mailbox;
-	int priority;
-};
-
-struct actor_queue {
 	struct list messages;
+	actor_handler_t handler;
+	int priority;
 };
 
 int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes);
 int actor_deinit(void);
 
-int actor_queue_init(struct actor_queue *queue);
-
-/**
- * @brief Count how many messages in the queue
- *
- * @param queue queue
- *
- * @return number of messages
- */
-int actor_queue_len(struct actor_queue *queue);
-
-struct actor *actor_new(actor_handler_t handler, int priority,
-		struct actor_queue *queue);
-struct actor *actor_set(struct actor *actor, actor_handler_t handler,
-		int priority, struct actor_queue *queue);
+struct actor *actor_new(actor_handler_t handler, int priority);
+struct actor *actor_set(struct actor *actor,
+		actor_handler_t handler, int priority);
 
 /**
  * @brief Send a message to an actor
