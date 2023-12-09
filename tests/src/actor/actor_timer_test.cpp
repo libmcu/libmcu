@@ -106,7 +106,7 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 		struct timespec time;
   time.tv_sec = 1;
   time.tv_nsec = 0;
-		sem_timedwait(&done, 500);
+		sem_timedwait(&done, &time);
 	}
 
 	actor_timer_stop(timer);
