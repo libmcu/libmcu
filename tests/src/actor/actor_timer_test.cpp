@@ -61,6 +61,7 @@ TEST_GROUP(ACTOR_TIMER) {
 	void teardown(void) {
                 usleep(50);
                 actor_deinit();
+		sem_destroy(&done);
 
 		mock().checkExpectations();
 		mock().clear();

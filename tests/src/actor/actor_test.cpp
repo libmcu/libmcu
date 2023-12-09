@@ -57,6 +57,7 @@ TEST_GROUP(ACTOR) {
                  * before killed */
                 usleep(50);
                 actor_deinit();
+		sem_destroy(&done);
 
 		mock().checkExpectations();
 		mock().clear();
