@@ -26,7 +26,7 @@ struct actor {
 	int priority;
 };
 
-int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes);
+int actor_init(void *mem, size_t memsize, size_t stack_size_bytes);
 int actor_deinit(void);
 
 struct actor *actor_new(actor_handler_t handler, int priority);

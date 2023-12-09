@@ -30,18 +30,19 @@ struct actor_msg {
     int id;
 };
 
-struct actor my_actor1;
-struct actor_queue my_queue1;
 uint8_t mem[256];
 uint8_t timer_mem[256];
 
+struct actor my_actor1;
+
 static void my_actor1_handler(struct actor *actor, struct actor_msg *msg) {
-    struct my_msg *my_msg = (struct my_msg *)msg;
-    printf("actor called %p with msg id: %d", actor, my_msg->id);
+    printf("actor called %p with msg id: %d", actor, msg->id);
+    actor_free(msg);
 }
 
-actor_init(mem, sizeof(mem));
+actor_init(mem, sizeof(mem), 4096);
 actor_timer_init(timer_mem, sizeof(timer_mem));
+
 actor_set(&my_actor1, my_actor1_handler, 0);
 
 struct actor_msg *first_msg = actor_alloc(sizeof(*first_msg));

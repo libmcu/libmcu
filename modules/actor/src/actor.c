@@ -128,6 +128,26 @@ static int schedule_actor(struct actor *actor, struct actor_context *ctx)
 	return 0;
 }
 
+static void dispatch_actor(struct core *core)
+{
+	struct actor *actor = NULL;
+	struct actor_msg *message = NULL;
+
+	actor_lock();
+
+	actor = pop_actor(&core->runq);
+	message = (struct actor_msg *)(void *)
+		pop_message(&actor->messages)->payload;
+
+	actor_unlock();
+
+	ACTOR_DEBUG("dispatch(%d) %p", core->priority, actor);
+
+	if (actor && actor->handler) {
+		(*actor->handler)(actor, message);
+	}
+}
+
 static void *dispatcher(void *e)
 {
 	struct core *core = (struct core *)e;
@@ -135,22 +155,8 @@ static void *dispatcher(void *e)
 	ACTOR_INFO("Dispatcher(%d) started", core->priority);
 
 	while (1) {
-		struct actor *actor = NULL;
-		struct actor_msg *message = NULL;
-
 		sem_wait(&core->dispatch_event);
-
-		actor_lock();
-		actor = pop_actor(&core->runq);
-		message = (struct actor_msg *)(void *)
-			pop_message(&actor->messages)->payload;
-		actor_unlock();
-
-		ACTOR_DEBUG("dispatch(%d) %p", core->priority, actor);
-
-		if (actor && actor->handler) {
-			(*actor->handler)(actor, message);
-		}
+		dispatch_actor(core);
 	}
 
 	pthread_exit(NULL);
@@ -204,6 +210,8 @@ static int deinitialize_scheduler(struct actor_context *ctx)
 
 struct actor_msg *actor_alloc(size_t payload_size)
 {
+	struct list *p = NULL;
+
 	if (payload_size == 0 || payload_size > ACTOR_DEFAULT_MESSAGE_SIZE) {
 		return NULL;
 	}
@@ -211,9 +219,10 @@ struct actor_msg *actor_alloc(size_t payload_size)
 	actor_lock();
 
 	struct list *head = &m.msgpool.free_list.head;
-	struct list *p = head->next;
+	struct list *next = head->next;
 
-	if (p && p != head) {
+	if (next != head) {
+		p = next;
 		list_del(p, head);
 	}
 
@@ -312,17 +321,17 @@ struct actor *actor_set(struct actor *actor,
 	return actor;
 }
 
-int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
+int actor_init(void *mem, size_t memsize, size_t stack_size_bytes)
 {
 	const size_t mask = sizeof(uintptr_t) - 1;
-	const size_t remainder = (size_t)msgpool & mask;
+	const size_t remainder = (size_t)mem & mask;
 
-	assert(msgpool);
-	assert(msgpool_size >= (sizeof(struct actor_msg) - remainder));
+	assert(mem);
+	assert(memsize >= (sizeof(struct actor_msg) + remainder));
 
 	memset(&m, 0, sizeof(m));
-	m.msgpool.buf = (void *)(((uintptr_t)msgpool + mask) & ~mask);
-	m.msgpool.cap = msgpool_size - remainder;
+	m.msgpool.buf = (void *)(((uintptr_t)mem + mask) & ~mask);
+	m.msgpool.cap = memsize - remainder;
 
 	struct list *free_list_head = &m.msgpool.free_list.head;
 	struct sized_msg *sized_pool = (struct sized_msg *)m.msgpool.buf;
@@ -332,13 +341,13 @@ int actor_init(void *msgpool, size_t msgpool_size, size_t stack_size_bytes)
 
 	for (size_t i = 0; i < max_index; i++) {
 		add_to_list(&sized_pool[i].header.link, free_list_head);
-		ACTOR_DEBUG("free list entry: %p", &sized_pool[i].header.link);
+		ACTOR_DEBUG("free entry: %p", &sized_pool[i].header.link);
 	}
 
 	m.msgpool.cap = max_index * sizeof(*sized_pool);
 
 	ACTOR_INFO("%lu free entries initialized.", max_index);
-	ACTOR_DEBUG("%lu bytes wasted.", msgpool_size - m.msgpool.cap);
+	ACTOR_DEBUG("%lu bytes wasted.", memsize - m.msgpool.cap);
 
 	return initialize_scheduler(&m, stack_size_bytes);
 }
