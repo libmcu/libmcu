@@ -5,11 +5,14 @@ This is an implementation of Actor Model which is a conceptual concurrent comput
 ## Integration Guide
 
 - ACTOR_DEFAULT_MESSAGE_SIZE
+    - Memory is allocated with fixed-size blocks defined by `ACTOR_DEFAULT_MESSAGE_SIZE` to avoid external fragmentation.
 - ACTOR_PRIORITY_MAX
     - Threads are created according to the number of priorities. The default is 1.
 - ACTOR_PRIORITY_BASE
     - Priority increases or decreases by 1 based on it. The default is 0.
     - If the lower number the higher priority, then define ACTOR_PRIORITY_DESCENDING. The default is ascending.
+
+### Example
 
 ```c
 struct actor_msg {
