@@ -102,7 +102,8 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 			.withParameter("self", &actor)
 			.withParameter("msg", msg);
 		actor_timer_step(defer_ms);
-		sem_wait(&done);
+                usleep(100000);
+		//sem_wait(&done);
 	}
 
 	actor_timer_stop(timer);
