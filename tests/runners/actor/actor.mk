@@ -4,6 +4,7 @@ COMPONENT_NAME = actor
 
 SRC_FILES = \
 	../modules/actor/src/actor.c \
+	../modules/actor/src/actor_timer.c \
 
 TEST_SRC_FILES = \
 	src/actor/actor_test.cpp \

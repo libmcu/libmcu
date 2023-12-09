@@ -6,6 +6,7 @@
 
 #include "libmcu/actor.h"
 #include "libmcu/actor_overrides.h"
+#include "libmcu/actor_timer.h"
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -299,9 +300,15 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 int actor_send_defer(struct actor *actor, struct actor_msg *msg,
 		uint32_t millisec_delay)
 {
-	unused(actor);
-	unused(msg);
-	unused(millisec_delay);
+	struct actor_timer *timer =
+		actor_timer_new(actor, msg, millisec_delay, 0);
+
+	if (!timer) {
+		return -ENOSPC;
+	}
+
+	actor_timer_start(timer);
+
 	return 0;
 }
 
