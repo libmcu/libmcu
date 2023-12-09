@@ -4,10 +4,6 @@ This is an implementation of Actor Model which is a conceptual concurrent comput
 
 ## Overview
 
-Two ways to send a message to actors:
-1. by actor: single actor
-2. by queue: multiple actors
-
 - 하나의 큐에 여러개의 액터를 등록하면, pub/sub 구현이 가능
 - 하나의 큐에 하나의 액터만 등록하면 구현과 설계가 간단
   - 하나의 메시지에 여러개의 액터가 행동해야 한다면, 하나의 액터가 그 일을 위임하게 하는 방법이 있음
@@ -30,22 +26,29 @@ struct actor_msg {
     int id;
 };
 
-uint8_t mem[256];
-uint8_t timer_mem[256];
-
-struct actor my_actor1;
+static uint8_t mem[256];
+static uint8_t timer_mem[256];
+static struct actor my_actor1;
 
 static void my_actor1_handler(struct actor *actor, struct actor_msg *msg) {
     printf("actor called %p with msg id: %d", actor, msg->id);
     actor_free(msg);
 }
 
-actor_init(mem, sizeof(mem), 4096);
-actor_timer_init(timer_mem, sizeof(timer_mem));
+int main(void) {
+    actor_init(mem, sizeof(mem), 4096);
+    actor_timer_init(timer_mem, sizeof(timer_mem));
 
-actor_set(&my_actor1, my_actor1_handler, 0);
+    actor_set(&my_actor1, my_actor1_handler, 0);
 
-struct actor_msg *first_msg = actor_alloc(sizeof(*first_msg));
-first_msg->id = 1;
-actor_send(&my_actor1, first_msg);
+    ...
+
+    while (1) {
+        struct actor_msg *msg = actor_alloc(sizeof(*msg));
+        msg->id = 1;
+        actor_send(&my_actor1, msg);
+
+        sleep_ms(1000);
+    }
+}
 ```

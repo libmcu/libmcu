@@ -82,7 +82,6 @@ TEST(ACTOR_TIMER, start_ShouldSendActor_WhenTimedout) {
 	LONGS_EQUAL(0, actor_timer_len());
 }
 
-#if 0
 TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	struct actor actor;
 	struct actor_msg *msg = actor_alloc(sizeof(*msg));
@@ -105,7 +104,6 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	actor_timer_delete(timer);
 	LONGS_EQUAL(0, actor_timer_len());
 }
-#endif
 
 TEST(ACTOR_TIMER, new_ShouldReturnNull_WhenAllocationFailed) {
 	for (size_t i = 0; i < actor_timer_cap(); i++) {
