@@ -300,8 +300,7 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 int actor_send_defer(struct actor *actor, struct actor_msg *msg,
 		uint32_t millisec_delay)
 {
-	struct actor_timer *timer =
-		actor_timer_new(actor, msg, millisec_delay, 0);
+	struct actor_timer *timer = actor_timer_new(actor, msg, millisec_delay);
 
 	if (!timer) {
 		return -ENOSPC;

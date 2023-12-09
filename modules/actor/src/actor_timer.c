@@ -29,7 +29,6 @@ struct actor_timer {
 	struct actor_msg *msg;
 
 	uint32_t timeout_ms;
-	uint32_t interval_ms;
 };
 
 static struct {
@@ -135,7 +134,7 @@ int actor_timer_stop(struct actor_timer *timer)
 }
 
 struct actor_timer *actor_timer_new(struct actor *actor,
-		struct actor_msg *msg, uint32_t millisec_delay, bool repeat)
+		struct actor_msg *msg, uint32_t millisec_delay)
 {
 	actor_lock();
 	struct actor_timer *timer = alloc_timer(&m.timer_free);
@@ -145,7 +144,6 @@ struct actor_timer *actor_timer_new(struct actor *actor,
 		timer->actor = actor;
 		timer->msg = msg;
 		timer->timeout_ms = millisec_delay;
-		timer->interval_ms = repeat? millisec_delay : 0;
 	}
 
 	return timer;
@@ -183,13 +181,9 @@ int actor_timer_step(uint32_t elapsed_ms)
 
 		actor_lock();
 
-		if (!timer->interval_ms) {
-			list_del(&timer->link, &m.timer_armed);
-			ACTOR_INFO("timer disarmed: %p", timer);
-			free_timer(timer, &m.timer_free);
-		}
-
-		timer->timeout_ms = timer->interval_ms;
+		list_del(&timer->link, &m.timer_armed);
+		ACTOR_INFO("timer disarmed: %p", timer);
+		free_timer(timer, &m.timer_free);
 	}
 
 	actor_unlock();
