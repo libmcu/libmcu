@@ -116,7 +116,7 @@ int actor_timer_start(struct actor_timer *timer)
 	return 0;
 }
 
-int actor_timer_stop(const struct actor_timer *timer)
+int actor_timer_stop(struct actor_timer *timer)
 {
 	struct list *p;
 
