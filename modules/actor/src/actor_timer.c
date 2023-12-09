@@ -179,7 +179,9 @@ int actor_timer_step(uint32_t elapsed_ms)
 
 		actor_unlock();
 
+ACTOR_DEBUG("Raise");
 		actor_send(timer->actor, timer->msg);
+ACTOR_DEBUG("Raised");
 
 		actor_lock();
 
