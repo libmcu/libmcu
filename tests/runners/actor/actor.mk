@@ -11,17 +11,17 @@ TEST_SRC_FILES = \
 	stubs/logging.cpp \
 	src/test_all.cpp
 
-ifeq ($(shell uname), Darwin)
-TEST_SRC_FILES += fakes/fake_semaphore_ios.c
-endif
-
 INCLUDE_DIRS = \
-	../modules/common/include/libmcu/posix \
 	../modules/common/include \
 	../modules/actor/include \
 	../modules/logging/include \
 	$(CPPUTEST_HOME)/include \
 	. \
+
+ifeq ($(shell uname), Darwin)
+TEST_SRC_FILES += fakes/fake_semaphore_ios.c
+INCLUDE_DIRS += ../modules/common/include/libmcu/posix
+endif
 
 MOCKS_SRC_DIRS =
 CPPUTEST_CPPFLAGS = -DUNITTEST -include libmcu/logging.h \
