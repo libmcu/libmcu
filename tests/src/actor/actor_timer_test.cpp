@@ -97,7 +97,6 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 	actor_timer_start(timer);
 	dont_free = true;
 
-#if 0
 	for (int i = 0; i < 10; i++) {
 		mock().expectOneCall("actor_handler")
 			.withParameter("self", &actor)
@@ -105,7 +104,6 @@ TEST(ACTOR_TIMER, start_ShouldSendActorRepeatly_WhenIntervalGiven) {
 		actor_timer_step(defer_ms);
 		sem_wait(&done);
 	}
-#endif
 
 	actor_timer_stop(timer);
 	LONGS_EQUAL(1, actor_timer_len());
