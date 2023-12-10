@@ -62,13 +62,14 @@ $ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libm
 
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
-LIBMCU_MODULES := ao logging metrics pubsub
+# The commented lines below are optional. All modules and interfaces included by default if not specified.
+#LIBMCU_MODULES := actor metrics
 include $(LIBMCU_ROOT)/projects/modules.mk
 
 <SRC_FILES> += $(LIBMCU_MODULES_SRCS)
 <INC_PATHS> += $(LIBMCU_MODULES_INCS)
 
-LIBMCU_INTERFACES := i2c l4
+#LIBMCU_INTERFACES := gpio pwm
 include $(LIBMCU_ROOT)/projects/interfaces.mk
 
 <SRC_FILES> += $(LIBMCU_INTERFACES_SRCS)
@@ -85,10 +86,10 @@ or
 
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
-list(APPEND LIBMCU_MODULES ao logging metrics pubsub)
+#list(APPEND LIBMCU_MODULES metrics pubsub)
 include(${LIBMCU_ROOT}/projects/modules.cmake)
 
-list(APPEND LIBMCU_INTERFACES i2c l4)
+#list(APPEND LIBMCU_INTERFACES i2c uart)
 include(${LIBMCU_ROOT}/projects/interfaces.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
