@@ -35,12 +35,18 @@ void actor_unlock(void) {
 	pthread_mutex_unlock(&lock);
 }
 
+void actor_timer_boot(void) {
+}
+
 static void actor_handler(struct actor *self, struct actor_msg *msg) {
 	mock().actualCall(__func__)
 		.withParameter("self", self)
 		.withParameter("msg", msg);
 
-	actor_free(msg);
+	if (msg) {
+		actor_free(msg);
+	}
+
 	sem_post(&done);
 }
 

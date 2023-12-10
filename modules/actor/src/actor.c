@@ -133,12 +133,14 @@ static void dispatch_actor(struct core *core)
 {
 	struct actor *actor = NULL;
 	struct actor_msg *message = NULL;
+	struct sized_msg *p;
 
 	actor_lock();
 
 	actor = pop_actor(&core->runq);
-	message = (struct actor_msg *)(void *)
-		pop_message(&actor->messages)->payload;
+	if ((p = pop_message(&actor->messages))) {
+		message = (struct actor_msg *)(void *)p->payload;
+	}
 
 	actor_unlock();
 
@@ -277,15 +279,16 @@ size_t actor_len(void)
 int actor_send(struct actor *actor, struct actor_msg *msg)
 {
 	assert(actor);
-	assert(msg);
 
 	bool need_schedule = true;
 
 	actor_lock();
 
-	struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
-	if (add_to_list(&p->header.link, &actor->messages)) {
-		need_schedule = false;
+	if (msg) {
+		struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
+		if (add_to_list(&p->header.link, &actor->messages)) {
+			need_schedule = false;
+		}
 	}
 
 	if (need_schedule) {

@@ -35,11 +35,18 @@ void actor_unlock(void) {
 	pthread_mutex_unlock(&lock);
 }
 
+void actor_timer_boot(void) {
+}
+
 static void actor_handler(struct actor *self, struct actor_msg *msg) {
 	mock().actualCall(__func__)
 		.withParameter("self", self)
 		.withParameter("msg", msg);
-	actor_free(msg);
+
+	if (msg) {
+		actor_free(msg);
+	}
+
 	sem_post(&done);
 }
 
@@ -132,5 +139,17 @@ TEST(ACTOR, send_ShouldDispatchHandlers) {
 	actor_send(&actor2, msg2);
 
 	sem_wait(&done);
+	sem_wait(&done);
+}
+
+TEST(ACTOR, send_ShouldDispatchHandler_WhenNullMessageGiven) {
+	struct actor actor1;
+	actor_set(&actor1, actor_handler, 0);
+
+	mock().expectOneCall("actor_handler")
+		.withParameter("self", &actor1)
+		.withParameter("msg", (struct actor_msg *)NULL);
+
+	actor_send(&actor1, NULL);
 	sem_wait(&done);
 }
