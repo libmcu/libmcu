@@ -62,7 +62,7 @@ TEST_GROUP(ACTOR) {
 	void teardown(void) {
                 /* give some time space for new threads to take place to run
                  * before killed */
-                usleep(50);
+                usleep(100);
                 actor_deinit();
 		sem_destroy(&done);
 

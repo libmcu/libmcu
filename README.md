@@ -19,7 +19,7 @@ Any feedback would be appreciated.
 ## Modules
 * [Actor](modules/actor)
 * [Active Objects](modules/ao)
-* [Applicatin Timer](modules/apptimer)
+* [Application Timer](modules/apptimer)
 * [Button](modules/button)
 * [Command Line Interface](modules/cli)
 * [Common](modules/common)
@@ -62,7 +62,8 @@ $ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libm
 
 ```make
 LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
-# The commented lines below are optional. All modules and interfaces included by default if not specified.
+# The commented lines below are optional. All modules and interfaces included
+# by default if not specified.
 #LIBMCU_MODULES := actor metrics
 include $(LIBMCU_ROOT)/projects/modules.mk
 

@@ -62,7 +62,7 @@ TEST_GROUP(ACTOR_TIMER) {
 		actor_timer_init(memtimer, sizeof(memtimer));
 	}
 	void teardown(void) {
-                usleep(50);
+                usleep(100);
                 actor_deinit();
 		sem_destroy(&done);
 
