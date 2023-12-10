@@ -215,11 +215,16 @@ static button_rc_t do_step(void)
 	unsigned long t = m.get_time_ms();
 	button_rc_t rc = BUTTON_BUSY;
 
-	if ((t - t0) < BUTTON_SAMPLING_PERIOD_MS) {
-		return BUTTON_BUSY;
+	unsigned long next = t0;
+
+	while ((t - next) >= BUTTON_SAMPLING_PERIOD_MS) {
+		next += BUTTON_SAMPLING_PERIOD_MS;
+		rc = scan_all(next);
+		if ((t - next) > BUTTON_SAMPLING_PERIOD_MAX_LATENCY_MS) {
+			break;
+		}
 	}
 
-	rc = scan_all(t);
 	t0 = t;
 
 	return rc;
