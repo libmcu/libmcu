@@ -9,14 +9,12 @@
 
 static pthread_mutex_t fallback_lock = PTHREAD_MUTEX_INITIALIZER;
 
-void actor_lock(void *ctx)
+void actor_lock(void)
 {
-	unused(ctx);
 	pthread_mutex_lock(&fallback_lock);
 }
 
-void actor_unlock(void *ctx)
+void actor_unlock(void)
 {
-	unused(ctx);
 	pthread_mutex_unlock(&fallback_lock);
 }

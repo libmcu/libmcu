@@ -56,10 +56,8 @@ void actor_timer_boot(void)
 	assert(rc == pdPASS);
 }
 
-void actor_lock(void *lock_handle)
+void actor_lock(void)
 {
-	(void)lock_handle;
-
 	if (in_interrupt()) {
 		intctx = taskENTER_CRITICAL_FROM_ISR();
 	} else {
@@ -67,10 +65,8 @@ void actor_lock(void *lock_handle)
 	}
 }
 
-void actor_unlock(void *lock_handle)
+void actor_unlock(void)
 {
-	(void)lock_handle;
-
 	if (in_interrupt()) {
 		taskEXIT_CRITICAL_FROM_ISR(intctx);
 	} else {

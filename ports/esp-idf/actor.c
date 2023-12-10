@@ -42,16 +42,14 @@ void actor_timer_boot(void)
 	esp_timer_create(&timer_args, &actor_timer);
 	esp_timer_start_periodic(actor_timer,
 			  ACTOR_TIMER_INTERVAL_MS * 1000/*usec*/);
-
-	return 0;
 }
 
-void actor_lock(void *lock_handle)
+void actor_lock(void)
 {
 	taskENTER_CRITICAL(&actor_spinlock);
 }
 
-void actor_unlock(void *lock_handle)
+void actor_unlock(void)
 {
 	taskEXIT_CRITICAL(&actor_spinlock);
 }
