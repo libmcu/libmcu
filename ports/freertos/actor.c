@@ -48,7 +48,7 @@ static void on_timeout(TimerHandle_t xTimer)
 void actor_timer_boot(void)
 {
 	TimerHandle_t actor_timer_handle = xTimerCreate("AO Timer",
-			pdMS_TO_TICKS(AO_TIMER_SCAN_INTERVAL_MS), pdTRUE,
+			pdMS_TO_TICKS(ACTOR_TIMER_INTERVAL_MS), pdTRUE,
 			(void *)0, on_timeout);
 	assert(actor_timer_handle);
 
