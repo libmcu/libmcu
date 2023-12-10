@@ -39,6 +39,7 @@ void actor_timer_boot(void) {
 }
 
 static void actor_handler(struct actor *self, struct actor_msg *msg) {
+printf("handler start\n");
 	mock().actualCall(__func__)
 		.withParameter("self", self)
 		.withParameter("msg", msg);
@@ -47,7 +48,9 @@ static void actor_handler(struct actor *self, struct actor_msg *msg) {
 		actor_free(msg);
 	}
 
+printf("handler sem post\n");
 	sem_post(&done);
+printf("handler end\n");
 }
 
 TEST_GROUP(ACTOR) {
@@ -62,7 +65,7 @@ TEST_GROUP(ACTOR) {
 	void teardown(void) {
                 /* give some time space for new threads to take place to run
                  * before killed */
-                usleep(100);
+                usleep(50);
                 actor_deinit();
 		sem_destroy(&done);
 
