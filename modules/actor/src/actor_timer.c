@@ -216,5 +216,7 @@ int actor_timer_init(void *mem, size_t memsize)
 	ACTOR_INFO("%lu free timer entries initialized.", m.cap);
 	ACTOR_DEBUG("%lu bytes wasted.", memsize - maxbytes);
 
+	actor_timer_boot();
+
 	return 0;
 }
