@@ -149,7 +149,6 @@ static void dispatch_actor(struct core *core)
 	if (actor && actor->handler) {
 		(*actor->handler)(actor, message);
 	}
-	ACTOR_DEBUG("dispatched");
 }
 
 static void *dispatcher(void *e)

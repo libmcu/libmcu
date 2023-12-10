@@ -62,7 +62,7 @@ TEST_GROUP(ACTOR_TIMER) {
 		actor_timer_init(memtimer, sizeof(memtimer));
 	}
 	void teardown(void) {
-                usleep(150);
+                usleep(50);
                 actor_deinit();
 		sem_destroy(&done);
 
@@ -78,6 +78,7 @@ TEST(ACTOR_TIMER, start_ShouldSendActor_WhenTimedout) {
 
 	uint32_t defer_ms = 1000;
 	struct actor_timer *timer = actor_timer_new(&actor, msg, defer_ms);
+	CHECK(timer != NULL);
 	actor_timer_start(timer);
 
 	mock().expectOneCall("actor_handler")
