@@ -4,6 +4,9 @@ ifneq ($(LIBMCU_ROOT),)
 libmcu-basedir := $(LIBMCU_ROOT)/
 endif
 
+LIBMCU_MODULES ?= actor ao apptimer bitmap button cli common jobqueue logging \
+		  metrics pubsub retry pm
+
 ifeq ($(filter common, $(LIBMCU_MODULES)),)
 LIBMCU_MODULES += common
 endif

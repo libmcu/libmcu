@@ -24,6 +24,7 @@ extern "C" {
 			pos = tmp, tmp = pos->next)
 #define list_entry(ptr, type, member) \
 	((type *)(void *)((char *)(ptr) - offsetof(type, member)))
+#define list_first(head)		((head)->next)
 
 #define DEFINE_LIST_HEAD(name)		struct list name = { .next = &name, }
 
