@@ -5,6 +5,7 @@ COMPONENT_NAME = actor_timer
 SRC_FILES = \
 	../modules/actor/src/actor_timer.c \
 	../modules/actor/src/actor.c \
+	../modules/actor/src/actor_overrides.c \
 
 TEST_SRC_FILES = \
 	src/actor/actor_timer_test.cpp \

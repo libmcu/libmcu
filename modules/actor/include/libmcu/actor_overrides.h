@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#include "libmcu/actor.h"
+
 void actor_lock(void);
 void actor_unlock(void);
 
@@ -20,6 +22,11 @@ void actor_unlock(void);
  * @note This will be called at the end of @ref actor_timer_init()
  */
 void actor_timer_boot(void);
+
+void actor_pre_dispatch_hook(const struct actor *actor,
+		const struct actor_msg *msg);
+void actor_post_dispatch_hook(const struct actor *actor,
+		const struct actor_msg *msg);
 
 #if defined(__cplusplus)
 }

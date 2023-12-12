@@ -139,9 +139,13 @@ static void dispatch_actor(struct core *core)
 
 	ACTOR_DEBUG("dispatch(%d) %p: %p", core->priority, actor, message);
 
+	actor_pre_dispatch_hook(actor, message);
+
 	if (actor && actor->handler) {
 		(*actor->handler)(actor, message);
 	}
+
+	actor_post_dispatch_hook(actor, message);
 }
 
 static void *dispatcher(void *e)
@@ -236,7 +240,9 @@ struct actor_msg *actor_alloc(size_t payload_size)
 
 int actor_free(struct actor_msg *msg)
 {
-	assert(msg);
+	if (msg == NULL) {
+		return 0;
+	}
 
 	struct list *head = &m.msgpool.free_list.head;
 	struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
