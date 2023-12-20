@@ -18,7 +18,7 @@ extern "C" {
 #define ACTOR_PRIORITY_MAX		1
 #endif
 #if !defined(ACTOR_PRIORITY_BASE)
-#define ACTOR_PRIORITY_BASE		0
+#define ACTOR_PRIORITY_BASE		1
 #endif
 
 struct actor;
