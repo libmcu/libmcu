@@ -1,7 +1,6 @@
 #include "libmcu/logging_overrides.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "timers.h"
 #include <stdbool.h>
 
 static unsigned long intctx;
