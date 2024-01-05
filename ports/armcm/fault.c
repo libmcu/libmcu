@@ -226,5 +226,5 @@ void fault_process(struct core_registers *regs)
 LIBMCU_WEAK
 int fault_save(const struct core_registers LIBMCU_UNUSED *regs)
 {
-	return -1;
+	return 0;
 }
