@@ -13,7 +13,9 @@ extern "C" {
 
 #include <stddef.h>
 
-struct kvstore {
+struct kvstore;
+
+struct kvstore_api {
 	int (*write)(struct kvstore *self,
 			char const *key, void const *value, size_t size);
 	int (*read)(struct kvstore *self,
@@ -25,29 +27,29 @@ struct kvstore {
 
 static inline int kvstore_open(struct kvstore *self, char const *ns)
 {
-	return self->open(self, ns);
+	return ((struct kvstore_api *)self)->open(self, ns);
 }
 
 static inline void kvstore_close(struct kvstore *self)
 {
-	self->close(self);
+	((struct kvstore_api *)self)->close(self);
 }
 
 static inline int kvstore_write(struct kvstore *self,
 		char const *key, void const *value, size_t size)
 {
-	return self->write(self, key, value, size);
+	return ((struct kvstore_api *)self)->write(self, key, value, size);
 }
 
 static inline int kvstore_read(struct kvstore *self,
 		char const *key, void *buf, size_t size)
 {
-	return self->read(self, key, buf, size);
+	return ((struct kvstore_api *)self)->read(self, key, buf, size);
 }
 
 static inline int kvstore_clear(struct kvstore *self, char const *key)
 {
-	return self->clear(self, key);
+	return ((struct kvstore_api *)self)->clear(self, key);
 }
 
 #if defined(__cplusplus)
