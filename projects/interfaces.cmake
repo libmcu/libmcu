@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 if (NOT DEFINED LIBMCU_INTERFACES)
-	set(LIBMCU_INTERFACES adc gpio i2c l4 pwm spi timer uart wifi)
+	set(LIBMCU_INTERFACES adc flash gpio i2c l4 pwm spi timer uart wifi)
 endif()
 
 foreach(iface ${LIBMCU_INTERFACES})

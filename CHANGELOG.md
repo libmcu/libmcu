@@ -1,4 +1,28 @@
 # Changelog
+## v0.2.4 - January 9, 2024
+- port: freertos: add stack overflow hook
+- button: change time data type from int to long
+- logging: change stringify() to return length instead of pointer
+- cli: add history functionality
+- port: freertos: fix task stack size calculation
+- pm: add power management interface
+- i2c: add i2c interface
+- uart: add uart interface
+- adc: add adc interface
+- wifi: add wifi interface
+- spi: add spi interface
+- gpio: add gpio interface
+- timer: add timer interface
+- pwm: add pwm interface
+- metrics: change metric key type to uint16_t
+- logging: fix deadlock
+- add ARM Cortex-M fault handler
+- actor: add actor model
+### **Breaking Changes**
+- button: change handler interface
+- kvstore: rename api of `struct kvstore` to `struct kvstore_api`
+- common: replace string-based reboot reason with code-based
+
 ## v0.2.3 - January 4, 2023
 ### **Breaking Changes**
 - metrics: change to not designate key ID when defining a metric

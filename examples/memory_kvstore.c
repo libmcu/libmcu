@@ -21,8 +21,8 @@
 #define KVSTORE_MAX_NAMESPACE_LENGTH		32
 #endif
 
-struct memory_kvstore {
-	struct kvstore ops;
+struct kvstore {
+	struct kvstore_api api;
 	char *namespace;
 	struct list namespace_list;
 	struct list keylist_head;
@@ -37,11 +37,11 @@ struct memory_kvstore_entry {
 
 static DEFINE_LIST_HEAD(namespace_list_head);
 
-static struct memory_kvstore *find_namespace(char const *namespace)
+static struct kvstore *find_namespace(char const *namespace)
 {
 	struct list *p;
 	list_for_each(p, &namespace_list_head) {
-		struct memory_kvstore *obj =
+		struct kvstore *obj =
 			list_entry(p, typeof(*obj), namespace_list);
 		if (!strncmp(obj->namespace, namespace,
 					KVSTORE_MAX_NAMESPACE_LENGTH)) {
@@ -51,7 +51,7 @@ static struct memory_kvstore *find_namespace(char const *namespace)
 	return NULL;
 }
 
-static struct memory_kvstore_entry *find_key(struct memory_kvstore const *obj,
+static struct memory_kvstore_entry *find_key(struct kvstore const *obj,
 		char const *key)
 {
 	struct list *p;
@@ -68,10 +68,9 @@ static struct memory_kvstore_entry *find_key(struct memory_kvstore const *obj,
 static int memory_kvstore_write(struct kvstore *kvstore,
 		char const *key, void const *value, size_t size)
 {
-	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
-
 	struct memory_kvstore_entry *entry;
-	if ((entry = find_key(obj, key))) {
+
+	if ((entry = find_key(kvstore, key))) {
 		void *new_value = malloc(size);
 		if (!new_value) {
 			goto err;
@@ -93,7 +92,7 @@ static int memory_kvstore_write(struct kvstore *kvstore,
 
 		strcpy(entry->key, key);
 		entry->key[len] = '\0';
-		list_add(&entry->list, &obj->keylist_head);
+		list_add(&entry->list, &kvstore->keylist_head);
 	}
 
 	memcpy(entry->value, value, size);
@@ -112,9 +111,7 @@ err:
 static int memory_kvstore_read(struct kvstore *kvstore,
 		char const *key, void *buf, size_t bufsize)
 {
-	struct memory_kvstore const *obj =
-		(struct memory_kvstore const *)kvstore;
-	struct memory_kvstore_entry const *entry = find_key(obj, key);
+	struct memory_kvstore_entry const *entry = find_key(kvstore, key);
 	if (entry) {
 		size_t size = MIN(bufsize, entry->value_size);
 		memcpy(buf, entry->value, size);
@@ -126,10 +123,9 @@ static int memory_kvstore_read(struct kvstore *kvstore,
 
 void memory_kvstore_destroy(struct kvstore *kvstore)
 {
-	struct memory_kvstore *obj = (struct memory_kvstore *)kvstore;
-
 	struct list *p, *n;
-	list_for_each_safe(p, n, &obj->keylist_head) {
+
+	list_for_each_safe(p, n, &kvstore->keylist_head) {
 		struct memory_kvstore_entry *entry =
 			list_entry(p, typeof(*entry), list);
 		free(entry->key);
@@ -137,17 +133,17 @@ void memory_kvstore_destroy(struct kvstore *kvstore)
 		free(entry);
 	}
 
-	list_del(&obj->namespace_list, &namespace_list_head);
-	free(obj->namespace);
+	list_del(&kvstore->namespace_list, &namespace_list_head);
+	free(kvstore->namespace);
 	free(kvstore);
 }
 
 struct kvstore *memory_kvstore_create(char const *ns)
 {
-	struct memory_kvstore *p;
+	struct kvstore *p;
 
 	if ((p = find_namespace(ns))) {
-		return &p->ops;
+		return p;
 	}
 
 	size_t len = strnlen(ns, KVSTORE_MAX_NAMESPACE_LENGTH);
@@ -160,14 +156,14 @@ struct kvstore *memory_kvstore_create(char const *ns)
 		return NULL;
 	}
 
-	p->ops.write = memory_kvstore_write;
-	p->ops.read = memory_kvstore_read;
+	p->api.write = memory_kvstore_write;
+	p->api.read = memory_kvstore_read;
 	list_init(&p->keylist_head);
 	strcpy(p->namespace, ns);
 	p->namespace[len] = '\0';
 	list_add(&p->namespace_list, &namespace_list_head);
 
-	return &p->ops;
+	return p;
 }
 
 int memory_kvstore_init(void)
