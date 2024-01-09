@@ -37,7 +37,6 @@ Any feedback would be appreciated.
 * [PWM](interfaces/pwm)
 * [SPI](interfaces/spi)
 * [Timer](interfaces/timer)
-* [Transport](interfaces/l4)
 * [UART](interfaces/uart)
 * [WiFi](interfaces/wifi)
 
