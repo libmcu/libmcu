@@ -25,30 +25,25 @@ struct kvstore_api {
 	void (*close)(struct kvstore *self);
 };
 
-static inline int kvstore_open(struct kvstore *self, char const *ns)
-{
+static inline int kvstore_open(struct kvstore *self, char const *ns) {
 	return ((struct kvstore_api *)self)->open(self, ns);
 }
 
-static inline void kvstore_close(struct kvstore *self)
-{
+static inline void kvstore_close(struct kvstore *self) {
 	((struct kvstore_api *)self)->close(self);
 }
 
 static inline int kvstore_write(struct kvstore *self,
-		char const *key, void const *value, size_t size)
-{
+		char const *key, void const *value, size_t size) {
 	return ((struct kvstore_api *)self)->write(self, key, value, size);
 }
 
 static inline int kvstore_read(struct kvstore *self,
-		char const *key, void *buf, size_t size)
-{
+		char const *key, void *buf, size_t size) {
 	return ((struct kvstore_api *)self)->read(self, key, buf, size);
 }
 
-static inline int kvstore_clear(struct kvstore *self, char const *key)
-{
+static inline int kvstore_clear(struct kvstore *self, char const *key) {
 	return ((struct kvstore_api *)self)->clear(self, key);
 }
 

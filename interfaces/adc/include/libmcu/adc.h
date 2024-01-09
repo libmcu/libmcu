@@ -45,15 +45,46 @@ typedef enum {
 
 struct adc;
 
+struct adc_api {
+	int (*enable)(struct adc *self);
+	int (*disable)(struct adc *self);
+	int (*init_channel)(struct adc *self, adc_channel_t channel);
+	int (*calibrate)(struct adc *self);
+	int (*measure)(struct adc *self);
+	int (*read)(struct adc *self, adc_channel_t channel);
+	int (*convert_to_millivolts)(struct adc *self, int value);
+};
+
+static inline int adc_enable(struct adc *self) {
+	return ((struct adc_api *)self)->enable(self);
+}
+
+static inline int adc_disable(struct adc *self) {
+	return ((struct adc_api *)self)->disable(self);
+}
+
+static inline int adc_channel_init(struct adc *self, adc_channel_t channel) {
+	return ((struct adc_api *)self)->init_channel(self, channel);
+}
+
+static inline int adc_calibrate(struct adc *self) {
+	return ((struct adc_api *)self)->calibrate(self);
+}
+
+static inline int adc_measure(struct adc *self) {
+	return ((struct adc_api *)self)->measure(self);
+}
+
+static inline int adc_read(struct adc *self, adc_channel_t channel) {
+	return ((struct adc_api *)self)->read(self, channel);
+}
+
+static inline int adc_convert_to_millivolts(struct adc *self, int value) {
+	return ((struct adc_api *)self)->convert_to_millivolts(self, value);
+}
+
 struct adc *adc_create(uint8_t adc_num);
 int adc_delete(struct adc *self);
-int adc_enable(struct adc *self);
-int adc_disable(struct adc *self);
-int adc_channel_init(struct adc *self, adc_channel_t channel);
-int adc_calibrate(struct adc *self);
-int adc_measure(struct adc *self);
-int adc_read(struct adc *self, adc_channel_t channel);
-int adc_convert_to_millivolts(struct adc *self, int value);
 
 #if defined(__cplusplus)
 }

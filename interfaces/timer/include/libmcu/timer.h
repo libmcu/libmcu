@@ -14,20 +14,40 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-struct timer {
-	bool periodic;
-	bool enabled;
+struct timer;
+
+typedef void (*timer_callback_t)(struct timer *self, void *ctx);
+
+struct timer_api {
+	int (*enable)(struct timer *self);
+	int (*disable)(struct timer *self);
+	int (*start)(struct timer *self, uint32_t timeout_ms);
+	int (*restart)(struct timer *self, uint32_t timeout_ms);
+	int (*stop)(struct timer *self);
 };
 
-typedef void (*timer_callback_t)(struct timer *timer, void *ctx);
+static inline int timer_enable(struct timer *self) {
+	return ((struct timer_api *)self)->enable(self);
+}
+
+static inline int timer_disable(struct timer *self) {
+	return ((struct timer_api *)self)->disable(self);
+}
+
+static inline int timer_start(struct timer *self, uint32_t timeout_ms) {
+	return ((struct timer_api *)self)->start(self, timeout_ms);
+}
+
+static inline int timer_restart(struct timer *self, uint32_t timeout_ms) {
+	return ((struct timer_api *)self)->restart(self, timeout_ms);
+}
+
+static inline int timer_stop(struct timer *self) {
+	return ((struct timer_api *)self)->stop(self);
+}
 
 struct timer *timer_create(bool periodic, timer_callback_t callback, void *arg);
-int timer_delete(struct timer *timer);
-int timer_enable(struct timer *timer);
-int timer_disable(struct timer *timer);
-int timer_start(struct timer *timer, uint32_t timeout_ms);
-int timer_restart(struct timer *timer, uint32_t timeout_ms);
-int timer_stop(struct timer *timer);
+int timer_delete(struct timer *self);
 
 #if defined(__cplusplus)
 }

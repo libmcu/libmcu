@@ -15,6 +15,7 @@ INCLUDE_DIRS = \
 	../modules/common/include \
 	../modules/logging/include \
 	../interfaces/flash/include \
+	../interfaces/kvstore/include \
 	../tests/mocks \
 	$(CPPUTEST_HOME)/include \
 
