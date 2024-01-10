@@ -18,7 +18,6 @@ Any feedback would be appreciated.
 
 ## Modules
 * [Actor](modules/actor)
-* [Active Objects](modules/ao)
 * [Application Timer](modules/apptimer)
 * [Button](modules/button)
 * [Command Line Interface](modules/cli)
@@ -38,7 +37,6 @@ Any feedback would be appreciated.
 * [PWM](interfaces/pwm)
 * [SPI](interfaces/spi)
 * [Timer](interfaces/timer)
-* [Transport](interfaces/l4)
 * [UART](interfaces/uart)
 * [WiFi](interfaces/wifi)
 

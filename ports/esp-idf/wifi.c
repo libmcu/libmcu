@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "libmcu/port/wifi.h"
+#include "libmcu/wifi.h"
 
 #include <errno.h>
 #include <stdbool.h>
@@ -31,6 +31,8 @@ enum esp32_state {
 };
 
 struct wifi {
+	struct wifi_api api;
+
 	struct wifi_event_callback callbacks[WIFI_EVENT_CALLBACK_CAPACITY];
 
 	struct wifi_iface_info status;
@@ -46,15 +48,15 @@ struct wifi {
 	enum esp32_state state;
 };
 
-static void raise_event_with_data(struct wifi *iface,
+static void raise_event_with_data(struct wifi *self,
 				  enum wifi_event evt, const void *data)
 {
 	for (unsigned int i = 0; i < WIFI_EVENT_CALLBACK_CAPACITY; i++) {
-		struct wifi_event_callback *cb = &iface->callbacks[i];
+		struct wifi_event_callback *cb = &self->callbacks[i];
 
 		if (evt == cb->event_type || cb->event_type == WIFI_EVT_ANY) {
 			if (cb->func) {
-				(*cb->func)(iface, evt, data, cb->user_ctx);
+				(*cb->func)(self, evt, data, cb->user_ctx);
 			}
 		}
 	}
@@ -113,11 +115,11 @@ static void handle_scan_done(struct wifi *self)
 	handle_scan_result(self);
 }
 
-static void handle_connected_event(struct wifi *ctx, ip_event_got_ip_t *ip)
+static void handle_connected_event(struct wifi *self, ip_event_got_ip_t *ip)
 {
-	ctx->state = ESP32_STATE_STA_CONNECTED;
-	memcpy(&ctx->ip, &ip->ip_info.ip, sizeof(ctx->ip));
-	raise_event_with_data(ctx, WIFI_EVT_CONNECTED, 0);
+	self->state = ESP32_STATE_STA_CONNECTED;
+	memcpy(&self->ip, &ip->ip_info.ip, sizeof(self->ip));
+	raise_event_with_data(self, WIFI_EVT_CONNECTED, 0);
 }
 
 
@@ -173,23 +175,23 @@ static void on_ip_events(void *arg, esp_event_base_t event_base,
 	}
 }
 
-static bool initialize_wifi_event(struct wifi *ctx)
+static bool initialize_wifi_event(struct wifi *self)
 {
 	esp_err_t res = esp_event_handler_instance_register(WIFI_EVENT,
 			ESP_EVENT_ANY_ID,
 			&on_wifi_events,
-			ctx,
-			&ctx->wifi_events);
+			self,
+			&self->wifi_events);
 	res |= esp_event_handler_instance_register(IP_EVENT,
 			ESP_EVENT_ANY_ID,
 			&on_ip_events,
-			ctx,
-			&ctx->ip_acquisition_events);
+			self,
+			&self->ip_acquisition_events);
 
 	return !res;
 }
 
-static bool initialize_wifi_iface(struct wifi *ctx)
+static bool initialize_wifi_iface(struct wifi *self)
 {
 	wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
 	esp_err_t res = esp_netif_init();
@@ -201,27 +203,29 @@ static bool initialize_wifi_iface(struct wifi *ctx)
 	res |= esp_wifi_init(&config);
 	res |= esp_wifi_set_mode(WIFI_MODE_STA);
 
+	(void)self;
 	return !res;
 }
 
-static int initialize_wifi(struct wifi *ctx)
+static int initialize_wifi(struct wifi *self)
 {
-	if (!initialize_wifi_event(ctx)) {
+	if (!initialize_wifi_event(self)) {
 		return -EBUSY;
 	}
-	if (!initialize_wifi_iface(ctx)) {
+	if (!initialize_wifi_iface(self)) {
 		return -EAGAIN;
 	}
 
 	return 0;
 }
 
-static int deinitialize_wifi(struct wifi *ctx)
+static int deinitialize_wifi(struct wifi *self)
 {
+	(void)self;
 	return esp_wifi_deinit() == ESP_OK ? 0 : -EBUSY;
 }
 
-int wifi_port_connect(struct wifi *self, const struct wifi_conn_param *param)
+static int connect_wifi(struct wifi *self, const struct wifi_conn_param *param)
 {
 	wifi_config_t conf = {
 		.sta = {
@@ -271,7 +275,7 @@ int wifi_port_connect(struct wifi *self, const struct wifi_conn_param *param)
 	return 0;
 }
 
-int wifi_port_disconnect(struct wifi *self)
+static int disconnect_wifi(struct wifi *self)
 {
 	if (self->state != ESP32_STATE_STA_CONNECTED &&
 			self->state != ESP32_STATE_STA_CONNECTING) {
@@ -285,7 +289,7 @@ int wifi_port_disconnect(struct wifi *self)
 	return 0;
 }
 
-int wifi_port_scan(struct wifi *self)
+static int scan_wifi(struct wifi *self)
 {
 	if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK ||
 			esp_wifi_scan_start(&(wifi_scan_config_t) {
@@ -297,23 +301,23 @@ int wifi_port_scan(struct wifi *self)
 	return 0;
 }
 
-int wifi_port_enable(struct wifi *self)
+static int enable_wifi(struct wifi *self)
 {
 	return esp_wifi_start() == ESP_OK ? 0 : -EAGAIN;
 }
 
-int wifi_port_disable(struct wifi *self)
+static int disable_wifi(struct wifi *self)
 {
 	return esp_wifi_stop() == ESP_OK ? 0 : -EBUSY;
 }
 
-int wifi_port_get_status(struct wifi *self, struct wifi_iface_info *info)
+static int get_status(struct wifi *self, struct wifi_iface_info *info)
 {
 	memcpy(info, &self->status, sizeof(self->status));
 	return 0;
 }
 
-int wifi_port_register_event_callback(struct wifi *self,
+static int register_event_callback(struct wifi *self,
 		enum wifi_event event_type, const wifi_event_callback_t cb,
 		void *user_ctx)
 {
@@ -337,11 +341,19 @@ int wifi_port_register_event_callback(struct wifi *self,
 	return 0;
 }
 
-struct wifi *wifi_port_create(int id)
+struct wifi *wifi_create(int id)
 {
-	static struct wifi esp_iface;
-
-	memset(&esp_iface, 0, sizeof(esp_iface));
+	static struct wifi esp_iface = {
+		.api = {
+			.connect = connect_wifi,
+			.disconnect = disconnect_wifi,
+			.scan = scan_wifi,
+			.enable = enable_wifi,
+			.disable = disable_wifi,
+			.get_status = get_status,
+			.register_event_callback = register_event_callback,
+		},
+	};
 
 	if (esp_iface.state != ESP32_STATE_UNKNOWN) {
 		return NULL;
@@ -361,7 +373,7 @@ struct wifi *wifi_port_create(int id)
 	return &esp_iface;
 }
 
-int wifi_port_delete(struct wifi *self)
+int wifi_delete(struct wifi *self)
 {
 	deinitialize_wifi(self);
 	self->state = ESP32_STATE_UNKNOWN;

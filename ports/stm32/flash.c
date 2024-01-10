@@ -114,38 +114,38 @@ static size_t do_size(struct flash *self)
 	return self->size;
 }
 
-struct flash *flash_create(void)
+struct flash *flash_create(int partition)
 {
-	static struct flash flash = {
-		.api = {
-			.write = do_write,
-			.read = do_read,
-			.erase = do_erase,
-			.size = do_size,
-		},
+	static struct flash flash[] = {
+		{
+			.api = {
+				.write = do_write,
+				.read = do_read,
+				.erase = do_erase,
+				.size = do_size,
+			},
 
-		.baseaddr = STM32_NVS_FLASH_ADDR,
-		.size = STM32_NVS_FLASH_SIZE,
-		.sector_size = STM32_NVS_FLASH_SECTOR_SIZE,
+			.baseaddr = STM32_NVS_FLASH_ADDR,
+			.size = STM32_NVS_FLASH_SIZE,
+			.sector_size = STM32_NVS_FLASH_SECTOR_SIZE,
+		},
+		{
+			.api = {
+				.write = do_write,
+				.read = do_read,
+				.erase = do_erase,
+				.size = do_size,
+			},
+
+			.baseaddr = STM32_NVS_SCRATCH_FLASH_ADDR,
+			.size = STM32_NVS_FLASH_SIZE,
+			.sector_size = STM32_NVS_FLASH_SECTOR_SIZE,
+		},
 	};
 
-	return &flash;
-}
+	if (partition < 0 || partition > 1) {
+		return NULL;
+	}
 
-struct flash *flash_scratch_create(void)
-{
-	static struct flash flash = {
-		.api = {
-			.write = do_write,
-			.read = do_read,
-			.erase = do_erase,
-			.size = do_size,
-		},
-
-		.baseaddr = STM32_NVS_SCRATCH_FLASH_ADDR,
-		.size = STM32_NVS_FLASH_SIZE,
-		.sector_size = STM32_NVS_FLASH_SECTOR_SIZE,
-	};
-
-	return &flash;
+	return &flash[partition];
 }

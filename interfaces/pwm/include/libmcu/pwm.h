@@ -14,19 +14,46 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-struct pwm {
-	bool enabled;
-	bool running;
+struct pwm;
+
+struct pwm_api {
+	int (*enable)(struct pwm *self);
+	int (*disable)(struct pwm *self);
+	int (*start)(struct pwm *self,
+			uint32_t freq_hz, uint32_t duty_millipercent);
+	int (*update_frequency)(struct pwm *self, uint32_t hz);
+	int (*update_duty)(struct pwm *self, uint32_t millipercent);
+	int (*stop)(struct pwm *self);
 };
 
+static inline int pwm_enable(struct pwm *self) {
+	return ((struct pwm_api *)self)->enable(self);
+}
+
+static inline int pwm_disable(struct pwm *self) {
+	return ((struct pwm_api *)self)->disable(self);
+}
+
+static inline int pwm_start(struct pwm *self,
+		uint32_t freq_hz, uint32_t duty_millipercent) {
+	return ((struct pwm_api *)self)->start(self,
+			freq_hz, duty_millipercent);
+}
+
+static inline int pwm_update_frequency(struct pwm *self, uint32_t hz) {
+	return ((struct pwm_api *)self)->update_frequency(self, hz);
+}
+
+static inline int pwm_update_duty(struct pwm *self, uint32_t millipercent) {
+	return ((struct pwm_api *)self)->update_duty(self, millipercent);
+}
+
+static inline int pwm_stop(struct pwm *self) {
+	return ((struct pwm_api *)self)->stop(self);
+}
+
 struct pwm *pwm_create(uint8_t ch);
-int pwm_delete(struct pwm *pwm);
-int pwm_enable(struct pwm *pwm);
-int pwm_disable(struct pwm *pwm);
-int pwm_start(struct pwm *pwm, uint32_t freq_hz, uint32_t duty_millipercent);
-int pwm_update_frequency(struct pwm *pwm, uint32_t hz);
-int pwm_update_duty(struct pwm *pwm, uint32_t millipercent);
-int pwm_stop(struct pwm *pwm);
+int pwm_delete(struct pwm *self);
 
 #if defined(__cplusplus)
 }

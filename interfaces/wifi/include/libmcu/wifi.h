@@ -95,8 +95,21 @@ struct wifi_scan_result {
 };
 
 struct wifi;
-typedef void (*wifi_event_callback_t)(const struct wifi *iface,
-		enum wifi_event evt, const void *data, void *user_ctx);
+
+typedef void (*wifi_event_callback_t)(const struct wifi *self,
+		enum wifi_event evt, const void *data, void *ctx);
+
+struct wifi_api {
+	int (*connect)(struct wifi *self, const struct wifi_conn_param *param);
+	int (*disconnect)(struct wifi *self);
+	int (*scan)(struct wifi *self);
+	int (*enable)(struct wifi *self);
+	int (*disable)(struct wifi *self);
+	int (*get_status)(struct wifi *self, struct wifi_iface_info *info);
+	int (*register_event_callback)(struct wifi *self,
+			enum wifi_event event_type,
+			const wifi_event_callback_t cb, void *cb_ctx);
+};
 
 struct wifi_event_callback {
 	wifi_event_callback_t func;
@@ -104,16 +117,41 @@ struct wifi_event_callback {
 	void *user_ctx;
 };
 
+static inline int wifi_connect(struct wifi *self,
+		const struct wifi_conn_param *param) {
+	return ((struct wifi_api *)self)->connect(self, param);
+}
+
+static inline int wifi_disconnect(struct wifi *self) {
+	return ((struct wifi_api *)self)->disconnect(self);
+}
+
+static inline int wifi_scan(struct wifi *self) {
+	return ((struct wifi_api *)self)->scan(self);
+}
+
+static inline int wifi_enable(struct wifi *self) {
+	return ((struct wifi_api *)self)->enable(self);
+}
+
+static inline int wifi_disable(struct wifi *self) {
+	return ((struct wifi_api *)self)->disable(self);
+}
+
+static inline int wifi_get_status(struct wifi *self,
+		struct wifi_iface_info *info) {
+	return ((struct wifi_api *)self)->get_status(self, info);
+}
+
+static inline int wifi_register_event_callback(struct wifi *self,
+		enum wifi_event event_type,
+		const wifi_event_callback_t cb, void *cb_ctx) {
+	return ((struct wifi_api *)self)->register_event_callback(self,
+			event_type, cb, cb_ctx);
+}
+
 struct wifi *wifi_create(int id);
 int wifi_delete(struct wifi *self);
-int wifi_connect(struct wifi *self, const struct wifi_conn_param *param);
-int wifi_disconnect(struct wifi *self);
-int wifi_scan(struct wifi *self);
-int wifi_enable(struct wifi *self);
-int wifi_disable(struct wifi *self);
-int wifi_get_status(struct wifi *self, struct wifi_iface_info *info);
-int wifi_register_event_callback(struct wifi *self, enum wifi_event event_type,
-		const wifi_event_callback_t cb, void *user_ctx);
 
 #if defined(__cplusplus)
 }

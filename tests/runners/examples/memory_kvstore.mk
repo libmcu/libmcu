@@ -12,6 +12,7 @@ TEST_SRC_FILES = \
 INCLUDE_DIRS = \
 	../examples \
 	../modules/common/include \
+	../interfaces/kvstore/include \
 	$(CPPUTEST_HOME)/include \
 
 MOCKS_SRC_DIRS =

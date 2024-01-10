@@ -1,4 +1,8 @@
 # Changelog
+## v0.2.5 - January 10, 2024
+### **Breaking Changes**
+- interfaces: replace port interface with vtable
+
 ## v0.2.4 - January 9, 2024
 - port: freertos: add stack overflow hook
 - button: change time data type from int to long
