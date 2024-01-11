@@ -27,7 +27,9 @@ struct meta_entry {
 	uint32_t hash_dbj2;
 	uint32_t offset;
 	uint32_t len;
+#if (FLASH_LINE_ALIGN_BYTES > 16) /* ISO C forbids zero-size array */
 	uint8_t _padding[FLASH_LINE_ALIGN_BYTES - 16];
+#endif
 } LIBMCU_PACKED;
 LIBMCU_ASSERT(sizeof(struct meta_entry) == FLASH_LINE_ALIGN_BYTES);
 
@@ -354,11 +356,11 @@ static int flash_kvstore_erase(struct kvstore *self, const char *key)
 	return -ENOENT;
 }
 
-static int flash_kvstore_open(struct kvstore *self, const char *namespace)
+static int flash_kvstore_open(struct kvstore *self, const char *ns)
 {
 	/* WARN: only one namespace supported */
 	unused(self);
-	unused(namespace);
+	unused(ns);
 	return -EALREADY;
 }
 
