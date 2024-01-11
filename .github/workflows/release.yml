@@ -36,5 +36,5 @@ jobs:
 
             ## Features
             ## Bug Fixes
-          draft: false
+          draft: true
           prerelease: false

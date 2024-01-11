@@ -95,7 +95,7 @@ static int find_key(struct storage *storage, const char *key, struct meta *meta)
 		}
 	}
 
-	if (keycnt > 0) {
+	if (keycnt > 0 && meta->entry.len > 0) {
 		return 0;
 	}
 
@@ -191,89 +191,98 @@ static int write_meta(struct storage *storage, const struct meta *meta)
 static int write_value(struct storage *storage,
 		const void *data, const struct meta *meta)
 {
+	if (!data || meta->entry.len == 0) {
+		return 0;
+	}
+
 	uintptr_t offset = storage->offset +
 		storage->meta.offset + storage->meta.size +
 		meta->entry.offset;
 	return flash_write(storage->flash, offset, data, meta->entry.len);
 }
 
-/* It should keep at least one validate partition even if an error occurs in the
- * middle of flash processing. */
-static int reclaim(struct kvstore *self) {
-        struct storage *p = &self->storage;
-	struct storage *t = &self->scratch;
-
-	if (!t->flash) {
-		return -ENOTSUP;
-	}
-
-	uintptr_t start = p->offset + p->meta.offset;
-	uintptr_t end = start + p->meta.size;
+static int move_partition(struct storage *from, struct storage *to)
+{
+	uintptr_t start = from->offset + from->meta.offset;
+	uintptr_t end = start + from->meta.size;
 	uint32_t entry_size = sizeof(struct meta_entry);
 	struct meta meta;
 
-	flash_erase(t->flash, t->offset, t->size);
+	flash_erase(to->flash, to->offset, to->size);
 
 	for (uintptr_t offset = start; offset < end; offset += entry_size) {
 		struct meta new_meta;
+		uint8_t buf[FLASH_LINE_ALIGN_BYTES];
 
-		if (flash_read(p->flash, offset, &meta.entry, entry_size) < 0) {
+		if (flash_read(from->flash,
+				offset, &meta.entry, entry_size) < 0) {
 			return -EIO;
 		}
 
 		if (is_free_entry(&meta.entry) ||
-				find_meta(p, &meta) != 0 ||
-				find_meta(t, &meta) == 0) {
+				find_meta(from, &meta) != 0 ||
+				meta.entry.len == 0 ||
+				meta.entry.offset > from->data.size ||
+				find_meta(to, &meta) == 0) {
 			continue;
 		}
 
-		if (alloc_entry(t, meta.entry.len, &new_meta) < 0) {
+		if (alloc_entry(to, meta.entry.len, &new_meta) < 0) {
 			return -EIO;
 		}
 
 		new_meta.entry.hash_murmur = meta.entry.hash_murmur;
 		new_meta.entry.hash_dbj2 = meta.entry.hash_dbj2;
 
-		if (write_meta(t, &new_meta) < 0) {
+		if (write_meta(to, &new_meta) < 0) {
 			return -EIO;
 		}
 
-		for (uint32_t i = 0; i < new_meta.entry.len; i++) {
-			uint8_t buf[FLASH_LINE_ALIGN_BYTES];
-                        uintptr_t ofs_f = p->offset + p->meta.offset +
-				p->meta.size + meta.entry.offset + i;
-                        uintptr_t ofs_t = t->offset + t->meta.offset +
-				t->meta.size + new_meta.entry.offset + i;
-                        if (flash_read(p->flash, ofs_f, buf, sizeof(buf)) < 0) {
+		for (uint32_t i = 0; i < new_meta.entry.len; i += sizeof(buf)) {
+                        uintptr_t of = from->offset + from->meta.offset +
+				from->meta.size + meta.entry.offset + i;
+                        uintptr_t ot = to->offset + to->meta.offset +
+				to->meta.size + new_meta.entry.offset + i;
+                        if (flash_read(from->flash, of, buf, sizeof(buf)) < 0) {
                                 return -EIO;
                         }
-                        if (flash_write(t->flash, ofs_t, buf, sizeof(buf)) < 0) {
+                        if (flash_write(to->flash, ot, buf, sizeof(buf)) < 0) {
 				return -EIO;
 			}
-		}
-	}
-
-	if (alloc_entry(t, FLASH_LINE_ALIGN_BYTES, &meta) == -ENOSPC) {
-		return -ENOSPC;
-	}
-
-	flash_erase(p->flash, p->offset, p->size);
-
-	for (uintptr_t offset = t->offset; offset < t->size;
-			offset += FLASH_LINE_ALIGN_BYTES) {
-		uint8_t buf[FLASH_LINE_ALIGN_BYTES];
-		if (flash_read(t->flash, offset, buf, sizeof(buf)) < 0) {
-			return -EIO;
-		}
-		if (flash_write(p->flash, offset, buf, sizeof(buf)) < 0) {
-			return -EIO;
 		}
 	}
 
 	return 0;
 }
 
-static int flash_kvstore_write(struct kvstore *self,
+/* It should keep at least one validate partition even if an error occurs in the
+ * middle of flash processing. */
+static int reclaim(struct kvstore *self)
+{
+	struct meta meta;
+	int rc;
+
+	if (!self->scratch.flash) {
+		rc = -ENOTSUP;
+		goto out;
+	}
+
+	if ((rc = move_partition(&self->storage, &self->scratch)) != 0) {
+		goto out;
+	}
+
+	/* No space left even after reclaiming. */
+	if (alloc_entry(&self->scratch, FLASH_LINE_ALIGN_BYTES, &meta) != 0) {
+		rc = -ENOSPC;
+		goto out;
+	}
+
+	rc = move_partition(&self->scratch, &self->storage);
+out:
+	return rc;
+}
+
+static int do_write(struct kvstore *self,
 		const char *key, const void *value, size_t size)
 {
 	struct meta new_meta;
@@ -307,6 +316,12 @@ static int flash_kvstore_write(struct kvstore *self,
 	return 0;
 }
 
+static int flash_kvstore_write(struct kvstore *self,
+		const char *key, const void *value, size_t size)
+{
+	return do_write(self, key, value, size);
+}
+
 static int flash_kvstore_read(struct kvstore *self,
 		const char *key, void *buf, size_t size)
 {
@@ -325,20 +340,18 @@ static int flash_kvstore_read(struct kvstore *self,
 
 static int flash_kvstore_erase(struct kvstore *self, const char *key)
 {
-#if defined(FLASH_OVERWRITE)
 	struct meta meta;
 
+#if defined(FLASH_OVERWRITE)
 	if (find_key(&self->storage, key, &meta) == 0) {
 		return delete_meta(&self->storage, &meta);
 	}
-
-	return -ENOENT;
 #else
-	unused(self);
-	unused(key);
-
-	return -ENOTSUP;
+	if (find_key(&self->storage, key, &meta) == 0) {
+		return do_write(self, key, 0, 0);
+	}
 #endif
+	return -ENOENT;
 }
 
 static int flash_kvstore_open(struct kvstore *self, const char *namespace)

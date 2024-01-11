@@ -290,12 +290,8 @@ TEST(FlashKVStore, read_ShouldReturnLengthOfBytesRead) {
 }
 
 TEST(FlashKVStore, erase_ShouldReturnNoEntry_WhenNonExistKeyGiven) {
-#if defined(FLASH_OVERWRITE)
 	prepare_meta_read_any(0, META_SIZE / META_ENTRY_SIZE);
 	LONGS_EQUAL(-ENOENT, kvstore_clear(kvstore, "nonexistkey"));
-#else
-	LONGS_EQUAL(-ENOTSUP, kvstore_clear(kvstore, "nonexistkey"));
-#endif
 }
 
 #if defined(FLASH_OVERWRITE)
