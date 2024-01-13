@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 typedef enum {
 	BOARD_REBOOT_UNKNOWN,
 	BOARD_REBOOT_POWER,
@@ -39,6 +41,13 @@ const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 unsigned long board_get_time_since_boot_ms(void);
 
 long board_random(void);
+
+/**
+ * @brief Get overall CPU usage
+ *
+ * @return percentage of 0 to 100
+ */
+uint8_t board_cpuload(void);
 
 unsigned long board_get_free_heap_bytes(void);
 unsigned long board_get_total_heap_bytes(void);
