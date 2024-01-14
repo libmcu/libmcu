@@ -45,9 +45,10 @@ long board_random(void);
 /**
  * @brief Get overall CPU usage
  *
+ * @param core_id the core's identifier
  * @return percentage of 0 to 100
  */
-uint8_t board_cpuload(void);
+uint8_t board_cpuload(int core_id);
 
 unsigned long board_get_free_heap_bytes(void);
 unsigned long board_get_total_heap_bytes(void);

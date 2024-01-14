@@ -106,7 +106,7 @@ void *board_get_current_thread(void)
 }
 
 LIBMCU_WEAK
-uint8_t board_cpuload(void)
+uint8_t board_cpuload(int core_id)
 {
 	return 0;
 }
