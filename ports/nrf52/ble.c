@@ -794,5 +794,5 @@ struct ble *ble_create(int id)
 
 void ble_destroy(struct ble *iface)
 {
-	memset(self, 0, sizeof(*iface));
+	memset(iface, 0, sizeof(*iface));
 }
