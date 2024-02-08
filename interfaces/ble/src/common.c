@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "pble/ble.h"
+#include "libmcu/ble.h"
 #include <string.h>
 #include <errno.h>
 
