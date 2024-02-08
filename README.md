@@ -32,8 +32,11 @@ Any feedback would be appreciated.
 
 ## Interfaces
 * [ADC](interfaces/adc)
+* [BLE](interfaces/ble)
+* [Flash](interfaces/flash)
 * [GPIO](interfaces/gpio)
 * [I2C](interfaces/i2c)
+* [KVStore](interfaces/kvstore)
 * [PWM](interfaces/pwm)
 * [SPI](interfaces/spi)
 * [Timer](interfaces/timer)
