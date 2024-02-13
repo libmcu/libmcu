@@ -199,8 +199,9 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 			}
 		}
 		break;
-	case BLE_GAP_EVENT_CONN_UPDATE:
 	case BLE_GAP_EVENT_MTU:
+		evt = BLE_GAP_EVT_MTU;
+		break;
 	default:
 		evt = event->type;
 		break;
