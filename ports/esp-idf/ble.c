@@ -55,6 +55,7 @@ struct ble {
 	uint8_t addr_type;
 	uint8_t addr[BLE_ADDR_LEN];
 	uint16_t connection_handle;
+	uint16_t mtu;
 	volatile bool ready;
 };
 
@@ -200,6 +201,7 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 		}
 		break;
 	case BLE_GAP_EVENT_MTU:
+		iface->mtu = event->mtu.value;
 		evt = BLE_GAP_EVT_MTU;
 		break;
 	default:
