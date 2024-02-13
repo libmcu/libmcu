@@ -515,8 +515,9 @@ static int gatt_notify(struct ble *self, const void *attr_handle,
 	return ble_gattc_notify_custom(self->connection_handle, attr, om);
 }
 
-static int gatt_set_mtu(struct ble *self, uint16_t mtu_bytes)
+static int gatt_set_optimal_mtu(struct ble *self, uint16_t mtu_bytes)
 {
+	(void)self;
 	return ble_att_set_preferred_mtu(mtu_bytes);
 }
 
@@ -621,7 +622,7 @@ struct ble *ble_create(int id)
 			.gatt_register_service = gatt_register_service,
 			.gatt_response = gatt_response,
 			.gatt_notify = gatt_notify,
-			.gatt_set_mtu = gatt_set_mtu,
+			.gatt_set_optimal_mtu = gatt_set_optimal_mtu,
 			.gatt_get_mtu = gatt_get_mtu,
 		},
 	};

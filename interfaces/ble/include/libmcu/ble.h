@@ -166,7 +166,7 @@ struct ble_api {
 	int (*gatt_notify)(struct ble *self, const void *attr_handle,
 			const void *data, uint16_t datasize);
 	uint16_t (*gatt_get_mtu)(struct ble *self);
-	int (*gatt_set_mtu)(struct ble *self, uint16_t mtu_bytes);
+	int (*gatt_set_optimal_mtu)(struct ble *self, uint16_t mtu_bytes);
 };
 
 static inline int ble_enable(struct ble *self,
@@ -264,8 +264,8 @@ static inline uint16_t ble_gatt_get_mtu(struct ble *self) {
 	return ((struct ble_api *)self)->gatt_get_mtu(self);
 }
 
-static inline int ble_gatt_set_mtu(struct ble *self, uint16_t mtu_bytes) {
-	return ((struct ble_api *)self)->gatt_set_mtu(self, mtu_bytes);
+static inline int ble_gatt_set_optimal_mtu(struct ble *self, uint16_t mtu_bytes) {
+	return ((struct ble_api *)self)->gatt_set_optimal_mtu(self, mtu_bytes);
 }
 
 void ble_adv_payload_init(struct ble_adv_payload *buf);
