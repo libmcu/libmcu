@@ -502,7 +502,7 @@ static int gatt_response(struct ble_handler_context *ctx,
 		const void *data, uint16_t datasize)
 {
 	struct ble_gatt_access_ctxt *p = (struct ble_gatt_access_ctxt *)ctx->ctx;
-	return os_mbuf_append(p->om, data, sizeof(datasize));
+	return os_mbuf_append(p->om, data, datasize);
 }
 
 static int gatt_notify(struct ble *self, const void *attr_handle,
