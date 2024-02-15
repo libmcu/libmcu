@@ -289,9 +289,8 @@ static int adv_set_duration(struct ble *self, uint32_t msec)
 {
 	if (msec == BLE_TIME_FOREVER) {
 		self->adv.duration_ms = BLE_HS_FOREVER;
-	} else {
-		self->adv.duration_ms = msec;
 	}
+	self->adv.duration_ms = msec;
 	return 0;
 }
 
