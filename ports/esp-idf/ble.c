@@ -445,15 +445,21 @@ static void copy_uuid(ble_uuid_any_t *p, const uint8_t *uuid, uint8_t uuid_len)
 	uint8_t *t = p->u128.value;
 	p->u.type = BLE_UUID_TYPE_128;
 
-	if (uuid_len == 2) {
-		p->u.type = BLE_UUID_TYPE_16;
-		t = (uint8_t *)&p->u16.value;
-	} else if (uuid_len == 4) {
-		p->u.type = BLE_UUID_TYPE_32;
-		t = (uint8_t *)&p->u32.value;
-	}
+	if (uuid_len > 4) {
+		for (uint8_t i = 0; i < uuid_len; i++) {
+			t[i] = uuid[uuid_len - i - 1];
+		}
+	} else {
+		if (uuid_len == 2) {
+			p->u.type = BLE_UUID_TYPE_16;
+			t = (uint8_t *)&p->u16.value;
+		} else if (uuid_len == 4) {
+			p->u.type = BLE_UUID_TYPE_32;
+			t = (uint8_t *)&p->u32.value;
+		}
 
-	memcpy(t, uuid, uuid_len);
+		memcpy(t, uuid, uuid_len);
+	}
 }
 
 static struct ble_gatt_service *gatt_create_service(void *mem, uint16_t memsize,
