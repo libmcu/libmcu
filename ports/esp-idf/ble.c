@@ -384,8 +384,8 @@ static int adv_start(struct ble *self)
 	struct ble_gap_adv_params adv_params = {
 		.conn_mode = BLE_GAP_CONN_MODE_UND,
 		.disc_mode = BLE_GAP_DISC_MODE_GEN,
-		.itvl_min = self->adv.min_ms * 1000 / BLE_HCI_ADV_ITVL,
-		.itvl_max = self->adv.max_ms * 1000 / BLE_HCI_ADV_ITVL,
+		.itvl_min = BLE_GAP_ADV_ITVL_MS(self->adv.min_ms),
+		.itvl_max = BLE_GAP_ADV_ITVL_MS(self->adv.max_ms),
 	};
 
 	switch (self->adv.mode) {
