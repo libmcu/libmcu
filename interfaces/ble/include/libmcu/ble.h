@@ -14,6 +14,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 #if !defined(BLE_DEFAULT_DEVICE_NAME)
 #define BLE_DEFAULT_DEVICE_NAME			"libmcu"
@@ -75,6 +76,12 @@ enum ble_gap_evt {
 	BLE_GAP_EVT_ADV_COMPLETE,
 	BLE_GAP_EVT_ADV_SUSPENDED,
 	BLE_GAP_EVT_MTU,
+	BLE_GAP_EVT_SUBSCRIBE,
+	BLE_GAP_EVT_CONN_PARAM_UPDATE,
+	BLE_GAP_EVT_SECURITY,
+	BLE_GAP_EVT_ALREADY_BONDED,
+	BLE_GAP_EVT_PASSKEY,
+	BLE_GAP_EVT_IDENTITY_RESOLVED,
 	BLE_GAP_EVT_MAX,
 };
 
@@ -105,11 +112,20 @@ enum ble_gatt_op {
 	BLE_GATT_OP_AUTHORIZE_WRITE		= 0x0200,
 };
 
+enum ble_paring_method {
+	BLE_PAIR_NO_IO,
+	BLE_PAIR_DISPLAY_ONLY,
+	BLE_PAIR_DISPLAY_YES_NO,
+	BLE_PAIR_KEYBOARD_ONLY,
+	BLE_PAIR_KEYBOARD_DISPLAY,
+};
+
 struct ble;
 struct ble_gatt_service;
+struct ble_conn_state;
 
 typedef void (*ble_event_callback_t)(struct ble *self,
-		uint8_t evt, const void *msg);
+		uint8_t evt, const struct ble_conn_state *state);
 
 struct ble_handler_context {
 	uint8_t event_type;
@@ -130,12 +146,34 @@ struct ble_gatt_characteristic {
 	uint16_t op;
 };
 
+typedef void (*ble_pairing_callback_t)(const enum ble_paring_method method,
+		void *buf, const size_t bufsize);
+
+struct ble_param {
+	uint8_t addr[BLE_ADDR_LEN];
+	enum ble_device_addr addr_type;
+	bool enable_bonding;
+	ble_pairing_callback_t pairing_callback;
+	enum ble_paring_method pairing_method;
+};
+
+struct ble_conn_state {
+	uint16_t interval;
+	uint16_t latency;
+	uint16_t supervision_timeout;
+	bool is_encrypted;
+	bool is_authenticated;
+	bool is_bonded;
+	uint8_t device_addr[BLE_ADDR_LEN];
+	uint8_t remote_addr[BLE_ADDR_LEN];
+	int8_t rssi;
+};
+
 struct ble_api {
-	int (*enable)(struct ble *self, enum ble_device_addr addr_type,
-			uint8_t addr[BLE_ADDR_LEN]);
+	int (*enable)(struct ble *self, const struct ble_param *param,
+			const char *device_name);
 	int (*disable)(struct ble *self);
-	enum ble_device_addr (*get_device_address)(struct ble *self,
-			uint8_t addr[BLE_ADDR_LEN]);
+	int (*clear_bonding)(struct ble *self);
 
 	void (*register_gap_event_callback)(struct ble *self,
 			ble_event_callback_t cb);
@@ -169,18 +207,17 @@ struct ble_api {
 	int (*gatt_set_optimal_mtu)(struct ble *self, uint16_t mtu_bytes);
 };
 
-static inline int ble_enable(struct ble *self,
-		enum ble_device_addr addr_type, uint8_t addr[BLE_ADDR_LEN]) {
-	return ((struct ble_api *)self)->enable(self, addr_type, addr);
+static inline int ble_enable(struct ble *self, const struct ble_param *param,
+		const char *device_name) {
+	return ((struct ble_api *)self)->enable(self, param, device_name);
 }
 
 static inline int ble_disable(struct ble *self) {
 	return ((struct ble_api *)self)->disable(self);
 }
 
-static inline enum ble_device_addr ble_get_device_address(struct ble *self,
-		uint8_t addr[BLE_ADDR_LEN]) {
-	return ((struct ble_api *)self)->get_device_address(self, addr);
+static inline int ble_clear_bonding(struct ble *self) {
+	return ((struct ble_api *)self)->clear_bonding(self);
 }
 
 static inline void ble_register_gap_event_callback(struct ble *self,

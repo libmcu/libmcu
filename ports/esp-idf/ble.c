@@ -36,6 +36,8 @@ LIBMCU_ASSERT(BLE_GAP_EVT_MAX < UINT8_MAX);
 #define BLE_LOG_ERROR(...)
 #endif
 
+#define MAX_DESCRIPTORS_PER_CHAR	1
+
 struct ble {
 	struct ble_api api;
 
@@ -52,8 +54,8 @@ struct ble {
 		struct ble_adv_payload scan_response;
 	} adv;
 
-	uint8_t addr_type;
-	uint8_t addr[BLE_ADDR_LEN];
+	struct ble_param param;
+
 	uint16_t connection_handle;
 	uint16_t mtu;
 	volatile bool ready;
@@ -107,35 +109,6 @@ static void *svc_mem_alloc(struct ble_gatt_service *svc, uint16_t size)
 	return p;
 }
 
-static enum ble_device_addr read_device_address(uint8_t addr[BLE_ADDR_LEN])
-{
-	ble_addr_t t;
-
-	int rc = ble_hs_id_infer_auto(0, &t.type);
-	if (rc != 0) {
-		BLE_LOG_ERROR("error determining address type; rc=%d", rc);
-		assert(0);
-	}
-
-	rc = ble_hs_id_copy_addr(t.type, t.val, NULL);
-	if (rc != 0) {
-		BLE_LOG_ERROR("error reading address; rc=%d", rc);
-		assert(0);
-	}
-
-	memcpy(addr, t.val, BLE_ADDR_LEN);
-
-	if (BLE_ADDR_IS_STATIC(&t)) {
-		return BLE_ADDR_STATIC_RPA;
-	} else if (BLE_ADDR_IS_RPA(&t)) {
-		return BLE_ADDR_PRIVATE_RPA;
-	} else if (BLE_ADDR_IS_NRPA(&t)) {
-		return BLE_ADDR_PRIVATE_NRPA;
-	}
-
-	return BLE_ADDR_PUBLIC;
-}
-
 static const struct gatt_characteristic_handler *get_chr_handler(
 		const struct ble_gatt_service *svc,
 		const struct ble_gatt_chr_def *chr)
@@ -174,14 +147,18 @@ static int on_characteristic_request(uint16_t conn_handle, uint16_t attr_handle,
 static int on_gap_event(struct ble_gap_event *event, void *arg)
 {
 	struct ble *iface = (struct ble *)arg;
-	struct ble_gap_conn_desc desc;
 	enum ble_gap_evt evt = BLE_GAP_EVT_UNKNOWN;
+	uint16_t handle = 0;
 
 	switch (event->type) {
 	case BLE_GAP_EVENT_CONNECT:
-		evt = BLE_GAP_EVT_CONNECTED;
+		handle = event->connect.conn_handle;
 		if (event->connect.status == 0) {
 			iface->connection_handle = event->connect.conn_handle;
+			ble_gap_security_initiate(iface->connection_handle);
+			evt = BLE_GAP_EVT_CONNECTED;
+		} else {
+			evt = BLE_GAP_EVT_DISCONNECTED;
 		}
 		break;
 	case BLE_GAP_EVENT_DISCONNECT:
@@ -201,16 +178,80 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 		}
 		break;
 	case BLE_GAP_EVENT_MTU:
-		iface->mtu = event->mtu.value;
 		evt = BLE_GAP_EVT_MTU;
+		handle = event->mtu.conn_handle;
+		iface->mtu = event->mtu.value;
+		break;
+	case BLE_GAP_EVENT_SUBSCRIBE:
+		evt = BLE_GAP_EVT_SUBSCRIBE;
+		handle = event->subscribe.conn_handle;
+		break;
+	case BLE_GAP_EVENT_CONN_UPDATE:
+		evt = BLE_GAP_EVT_CONN_PARAM_UPDATE;
+		handle = event->conn_update.conn_handle;
+		break;
+	case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+		handle = event->conn_update_req.conn_handle;
+		break;
+	case BLE_GAP_EVENT_ENC_CHANGE:
+		evt = BLE_GAP_EVT_SECURITY;
+		handle = event->enc_change.conn_handle;
+		/* Refer to https://mynewt.apache.org/latest/network/ble_hs/ble_hs_return_codes.html for status code. */
+		if (event->enc_change.status != 0) { /* encryption failure */
+			/* Refer to BT 4.2, Vol2 , Part E , section 7.1.6 for error code */
+			ble_gap_terminate(event->connect.conn_handle, 0x05);
+		}
+		break;
+	case BLE_GAP_EVENT_REPEAT_PAIRING:
+		evt = BLE_GAP_EVT_ALREADY_BONDED;
+		handle = event->repeat_pairing.conn_handle;
+		break;
+	case BLE_GAP_EVENT_PASSKEY_ACTION:
+		evt = BLE_GAP_EVT_PASSKEY;
+		handle = event->passkey.conn_handle;
+
+		enum ble_paring_method method = iface->param.pairing_method;
+		struct ble_sm_io pkey = {
+			.action = event->passkey.params.action,
+		};
+		if (iface->param.pairing_callback) {
+			(*iface->param.pairing_callback)(method,
+					&pkey.passkey, sizeof(pkey.oob));
+		}
+		int rc = ble_sm_inject_io(handle, &pkey);
+		break;
+	case BLE_GAP_EVENT_IDENTITY_RESOLVED:
+		evt = BLE_GAP_EVT_IDENTITY_RESOLVED;
+		handle = event->identity_resolved.conn_handle;
+		break;
+	case BLE_GAP_EVENT_NOTIFY_RX:
+		handle = event->notify_rx.conn_handle;
+		break;
+	case BLE_GAP_EVENT_NOTIFY_TX:
+		handle = event->notify_tx.conn_handle;
 		break;
 	default:
 		evt = event->type;
 		break;
 	}
 
+	struct ble_conn_state state = { 0, };
+	struct ble_gap_conn_desc desc;
+
+	if (handle && ble_gap_conn_find(handle, &desc) == 0) {
+		state.is_encrypted = desc.sec_state.encrypted;
+		state.is_authenticated = desc.sec_state.authenticated;
+		state.is_bonded = desc.sec_state.bonded;
+		state.interval = desc.conn_itvl;
+		state.latency = desc.conn_latency;
+		state.supervision_timeout = desc.supervision_timeout;
+		memcpy(state.device_addr, desc.our_id_addr.val, sizeof(state.device_addr));
+		memcpy(state.remote_addr, desc.peer_id_addr.val, sizeof(state.remote_addr));
+		ble_gap_conn_rssi(handle, &state.rssi);
+	}
+
 	if (iface && iface->gap_event_callback) {
-		iface->gap_event_callback(iface, evt, 0);
+		iface->gap_event_callback(iface, evt, &state);
 	}
 
 	return 0;
@@ -252,18 +293,18 @@ static void on_sync(void)
 {
 	assert(onair);
 
-	int rc = ble_hs_util_ensure_addr(0);
+	int rc = ble_hs_util_ensure_addr(1);
 	assert(rc == 0);
 
-	if (onair->addr_type == BLE_ADDR_PRIVATE_RPA ||
-			onair->addr_type == BLE_ADDR_PRIVATE_NRPA) {
-		uint8_t type = onair->addr_type - 1;/*1:RPA, 2:NRPA, 0:disable*/
 #if 0
+	if (onair->param.addr_type == BLE_ADDR_PRIVATE_RPA ||
+			onair->param.addr_type == BLE_ADDR_PRIVATE_NRPA) {
+		uint8_t type = onair->param.addr_type - 1;/*1:RPA, 2:NRPA, 0:disable*/
 		extern int ble_hs_pvcy_rpa_config(uint8_t enable);
 		rc = ble_hs_pvcy_rpa_config(type);
 		assert(rc == 0);
-#endif
 	}
+#endif
 
 	onair->ready = true;
 }
@@ -363,18 +404,14 @@ static int adv_start(struct ble *self)
 		break;
 	}
 
-	rc = ble_gap_adv_start(self->addr_type, NULL,
+	rc = ble_gap_adv_start(self->param.addr_type == BLE_ADDR_PUBLIC?
+				BLE_OWN_ADDR_PUBLIC : BLE_OWN_ADDR_RPA_RANDOM_DEFAULT,
+			NULL,
 			(int32_t)self->adv.duration_ms,
 			&adv_params, on_gap_event, self);
 	if (rc != 0) {
 		BLE_LOG_ERROR("adv failure: %d", rc);
 		return -EFAULT;
-	}
-
-	enum ble_device_addr type = read_device_address(self->addr);
-	if (type != self->addr_type) {
-		BLE_LOG_WARN("addr type mismatch: %d expected but %d",
-				self->addr_type, type);
 	}
 
 	return 0;
@@ -395,8 +432,8 @@ static int adv_init(struct ble *self, enum ble_adv_mode mode)
 
 	self->adv.mode = mode;
 
-	self->adv.min_ms = 0;
-	self->adv.max_ms = 0;
+	self->adv.min_ms = 20;
+	self->adv.max_ms = 60;
 	self->adv.duration_ms = BLE_HS_FOREVER;
 
 	return 0;
@@ -425,7 +462,7 @@ static struct ble_gatt_service *gatt_create_service(void *mem, uint16_t memsize,
 	assert(mem != NULL);
 	assert(memsize > (uint16_t)(sizeof(struct ble_gatt_service) +
 			(nr_chrs+1/*null desc*/) * sizeof(struct ble_gatt_chr_def) +
-			nr_chrs * sizeof(struct ble_gatt_dsc_def) * 6/*max.desc*/ +
+			nr_chrs * sizeof(struct ble_gatt_dsc_def) * MAX_DESCRIPTORS_PER_CHAR +
 			nr_chrs * sizeof(struct gatt_characteristic_handler)));
 	assert(uuid != NULL);
 	assert(uuid_len == 2 || uuid_len == 4 || uuid_len == 16);
@@ -487,6 +524,24 @@ static const uint16_t *gatt_add_characteristic(struct ble_gatt_service *svc,
 	if (chr->op & BLE_GATT_OP_INDICATE) {
 		p->flags |= BLE_GATT_CHR_F_INDICATE;
 	}
+	if (chr->op & BLE_GATT_OP_ENC_READ) {
+		p->flags |= BLE_GATT_CHR_F_READ_ENC;
+	}
+	if (chr->op & BLE_GATT_OP_AUTH_READ) {
+		p->flags |= BLE_GATT_CHR_F_READ_AUTHEN;
+	}
+	if (chr->op & BLE_GATT_OP_AUTHORIZE_READ) {
+		p->flags |= BLE_GATT_CHR_F_READ_AUTHOR;
+	}
+	if (chr->op & BLE_GATT_OP_ENC_WRITE) {
+		p->flags |= BLE_GATT_CHR_F_WRITE_ENC;
+	}
+	if (chr->op & BLE_GATT_OP_AUTH_WRITE) {
+		p->flags |= BLE_GATT_CHR_F_READ_AUTHEN;
+	}
+	if (chr->op & BLE_GATT_OP_AUTHORIZE_WRITE) {
+		p->flags |= BLE_GATT_CHR_F_READ_AUTHOR;
+	}
 
 	return p->val_handle;
 }
@@ -529,14 +584,12 @@ static uint16_t gatt_get_mtu(struct ble *self)
 	return self->mtu;
 }
 
-static enum ble_device_addr get_device_address(struct ble *iface,
-		uint8_t addr[BLE_ADDR_LEN])
+static int clear_bonding(struct ble *self)
 {
-	memcpy(addr, iface->addr, BLE_ADDR_LEN);
-	return (enum ble_device_addr)iface->addr_type;
+	return ble_store_clear();
 }
 
-static void initialize(struct ble *iface)
+static void initialize(struct ble *iface, const char *device_name)
 {
 	/* ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init()); */
 	nimble_port_init();
@@ -547,8 +600,35 @@ static void initialize(struct ble *iface)
 	ble_hs_cfg.gatts_register_arg = iface;
 	ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
-	if (iface->addr_type == BLE_ADDR_PRIVATE_RPA ||
-			iface->addr_type == BLE_ADDR_PRIVATE_NRPA) {
+	ble_hs_cfg.sm_mitm = 1;
+	ble_hs_cfg.sm_sc = 1;
+	ble_hs_cfg.sm_bonding = 0;
+
+	if (iface->param.enable_bonding) {
+		ble_hs_cfg.sm_bonding = 1;
+	}
+
+	switch (iface->param.pairing_method) {
+	case BLE_PAIR_DISPLAY_ONLY:
+		ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_DISP_ONLY;
+		break;
+	case BLE_PAIR_DISPLAY_YES_NO:
+		ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_DISP_YES_NO;
+		break;
+	case BLE_PAIR_KEYBOARD_ONLY:
+		ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_KEYBOARD_ONLY;
+		break;
+	case BLE_PAIR_KEYBOARD_DISPLAY:
+		ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_KEYBOARD_DISP;
+		break;
+	case BLE_PAIR_NO_IO: /* fall through */
+	default:
+		ble_hs_cfg.sm_io_cap = BLE_SM_IO_CAP_NO_IO;
+		break;
+	}
+
+	if (iface->param.addr_type == BLE_ADDR_PRIVATE_RPA ||
+			iface->param.addr_type == BLE_ADDR_PRIVATE_NRPA) {
 		ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ID |
 				BLE_SM_PAIR_KEY_DIST_ENC;
 		ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ID |
@@ -557,19 +637,25 @@ static void initialize(struct ble *iface)
 
 	ble_svc_gap_init();
 	ble_svc_gatt_init();
-	ble_svc_gap_device_name_set(BLE_DEFAULT_DEVICE_NAME);
+
+	if (!device_name) {
+		device_name = BLE_DEFAULT_DEVICE_NAME;
+	}
+	ble_svc_gap_device_name_set(device_name);
+
+	extern void ble_store_config_init(void);
+	ble_store_config_init();
 }
 
-static int enable_device(struct ble *self,
-		enum ble_device_addr addr_type, uint8_t addr[BLE_ADDR_LEN])
+static int enable_device(struct ble *self, const struct ble_param *param,
+		const char *device_name)
 {
 	if (!onair) {
-		self->addr_type = addr_type;
-		if (addr) {
-			memcpy(self->addr, addr, sizeof(self->addr));
+		if (param) {
+			memcpy(&self->param, param, sizeof(*param));
 		}
 
-		initialize(self);
+		initialize(self, device_name);
 		onair = self;
 	}
 
@@ -580,13 +666,13 @@ static int disable_device(struct ble *self)
 {
 	int rc = 0;
 
-	if (self->addr_type == BLE_ADDR_PRIVATE_RPA ||
-			self->addr_type == BLE_ADDR_PRIVATE_NRPA) {
 #if 0
+	if (self->param.addr_type == BLE_ADDR_PRIVATE_RPA ||
+			self->param.addr_type == BLE_ADDR_PRIVATE_NRPA) {
 		extern int ble_hs_pvcy_rpa_config(uint8_t enable);
 		rc = ble_hs_pvcy_rpa_config(0);
-#endif
 	}
+#endif
 
 	rc |= nimble_port_stop();
 	nimble_port_deinit();
@@ -606,11 +692,11 @@ struct ble *ble_create(int id)
 		.api = {
 			.enable = enable_device,
 			.disable = disable_device,
+			.clear_bonding = clear_bonding,
 			.register_gap_event_callback =
 				register_gap_event_callback,
 			.register_gatt_event_callback =
 				register_gatt_event_callback,
-			.get_device_address = get_device_address,
 
 			.adv_init = adv_init,
 			.adv_set_interval = adv_set_interval,
