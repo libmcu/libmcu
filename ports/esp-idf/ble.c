@@ -191,6 +191,7 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 		handle = event->conn_update.conn_handle;
 		break;
 	case BLE_GAP_EVENT_CONN_UPDATE_REQ:
+		evt = BLE_GAP_EVT_CONN_PARAM_UPDATE_REQ;
 		handle = event->conn_update_req.conn_handle;
 		break;
 	case BLE_GAP_EVENT_ENC_CHANGE:
@@ -242,9 +243,9 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 		state.is_encrypted = desc.sec_state.encrypted;
 		state.is_authenticated = desc.sec_state.authenticated;
 		state.is_bonded = desc.sec_state.bonded;
-		state.interval = desc.conn_itvl;
+		state.interval_ms = (uint32_t)(desc.conn_itvl * 1.25);
 		state.latency = desc.conn_latency;
-		state.supervision_timeout = desc.supervision_timeout;
+		state.supervision_timeout_ms = desc.supervision_timeout * 10;
 		memcpy(state.device_addr, desc.our_id_addr.val, sizeof(state.device_addr));
 		memcpy(state.remote_addr, desc.peer_id_addr.val, sizeof(state.remote_addr));
 		ble_gap_conn_rssi(handle, &state.rssi);
@@ -589,6 +590,19 @@ static int clear_bonding(struct ble *self)
 	return ble_store_clear();
 }
 
+static int update_conn_param(struct ble *self,
+		const struct ble_conn_param *param)
+{
+	return ble_gap_update_params(self->connection_handle,
+			&(const struct ble_gap_upd_params) {
+				.itvl_min = BLE_GAP_CONN_ITVL_MS(param->min_interval_ms),
+				.itvl_max = BLE_GAP_CONN_ITVL_MS(param->max_interval_ms),
+				.latency = param->latency,
+				.supervision_timeout = BLE_GAP_SUPERVISION_TIMEOUT_MS(param->supervision_timeout_ms),
+			}
+	);
+}
+
 static void initialize(struct ble *iface, const char *device_name)
 {
 	/* ESP_ERROR_CHECK(esp_nimble_hci_and_controller_init()); */
@@ -692,7 +706,10 @@ struct ble *ble_create(int id)
 		.api = {
 			.enable = enable_device,
 			.disable = disable_device,
+
 			.clear_bonding = clear_bonding,
+			.update_conn_param = update_conn_param,
+
 			.register_gap_event_callback =
 				register_gap_event_callback,
 			.register_gatt_event_callback =

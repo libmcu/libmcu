@@ -78,6 +78,7 @@ enum ble_gap_evt {
 	BLE_GAP_EVT_MTU,
 	BLE_GAP_EVT_SUBSCRIBE,
 	BLE_GAP_EVT_CONN_PARAM_UPDATE,
+	BLE_GAP_EVT_CONN_PARAM_UPDATE_REQ,
 	BLE_GAP_EVT_SECURITY,
 	BLE_GAP_EVT_ALREADY_BONDED,
 	BLE_GAP_EVT_PASSKEY,
@@ -157,10 +158,17 @@ struct ble_param {
 	enum ble_paring_method pairing_method;
 };
 
-struct ble_conn_state {
-	uint16_t interval;
+struct ble_conn_param {
+	uint32_t min_interval_ms;
+	uint32_t max_interval_ms;
 	uint16_t latency;
-	uint16_t supervision_timeout;
+	uint32_t supervision_timeout_ms;
+};
+
+struct ble_conn_state {
+	uint32_t interval_ms;
+	uint16_t latency;
+	uint32_t supervision_timeout_ms;
 	bool is_encrypted;
 	bool is_authenticated;
 	bool is_bonded;
@@ -174,6 +182,9 @@ struct ble_api {
 			const char *device_name);
 	int (*disable)(struct ble *self);
 	int (*clear_bonding)(struct ble *self);
+
+	int (*update_conn_param)(struct ble *self,
+			const struct ble_conn_param *param);
 
 	void (*register_gap_event_callback)(struct ble *self,
 			ble_event_callback_t cb);
@@ -218,6 +229,11 @@ static inline int ble_disable(struct ble *self) {
 
 static inline int ble_clear_bonding(struct ble *self) {
 	return ((struct ble_api *)self)->clear_bonding(self);
+}
+
+static inline int ble_update_conn_param(struct ble *self,
+		const struct ble_conn_param *param) {
+	return ((struct ble_api *)self)->update_conn_param(self, param);
 }
 
 static inline void ble_register_gap_event_callback(struct ble *self,
