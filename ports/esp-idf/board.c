@@ -13,6 +13,7 @@
 #include "esp_timer.h"
 #include "esp_mac.h"
 #include "esp_system.h"
+#include "esp_random.h"
 
 LIBMCU_NO_INSTRUMENT
 void *board_get_current_thread(void)
@@ -85,4 +86,9 @@ board_reboot_reason_t board_get_reboot_reason(void)
 	default:
 		return BOARD_REBOOT_UNKNOWN;
 	}
+}
+
+uint32_t board_random(void)
+{
+	return esp_random();
 }

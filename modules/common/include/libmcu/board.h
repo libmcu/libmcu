@@ -40,7 +40,7 @@ const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 
 unsigned long board_get_time_since_boot_ms(void);
 
-long board_random(void);
+uint32_t board_random(void);
 
 /**
  * @brief Get overall CPU usage
