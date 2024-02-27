@@ -92,3 +92,8 @@ uint32_t board_random(void)
 {
 	return esp_random();
 }
+
+void board_reboot(void)
+{
+	esp_restart();
+}
