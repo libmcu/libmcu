@@ -74,7 +74,7 @@ unsigned long board_get_time_since_boot_ms(void)
 }
 
 LIBMCU_WEAK
-long board_random(void)
+uint32_t board_random(void)
 {
 	return 0;
 }

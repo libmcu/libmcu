@@ -46,6 +46,7 @@ struct wifi {
 	esp_event_handler_instance_t ip_acquisition_events;
 
 	enum esp32_state state;
+	esp_netif_t *iface;
 };
 
 static void raise_event_with_data(struct wifi *self,
@@ -196,7 +197,7 @@ static bool initialize_wifi_iface(struct wifi *self)
 	wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
 	esp_err_t res = esp_netif_init();
 
-	if (esp_netif_create_default_wifi_sta() == NULL) {
+	if ((self->iface = esp_netif_create_default_wifi_sta()) == NULL) {
 		return false;
 	}
 
@@ -222,7 +223,10 @@ static int initialize_wifi(struct wifi *self)
 static int deinitialize_wifi(struct wifi *self)
 {
 	(void)self;
-	return esp_wifi_deinit() == ESP_OK ? 0 : -EBUSY;
+	int rc = esp_wifi_deinit();
+	rc |= esp_netif_deinit();
+	esp_netif_destroy_default_wifi(self->iface);
+	return rc == ESP_OK ? 0 : -EBUSY;
 }
 
 static int connect_wifi(struct wifi *self, const struct wifi_conn_param *param)
