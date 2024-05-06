@@ -149,14 +149,15 @@ static int alloc_entry(struct storage *storage, size_t size, struct meta *meta)
 			return -EIO;
 		}
 
-		if (!allocated && is_free_entry(&meta->entry)) {
-			meta->offset = offset;
-			allocated = true;
+		if (is_free_entry(&meta->entry)) {
+			if (!allocated) {
+				meta->offset = offset;
+				allocated = true;
+			}
 		} else {
 			uint32_t t = ALIGN(meta->entry.offset + meta->entry.len,
 					FLASH_LINE_ALIGN_BYTES);
-			if (t > new_data_offset &&
-					t < storage->data.size) {
+			if (t > new_data_offset && t < storage->data.size) {
 				new_data_offset = t;
 			}
 		}
@@ -179,8 +180,7 @@ static int delete_meta(struct storage *storage, struct meta *meta)
 	entry->hash_murmur = 0;
 	entry->hash_dbj2 = 0;
 
-	return flash_write(storage->flash,
-			meta->offset, entry, sizeof(*entry));
+	return flash_write(storage->flash, meta->offset, entry, sizeof(*entry));
 }
 #endif
 

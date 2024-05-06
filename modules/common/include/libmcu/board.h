@@ -25,6 +25,7 @@ typedef enum {
 	BOARD_REBOOT_DEEPSLEEP,
 	BOARD_REBOOT_BROWNOUT,
 	BOARD_REBOOT_SDIO,
+	BOARD_REBOOT_DEBUGGER,
 } board_reboot_reason_t;
 
 void board_init(void);
