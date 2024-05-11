@@ -47,6 +47,11 @@ void fsm_step(struct fsm *fsm)
 	}
 }
 
+fsm_state_t fsm_state(const struct fsm *fsm)
+{
+	return fsm->state.present;
+}
+
 void fsm_reset(struct fsm *fsm)
 {
 	fsm->state = (struct fsm_state) { 0, 0 };
