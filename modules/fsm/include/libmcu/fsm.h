@@ -54,6 +54,7 @@ void fsm_init(struct fsm *fsm, const struct fsm_item *items, size_t item_len,
 		void *ctx);
 void fsm_step(struct fsm *fsm);
 void fsm_reset(struct fsm *fsm);
+void fsm_state(struct fsm *fsm);
 
 #if defined(__cplusplus)
 }
