@@ -53,6 +53,7 @@ export CPPUTEST_WARNINGFLAGS = \
 	\
 	-Wno-error=switch-enum \
 	-Wno-error=aggregate-return \
+	-Wno-error=shadow \
 
 #-Wredundant-decls -Wswitch-enum
 

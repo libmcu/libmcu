@@ -34,11 +34,6 @@ static bool process(const struct fsm_item *item,
 	return false;
 }
 
-fsm_state_t fsm_state(struct fsm *fsm)
-{
-	return fsm->state.present;
-}
-
 void fsm_step(struct fsm *fsm)
 {
 	fsm_state_t current_state = fsm->state.present;
@@ -50,6 +45,11 @@ void fsm_step(struct fsm *fsm)
 			break;
 		}
 	}
+}
+
+fsm_state_t fsm_state(struct fsm *fsm)
+{
+	return fsm->state.present;
 }
 
 void fsm_reset(struct fsm *fsm)
