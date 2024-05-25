@@ -14,6 +14,9 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#define PWM_PCT_TO_MILLI(pct)		((pct) * 1000)
+#define PWM_MILLI_TO_PCT(millipct)	((millipct) / 1000)
+
 struct pwm;
 
 struct pwm_api {
@@ -21,8 +24,8 @@ struct pwm_api {
 	int (*disable)(struct pwm *self);
 	int (*start)(struct pwm *self,
 			uint32_t freq_hz, uint32_t duty_millipercent);
-	int (*update_frequency)(struct pwm *self, uint32_t hz);
-	int (*update_duty)(struct pwm *self, uint32_t millipercent);
+	int (*update_frequency)(struct pwm *self, int ch, uint32_t hz);
+	int (*update_duty)(struct pwm *self, int ch, uint32_t millipercent);
 	int (*stop)(struct pwm *self);
 };
 
@@ -40,12 +43,13 @@ static inline int pwm_start(struct pwm *self,
 			freq_hz, duty_millipercent);
 }
 
-static inline int pwm_update_frequency(struct pwm *self, uint32_t hz) {
-	return ((struct pwm_api *)self)->update_frequency(self, hz);
+static inline int pwm_update_frequency(struct pwm *self, int ch, uint32_t hz) {
+	return ((struct pwm_api *)self)->update_frequency(self, ch, hz);
 }
 
-static inline int pwm_update_duty(struct pwm *self, uint32_t millipercent) {
-	return ((struct pwm_api *)self)->update_duty(self, millipercent);
+static inline int pwm_update_duty(struct pwm *self,
+		int ch, uint32_t millipercent) {
+	return ((struct pwm_api *)self)->update_duty(self, ch, millipercent);
 }
 
 static inline int pwm_stop(struct pwm *self) {
