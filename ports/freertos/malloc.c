@@ -19,7 +19,7 @@ void *malloc(size_t size)
 	return pvPortMalloc(size);
 }
 
-void *calloc(size_t num, sizeo_t size)
+void *calloc(size_t num, size_t size)
 {
 	if (num == 0 || size == 0) {
 		return NULL;

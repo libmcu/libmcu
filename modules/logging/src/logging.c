@@ -254,19 +254,15 @@ size_t logging_write_with_backend(logging_t type,
 	}
 
 	logging_lock();
-	{
-		const struct logging_tag *tag = obtain_tag(ctx->tag);
 
-		if (!is_logging_type_valid(type)) {
-			logging_unlock();
-			goto out;
-		}
-		if (!is_logging_type_enabled(tag, type)) {
-			logging_unlock();
-			goto out;
-		}
+	const struct logging_tag *tag = obtain_tag(ctx->tag);
+
+	if (!is_logging_type_valid(type)) {
+		goto out;
 	}
-	logging_unlock();
+	if (!is_logging_type_enabled(tag, type)) {
+		goto out;
+	}
 
 	logging_data_t *log = (logging_data_t *)buf;
 	pack_log(log, type, ctx->pc, ctx->lr);
@@ -277,6 +273,8 @@ size_t logging_write_with_backend(logging_t type,
 	}
 
 out:
+	logging_unlock();
+
 	return result;
 }
 
@@ -288,19 +286,15 @@ size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 	assert(ctx != NULL);
 
 	logging_lock();
-	{
-		const struct logging_tag *tag = obtain_tag(ctx->tag);
 
-		if (!is_logging_type_valid(type)) {
-			logging_unlock();
-			goto out;
-		}
-		if (!is_logging_type_enabled(tag, type)) {
-			logging_unlock();
-			goto out;
-		}
+	const struct logging_tag *tag = obtain_tag(ctx->tag);
+
+	if (!is_logging_type_valid(type)) {
+		goto out;
 	}
-	logging_unlock();
+	if (!is_logging_type_enabled(tag, type)) {
+		goto out;
+	}
 
 	logging_data_t *log = (logging_data_t *)buf;
 	pack_log(log, type, ctx->pc, ctx->lr);
@@ -313,6 +307,8 @@ size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 	}
 
 out:
+	logging_unlock();
+
 	return result;
 }
 
