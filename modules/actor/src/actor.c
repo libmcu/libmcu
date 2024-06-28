@@ -37,7 +37,7 @@ struct actor_msg {
 LIBMCU_STATIC_ASSERT((ACTOR_DEFAULT_MESSAGE_SIZE % sizeof(uintptr_t)) == 0,
 		"ACTOR_DEFAULT_MESSAGE_SIZE should be aligned to system memory alignment.");
 
-struct sized_msg {
+struct msg {
 	struct actor_msg header;
 	uint8_t payload[ACTOR_DEFAULT_MESSAGE_SIZE];
 };
@@ -64,12 +64,12 @@ struct core {
 	int priority;
 };
 
-static struct actor_context {
+static struct actor_ctx {
 	struct core core[ACTOR_PRIORITY_MAX];
 	struct msgpool msgpool;
 } m;
 
-static int add_to_list(struct list *node, struct list *head)
+static int add_if_not_exist(struct list *node, struct list *head)
 {
 	struct list *p;
 
@@ -86,6 +86,11 @@ static int add_to_list(struct list *node, struct list *head)
 	return 0;
 }
 
+static int push_actor(struct actor *actor, struct core *core)
+{
+	return add_if_not_exist(&actor->link, &core->runq);
+}
+
 static struct actor *pop_actor(struct list *q)
 {
 	if (list_empty(q)) {
@@ -98,26 +103,34 @@ static struct actor *pop_actor(struct list *q)
 	return actor;
 }
 
-static struct sized_msg *pop_message(struct list *q)
+static int push_message(struct msg *p, struct actor *actor)
+{
+	return add_if_not_exist(&p->header.link, &actor->messages);
+}
+
+static struct msg *pop_message(struct list *q)
 {
 	if (list_empty(q)) {
 		return NULL;
 	}
 
-	struct sized_msg *msg = list_entry(list_first(q),
-			struct sized_msg, header);
+	struct msg *msg = list_entry(list_first(q), struct msg, header);
 	list_del(&msg->header.link, q);
 
 	return msg;
 }
 
-static int schedule_actor(struct actor *actor, struct actor_context *ctx)
+static bool has_message(const struct list *q)
+{
+	return !list_empty(q);
+}
+
+static int schedule_actor(struct actor *actor, struct actor_ctx *ctx)
 {
 	struct core *core = &ctx->core[actor->priority];
 
-	if (add_to_list(&actor->link, &core->runq) == 0) {
-		sem_post(&core->dispatch_event);
-	}
+	push_actor(actor, core);
+	sem_post(&core->dispatch_event);
 
 	return 0;
 }
@@ -126,13 +139,22 @@ static void dispatch_actor(struct core *core)
 {
 	struct actor *actor = NULL;
 	struct actor_msg *message = NULL;
-	struct sized_msg *p;
+	struct msg *p;
 
 	actor_lock();
 
-	actor = pop_actor(&core->runq);
+	if ((actor = pop_actor(&core->runq)) == NULL) {
+		actor_unlock();
+		ACTOR_WARN("No actor found");
+		return;
+	}
+
 	if ((p = pop_message(&actor->messages))) {
 		message = (struct actor_msg *)(void *)p->payload;
+
+		if (has_message(&actor->messages)) {
+			push_actor(actor, core);
+		}
 	}
 
 	actor_unlock();
@@ -141,7 +163,7 @@ static void dispatch_actor(struct core *core)
 
 	actor_pre_dispatch_hook(actor, message);
 
-	if (actor && actor->handler) {
+	if (actor->handler) {
 		(*actor->handler)(actor, message);
 	}
 
@@ -163,8 +185,7 @@ static void *dispatcher(void *e)
 	return NULL;
 }
 
-static int initialize_scheduler(struct actor_context *ctx,
-		size_t stack_size_bytes)
+static int initialize_scheduler(struct actor_ctx *ctx, size_t stack_size_bytes)
 {
 	for (int i = 0; i < ACTOR_PRIORITY_MAX; i++) {
 		struct core *core = &ctx->core[i];
@@ -195,7 +216,7 @@ static int initialize_scheduler(struct actor_context *ctx,
 	return 0;
 }
 
-static int deinitialize_scheduler(struct actor_context *ctx)
+static int deinitialize_scheduler(struct actor_ctx *ctx)
 {
 	for (int i = 0; i < ACTOR_PRIORITY_MAX; i++) {
 		struct core *core = &ctx->core[i];
@@ -229,7 +250,7 @@ struct actor_msg *actor_alloc(size_t payload_size)
 	actor_unlock();
 
 	if (p) {
-		struct sized_msg *msg = (struct sized_msg *)p;
+		struct msg *msg = (struct msg *)p;
 		ACTOR_INFO("Allocated: %p (%p)", msg, msg->payload);
 
 		return (struct actor_msg *)(void *)msg->payload;
@@ -245,12 +266,12 @@ int actor_free(struct actor_msg *msg)
 	}
 
 	struct list *head = &m.msgpool.free_list.head;
-	struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
+	struct msg *p = list_entry(msg, struct msg, payload);
 	ACTOR_INFO("Free: %p (%p)", p, p->payload);
 
 	actor_lock();
 
-	add_to_list(&p->header.link, head);
+	add_if_not_exist(&p->header.link, head);
 
 	actor_unlock();
 
@@ -268,11 +289,11 @@ size_t actor_len(void)
 
 	actor_lock();
 
-	size_t cnt = (size_t)list_count(head);
+	const size_t cnt = (size_t)list_count(head);
 
 	actor_unlock();
 
-	return m.msgpool.cap - cnt * sizeof(struct sized_msg);
+	return m.msgpool.cap - cnt * sizeof(struct msg);
 }
 
 int actor_send(struct actor *actor, struct actor_msg *msg)
@@ -280,13 +301,15 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 	assert(actor);
 
 	bool need_schedule = true;
+	int rc = 0;
 
 	actor_lock();
 
 	if (msg) {
-		struct sized_msg *p = list_entry(msg, struct sized_msg, payload);
-		if (add_to_list(&p->header.link, &actor->messages)) {
+		struct msg *p = list_entry(msg, struct msg, payload);
+		if ((rc = push_message(p, actor)) != 0) {
 			need_schedule = false;
+			ACTOR_WARN("Duplicate message %p", msg);
 		}
 	}
 
@@ -296,7 +319,7 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 
 	actor_unlock();
 
-	return 0;
+	return rc;
 }
 
 int actor_send_defer(struct actor *actor, struct actor_msg *msg,
@@ -342,13 +365,13 @@ int actor_init(void *mem, size_t memsize, size_t stack_size_bytes)
 	m.msgpool.cap = memsize - remainder;
 
 	struct list *free_list_head = &m.msgpool.free_list.head;
-	struct sized_msg *sized_pool = (struct sized_msg *)m.msgpool.buf;
+	struct msg *sized_pool = (struct msg *)m.msgpool.buf;
 	size_t max_index = m.msgpool.cap / sizeof(*sized_pool);
 
 	list_init(free_list_head);
 
 	for (size_t i = 0; i < max_index; i++) {
-		add_to_list(&sized_pool[i].header.link, free_list_head);
+		add_if_not_exist(&sized_pool[i].header.link, free_list_head);
 		ACTOR_DEBUG("free entry: %p", &sized_pool[i].header.link);
 	}
 
