@@ -120,7 +120,7 @@ static struct msg *pop_message(struct list *q)
 	return msg;
 }
 
-static bool has_message(struct list *q)
+static bool has_message(const struct list *q)
 {
 	return !list_empty(q);
 }
