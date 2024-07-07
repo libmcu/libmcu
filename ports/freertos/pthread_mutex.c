@@ -66,7 +66,13 @@ int pthread_mutex_lock(pthread_mutex_t *mutex)
 
 int pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	return pthread_mutex_lock(mutex);
+	if (mutex == NULL) {
+		return -EINVAL;
+	}
+
+	SemaphoreHandle_t sema = (SemaphoreHandle_t)*mutex;
+
+	return pthread_mutex_lock_internal(sema, 0);
 }
 
 int pthread_mutex_unlock(pthread_mutex_t *mutex)
