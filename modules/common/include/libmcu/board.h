@@ -28,6 +28,8 @@ typedef enum {
 	BOARD_REBOOT_DEBUGGER,
 } board_reboot_reason_t;
 
+typedef void (*board_idle_hook_t)(void);
+
 void board_init(void);
 void board_reboot(void);
 int board_reset_factory(void);
@@ -41,15 +43,21 @@ const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 
 unsigned long board_get_time_since_boot_ms(void);
 
+int board_register_idle_hook(int opt, board_idle_hook_t func);
 uint32_t board_random(void);
 
 /**
- * @brief Get overall CPU usage
+ * @brief Get the CPU load for a specific core over a certain period.
  *
- * @param core_id the core's identifier
- * @return percentage of 0 to 100
+ * This function returns the CPU load percentage for a specific core identified
+ * by `core_id` over a period of time specified by `period_sec` in seconds.
+ *
+ * @param[in] core_id The ID of the core for which to get the CPU load.
+ * @param[n] period_sec The period over which to measure the CPU load in seconds.
+ * @return The CPU load percentage for the specified core over the specified
+ *         period.
  */
-uint8_t board_cpuload(int core_id);
+uint8_t board_cpuload(int core_id, uint32_t period_sec);
 
 unsigned long board_get_free_heap_bytes(void);
 unsigned long board_get_total_heap_bytes(void);
