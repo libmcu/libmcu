@@ -66,6 +66,16 @@ unsigned long board_get_current_stack_watermark(void);
 
 void *board_get_current_thread(void);
 
+/**
+ * @brief Get the revision number of the board.
+ *
+ * This function returns the revision number of the board. The revision number
+ * is a unique identifier that represents the version of the board.
+ *
+ * @return The revision number of the board.
+ */
+int board_get_revision(void);
+
 #if defined(__cplusplus)
 }
 #endif

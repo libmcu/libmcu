@@ -112,3 +112,9 @@ uint8_t board_cpuload(int core_id, uint32_t period_sec)
 	unused(period_sec);
 	return 0;
 }
+
+LIBMCU_WEAK
+int board_get_revision(void)
+{
+	return 0;
+}
