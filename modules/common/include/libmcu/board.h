@@ -37,6 +37,7 @@ int board_reset_factory(void);
 const char *board_get_version_string(void);
 const char *board_get_build_date_string(void);
 const char *board_get_serial_number_string(void);
+const char *board_name(void);
 
 board_reboot_reason_t board_get_reboot_reason(void);
 const char *board_get_reboot_reason_string(board_reboot_reason_t reason);

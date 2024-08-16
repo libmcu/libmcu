@@ -27,7 +27,13 @@ const char *board_get_build_date_string(void)
 LIBMCU_WEAK
 const char *board_get_serial_number_string(void)
 {
-	return "S/N";
+	return "";
+}
+
+LIBMCU_WEAK
+const char *board_name(void)
+{
+	return "";
 }
 
 const char *board_get_reboot_reason_string(board_reboot_reason_t reason)
