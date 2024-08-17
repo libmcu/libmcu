@@ -21,7 +21,8 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-LIBMCU_ASSERT(BLE_GAP_EVT_MAX < UINT8_MAX);
+static_assert(BLE_GAP_EVT_MAX < UINT8_MAX,
+		"BLE_GAP_EVT_MAX must be less than UINT8_MAX");
 
 #if !defined(BLE_LOG_DEBUG)
 #define BLE_LOG_DEBUG(...)

@@ -56,3 +56,4 @@ build
 tests/cpputest
 .ccls-cache
 compile_commands.json
+.cache

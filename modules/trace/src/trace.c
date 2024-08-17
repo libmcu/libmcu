@@ -12,7 +12,7 @@
 #define MIN(a, b)			(((a) > (b))? (b) : (a))
 #endif
 
-LIBMCU_ASSERT((TRACE_MAXLEN & (TRACE_MAXLEN - 1)) == 0);
+static_assert((TRACE_MAXLEN & (TRACE_MAXLEN - 1)) == 0, "");
 
 static struct {
 	struct trace tracing[TRACE_MAXLEN];

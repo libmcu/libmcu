@@ -33,7 +33,7 @@ struct subscription {
 	void *context;
 	intptr_t _placeholder_for_compatibility_to_tiny_pubsub;
 };
-LIBMCU_STATIC_ASSERT(sizeof(struct subscription)
+static_assert(sizeof(struct subscription)
 		== sizeof(pubsub_subscribe_static_t), "");
 
 static struct {

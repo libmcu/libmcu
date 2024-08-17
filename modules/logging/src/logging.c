@@ -36,11 +36,11 @@ typedef struct {
 	logging_t type;
 	uint8_t message[];
 } LIBMCU_PACKED logging_data_t;
-LIBMCU_STATIC_ASSERT(sizeof(logging_t) == sizeof(uint8_t),
+static_assert(sizeof(logging_t) == sizeof(uint8_t),
 		"The size of logging_t must be the same of uint8_t.");
-LIBMCU_STATIC_ASSERT(LOGGING_TYPE_MAX <= (1U << (sizeof(logging_t) * 8)) - 1,
+static_assert(LOGGING_TYPE_MAX <= (1U << (sizeof(logging_t) * 8)) - 1,
 		"TYPE_MAX must not exceed its data type size.");
-LIBMCU_STATIC_ASSERT(LOGGING_MESSAGE_MAXLEN
+static_assert(LOGGING_MESSAGE_MAXLEN
 		< (1U << (sizeof(((logging_data_t *)0)->message_length) * 8)),
 		"MESSAGE_MAXLEN must not exceed its data type size.");
 

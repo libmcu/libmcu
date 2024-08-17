@@ -36,7 +36,8 @@
 #define BLE_LOG_ERROR(...)
 #endif
 
-LIBMCU_ASSERT(BLE_GAP_EVT_MAX < UINT8_MAX);
+static_assert(BLE_GAP_EVT_MAX < UINT8_MAX,
+		"BLE_GAP_EVT_MAX must be less than UINT8_MAX");
 
 #define BLE_PRIORITY			3
 #define ADV_INTERVAL_UNIT_THOUSANDTH	625

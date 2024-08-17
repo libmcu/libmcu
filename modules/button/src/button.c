@@ -11,16 +11,16 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
-LIBMCU_STATIC_ASSERT(BUTTON_MAX < 8*sizeof(unsigned int),
+static_assert(BUTTON_MAX < 8*sizeof(unsigned int),
 		"BUTTON_MAX must be less than bitmap data type size.");
-LIBMCU_STATIC_ASSERT(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_PERIOD_MS,
+static_assert(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_PERIOD_MS,
 		"The sampling period time must be less than press hold time.");
 
 #define MIN_PRESSED_HISTORY			\
 	(BUTTON_MIN_PRESS_TIME_MS / BUTTON_SAMPLING_PERIOD_MS)
 #define HISTORY_MASK				\
 	((1U << (MIN_PRESSED_HISTORY + 1)) - 1) /* 0b1111111 */
-LIBMCU_STATIC_ASSERT(MIN_PRESSED_HISTORY < (8*sizeof(unsigned int) - 2),
+static_assert(MIN_PRESSED_HISTORY < (8*sizeof(unsigned int) - 2),
 		"The history pattern must be within the data type size.");
 
 typedef enum {

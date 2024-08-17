@@ -24,8 +24,10 @@
 #if !defined(STM32_NVS_SCRATCH_FLASH_ADDR)
 #define STM32_NVS_SCRATCH_FLASH_ADDR	0x0807f800 /* bank2 page.127 */
 #endif
-LIBMCU_ASSERT(STM32_NVS_FLASH_SIZE >= 1024);
-LIBMCU_ASSERT(STM32_NVS_FLASH_SECTOR_SIZE >= STM32_NVS_FLASH_SIZE);
+static_assert(STM32_NVS_FLASH_SIZE >= 1024,
+		"STM32_NVS_FLASH_SIZE must be greater than or equal to 1024");
+static_assert(STM32_NVS_FLASH_SECTOR_SIZE >= STM32_NVS_FLASH_SIZE,
+		"STM32_NVS_FLASH_SECTOR_SIZE must be greater than or equal to STM32_NVS_FLASH_SIZE");
 
 struct flash {
 	struct flash_api api;

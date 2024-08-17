@@ -34,7 +34,7 @@ struct actor_msg {
 #define ACTOR_DEFAULT_MESSAGE_SIZE		\
 	(sizeof(struct actor_msg) + sizeof(uintptr_t))
 #endif
-LIBMCU_STATIC_ASSERT((ACTOR_DEFAULT_MESSAGE_SIZE % sizeof(uintptr_t)) == 0,
+static_assert((ACTOR_DEFAULT_MESSAGE_SIZE % sizeof(uintptr_t)) == 0,
 		"ACTOR_DEFAULT_MESSAGE_SIZE should be aligned to system memory alignment.");
 
 struct msg {

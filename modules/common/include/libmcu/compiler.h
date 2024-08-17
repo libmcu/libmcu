@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -27,9 +27,16 @@ extern "C" {
 #define LIBMCU_PACKED			__attribute__((packed))
 #define LIBMCU_NO_INSTRUMENT		__attribute__((no_instrument_function))
 
-#define LIBMCU_STATIC_ASSERT(exp, msg)	__extension__ _Static_assert(exp, msg)
-#define LIBMCU_ASSERT(exp)		\
-	__extension__ _Static_assert(exp, stringify((exp)))
+#if !defined(static_assert)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#define static_assert _Static_assert
+#else
+#define static_assert_paste(a, b)	a ## b
+#define static_assert_expand(a,b)	static_assert_paste(a, b)
+#define static_assert(expr, msg)	\
+	enum { static_assert_expand(ASSERT_line_,__LINE__) = 1 / (expr) }
+#endif
+#endif
 
 #define barrier()			__asm__ __volatile__("" ::: "memory")
 #define ACCESS_ONCE(x)			(*(volatile __typeof__(x) *)&(x))
