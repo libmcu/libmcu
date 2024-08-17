@@ -39,7 +39,7 @@ typedef struct {
 	pubsub_callback_t callback;
 	void *context;
 } subscribe_t;
-LIBMCU_STATIC_ASSERT(sizeof(subscribe_t) == sizeof(pubsub_subscribe_static_t),
+static_assert(sizeof(subscribe_t) == sizeof(pubsub_subscribe_static_t),
 	"The size of public and private subscribe data type must be the same.");
 
 static struct {

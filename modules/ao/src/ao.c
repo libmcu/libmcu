@@ -25,7 +25,8 @@
 #define AO_ERROR(...)
 #endif
 
-LIBMCU_ASSERT(AO_EVENT_MAXLEN < UINT16_MAX);
+static_assert(AO_EVENT_MAXLEN < UINT16_MAX,
+		"AO_EVENT_MAXLEN must be less than UINT16_MAX");
 
 static uint16_t get_index(uint16_t index)
 {

@@ -15,7 +15,8 @@ enum {
 #undef METRICS_DEFINE
 	METRICS_KEY_MAX,
 };
-LIBMCU_ASSERT(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8));
+static_assert(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8),
+	"METRICS_KEY_MAX must be less than the maximum value of metric_key_t");
 
 #define METRICS_KEY_MAGIC		METRICS_KEY_MAX
 #define MAGIC_KEY			0xffU

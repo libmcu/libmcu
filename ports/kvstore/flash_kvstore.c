@@ -31,7 +31,8 @@ struct meta_entry {
 	uint8_t _padding[FLASH_LINE_ALIGN_BYTES - 16];
 #endif
 } LIBMCU_PACKED;
-LIBMCU_ASSERT(sizeof(struct meta_entry) == FLASH_LINE_ALIGN_BYTES);
+static_assert(sizeof(struct meta_entry) == FLASH_LINE_ALIGN_BYTES,
+		"meta_entry size must be aligned to FLASH_LINE_ALIGN_BYTES");
 
 struct meta {
 	struct meta_entry entry;
