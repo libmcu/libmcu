@@ -1,6 +1,8 @@
 #include "CppUTestExt/MockSupport.h"
 #include "libmcu/wifi.h"
 
+void fake_wifi_trigger_callback(enum wifi_event evt, const void *data);
+
 struct wifi {
 	struct wifi_api api;
 };
@@ -10,12 +12,10 @@ static wifi_event_callback_t callback;
 static void *callback_ctx;
 
 static int do_connect(struct wifi *self, const struct wifi_conn_param *param) {
-	int rc = mock().actualCall("wifi_connect").returnIntValue();
-	enum wifi_event evt = rc? WIFI_EVT_DISCONNECTED : WIFI_EVT_CONNECTED;
-	if (callback) {
-		(*callback)(iface, evt, 0, callback_ctx);
-	}
-	return rc;
+	return mock().actualCall("wifi_connect")
+		.withMemoryBufferParameter("ssid", (const uint8_t *)param->ssid, param->ssid_len)
+		.withMemoryBufferParameter("pass", (const uint8_t *)param->psk, param->psk_len)
+		.returnIntValue();
 }
 
 static int do_disconnect(struct wifi *self) {
@@ -60,4 +60,11 @@ struct wifi *wifi_create(int id) {
 int wifi_delete(struct wifi *self) {
 	(void)self;
 	return 0;
+}
+
+void fake_wifi_trigger_callback(enum wifi_event evt, const void *data)
+{
+	if (callback) {
+		(*callback)(iface, evt, data, callback_ctx);
+	}
 }
