@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -365,17 +365,21 @@ static cli_cmd_error_t cli_step_core(struct cli *cli)
 	return err;
 }
 
-void cli_step(struct cli *cli)
+cli_cmd_error_t cli_step(struct cli *cli)
 {
-	cli_step_core(cli);
+	return cli_step_core(cli);
 }
 
-void cli_run(struct cli *cli)
+void cli_run(struct cli *cli, void (*sleep)(void))
 {
 	cli_cmd_error_t rc;
 
 	do {
 		rc = cli_step_core(cli);
+
+		if (sleep) {
+			(*sleep)();
+		}
 	} while (rc != CLI_CMD_EXIT);
 
 	cli->io->write(CLI_PROMPT_EXIT_MESSAGE,

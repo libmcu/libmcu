@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -42,8 +42,8 @@ struct cli {
 void cli_init(struct cli *cli, struct cli_io const *io,
 		void *buf, size_t bufsize);
 void cli_register_cmdlist(struct cli *cli, const struct cli_cmd **cmdlist);
-void cli_run(struct cli *cli);
-void cli_step(struct cli *cli);
+void cli_run(struct cli *cli, void (*sleep)(void));
+cli_cmd_error_t cli_step(struct cli *cli);
 
 #if defined(__cplusplus)
 }
