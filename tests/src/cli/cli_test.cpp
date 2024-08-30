@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -81,128 +81,128 @@ TEST_GROUP(cli) {
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGiven) {
 	given("Hello, World\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCR) {
 	given("Hello, World\rexit\r");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnUnknownCommand_WhenUnknownCommandGivenWithCRLF) {
 	given("Hello, World\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ Hello, World\ncommand not found\n");
 }
 
 TEST(cli, cli_ShouldReturnExit_WhenExitCommandGiven) {
 	given("exit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ exit\nEXIT\n");
 }
 
 TEST(cli, cli_ShouldReturnBLANK_WhenNoCommandGiven) {
 	given("\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ \n$ exit\nEXIT\n");
 }
 
 TEST(cli, cli_ShouldDeletePreviousCharacter_WhenBackspaceGiven) {
 	given("help\bq\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ help\b \bq\ncommand not found");
 }
 
 TEST(cli, cli_ShouldIgnoreTab) {
 	given("hel\tp\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ help\n");
 }
 
 TEST(cli, cli_ShouldParseArgs_WhenMultipleArgsGiven) {
 	given("args 1 2 3\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args 1 2 3\n1: args\n2: 1\n3: 2\n4: 3\n");
 }
 
 TEST(cli, cli_ShouldIgnoreArgs_WhenMoreThanMaxArgsGiven) {
 	given("args 1 2 3 4\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args 1 2 3 4\n1: args\n2: 1\n3: 2\n4: 3\n");
 }
 
 TEST(cli, cli_ShouldReturnError_WhenErrorGiven) {
 	given("error\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ error\nERROR\n");
 }
 
 TEST(cli, cli_ShouldReturnDesc_WhenCommandUsageInvalid) {
 	given("invalid\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ invalid\ndesc\n");
 }
 
 TEST(cli, cli_ShouldIgnoreInput_WhenDefaultMaxLen62Reached) {
 	given("1234567890123456789012345678901234567890123456789012345678901234567890\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ 12345678901234567890123456789012345678901234567890123456789012\n");
 }
 
 TEST(cli, ShouldNotSplitArguments_WhenQuotedWordGiven) {
 	given("args first \"2 second\"\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args first \"2 second\"\n1: args\n2: first\n3: 2 second\n");
 }
 
 TEST(cli, ShouldTrimTrailingSpaces) {
 	given("args first   second \nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args first   second \n1: args\n2: first\n3: second\n$");
 }
 
 TEST(cli, ShouldTrimParameterLeadingSpaces) {
 	given("args     first\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args     first\n1: args\n2: first\n");
 }
 
 TEST(cli, ShouldTrimLeadingSpaces) {
 	given("  args     first\nexit\n");
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$   args     first\n1: args\n2: first\n");
 }
 
 TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPGiven) {
 	char input[] = { 'a','r','g','s','\n', CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args\n1: args\n$ args\n1: args\n");
 }
 TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterTypingGiven) {
 	char input[] = { 'a','r','g','s','\n', 't',CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args\n1: args\n$ t\b \bargs\n1: args\n");
 }
 TEST(cli, ShouldPrintPreviousHistory_WhenCtrlPAfterLongerTypingGiven) {
 	char input[] = { 'a','r','g','s','\n', '1','2','3','4','5','6',CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args\n1: args\n$ 123456\b\b\b\b\b\b      \b\b\b\b\b\bargs\n1: args\n");
 }
 TEST(cli, ShouldPrintPreviousHistory_WhenOnlyOneHistoryGiven) {
 	char input[] = { 'a','r','g','s','\n', CTRL_P, CTRL_P,'\n', 'e','x','i','t','\n' };
 	given(input);
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ args\n1: args\n$ args\n1: args\n");
 }
 
 TEST(cli, ShouldPrintNewLine_WhenCtrlCGiven) {
 	char input[] = { 'a','r','g', CTRL_C, 'e','x','i','t','\n' };
 	given(input);
-	cli_run(&cli);
+	cli_run(&cli, NULL);
 	then("$ arg\n");
 }
