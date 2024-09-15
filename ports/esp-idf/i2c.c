@@ -5,7 +5,6 @@
  */
 
 #include "libmcu/i2c.h"
-#include "libmcu/metrics.h"
 
 #include <errno.h>
 #include <string.h>
@@ -31,7 +30,6 @@ static int read_i2c(struct i2c *self, uint8_t slave_addr,
 	pthread_mutex_unlock(&self->mutex);
 
 	if (rc != ESP_OK) {
-		metrics_increase(I2CErrorRead);
 		return -EIO;
 	}
 
@@ -47,7 +45,6 @@ static int write_i2c(struct i2c *self, uint8_t slave_addr,
 	pthread_mutex_unlock(&self->mutex);
 
 	if (rc != ESP_OK) {
-		metrics_increase(I2CErrorWrite);
 		rc = -EIO;
 	}
 
@@ -73,7 +70,6 @@ static int read_reg(struct i2c *self, uint8_t slave_addr,
 	pthread_mutex_unlock(&self->mutex);
 
 	if (rc != ESP_OK) {
-		metrics_increase(I2CErrorRead);
 		return -EIO;
 	}
 
@@ -88,7 +84,6 @@ static int write_reg(struct i2c *self, uint8_t slave_addr,
 	size_t len = data_len + reg_len;
 	uint8_t *buf = (uint8_t *)malloc(len);
 	if (buf == NULL) {
-		metrics_increase(HeapAllocFailure);
 		return -ENOMEM;
 	}
 
@@ -111,7 +106,6 @@ static int write_reg(struct i2c *self, uint8_t slave_addr,
 	pthread_mutex_unlock(&self->mutex);
 
 	if (rc != ESP_OK) {
-		metrics_increase(I2CErrorWrite);
 		rc = -EIO;
 	}
 
@@ -134,12 +128,10 @@ static int enable_i2c(struct i2c *self, uint32_t freq_hz)
 	};
 
 	if (i2c_param_config(self->channel, &conf) != ESP_OK) {
-		metrics_increase(I2CErrorParam);
 		return -EINVAL;
 	}
 
 	if (i2c_driver_install(self->channel, conf.mode, 0, 0, 0) != ESP_OK) {
-		metrics_increase(I2CError);
 		return -EFAULT;
 	}
 
@@ -151,7 +143,6 @@ static int disable_i2c(struct i2c *self)
 	pthread_mutex_destroy(&self->mutex);
 
 	if (i2c_driver_delete(self->channel) != ESP_OK) {
-		metrics_increase(I2CError);
 		return -EFAULT;
 	}
 
