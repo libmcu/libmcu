@@ -14,19 +14,13 @@
 #include "driver/spi_master.h"
 
 #define MAX_SPI			2
-
-#if defined(esp32)
-#define SPI_HOST		HSPI_HOST
-#else
-#define SPI_HOST		SPI2_HOST
-#endif
-
 #define DEFAULT_QUEUE_SIZE	7
 
 struct spi {
 	struct spi_api api;
 	struct spi_pin pin;
 	spi_device_handle_t handle;
+	spi_host_device_t host;
 };
 
 static int convert_freq_to_clock_div(uint32_t freq_hz)
@@ -120,7 +114,8 @@ static int enable_spi(struct spi *self, spi_mode_t mode, uint32_t freq_hz)
 		.quadhd_io_num = -1,
 		/*.flags = SPICOMMON_BUSFLAG_MASTER,*/
 	};
-	esp_err_t ret = spi_bus_initialize(SPI_HOST, &buscfg, SPI_DMA_CH_AUTO);
+	esp_err_t ret = spi_bus_initialize(self->host,
+			&buscfg, SPI_DMA_CH_AUTO);
 	ESP_ERROR_CHECK(ret);
 
 	spi_device_interface_config_t devcfg = {
@@ -131,7 +126,7 @@ static int enable_spi(struct spi *self, spi_mode_t mode, uint32_t freq_hz)
 		/*.flags = SPI_DEVICE_HALFDUPLEX,*/
 	};
 
-	ret = spi_bus_add_device(SPI_HOST, &devcfg, &self->handle);
+	ret = spi_bus_add_device(self->host, &devcfg, &self->handle);
 	ESP_ERROR_CHECK(ret);
 
 	return 0;
@@ -140,7 +135,7 @@ static int enable_spi(struct spi *self, spi_mode_t mode, uint32_t freq_hz)
 static int disable_spi(struct spi *self)
 {
 	spi_bus_remove_device(self->handle);
-	spi_bus_free(SPI_HOST);
+	spi_bus_free(self->host);
 	return 0;
 }
 
@@ -148,10 +143,12 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin)
 {
 	static struct spi spi[MAX_SPI];
 
-	if (channel == 0 || channel > MAX_SPI) {
+	/* accept only SPI2 and SPI3 */
+	if (channel < 2 || channel >= (2 + MAX_SPI)) {
 		return NULL;
 	}
 
+	channel -= 2;
 	spi[channel].api = (struct spi_api) {
 		.enable = enable_spi,
 		.disable = disable_spi,
@@ -159,6 +156,23 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin)
 		.read = read_spi,
 		.writeread = writeread,
 	};
+
+	switch (channel) {
+	case 0:
+#if defined(esp32)
+		spi[channel].host = HSPI_HOST;
+#else
+		spi[channel].host = SPI2_HOST;
+#endif
+		break;
+	case 1:
+#if defined(esp32)
+		spi[channel].host = VSPI_HOST;
+#else
+		spi[channel].host = SPI3_HOST;
+#endif
+		break;
+	}
 
 	if (pin) {
 		memcpy(&spi[channel].pin, pin, sizeof(*pin));
