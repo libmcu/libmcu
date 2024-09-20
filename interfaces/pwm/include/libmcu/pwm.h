@@ -56,7 +56,7 @@ static inline int pwm_stop(struct pwm *self) {
 	return ((struct pwm_api *)self)->stop(self);
 }
 
-struct pwm *pwm_create(uint8_t ch);
+struct pwm *pwm_create(uint8_t ch, int pin);
 int pwm_delete(struct pwm *self);
 
 #if defined(__cplusplus)

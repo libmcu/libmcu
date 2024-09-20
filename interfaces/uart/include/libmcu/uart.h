@@ -27,6 +27,13 @@ struct uart_api {
 			uart_rx_callback_t cb, void *cb_ctx);
 };
 
+struct uart_pin {
+	int rx;
+	int tx;
+	int rts;
+	int cts;
+};
+
 static inline int uart_enable(struct uart *self, uint32_t baudrate) {
 	return ((struct uart_api *)self)->enable(self, baudrate);
 }
@@ -50,7 +57,7 @@ static inline int uart_register_rx_callback(struct uart *self,
 			cb, cb_ctx);
 }
 
-struct uart *uart_create(uint8_t channel);
+struct uart *uart_create(uint8_t channel, const struct uart_pin *pin);
 void uart_delete(struct uart *self);
 
 #if defined(__cplusplus)
