@@ -7,6 +7,10 @@
 #include "libmcu/runner.h"
 #include <string.h>
 
+#if !defined(RUNNER_MAX)
+#define RUNNER_MAX		8
+#endif
+
 static struct {
 	const struct runner *runners;
 	size_t nr_runners;
@@ -106,11 +110,11 @@ int runner_register_change_cb(runner_change_cb_t pre_cb, void *pre_ctx,
 
 int runner_init(const struct runner *runners, size_t nr_runners)
 {
-	if (!runners || nr_runners == 0 || nr_runners > UINT8_MAX) {
+	if (!runners || nr_runners == 0 || nr_runners > RUNNER_MAX) {
 		return -EINVAL;
 	}
 
-	runner_t duplicate_check[nr_runners];
+	runner_t duplicate_check[RUNNER_MAX];
 
 	memset(duplicate_check, 0, sizeof(duplicate_check));
 
