@@ -1,8 +1,10 @@
 /*
- * SPDX-FileCopyrightText: 2024 Kyunghwan Kwon <k@libmcu.org>
+ * SPDX-FileCopyrightText: 2023 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
+
+/* NOTE: All the functions in this module are not thread-safe. */
 
 #ifndef LIBMCU_RUNNER_H
 #define LIBMCU_RUNNER_H
@@ -15,6 +17,8 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 #include <errno.h>
+
+#include "libmcu/runner_overrides.h"
 
 typedef uint8_t runner_t;
 typedef bool (*runner_change_cb_t)(const runner_t type, void *ctx);
@@ -32,7 +36,7 @@ struct runner_api {
 
 struct runner {
 	const struct runner_api *api;
-	runner_t type;
+	const runner_t type;
 };
 
 /**
@@ -68,59 +72,9 @@ int runner_register_change_cb(runner_change_cb_t pre_cb, void *pre_ctx,
 		runner_change_cb_t post_cb, void *post_ctx);
 void runner_start(const runner_t runner_type);
 int runner_change(const runner_t new_runner_type);
-const struct runner *runner(void);
+const struct runner *runner_current(void);
 runner_t runner_type(const struct runner *runner);
-
-/**
- * @brief This function performs a step in the runner's execution and calculates
- *        the time until the next execution period. It should be called
- *        periodically in the main loop of the application.
- *
- * @param[out] until_next_period_ms A pointer to a uint32_t where the time until
- *             the next execution period will be stored.
- *
- * @return int Returns 0 if the step was successful, and a non-zero error code
- *             otherwise.
- */
-static inline int runner_step(uint32_t *until_next_period_ms) {
-	if (runner()->api->step) {
-		return runner()->api->step(until_next_period_ms);
-	}
-	return -ENOENT;
-}
-
-static inline void runner_run(void) {
-	if (runner()->api->run) {
-		runner()->api->run();
-	}
-}
-
-static inline void runner_sleep(void) {
-	if (runner()->api->sleep) {
-		runner()->api->sleep();
-	}
-}
-
-static inline bool runner_busy(void) {
-	if (runner()->api->busy) {
-		runner()->api->busy();
-	}
-	return false;
-}
-
-static inline int runner_input(void *ctx) {
-	if (runner()->api->input) {
-		return runner()->api->input(ctx);
-	}
-	return -ENOENT;
-}
-
-static inline int runner_output(void *ctx) {
-	if (runner()->api->output) {
-		return runner()->api->output(ctx);
-	}
-	return -ENOENT;
-}
+runner_t runner_current_type(void);
 
 #if defined(__cplusplus)
 }

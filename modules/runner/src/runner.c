@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 Kyunghwan Kwon <k@libmcu.org>
+ * SPDX-FileCopyrightText: 2023 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -10,6 +10,14 @@
 #if !defined(RUNNER_MAX)
 #define RUNNER_MAX		8
 #endif
+
+/* NOTE: The default runner is a dummy runner that does nothing which would be
+ * used if runner called before initialized. */
+static struct runner_api default_runner_api;
+static struct runner default_runner = {
+	.api = &default_runner_api,
+	.type = (runner_t)-1,
+};
 
 static struct {
 	const struct runner *runners;
@@ -31,7 +39,7 @@ static const struct runner *find_runner_by_type(const runner_t runner_type)
 		}
 	}
 
-	return NULL;
+	return &default_runner;
 }
 
 static const struct runner *get_current(void)
@@ -49,14 +57,19 @@ static void set_current(const struct runner *runner)
 	m.current = runner;
 }
 
+const struct runner *runner_current(void)
+{
+	return get_current();
+}
+
 runner_t runner_type(const struct runner *runner)
 {
 	return runner->type;
 }
 
-const struct runner *runner(void)
+runner_t runner_current_type(void)
 {
-	return get_current();
+	return get_current_type();
 }
 
 int runner_change(const runner_t new_runner_type)
@@ -78,14 +91,21 @@ int runner_change(const runner_t new_runner_type)
 		}
 	}
 
-	old_runner->api->terminate();
+	if (old_runner->api->terminate) {
+		old_runner->api->terminate();
+	}
+
 	set_current(new_runner);
 
 	if (m.post_change_cb) {
 		m.post_change_cb(new_runner_type, m.post_change_cb_ctx);
 	}
 
-	return new_runner->api->prepare();
+	if (new_runner->api->prepare) {
+		return new_runner->api->prepare();
+	}
+
+	return 0;
 }
 
 void runner_start(const runner_t runner_type)
