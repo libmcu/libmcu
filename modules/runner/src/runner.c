@@ -106,8 +106,8 @@ int runner_register_change_cb(runner_change_cb_t pre_cb, void *pre_ctx,
 
 int runner_init(const struct runner *runners, size_t nr_runners)
 {
-	if (!runners || nr_runners == 0) {
-		return -ENOENT;
+	if (!runners || nr_runners == 0 || nr_runners > UINT8_MAX) {
+		return -EINVAL;
 	}
 
 	runner_t duplicate_check[nr_runners];
@@ -119,7 +119,7 @@ int runner_init(const struct runner *runners, size_t nr_runners)
 		duplicate_check[i] = r->type;
 		for (size_t j = 0; j < i; j++) {
 			if (duplicate_check[j] == r->type) {
-				return -EINVAL;
+				return -EBADF;
 			}
 		}
 	}
