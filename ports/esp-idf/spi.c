@@ -112,7 +112,7 @@ static int enable_spi(struct spi *self, spi_mode_t mode, uint32_t freq_hz)
 		.sclk_io_num = self->pin.sclk,
 		.quadwp_io_num = -1,
 		.quadhd_io_num = -1,
-		/*.flags = SPICOMMON_BUSFLAG_MASTER,*/
+		.flags = SPICOMMON_BUSFLAG_MASTER,
 	};
 	esp_err_t ret = spi_bus_initialize(self->host,
 			&buscfg, SPI_DMA_CH_AUTO);
@@ -121,7 +121,7 @@ static int enable_spi(struct spi *self, spi_mode_t mode, uint32_t freq_hz)
 	spi_device_interface_config_t devcfg = {
 		.clock_speed_hz = convert_freq_to_clock_div(freq_hz),
 		.mode = mode,
-		.spics_io_num = -1,
+		.spics_io_num = self->pin.default_cs,
 		.queue_size = DEFAULT_QUEUE_SIZE,
 		/*.flags = SPI_DEVICE_HALFDUPLEX,*/
 	};
