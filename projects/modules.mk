@@ -5,7 +5,7 @@ libmcu-basedir := $(LIBMCU_ROOT)/
 endif
 
 LIBMCU_MODULES ?= actor ao apptimer bitmap button cli common jobqueue logging \
-		  metrics pubsub retry pm fsm
+		  metrics pubsub retry runner pm fsm
 
 ifeq ($(filter common, $(LIBMCU_MODULES)),)
 LIBMCU_MODULES += common

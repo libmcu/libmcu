@@ -4,7 +4,7 @@ cmake_policy(SET CMP0057 NEW)
 
 if (NOT DEFINED LIBMCU_MODULES)
 	set(LIBMCU_MODULES actor ao apptimer bitmap button cli common jobqueue
-		logging metrics pubsub retry pm fsm)
+		logging metrics pubsub retry runner pm fsm)
 endif()
 
 if (NOT "common" IN_LIST LIBMCU_MODULES)
