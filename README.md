@@ -28,6 +28,7 @@ Any feedback would be appreciated.
 * [Power Management](modules/pm)
 * [PubSub](modules/pubsub)
 * [Retry with exponential backoff](modules/retry)
+* [Runner](modules/runner)
 * [Time Extension](modules/common)
 * [Trace](modules/trace)
 

@@ -36,6 +36,7 @@ struct spi_pin {
 	int miso;
 	int mosi;
 	int sclk;
+	int default_cs;
 };
 
 static inline int spi_enable(struct spi *self,
