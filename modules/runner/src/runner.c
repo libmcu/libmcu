@@ -97,12 +97,12 @@ int runner_change(const runner_t new_runner_type)
 
 	set_current(new_runner);
 
-	if (m.post_change_cb) {
-		m.post_change_cb(new_runner_type, m.post_change_cb_ctx);
-	}
-
 	if (new_runner->api->prepare) {
 		return new_runner->api->prepare();
+	}
+
+	if (m.post_change_cb) {
+		m.post_change_cb(new_runner_type, m.post_change_cb_ctx);
 	}
 
 	return 0;
@@ -112,12 +112,12 @@ void runner_start(const runner_t runner_type)
 {
 	set_current(find_runner_by_type(runner_type));
 
-	if (m.post_change_cb) {
-		m.post_change_cb(runner_type, m.post_change_cb_ctx);
-	}
-
 	if (get_current()->api->prepare) {
 		get_current()->api->prepare();
+	}
+
+	if (m.post_change_cb) {
+		m.post_change_cb(runner_type, m.post_change_cb_ctx);
 	}
 }
 
