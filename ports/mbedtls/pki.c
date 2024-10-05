@@ -151,6 +151,7 @@ int pki_generate_keypair(uint8_t *key_buf, size_t key_bufsize,
 }
 
 int pki_generate_csr(uint8_t *csr_buf, size_t csr_bufsize,
+		const uint8_t *prikey, size_t prikey_len,
 		const struct pki_csr_params *params)
 {
 	mbedtls_pk_context pk;
@@ -172,8 +173,8 @@ int pki_generate_csr(uint8_t *csr_buf, size_t csr_bufsize,
 		goto out_free;
 	}
 
-	if ((rc = mbedtls_pk_parse_key(&pk, params->prikey,
-			params->prikey_len + 1, NULL, 0)) != 0) {
+	if ((rc = mbedtls_pk_parse_key(&pk, prikey, prikey_len + 1, NULL, 0))
+			!= 0) {
 		goto out_free;
 	}
 
