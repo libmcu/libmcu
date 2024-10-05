@@ -8,6 +8,10 @@
 #include "libmcu/pwm.h"
 #include "libmcu/assert.h"
 
+#if !defined(DEFAULT_ESP_LEDC_TIMER_BIT)
+#define DEFAULT_ESP_LEDC_TIMER_BIT	LEDC_TIMER_9_BIT
+#endif
+
 struct pwm {
 	struct pwm_api api;
 
@@ -56,9 +60,15 @@ static int update_duty(struct pwm *self, int ch, uint32_t millipercent)
 	case LEDC_TIMER_13_BIT:
 		resolution = 8192;
 		break;
-	case LEDC_TIMER_10_BIT: /* fall through */
-	default:
+	case LEDC_TIMER_10_BIT:
 		resolution = 1024;
+		break;
+	case LEDC_TIMER_9_BIT:
+		resolution = 512;
+		break;
+	case LEDC_TIMER_8_BIT: /* fall through */
+	default:
+		resolution = 256;
 		break;
 	}
 
@@ -115,7 +125,7 @@ struct pwm *pwm_create(uint8_t ch, int pin)
 	pwm->timer = ch;
 	pwm->channel = 0;
 	pwm->speed_mode = LEDC_LOW_SPEED_MODE;
-	pwm->duty_resolution = LEDC_TIMER_10_BIT;
+	pwm->duty_resolution = DEFAULT_ESP_LEDC_TIMER_BIT;
 	pwm->freq_hz = 1000;
 	pwm->gpio_num = pin;
 
