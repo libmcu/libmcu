@@ -14,6 +14,10 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#if !defined(SPI_PIN_UNASSIGNED)
+#define SPI_PIN_UNASSIGNED		-1
+#endif
+
 typedef enum {
 	SPI_MODE_0, /* CPOL=0, CPHA=0 */
 	SPI_MODE_1, /* CPOL=0, CPHA=1 */
@@ -22,13 +26,16 @@ typedef enum {
 } spi_mode_t;
 
 struct spi;
+struct spi_device;
 
 struct spi_api {
-	int (*enable)(struct spi *self, spi_mode_t mode, uint32_t freq_hz);
-	int (*disable)(struct spi *self);
-	int (*write)(struct spi *self, const void *data, size_t data_len);
-	int (*read)(struct spi *self, void *buf, size_t bufsize);
-	int (*writeread)(struct spi *self, const void *txdata,
+	struct spi_device *(*enable)(struct spi *self,
+			spi_mode_t mode, uint32_t freq_hz, int pin_cs);
+	int (*disable)(struct spi_device *dev);
+	int (*write)(struct spi_device *dev,
+			const void *data, size_t data_len);
+	int (*read)(struct spi_device *dev, void *buf, size_t bufsize);
+	int (*writeread)(struct spi_device *dev, const void *txdata,
 			size_t txdata_len, void *rxbuf, size_t rxbuf_len);
 };
 
@@ -36,30 +43,29 @@ struct spi_pin {
 	int miso;
 	int mosi;
 	int sclk;
-	int default_cs;
 };
 
-static inline int spi_enable(struct spi *self,
-		spi_mode_t mode, uint32_t freq_hz) {
-	return ((struct spi_api *)self)->enable(self, mode, freq_hz);
+static inline struct spi_device *spi_enable(struct spi *self,
+		spi_mode_t mode, uint32_t freq_hz, int pin_cs) {
+	return ((struct spi_api *)self)->enable(self, mode, freq_hz, pin_cs);
 }
 
-static inline int spi_disable(struct spi *self) {
-	return ((struct spi_api *)self)->disable(self);
+static inline int spi_disable(struct spi_device *dev) {
+	return ((struct spi_api *)dev)->disable(dev);
 }
 
-static inline int spi_write(struct spi *self,
+static inline int spi_write(struct spi_device *dev,
 		const void *data, size_t data_len) {
-	return ((struct spi_api *)self)->write(self, data, data_len);
+	return ((struct spi_api *)dev)->write(dev, data, data_len);
 }
 
-static inline int spi_read(struct spi *self, void *buf, size_t bufsize) {
-	return ((struct spi_api *)self)->read(self, buf, bufsize);
+static inline int spi_read(struct spi_device *dev, void *buf, size_t bufsize) {
+	return ((struct spi_api *)dev)->read(dev, buf, bufsize);
 }
 
-static inline int spi_writeread(struct spi *self, const void *txdata,
+static inline int spi_writeread(struct spi_device *dev, const void *txdata,
 		size_t txdata_len, void *rxbuf, size_t rxbuf_len) {
-	return ((struct spi_api *)self)->writeread(self,
+	return ((struct spi_api *)dev)->writeread(dev,
 			txdata, txdata_len, rxbuf, rxbuf_len);
 }
 
