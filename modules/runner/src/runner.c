@@ -28,6 +28,8 @@ static struct {
 	runner_change_cb_t post_change_cb;
 	void *post_change_cb_ctx;
 
+	void *ctx;
+
 	const struct runner *current;
 } m;
 
@@ -98,7 +100,7 @@ int runner_change(const runner_t new_runner_type)
 	set_current(new_runner);
 
 	if (new_runner->api->prepare) {
-		return new_runner->api->prepare();
+		return new_runner->api->prepare(m.ctx);
 	}
 
 	if (m.post_change_cb) {
@@ -113,7 +115,7 @@ void runner_start(const runner_t runner_type)
 	set_current(find_runner_by_type(runner_type));
 
 	if (get_current()->api->prepare) {
-		get_current()->api->prepare();
+		get_current()->api->prepare(m.ctx);
 	}
 
 	if (m.post_change_cb) {
@@ -132,7 +134,7 @@ int runner_register_change_cb(runner_change_cb_t pre_cb, void *pre_ctx,
 	return 0;
 }
 
-int runner_init(const struct runner *runners, size_t nr_runners)
+int runner_init(const struct runner *runners, size_t nr_runners, void *ctx)
 {
 	if (!runners || nr_runners == 0 || nr_runners > RUNNER_MAX) {
 		return -EINVAL;
@@ -154,6 +156,7 @@ int runner_init(const struct runner *runners, size_t nr_runners)
 
 	m.runners = runners;
 	m.nr_runners = nr_runners;
+	m.ctx = ctx;
 
 	return 0;
 }
