@@ -106,7 +106,7 @@ static int convert_freq_to_clock_div(uint32_t freq_hz)
 		return SPI_MASTER_FREQ_11M;
 	} else if (freq_hz >= 10000000) {
 		return SPI_MASTER_FREQ_10M;
-	} else {
+	} else if (freq_hz >= 9000000){
 		return SPI_MASTER_FREQ_9M;
 	}
 
@@ -137,29 +137,17 @@ int spi_writeread(struct spi_device *dev,
 		void *rxbuf, size_t rxbuf_len)
 {
 	int rc = 0;
-	uint8_t *buf = (uint8_t *)calloc(1, txdata_len + rxbuf_len);
-
-	if (buf == NULL) {
-		return -ENOMEM;
-	}
-
-	memcpy(buf, txdata, txdata_len);
-
 	spi_transaction_t transaction = {
 		.length = txdata_len * 8,
 		.rxlength = rxbuf_len * 8,
-		.tx_buffer = buf,
-		.rx_buffer = &buf[txdata_len],
+		.tx_buffer = txdata,
+		.rx_buffer = rxbuf,
 		.user = (void *)dev,
 	};
 
 	if (spi_device_transmit(dev->handle, &transaction) != ESP_OK) {
 		rc = -EIO;
 	}
-
-	memcpy(rxbuf, &buf[txdata_len], rxbuf_len);
-
-	free(buf);
 
 	return rc;
 }
