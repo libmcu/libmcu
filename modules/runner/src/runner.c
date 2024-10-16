@@ -76,20 +76,25 @@ runner_t runner_current_type(void)
 
 int runner_change(const runner_t new_runner_type)
 {
+	int rc = 0;
+
 	if (new_runner_type == get_current_type()) {
-		return -EALREADY;
+		rc = -EALREADY;
+		goto out;
 	}
 
 	const struct runner *old_runner = get_current();
 	const struct runner *new_runner = find_runner_by_type(new_runner_type);
 
 	if (new_runner == NULL) {
-		return -EINVAL;
+		rc = -EINVAL;
+		goto out;
 	}
 
 	if (m.pre_change_cb) {
 		if (!m.pre_change_cb(new_runner_type, m.pre_change_cb_ctx)) {
-			return -EFAULT;
+			rc = -EFAULT;
+			goto out;
 		}
 	}
 
@@ -100,14 +105,15 @@ int runner_change(const runner_t new_runner_type)
 	set_current(new_runner);
 
 	if (new_runner->api->prepare) {
-		return new_runner->api->prepare(m.ctx);
+		rc = new_runner->api->prepare(m.ctx);
 	}
 
 	if (m.post_change_cb) {
 		m.post_change_cb(new_runner_type, m.post_change_cb_ctx);
 	}
 
-	return 0;
+out:
+	return rc;
 }
 
 void runner_start(const runner_t runner_type)
