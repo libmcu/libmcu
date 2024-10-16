@@ -31,6 +31,7 @@ struct pwm_channel;
  *         the function returns NULL.
  */
 struct pwm *pwm_create(uint8_t timer);
+
 /**
  * @brief Delete a PWM instance.
  *
@@ -43,29 +44,43 @@ struct pwm *pwm_create(uint8_t timer);
 int pwm_delete(struct pwm *self);
 
 /**
- * @brief Enable a PWM channel.
+ * Creates a new PWM channel.
  *
- * This function enables a PWM channel on a given pin. If the channel is 
- * already enabled, it will be reconfigured.
+ * @param[in] self A pointer to the PWM structure.
+ * @param[in] ch The channel number.
+ * @param[in] pin The pin number.
  *
- * @param[in] self The PWM instance.
- * @param[in] ch The channel to be enabled.
- * @param[in] pin The pin where the PWM signal will be output.
- *
- * @return A pointer to the enabled PWM channel. If the operation fails,
- *         the function returns NULL.
+ * @return A pointer to the created PWM channel.
  */
-struct pwm_channel *pwm_enable(struct pwm *self, int ch, int pin);
+struct pwm_channel *pwm_create_channel(struct pwm *self, int ch, int pin);
+
 /**
- * @brief Disable a PWM channel.
+ * Deletes a PWM channel.
  *
- * This function disables a PWM channel and frees the associated resources.
+ * @param[in] ch A pointer to the PWM channel to delete.
  *
- * @param[in] ch The PWM channel to be disabled.
+ * @return 0 on success, or a negative error code on failure.
+ */
+int pwm_delete_channel(struct pwm_channel *ch);
+
+/**
+ * Enables a PWM channel.
  *
- * @return 0 if the operation is successful, otherwise returns a non-zero error code.
+ * @param[in] ch A pointer to the PWM channel to enable.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int pwm_enable(struct pwm_channel *ch);
+
+/**
+ * Disables a PWM channel.
+ *
+ * @param[in] ch A pointer to the PWM channel to disable.
+ *
+ * @return 0 on success, or a negative error code on failure.
  */
 int pwm_disable(struct pwm_channel *ch);
+
 /**
  * @brief Start a PWM channel.
  *
@@ -78,6 +93,7 @@ int pwm_disable(struct pwm_channel *ch);
  * @return 0 if the operation is successful, otherwise returns a non-zero error code.
  */
 int pwm_start(struct pwm_channel *ch, uint32_t freq_hz, uint32_t duty_millipercent);
+
 /**
  * @brief Stop a PWM channel.
  *

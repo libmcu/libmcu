@@ -58,31 +58,42 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin);
 void spi_delete(struct spi *self);
 
 /**
- * @brief Enable a SPI device.
+ * Creates a new SPI device.
  *
- * This function enables a SPI device with a given mode, frequency, and chip
- * select pin.
- *
- * @param[in] self The SPI instance.
+ * @param[in] self A pointer to the SPI structure.
  * @param[in] mode The SPI mode.
- * @param[in] freq_hz The frequency of the SPI signal in Hz.
- * @param[in] pin_cs The chip select pin for the SPI device.
+ * @param[in] freq_hz The frequency in Hz.
+ * @param[in] pin_cs The chip select pin.
  *
- * @return A pointer to the enabled SPI device. If the operation fails,
- *         the function returns NULL.
+ * @return A pointer to the created SPI device.
  */
-struct spi_device *spi_enable(struct spi *self,
+struct spi_device *spi_create_device(struct spi *self,
 		spi_mode_t mode, uint32_t freq_hz, int pin_cs);
 
 /**
- * @brief Disable a SPI device.
+ * Deletes an SPI device.
  *
- * This function disables a SPI device and frees the associated resources.
+ * @param[in] dev A pointer to the SPI device to delete.
  *
- * @param[in] dev The SPI device to be disabled.
+ * @return 0 on success, or a negative error code on failure.
+ */
+int spi_delete_device(struct spi_device *dev);
+
+/**
+ * Enables an SPI device.
  *
- * @return 0 if the operation is successful, otherwise returns a non-zero error
- *         code.
+ * @param[in] dev A pointer to the SPI device to enable.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int spi_enable(struct spi_device *dev);
+
+/**
+ * Disables an SPI device.
+ *
+ * @param[in] dev A pointer to the SPI device to disable.
+ *
+ * @return 0 on success, or a negative error code on failure.
  */
 int spi_disable(struct spi_device *dev);
 
