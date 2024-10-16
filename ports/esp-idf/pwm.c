@@ -4,10 +4,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <string.h>
-#include "driver/ledc.h"
 #include "libmcu/pwm.h"
+
+#include <string.h>
+#include <errno.h>
+
 #include "libmcu/assert.h"
+#include "driver/ledc.h"
 
 #if !defined(DEFAULT_ESP_LEDC_TIMER_BIT)
 #define DEFAULT_ESP_LEDC_TIMER_BIT	LEDC_TIMER_9_BIT
@@ -18,6 +21,8 @@ struct pwm_channel {
 
 	uint8_t id;
 	int pin;
+
+	bool enabled;
 };
 
 struct pwm {
@@ -145,7 +150,25 @@ int pwm_stop(struct pwm_channel *ch)
 	return 0;
 }
 
-struct pwm_channel *pwm_enable(struct pwm *self, int ch, int pin)
+int pwm_enable(struct pwm_channel *ch)
+{
+	if (ch->enabled) {
+		return -EALREADY;
+	}
+
+	initialize_ledc(ch->pwm, ch->id, ch->pin);
+	ch->enabled = true;
+
+	return 0;
+}
+
+int pwm_disable(struct pwm_channel *ch)
+{
+	ch->enabled = false;
+	return 0;
+}
+
+struct pwm_channel *pwm_create_channel(struct pwm *self, int ch, int pin)
 {
 	self->channels[ch] = alloc_channel(self, ch, pin);
 
@@ -154,14 +177,12 @@ struct pwm_channel *pwm_enable(struct pwm *self, int ch, int pin)
 		self->speed_mode = LEDC_LOW_SPEED_MODE;
 		self->duty_resolution = DEFAULT_ESP_LEDC_TIMER_BIT;
 		self->freq_hz = 1000;
-
-		initialize_ledc(self, ch, pin);
 	}
 
 	return (struct pwm_channel *)self->channels[ch];
 }
 
-int pwm_disable(struct pwm_channel *ch)
+int pwm_delete_channel(struct pwm_channel *ch)
 {
 	free_channel(ch);
 
