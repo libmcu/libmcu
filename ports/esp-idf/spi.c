@@ -28,7 +28,6 @@ struct spi_device {
 };
 
 struct spi {
-	struct spi_api api;
 	struct spi_pin pin;
 
 	spi_host_device_t host;
@@ -114,7 +113,7 @@ static int convert_freq_to_clock_div(uint32_t freq_hz)
 	return SPI_MASTER_FREQ_8M;
 }
 
-static int write_spi(struct spi_device *dev, const void *data, size_t data_len)
+int spi_write(struct spi_device *dev, const void *data, size_t data_len)
 {
 	if (!data || data_len == 0) {
 		return -EINVAL;
@@ -133,8 +132,9 @@ static int write_spi(struct spi_device *dev, const void *data, size_t data_len)
 	return (int)data_len;
 }
 
-static int writeread(struct spi_device *dev, const void *txdata, size_t txdata_len,
-		       void *rxbuf, size_t rxbuf_len)
+int spi_writeread(struct spi_device *dev,
+		const void *txdata, size_t txdata_len,
+		void *rxbuf, size_t rxbuf_len)
 {
 	int rc = 0;
 	uint8_t *buf = (uint8_t *)calloc(1, txdata_len + rxbuf_len);
@@ -164,7 +164,7 @@ static int writeread(struct spi_device *dev, const void *txdata, size_t txdata_l
 	return rc;
 }
 
-static int read_spi(struct spi_device *dev, void *buf, size_t bufsize)
+int spi_read(struct spi_device *dev, void *buf, size_t bufsize)
 {
 	unused(dev);
 	unused(buf);
@@ -172,7 +172,7 @@ static int read_spi(struct spi_device *dev, void *buf, size_t bufsize)
 	return -ENOTSUP;
 }
 
-static struct spi_device *enable_spi(struct spi *self,
+struct spi_device *spi_enable(struct spi *self,
 		spi_mode_t mode, uint32_t freq_hz, int pin_cs)
 {
 	esp_err_t ret;
@@ -211,7 +211,7 @@ static struct spi_device *enable_spi(struct spi *self,
 	return device;
 }
 
-static int disable_spi(struct spi_device *dev)
+int spi_disable(struct spi_device *dev)
 {
 	esp_err_t err = spi_bus_remove_device(dev->handle);
 
@@ -232,13 +232,6 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin)
 	}
 
 	channel -= 2;
-	spi[channel].api = (struct spi_api) {
-		.enable = enable_spi,
-		.disable = disable_spi,
-		.write = write_spi,
-		.read = read_spi,
-		.writeread = writeread,
-	};
 
 	switch (channel) {
 	case 0:

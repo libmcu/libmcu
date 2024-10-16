@@ -25,52 +25,113 @@ typedef enum {
 	SPI_MODE_3, /* CPOL=1, CPHA=1 */
 } spi_mode_t;
 
-struct spi;
-struct spi_device;
-
-struct spi_api {
-	struct spi_device *(*enable)(struct spi *self,
-			spi_mode_t mode, uint32_t freq_hz, int pin_cs);
-	int (*disable)(struct spi_device *dev);
-	int (*write)(struct spi_device *dev,
-			const void *data, size_t data_len);
-	int (*read)(struct spi_device *dev, void *buf, size_t bufsize);
-	int (*writeread)(struct spi_device *dev, const void *txdata,
-			size_t txdata_len, void *rxbuf, size_t rxbuf_len);
-};
-
 struct spi_pin {
 	int miso;
 	int mosi;
 	int sclk;
 };
 
-static inline struct spi_device *spi_enable(struct spi *self,
-		spi_mode_t mode, uint32_t freq_hz, int pin_cs) {
-	return ((struct spi_api *)self)->enable(self, mode, freq_hz, pin_cs);
-}
+struct spi;
+struct spi_device;
 
-static inline int spi_disable(struct spi_device *dev) {
-	return ((struct spi_api *)dev)->disable(dev);
-}
-
-static inline int spi_write(struct spi_device *dev,
-		const void *data, size_t data_len) {
-	return ((struct spi_api *)dev)->write(dev, data, data_len);
-}
-
-static inline int spi_read(struct spi_device *dev, void *buf, size_t bufsize) {
-	return ((struct spi_api *)dev)->read(dev, buf, bufsize);
-}
-
-static inline int spi_writeread(struct spi_device *dev, const void *txdata,
-		size_t txdata_len, void *rxbuf, size_t rxbuf_len) {
-	return ((struct spi_api *)dev)->writeread(dev,
-			txdata, txdata_len, rxbuf, rxbuf_len);
-}
-
+/**
+ * @brief Create a SPI instance.
+ *
+ * This function creates a SPI instance associated with the given channel and
+ * pin.
+ *
+ * @param[in] channel The channel to be associated with the SPI instance.
+ * @param[in] pin The pin to be associated with the SPI instance.
+ *
+ * @return A pointer to the created SPI instance. If the creation fails,
+ *         the function returns NULL.
+ */
 struct spi *spi_create(uint8_t channel, const struct spi_pin *pin);
+
+/**
+ * @brief Delete a SPI instance.
+ *
+ * This function deletes a SPI instance and frees the associated resources.
+ *
+ * @param[in] self The SPI instance to be deleted.
+ */
 void spi_delete(struct spi *self);
+
+/**
+ * @brief Enable a SPI device.
+ *
+ * This function enables a SPI device with a given mode, frequency, and chip
+ * select pin.
+ *
+ * @param[in] self The SPI instance.
+ * @param[in] mode The SPI mode.
+ * @param[in] freq_hz The frequency of the SPI signal in Hz.
+ * @param[in] pin_cs The chip select pin for the SPI device.
+ *
+ * @return A pointer to the enabled SPI device. If the operation fails,
+ *         the function returns NULL.
+ */
+struct spi_device *spi_enable(struct spi *self,
+		spi_mode_t mode, uint32_t freq_hz, int pin_cs);
+
+/**
+ * @brief Disable a SPI device.
+ *
+ * This function disables a SPI device and frees the associated resources.
+ *
+ * @param[in] dev The SPI device to be disabled.
+ *
+ * @return 0 if the operation is successful, otherwise returns a non-zero error
+ *         code.
+ */
+int spi_disable(struct spi_device *dev);
+
+/**
+ * @brief Write data to a SPI device.
+ *
+ * This function writes data to a SPI device.
+ *
+ * @param[in] dev The SPI device.
+ * @param[in] data The data to be written.
+ * @param[in] data_len The length of the data to be written.
+ *
+ * @return 0 if the operation is successful, otherwise returns a non-zero error
+ *         code.
+ */
+int spi_write(struct spi_device *dev, const void *data, size_t data_len);
+
+/**
+ * @brief Read data from a SPI device.
+ *
+ * This function reads data from a SPI device into a buffer.
+ *
+ * @param[in] dev The SPI device.
+ * @param[out] buf The buffer where the read data will be stored.
+ * @param[in] bufsize The size of the buffer.
+ *
+ * @return 0 if the operation is successful, otherwise returns a non-zero error
+ *         code.
+ */
+int spi_read(struct spi_device *dev, void *buf, size_t bufsize);
+
+/**
+ * @brief Write and read data from a SPI device.
+ *
+ * This function writes data to a SPI device and then reads data from the
+ * device.
+ *
+ * @param[in] dev The SPI device.
+ * @param[in] txdata The data to be written.
+ * @param[in] txdata_len The length of the data to be written.
+ * @param[out] rxbuf The buffer where the read data will be stored.
+ * @param[in] rxbuf_len The size of the buffer.
+ *
+ * @return 0 if the operation is successful, otherwise returns a non-zero error
+ *         code.
+ */
+int spi_writeread(struct spi_device *dev,
+		const void *txdata, size_t txdata_len,
+		void *rxbuf, size_t rxbuf_len);
 
 #if defined(__cplusplus)
 }
