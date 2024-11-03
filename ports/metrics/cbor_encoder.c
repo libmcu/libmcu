@@ -23,10 +23,6 @@ size_t metrics_encode_header(void *buf, size_t bufsize,
 size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value)
 {
-	if (value == 0) {
-		return 0;
-	}
-
 	size_t len = cbor_writer_len(&writer);
 
 	cbor_encode_unsigned_integer(&writer, (uint64_t)key);
