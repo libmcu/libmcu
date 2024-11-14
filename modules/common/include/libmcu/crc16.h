@@ -15,9 +15,7 @@ extern "C" {
 #include <stddef.h>
 
 uint16_t crc16_update(uint16_t poly, uint16_t crc, uint8_t c);
-
 uint16_t crc16_modbus(const void *data, size_t datasize);
-uint16_t crc16_xmodem(const void *data, size_t datasize);
 
 #if defined(__cplusplus)
 }

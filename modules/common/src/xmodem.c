@@ -5,22 +5,21 @@
  */
 
 #include "libmcu/xmodem.h"
-#include "libmcu/crc16.h"
+
 #include <errno.h>
 #include <stdbool.h>
 
-#define META_SIZE		4
+#define META_LEN		4
 
-#define DATA_SIZE_128		128
-#define DATA_SIZE_1K		1024
-#define DEFAULT_DATA_SIZE	DATA_SIZE_128
+#define DATA_LEN_128		128
+#define DATA_LEN_1K		1024
+#define DEFAULT_DATA_LEN	DATA_LEN_128
 
-#define TIMEOUT_SYNC_SEC	60
-#define TIMEOUT_ACK_SEC		10
-#define TIMEOUT_ONE_CHAR_SEC	1
-#define TIMEOUT_INIT_SEC	3
+#define TIMEOUT_SYNC_MS		(60 * 1000)
+#define TIMEOUT_ACK_MS		(10 * 1000)
+#define TIMEOUT_ONE_CHAR_MS	(1 * 1000)
 
-#define IO_TIMEOUT		(TIMEOUT_ONE_CHAR_SEC * 1000)
+#define IO_TIMEOUT		TIMEOUT_ONE_CHAR_MS
 
 #if !defined(MIN)
 #define MIN(a, b)		((a) < (b)? (a) : (b))
@@ -53,6 +52,7 @@ struct packet {
 static struct {
 	xmodem_reader_t reader;
 	xmodem_writer_t writer;
+	xmodem_flush_t flush;
 
 	xmodem_millis_t millis;
 
@@ -67,6 +67,13 @@ static uint32_t millis(void)
 	}
 
 	return m.millis();
+}
+
+static void do_flush(void)
+{
+	if (m.flush) {
+		m.flush();
+	}
 }
 
 static int do_send(const uint8_t *data, size_t datasize, uint32_t timeout_ms)
@@ -121,22 +128,17 @@ static bool is_last_packet(const struct packet *packet)
 }
 
 static bool sync_sender(struct packet *packet,
-		uint8_t *initiator, uint32_t timeout_ms)
+		bool use_crc, uint32_t timeout_ms)
 {
 	const uint32_t t_started = millis();
 	uint32_t t_now = t_started;
-	uint32_t t_sent = t_started - TIMEOUT_ONE_CHAR_SEC * 1000;
-	size_t count = 0;
+	uint32_t t_sent = t_started - TIMEOUT_ONE_CHAR_MS;
 
 	do {
-		if (is_timedout(t_now, t_sent, TIMEOUT_ONE_CHAR_SEC * 1000)) {
-			if (*initiator == IDL && count >
-					(TIMEOUT_ACK_SEC / TIMEOUT_INIT_SEC)) {
-				*initiator = NAK;
-			}
-			do_send(initiator, 1, IO_TIMEOUT);
+		if (is_timedout(t_now, t_sent, TIMEOUT_ONE_CHAR_MS)) {
+			const uint8_t initiator = use_crc? IDL : NAK;
+			do_send(&initiator, 1, IO_TIMEOUT);
 			t_sent = t_now;
-			count += 1;
 		}
 
 		if (read_byte(&packet->header) == 1) {
@@ -150,19 +152,39 @@ static bool sync_sender(struct packet *packet,
 	return false;
 }
 
-static bool is_packet_valid(const struct packet *packet, bool crc)
+static uint16_t calculate_crc(const uint8_t *data, size_t datasize)
 {
-	const size_t data_size = packet->received - META_SIZE - (crc? 1 : 0);
+	uint16_t crc = 0;
+
+	for (size_t i = 0; i < datasize; i++) {
+		crc ^= (uint16_t)data[i] << 8;
+		for (int j = 0; j < 8; j++) {
+			if (crc & 0x8000) {
+				crc = (uint16_t)(crc << 1 ^ 0x1021);
+			} else {
+				crc <<= 1;
+			}
+		}
+	}
+
+	return crc;
+}
+
+static bool is_packet_valid(const struct packet *packet, bool use_crc)
+{
+	const size_t data_size = packet->received - META_LEN - (use_crc? 1 : 0);
 
 	if (packet->header == EOT || packet->header == CAN) {
 		return true;
-	} else if (packet->received < META_SIZE + (crc? 1 : 0)) {
+	} else if (packet->received < META_LEN + (use_crc? 1 : 0)) {
 		return false;
 	}
 
-	if (crc) {
-		uint16_t c = crc16_xmodem(packet->data, data_size);
-		return c == (packet->chksum[0] << 8 | packet->chksum[1]);
+	if (use_crc) {
+		const uint16_t c1 = calculate_crc(packet->data, data_size);
+		const uint16_t c2 = (uint16_t)
+			(packet->chksum[0] << 8 | packet->chksum[1]);
+		return c1 == c2;
 	}
 
 	uint8_t chksum = 0;
@@ -206,7 +228,7 @@ static xmodem_error_t check_buffer(const struct packet *packet, size_t index)
 }
 
 static xmodem_error_t read_packet(struct packet *packet,
-		size_t data_size, bool crc, uint32_t timeout_ms)
+		size_t data_size, bool use_crc, uint32_t timeout_ms)
 {
 	const uint32_t t_started = millis();
 	size_t *index = (size_t *)&packet->received;
@@ -223,9 +245,7 @@ static xmodem_error_t read_packet(struct packet *packet,
 		t_now = millis();
 
 		if (read_byte(&ch) != 1) {
-			if (is_timedout(t_now, t_read,
-					TIMEOUT_ONE_CHAR_SEC * 1000)) {
-				send_nak();
+			if (is_timedout(t_now, t_read, TIMEOUT_ONE_CHAR_MS)) {
 				return XMODEM_ERROR_NO_INPUT;
 			}
 			continue;
@@ -236,10 +256,11 @@ static xmodem_error_t read_packet(struct packet *packet,
 		err = check_buffer(packet, *index);
 
 		if (err == XMODEM_ERROR_RETRY) {
-			continue;
+			do_flush();
+			return err;
 		} else if (err == XMODEM_ERROR_RECEIVING) {
 			*index = *index + 1;
-			if (*index >= (META_SIZE + data_size + (crc? 1 : 0))) {
+			if (*index >= (META_LEN + data_size + (use_crc? 1:0))) {
 				return XMODEM_ERROR_NONE;
 			}
 		} else {
@@ -250,15 +271,35 @@ static xmodem_error_t read_packet(struct packet *packet,
 	return err;
 }
 
+static xmodem_error_t process_packet(struct packet *packet, bool use_crc)
+{
+	if (!is_packet_valid(packet, use_crc)) {
+		packet->received = 0;
+		send_nak();
+		return XMODEM_ERROR_RETRY;
+	}
+
+	xmodem_error_t err = XMODEM_ERROR_RECEIVING;
+
+	if (packet->seq == packet->seq_expected || packet->header == EOT) {
+		err = XMODEM_ERROR_NONE;
+		packet->seq_expected = (uint8_t)((packet->seq + 1) % 256);
+	}
+
+	packet->received = 0;
+	send_ack();
+	return err;
+}
+
 xmodem_error_t xmodem_receive(xmodem_data_block_size_t block_type,
 		xmodem_recv_callback_t on_recv, void *on_recv_ctx,
 		uint32_t timeout_ms)
 {
 	const uint32_t t_started = millis();
 	struct packet packet = { .data = m.buf, .seq_expected = 1};
-	size_t data_size = DEFAULT_DATA_SIZE;
+	size_t data_size = DEFAULT_DATA_LEN;
 	size_t nr_packets = 0;
-	uint8_t initiator = block_type == XMODEM_DATA_BLOCK_128? NAK : IDL;
+	const bool use_crc = block_type == XMODEM_DATA_BLOCK_128? false : true;
 	uint32_t t_now;
 	xmodem_error_t err;
 
@@ -266,44 +307,41 @@ xmodem_error_t xmodem_receive(xmodem_data_block_size_t block_type,
 		return XMODEM_ERROR_INVALID_PARAM;
 	}
 
-	if (!sync_sender(&packet,
-			&initiator, MIN(timeout_ms, TIMEOUT_SYNC_SEC*1000))) {
-		return XMODEM_ERROR_NO_RESPONSE;
+	if (block_type == XMODEM_DATA_BLOCK_1K) {
+		data_size = DATA_LEN_1K;
 	}
-
-	if (initiator == IDL && block_type == XMODEM_DATA_BLOCK_1K) {
-		data_size = DATA_SIZE_1K;
-	}
-
 	if (data_size > m.bufsize) {
 		return XMODEM_ERROR_NO_ENOUGH_BUFFER;
 	}
 
+	if (!sync_sender(&packet, use_crc, MIN(timeout_ms, TIMEOUT_SYNC_MS))) {
+		return XMODEM_ERROR_NO_RESPONSE;
+	}
+
 	do {
 		t_now = millis();
-		err = read_packet(&packet, data_size, initiator == IDL,
-				TIMEOUT_ACK_SEC * 1000);
 
-		if (err == XMODEM_ERROR_NONE &&
-				is_packet_valid(&packet, initiator == IDL)) {
-			if (packet.seq == packet.seq_expected) {
-				packet.seq_expected = (uint8_t)
-					((packet.seq + 1) % 256);
-				nr_packets += 1;
-				if (on_recv) {
-					(*on_recv)(packet.header == EOT?
-							0 : nr_packets,
-							packet.data, data_size,
-							on_recv_ctx);
-				}
-			}
-			packet.received = 0;
-			send_ack();
+		if ((err = read_packet(&packet,
+					data_size, use_crc, TIMEOUT_ACK_MS))
+				== XMODEM_ERROR_CANCELED
+				|| err == XMODEM_ERROR_CANCELED_BY_REMOTE) {
+			break;
+		}
+
+		if (process_packet(&packet, use_crc) != XMODEM_ERROR_NONE) {
 			continue;
 		}
 
-		packet.received = 0;
-		send_nak();
+		nr_packets += 1;
+
+		if (on_recv) {
+			if (packet.header == EOT) {
+				(*on_recv)(0, 0, 0, on_recv_ctx);
+			} else {
+				(*on_recv)(nr_packets, packet.data,
+						data_size, on_recv_ctx);
+			}
+		}
 	} while (!is_timedout(t_now, t_started, timeout_ms) &&
 			!is_last_packet(&packet));
 
@@ -315,10 +353,12 @@ xmodem_error_t xmodem_receive(xmodem_data_block_size_t block_type,
 	return err;
 }
 
-void xmodem_set_io(xmodem_reader_t reader, xmodem_writer_t writer)
+void xmodem_set_io(xmodem_reader_t reader, xmodem_writer_t writer,
+		xmodem_flush_t flush)
 {
 	m.reader = reader;
 	m.writer = writer;
+	m.flush = flush;
 }
 
 void xmodem_set_rx_buffer(uint8_t *rx_buf, size_t rx_bufsize)
@@ -327,7 +367,7 @@ void xmodem_set_rx_buffer(uint8_t *rx_buf, size_t rx_bufsize)
 	m.bufsize = rx_bufsize;
 }
 
-void xmodem_set_millis(xmodem_millis_t millis)
+void xmodem_set_millis(xmodem_millis_t fn)
 {
-	m.millis = millis;
+	m.millis = fn;
 }

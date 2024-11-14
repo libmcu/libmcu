@@ -37,15 +37,3 @@ uint16_t crc16_modbus(const void *data, size_t datasize)
 
 	return crc;
 }
-
-uint16_t crc16_xmodem(const void *data, size_t datasize)
-{
-	const uint8_t *p = (const uint8_t *)data;
-	uint16_t crc = 0;
-
-	for (size_t i = 0; i < datasize; i++) {
-		crc = update(0x1021, crc, p[i]);
-	}
-
-	return crc;
-}
