@@ -7,7 +7,9 @@
 #define UART_PARITY_EVEN	LIBMCU_UART_PARITY_EVEN
 #define UART_PARITY_ODD		LIBMCU_UART_PARITY_ODD
 #define uart_parity_t		libmcu_uart_parity_t
+#define uart_flush		libmcu_uart_flush
 #include "libmcu/uart.h"
+#undef uart_flush
 #undef uart_parity_t
 #undef UART_PARITY_ODD
 #undef UART_PARITY_EVEN
@@ -174,6 +176,32 @@ int uart_read(struct uart *self, void *buf, size_t bufsize)
 	}
 
 	return len;
+}
+
+int libmcu_uart_flush(struct uart *self)
+{
+	if (!self || !self->activated) {
+		return -EPIPE;
+	}
+
+	if (uart_wait_tx_done(self->channel, -1) != ESP_OK) {
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int uart_clear(struct uart *self)
+{
+	if (!self || !self->activated) {
+		return -EPIPE;
+	}
+
+	if (uart_flush_input(self->channel) != ESP_OK) {
+		return -EIO;
+	}
+
+	return 0;
 }
 
 int uart_enable(struct uart *self, uint32_t baudrate)
