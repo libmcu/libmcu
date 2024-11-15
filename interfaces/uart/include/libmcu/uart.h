@@ -145,6 +145,28 @@ int uart_register_rx_callback(struct uart *self,
  */
 int uart_configure(struct uart *self, const struct uart_config *config);
 
+/**
+ * @brief Flush the UART interface.
+ *
+ * This function flushes the UART interface, clearing any data that may be
+ * present in the transmit buffer.
+ *
+ * @param[in] self Pointer to the UART instance.
+ * @return 0 on success, or a negative error code on failure.
+ */
+int uart_flush(struct uart *self);
+
+/**
+ * @brief Clear the UART receive buffer.
+ *
+ * This function clears the receive buffer of the UART interface, removing any
+ * data that may be present in the receive buffer.
+ *
+ * @param[in] self Pointer to the UART instance.
+ * @return 0 on success, or a negative error code on failure.
+ */
+int uart_clear(struct uart *self);
+
 #if defined(__cplusplus)
 }
 #endif
