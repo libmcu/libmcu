@@ -22,6 +22,7 @@ Any feedback would be appreciated.
 * [Button](modules/button)
 * [Command Line Interface](modules/cli)
 * [Common](modules/common)
+* [DFU](modules/dfu)
 * [FSM](modules/fsm)
 * [Logging](modules/logging)
 * [Metrics](modules/metrics)
