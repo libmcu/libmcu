@@ -46,20 +46,6 @@ unsigned long board_get_free_heap_bytes(void)
 	return esp_get_free_heap_size();
 }
 
-const char *board_get_serial_number_string(void)
-{
-	static char sn[13];
-
-	if (sn[0] == '\0') {
-		uint8_t mac[6] = { 0, };
-		esp_efuse_mac_get_default(mac);
-		snprintf(sn, sizeof(sn), "%02x%02x%02x%02x%02x%02x",
-				mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	}
-
-	return sn;
-}
-
 board_reboot_reason_t board_get_reboot_reason(void)
 {
 	switch (esp_reset_reason()) {
