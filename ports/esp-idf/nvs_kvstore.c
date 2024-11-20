@@ -23,7 +23,8 @@ struct kvstore {
 
 static int nvs_storage_open(char const *namespace, nvs_handle_t *namespace_handle)
 {
-	return nvs_open(namespace, NVS_READWRITE, namespace_handle);
+	int err = nvs_open(namespace, NVS_READWRITE, namespace_handle);
+	return err == ESP_OK? 0 : -err;
 }
 
 static void nvs_storage_close(nvs_handle_t *namespace_handle)
@@ -34,25 +35,30 @@ static void nvs_storage_close(nvs_handle_t *namespace_handle)
 static int nvs_kvstore_write(struct kvstore *self, char const *key, void const *value, size_t size)
 {
 	int err = nvs_set_blob(self->handle, key, value, size);
-	if (err) {
-		return 0;
+
+	if (!err) {
+		err = nvs_commit(self->handle);
 	}
-	return !nvs_commit(self->handle)? size : 0;
+
+	return err == ESP_OK? size : -err;
 }
 
 static int nvs_kvstore_read(struct kvstore *self, char const *key, void *buf, size_t size)
 {
-	return !nvs_get_blob(self->handle, key, buf, &size)? size : 0;
+	int err = nvs_get_blob(self->handle, key, buf, &size);
+	return err == ESP_OK? size : -err;
 }
 
 static int nvs_kvstore_erase(struct kvstore *self, char const *key)
 {
-	return nvs_erase_key(self->handle, key);
+	int err = nvs_erase_key(self->handle, key);
+	return err == ESP_OK? 0 : -err;
 }
 
 static int nvs_kvstore_open(struct kvstore *self, char const *namespace)
 {
-	return nvs_storage_open(namespace, &self->handle);
+	int err = nvs_storage_open(namespace, &self->handle);
+	return err == ESP_OK? 0 : -err;
 }
 
 static void nvs_kvstore_close(struct kvstore *self)
