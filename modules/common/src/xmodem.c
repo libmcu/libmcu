@@ -338,8 +338,11 @@ xmodem_error_t xmodem_receive(xmodem_data_block_size_t block_type,
 			if (packet.header == EOT) {
 				(*on_recv)(0, 0, 0, on_recv_ctx);
 			} else {
-				(*on_recv)(nr_packets, packet.data,
+				err = (*on_recv)(nr_packets, packet.data,
 						data_size, on_recv_ctx);
+				if (err != XMODEM_ERROR_NONE) {
+					break;
+				}
 			}
 		}
 	} while (!is_timedout(t_now, t_started, timeout_ms) &&
