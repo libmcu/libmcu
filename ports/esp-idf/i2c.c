@@ -43,9 +43,9 @@ static int read_i2c(struct i2c_device *dev,
 		void *buf, size_t bufsize, uint32_t timeout_ms)
 {
 	pthread_mutex_lock(&dev->bus->mutex);
-        int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
-        /* FIXME: time spent on waiting for the bus is not included in the
-         * timeout. */
+	int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
+	/* FIXME: time spent on waiting for the bus is not included in the
+	 * timeout. */
 	rc |= i2c_master_receive(dev->handle, buf, bufsize, timeout_ms);
 	pthread_mutex_unlock(&dev->bus->mutex);
 
@@ -60,7 +60,7 @@ static int write_i2c(struct i2c_device *dev,
 		const void *data, size_t data_len, uint32_t timeout_ms)
 {
 	pthread_mutex_lock(&dev->bus->mutex);
-        int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
+	int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
 	rc |= i2c_master_transmit(dev->handle, data, data_len, timeout_ms);
 	pthread_mutex_unlock(&dev->bus->mutex);
 
@@ -84,7 +84,7 @@ static int read_reg(struct i2c_device *dev,
 	};
 
 	pthread_mutex_lock(&dev->bus->mutex);
-        int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
+	int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
 	rc |= i2c_master_transmit_receive(dev->handle, &reg[4 - reg_len],
 			reg_len, buf, bufsize, timeout_ms);
 	pthread_mutex_unlock(&dev->bus->mutex);
@@ -121,9 +121,9 @@ static int write_reg(struct i2c_device *dev,
 	}
 
 	pthread_mutex_lock(&dev->bus->mutex);
-        int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
-        rc |= i2c_master_transmit(dev->handle, buf, len, timeout_ms);
-        pthread_mutex_unlock(&dev->bus->mutex);
+	int rc = i2c_master_bus_wait_all_done(dev->bus->handle, timeout_ms);
+	rc |= i2c_master_transmit(dev->handle, buf, len, timeout_ms);
+	pthread_mutex_unlock(&dev->bus->mutex);
 
 	if (rc != ESP_OK) {
 		rc = -EIO;
