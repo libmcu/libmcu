@@ -1,6 +1,4 @@
 #include "esp_timer.h"
-#define timer_create libmcu_timer_create
-#define timer_delete libmcu_timer_delete
 #include "libmcu/timer.h"
 
 #if !defined(TIMER_MAX)

@@ -10,9 +10,6 @@
 #include <stdint.h>
 #include <semaphore.h>
 
-#define timer_start libmcu_timer_start
-#define timer_create libmcu_timer_create
-#define timer_delete libmcu_timer_delete
 #include "libmcu/timer.h"
 
 struct playing {
