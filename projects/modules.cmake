@@ -3,7 +3,7 @@
 cmake_policy(SET CMP0057 NEW)
 
 if (NOT DEFINED LIBMCU_MODULES)
-	set(LIBMCU_MODULES actor ao apptimer bitmap button cli common dfu
+	set(LIBMCU_MODULES actor ao apptimer bitmap button buzzer cli common dfu
 		jobqueue logging metrics pubsub retry runner pm fsm)
 endif()
 
