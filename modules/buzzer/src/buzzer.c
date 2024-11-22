@@ -15,11 +15,13 @@
 #define timer_delete libmcu_timer_delete
 #include "libmcu/timer.h"
 
+struct playing {
+	const struct melody *melody;
+	uint8_t index;
+};
+
 static struct buzzer {
-	struct playing {
-		const struct melody *melody;
-		uint8_t index;
-	} playing;
+	struct playing playing;
 
 	buzzer_callback_t *callback;
 	void *callback_ctx;
