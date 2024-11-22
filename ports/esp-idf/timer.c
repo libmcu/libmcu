@@ -1,8 +1,15 @@
-#include "esp_timer.h"
+/*
+ * SPDX-FileCopyrightText: 2022 Kyunghwan Kwon <k@libmcu.org>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "libmcu/timer.h"
+#include <string.h>
+#include "esp_timer.h"
 
 #if !defined(TIMER_MAX)
-#define TIMER_MAX			2
+#define TIMER_MAX			8
 #endif
 
 struct timer {
@@ -13,6 +20,24 @@ struct timer {
 	esp_timer_handle_t handle;
 	bool periodic;
 };
+
+static struct timer *new_timer(struct timer *pool, size_t n)
+{
+	struct timer empty = { 0, };
+
+	for (size_t i = 0; i < n; i++) {
+		if (memcmp(&empty, &pool[i], sizeof(empty)) == 0) {
+			return &pool[i];
+		}
+	}
+
+	return NULL;
+}
+
+static void free_timer(struct timer *timer)
+{
+	memset(timer, 0, sizeof(*timer));
+}
 
 static void callback_wrapper(void *arg)
 {
@@ -61,35 +86,31 @@ static int disable_timer(struct timer *self)
 struct timer *timer_create(bool periodic, timer_callback_t callback, void *arg)
 {
 	static struct timer timers[TIMER_MAX];
-	static int cnt;
+	struct timer *timer = new_timer(timers, TIMER_MAX);
 
-	if (cnt >= TIMER_MAX) {
-		return NULL;
-	}
+	if (timer) {
+		*timer = (struct timer) {
+			.api = {
+				.enable = enable_timer,
+				.disable = disable_timer,
+				.start = start_timer,
+				.restart = restart_timer,
+				.stop = stop_timer,
+			},
 
-	struct timer *timer = &timers[cnt++];
+			.callback = callback,
+			.arg = arg,
+			.periodic = periodic,
+		};
 
-	*timer = (struct timer) {
-		.api = {
-			.enable = enable_timer,
-			.disable = disable_timer,
-			.start = start_timer,
-			.restart = restart_timer,
-			.stop = stop_timer,
-		},
+		esp_timer_create_args_t param = {
+			.callback = callback_wrapper,
+			.arg = (void *)timer,
+		};
 
-		.callback = callback,
-		.arg = arg,
-		.periodic = periodic,
-	};
-
-	esp_timer_create_args_t param = {
-		.callback = callback_wrapper,
-		.arg = (void *)timer,
-	};
-
-	if (esp_timer_create(&param, &timer->handle) != ESP_OK) {
-		return NULL;
+		if (esp_timer_create(&param, &timer->handle) != ESP_OK) {
+			return NULL;
+		}
 	}
 
 	return timer;
@@ -98,5 +119,6 @@ struct timer *timer_create(bool periodic, timer_callback_t callback, void *arg)
 int timer_delete(struct timer *self)
 {
 	ESP_ERROR_CHECK(esp_timer_delete(self->handle));
+	free_timer(self);
 	return 0;
 }
