@@ -27,7 +27,7 @@ struct i2c_bus_api {
 };
 
 struct i2c_device_api {
-	void (*delete_device)(struct i2c_device *device);
+	void (*delete_device)(struct i2c_device *dev);
 
 	int (*read)(struct i2c_device *dev,
 			void *buf, size_t bufsize, uint32_t timeout_ms);
@@ -90,8 +90,8 @@ static inline struct i2c_device *i2c_create_device(struct i2c *bus,
 			slave_addr, freq_hz);
 }
 
-static inline void i2c_delete_device(struct i2c_device *device) {
-	((struct i2c_device_api *)device)->delete_device(device);
+static inline void i2c_delete_device(struct i2c_device *dev) {
+	((struct i2c_device_api *)dev)->delete_device(dev);
 }
 
 struct i2c *i2c_create(uint8_t channel, const struct i2c_pin *pin);

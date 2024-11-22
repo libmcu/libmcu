@@ -20,6 +20,7 @@ Any feedback would be appreciated.
 * [Actor](modules/actor)
 * [Application Timer](modules/apptimer)
 * [Button](modules/button)
+* [Buzzer](modules/buzzer)
 * [Command Line Interface](modules/cli)
 * [Common](modules/common)
 * [DFU](modules/dfu)
