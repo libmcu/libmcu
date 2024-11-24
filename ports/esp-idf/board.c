@@ -29,6 +29,12 @@ unsigned long board_get_time_since_boot_ms(void)
 }
 
 LIBMCU_NO_INSTRUMENT
+uint64_t board_get_time_since_boot_us(void)
+{
+	return (uint64_t)esp_timer_get_time();
+}
+
+LIBMCU_NO_INSTRUMENT
 unsigned long board_get_current_stack_watermark(void)
 {
 	return (unsigned long)uxTaskGetStackHighWaterMark(NULL);
