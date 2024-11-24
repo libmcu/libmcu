@@ -163,6 +163,14 @@ void metrics_increase_by(metric_key_t key, int32_t n)
 	metrics_unlock();
 }
 
+bool metrics_is_set(metric_key_t key)
+{
+	metrics_lock();
+	bool is_set = is_metric_set(get_obj_from_key(key));
+	metrics_unlock();
+	return is_set;
+}
+
 void metrics_reset(void)
 {
 	metrics_lock();
