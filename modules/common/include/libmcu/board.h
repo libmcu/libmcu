@@ -43,6 +43,7 @@ board_reboot_reason_t board_get_reboot_reason(void);
 const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 
 unsigned long board_get_time_since_boot_ms(void);
+uint64_t board_get_time_since_boot_us(void);
 
 int board_register_idle_hook(int opt, board_idle_hook_t func);
 uint32_t board_random(void);
