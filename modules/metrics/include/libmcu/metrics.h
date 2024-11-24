@@ -29,11 +29,67 @@ enum {
 
 typedef uint16_t metric_key_t;
 
+/**
+ * @brief Sets the value of a specific metric.
+ *
+ * This function sets the value of the specified metric key to the given
+ * integer value.
+ *
+ * @param[in] key The metric key to be set.
+ * @param[in] val The value to set for the specified metric key.
+ */
 void metrics_set(metric_key_t key, int32_t val);
+
+/**
+ * @brief Retrieves the value of a specific metric.
+ *
+ * This function retrieves the current value of the specified metric key.
+ *
+ * @param[in] key The metric key to retrieve the value for.
+ *
+ * @return int32_t The current value of the specified metric key.
+ */
 int32_t metrics_get(metric_key_t key);
+
+/**
+ * @brief Increases the value of a specific metric by 1.
+ *
+ * This function increments the value of the specified metric key by 1.
+ *
+ * @param[in] key The metric key to be increased.
+ */
 void metrics_increase(metric_key_t key);
+
+/**
+ * @brief Increases the value of a specific metric by a given amount.
+ *
+ * This function increments the value of the specified metric key by the
+ * given integer amount.
+ *
+ * @param[in] key The metric key to be increased.
+ * @param[in] n The amount to increase the value of the specified metric key by.
+ */
 void metrics_increase_by(metric_key_t key, int32_t n);
+
+/**
+ * @brief Resets all metrics to their default values.
+ *
+ * This function resets all metrics to their default values, typically zero.
+ */
 void metrics_reset(void);
+
+/**
+ * @brief Checks if a specific metric is set.
+ *
+ * This function checks if the specified metric key has been set to a
+ * non-default value.
+ *
+ * @param[in] key The metric key to check.
+ *
+ * @return bool True if the metric key is set, false otherwise.
+ */
+bool metrics_is_set(metric_key_t key);
+
 /**
  * @brief Traversing all metrics firing callback
  *
@@ -45,12 +101,53 @@ void metrics_reset(void);
  */
 void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
 					   void *ctx), void *ctx);
+
+/**
+ * @brief Collects all metrics into the provided buffer.
+ *
+ * This function collects all current metrics and stores them in the
+ * provided buffer. The buffer should be large enough to hold all the
+ * metrics data.
+ *
+ * @param[out] buf Pointer to the buffer where metrics data will be stored.
+ * @param[in] bufsize Size of the buffer in bytes.
+ *
+ * @return size_t The number of bytes written to the buffer.
+ */
 size_t metrics_collect(void *buf, size_t bufsize);
+
+/**
+ * @brief Retrieves the count of all metrics.
+ *
+ * This function returns the total number of metrics currently being tracked.
+ *
+ * @return size_t The count of all metrics.
+ */
 size_t metrics_count(void);
 
+/**
+ * @brief Initializes the metrics module.
+ *
+ * This function initializes the metrics module, setting up any necessary
+ * data structures and state. If the force parameter is true, the
+ * initialization will be forced even if the module is already initialized.
+ *
+ * @param force If true, forces re-initialization of the metrics module.
+ */
 void metrics_init(bool force);
 
 #if !defined(METRICS_NO_KEY_STRING)
+/**
+ * @brief Converts a metric key to its string representation.
+ *
+ * This function converts the specified metric key to its corresponding
+ * string representation. This can be useful for logging or displaying
+ * metric keys in a human-readable format.
+ *
+ * @param[in] key The metric key to be converted to a string.
+ *
+ * @return const char* The string representation of the specified metric key.
+ */
 const char *metrics_stringify_key(metric_key_t key);
 #endif
 
