@@ -94,8 +94,8 @@ static void initialize_ledc(struct pwm *self, int ch, int pin)
 
 static int update_frequency(struct pwm_channel *ch, uint32_t hz)
 {
-	ledc_set_freq(ch->pwm->speed_mode, ch->pwm->timer, hz);
-	return 0;
+	int err = ledc_set_freq(ch->pwm->speed_mode, ch->pwm->timer, hz);
+	return err == ESP_OK ? 0 : -err;
 }
 
 static int update_duty(struct pwm_channel *ch, uint32_t millipercent)
@@ -120,10 +120,10 @@ static int update_duty(struct pwm_channel *ch, uint32_t millipercent)
 
 	uint32_t duty = resolution * millipercent / 100000;
 
-	ledc_set_duty(ch->pwm->speed_mode, ch->id, duty);
-	ledc_update_duty(ch->pwm->speed_mode, ch->id);
+	int err = ledc_set_duty(ch->pwm->speed_mode, ch->id, duty);
+	err |= ledc_update_duty(ch->pwm->speed_mode, ch->id);
 
-	return 0;
+	return err == ESP_OK ? 0 : -err;
 }
 
 int pwm_update_duty(struct pwm_channel *ch, uint32_t millipercent)
@@ -139,15 +139,15 @@ int pwm_update_frequency(struct pwm_channel *ch, uint32_t hz)
 int pwm_start(struct pwm_channel *ch,
 		uint32_t freq_hz, uint32_t duty_millipercent)
 {
-	update_frequency(ch, freq_hz);
-	update_duty(ch, duty_millipercent);
-	return 0;
+	int err = update_frequency(ch, freq_hz);
+	err |= update_duty(ch, duty_millipercent);
+	return err;
 }
 
 int pwm_stop(struct pwm_channel *ch)
 {
-	ledc_stop(ch->pwm->speed_mode, ch->id, 0);
-	return 0;
+	int err = ledc_stop(ch->pwm->speed_mode, ch->id, 0);
+	return err == ESP_OK ? 0 : -err;
 }
 
 int pwm_enable(struct pwm_channel *ch)
