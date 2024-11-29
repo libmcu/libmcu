@@ -22,6 +22,7 @@ typedef uint16_t metric_key_t;
 #define metrics_collect(a, b)
 #define metrics_count()
 #define metrics_init(x)
+#define metrics_is_set(x)
 #if !defined(METRICS_NO_KEY_STRING)
 #define metrics_stringify_key(k)
 #endif
