@@ -11,33 +11,36 @@
 #include <string.h>
 
 #if !defined(BUTTON_MAX)
-#define BUTTON_MAX			8
+#define BUTTON_MAX				8
 #endif
 #if !defined(BUTTON_SAMPLING_INTERVAL_MS)
-#define BUTTON_SAMPLING_INTERVAL_MS	10U
+#define BUTTON_SAMPLING_INTERVAL_MS		10U
 #endif
 #if !defined(BUTTON_MIN_PRESS_TIME_MS)
-#define BUTTON_MIN_PRESS_TIME_MS	60U
+#define BUTTON_MIN_PRESS_TIME_MS		60U
 #endif
 #if !defined(BUTTON_REPEAT_DELAY_MS)
-#define BUTTON_REPEAT_DELAY_MS		300U
+#define BUTTON_REPEAT_DELAY_MS			300U
 #endif
 #if !defined(BUTTON_REPEAT_RATE_MS)
-#define BUTTON_REPEAT_RATE_MS		200U
+#define BUTTON_REPEAT_RATE_MS			200U
 #endif
 #if !defined(BUTTON_CLICK_WINDOW_MS)
-#define BUTTON_CLICK_WINDOW_MS		500U
+#define BUTTON_CLICK_WINDOW_MS			500U
+#endif
+#if !defined(BUTTON_MAX_SAMPLING_INTERVAL_MS)
+#define BUTTON_MAX_SAMPLING_INTERVAL_MS		1000U
 #endif
 static_assert(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_INTERVAL_MS,
 		"The sampling period time must be less than press hold time.");
 
 typedef enum {
-	ACTION_IDLE			= 0x00U,
-	ACTION_PRESSED			= 0x01U,
-	ACTION_RELEASED			= 0x02U,
-	ACTION_DOWN			= 0x04U,
-	ACTION_UP			= 0x08U,
-	ACTION_DEBOUNCING		= 0x10U,
+	ACTION_IDLE				= 0x00U,
+	ACTION_PRESSED				= 0x01U,
+	ACTION_RELEASED				= 0x02U,
+	ACTION_DOWN				= 0x04U,
+	ACTION_UP				= 0x08U,
+	ACTION_DEBOUNCING			= 0x10U,
 } action_t;
 
 typedef uint32_t waveform_t;
@@ -93,6 +96,7 @@ static void get_default_param(struct button_param *param)
 		.repeat_delay_ms = BUTTON_REPEAT_DELAY_MS,
 		.repeat_rate_ms = BUTTON_REPEAT_RATE_MS,
 		.click_window_ms = BUTTON_CLICK_WINDOW_MS,
+		.max_sampling_interval_ms = BUTTON_MAX_SAMPLING_INTERVAL_MS,
 	};
 }
 
@@ -130,14 +134,18 @@ static void update_waveform(waveform_t *waveform, const button_level_t pressed)
 static bool is_param_ok(const struct button_param *param,
 		const uint16_t min_pulse_count)
 {
-	if (!param->sampling_interval_ms ||
-			!param->repeat_delay_ms ||
-			!param->repeat_rate_ms ||
-			!param->click_window_ms) {
+	if (!param->sampling_interval_ms) {
 		return false;
 	}
 
 	if (param->min_press_time_ms < param->sampling_interval_ms) {
+		return false;
+	}
+
+	if (param->max_sampling_interval_ms < param->min_press_time_ms ||
+			param->max_sampling_interval_ms < param->repeat_delay_ms ||
+			param->max_sampling_interval_ms < param->repeat_rate_ms ||
+			param->max_sampling_interval_ms < param->click_window_ms) {
 		return false;
 	}
 
@@ -186,6 +194,9 @@ static bool is_button_down(const struct button *btn)
 static bool is_click_window_closed(const struct button *btn,
 		const uint32_t time_ms)
 {
+	if (!btn->param.click_window_ms) {
+		return true;
+	}
 	return time_ms - btn->data.time_released >= btn->param.click_window_ms;
 }
 
@@ -222,8 +233,14 @@ static bool process_holding(struct button *btn, const uint32_t time_ms)
 {
 	bool state_updated = false;
 
+	if (!btn->param.repeat_delay_ms) {
+		goto out;
+	}
+
 	if (btn->data.time_repeat) {
-		if ((time_ms - btn->data.time_repeat)
+		if (!btn->param.repeat_rate_ms) {
+			goto out;
+		} else if ((time_ms - btn->data.time_repeat)
 				>= btn->param.repeat_rate_ms) {
 			state_updated = true;
 		}
@@ -238,6 +255,7 @@ static bool process_holding(struct button *btn, const uint32_t time_ms)
 		btn->data.time_repeat = time_ms;
 	}
 
+out:
 	return state_updated;
 }
 
@@ -252,6 +270,8 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 
 	if (!pulses) {
 		goto out;
+	} else if (elapsed_ms > btn->param.max_sampling_interval_ms) {
+		goto out_updating_timestamp;
 	}
 
 	const waveform_t waveform = update_state(btn, pulses);
@@ -282,6 +302,8 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 	if (state != BUTTON_STATE_UNKNOWN) {
 		btn->state = state;
 	}
+
+out_updating_timestamp:
 	btn->timestamp = time_ms;
 out:
 	return state;
@@ -289,13 +311,13 @@ out:
 
 static button_error_t do_step(struct button *btn, const uint32_t time_ms)
 {
-	const button_state_t state =
-		process_button(btn, time_ms);
+	const button_state_t state = process_button(btn, time_ms);
 
 	if (state != BUTTON_STATE_UNKNOWN && btn->callback) {
 		(*btn->callback)(btn, state, 0, btn->callback_ctx);
 
-		if (state == BUTTON_STATE_RELEASED) {
+		if (state == BUTTON_STATE_RELEASED &&
+				btn->param.click_window_ms) {
 			(*btn->callback)(btn, BUTTON_STATE_CLICK,
 					btn->data.clicks, btn->callback_ctx);
 		}
@@ -334,16 +356,26 @@ button_error_t button_step_elapsed(struct button *btn,
 button_error_t button_set_param(struct button *btn,
 		const struct button_param *param)
 {
+	struct button_param copy;
+
 	if (btn == NULL || param == NULL) {
 		return BUTTON_ERROR_INVALID_PARAM;
 	}
 
-	if (is_param_ok(param, get_min_pressed_pulse_count(btn)) == false) {
-		return BUTTON_ERROR_INCORRECT_PARAM;
+	memcpy(&copy, param, sizeof(copy));
+
+	if (!copy.max_sampling_interval_ms) {
+		copy.max_sampling_interval_ms = BUTTON_MAX_SAMPLING_INTERVAL_MS;
 	}
 
-	memcpy(&btn->param, param, sizeof(*param));
-	return BUTTON_ERROR_NONE;
+	if (copy.sampling_interval_ms &&
+			is_param_ok(&copy, copy.min_press_time_ms
+				/ copy.sampling_interval_ms)) {
+		memcpy(&btn->param, &copy, sizeof(copy));
+		return BUTTON_ERROR_NONE;
+	}
+
+	return BUTTON_ERROR_INCORRECT_PARAM;
 }
 
 button_error_t button_get_param(const struct button *btn,

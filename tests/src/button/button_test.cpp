@@ -356,6 +356,7 @@ TEST(Button, disable_ShouldReturnError_WhenNullGiven) {
 
 TEST(Button, set_param_ShouldReturnError_WhenNullGiven) {
 	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_set_param(0, 0));
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_set_param(button, 0));
 }
 
 TEST(Button, get_param_ShouldReturnError_WhenNullGiven) {
@@ -372,6 +373,43 @@ TEST(Button, get_param_ShouldReturnParam_WhenValidButtonGiven) {
 TEST(Button, set_param_ShouldReturnError_WhenInCorrectParamGiven) {
 	struct button_param param = {0};
 	prepare();
+	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
+	finish();
+}
+
+TEST(Button, set_param_ShouldSetMaxSamplingInterval_WhenZeroValueOfItGiven) {
+	struct button_param param;
+	prepare();
+	button_get_param(button, &param);
+	param.max_sampling_interval_ms = 0;
+	LONGS_EQUAL(BUTTON_ERROR_NONE, button_set_param(button, &param));
+	finish();
+}
+
+TEST(Button, set_param_ShouldReturnError_WhenSamplingIntervalIsZero) {
+	struct button_param param;
+	prepare();
+	button_get_param(button, &param);
+	param.sampling_interval_ms = 0;
+	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
+	finish();
+}
+
+TEST(Button, set_param_ShouldReturnError_WhenMinPressTimeIsLessThanSamplingInterval) {
+	struct button_param param;
+	prepare();
+	button_get_param(button, &param);
+	param.min_press_time_ms = param.sampling_interval_ms - 1;
+	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
+	finish();
+}
+
+TEST(Button, set_param_ShouldReturnError_WhenWaveformIsTooLong) {
+	struct button_param param;
+	prepare();
+	button_get_param(button, &param);
+	param.min_press_time_ms = 30;
+	param.sampling_interval_ms = 1;
 	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
 	finish();
 }
@@ -451,5 +489,24 @@ TEST(Button, step_ShouldHandleHoldingRepeat_WhenCalledDelayed) {
 	step(36);
 	const uint32_t elapsed = (36)*BUTTON_SAMPLING_INTERVAL_MS;
 	button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * 20);
+	finish();
+}
+
+TEST(Button, step_ShouldSyncItsTime_WhenCalledForTheFirstTime) {
+	prepare();
+	button_step(button, 1001);
+	finish();
+}
+
+TEST(Button, step_ShouldSyncItsTime_WhenCalledAtTooLongInterval) {
+	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_STATE_PRESSED)
+		.withParameter("clicks", 0);
+
+	prepare();
+	step(6);
+	button_step(button, 10000);
 	finish();
 }

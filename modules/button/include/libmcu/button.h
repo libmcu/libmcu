@@ -41,7 +41,8 @@ struct button_param {
 	uint16_t repeat_delay_ms; /**< delay before the repeat event */
 	uint16_t repeat_rate_ms; /**< rate of the repeat event */
 	uint16_t click_window_ms; /**< time window to consider as a click */
-	uint16_t padding;
+	uint16_t max_sampling_interval_ms; /**< maximum interval to check
+						the button state */
 };
 
 struct button;

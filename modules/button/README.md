@@ -13,10 +13,16 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
   - The default is 60 milliseconds.
 * `BUTTON_REPEAT_DELAY_MS`
   - The repeat handler is called after the defined delay while button holding. The default is 300 milliseconds.
+  - Holding functionality will be disabled if the value is 0.
 * `BUTTON_REPEAT_RATE_MS`
   - The repeat handler is called every BUTTON_REPEAT_RATE_MS while button holding. The default is 200 milliseconds.
+  - Repeat functionality will be disabled if the value is 0.
 * `BUTTON_CLICK_WINDOW_MS`
   - The click handler is called with the number of clicks when another click comes in the time window. The default is 500 milliseconds.
+  - Click functionality will be disabled if the value is 0.
+* `BUTTON_MAX_SAMPLING_INTERVAL_MS`
+  - The maximum sampling period. The default is 1000 milliseconds.
+  - If set to 0, the default value, 1000 milliseconds, will be used.
  
 ### Initialize GPIO to be used for button
 This is platform specific, something like in case of NRF5:
