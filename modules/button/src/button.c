@@ -32,13 +32,13 @@ static_assert(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_INTERVAL_MS,
 		"The sampling period time must be less than press hold time.");
 
 typedef enum {
-	STATE_IDLE			= 0x00U,
-	STATE_PRESSED			= 0x01U,
-	STATE_RELEASED			= 0x02U,
-	STATE_DOWN			= 0x04U,
-	STATE_UP			= 0x08U,
-	STATE_DEBOUNCING		= 0x10U,
-} button_state_t;
+	ACTION_IDLE			= 0x00U,
+	ACTION_PRESSED			= 0x01U,
+	ACTION_RELEASED			= 0x02U,
+	ACTION_DOWN			= 0x04U,
+	ACTION_UP			= 0x08U,
+	ACTION_DEBOUNCING		= 0x10U,
+} action_t;
 
 typedef uint32_t waveform_t;
 
@@ -60,6 +60,7 @@ struct button {
 	void *callback_ctx;
 
 	uint32_t timestamp;
+	button_state_t state;
 
 	bool allocated;
 	bool active;
@@ -240,14 +241,14 @@ static bool process_holding(struct button *btn, const uint32_t time_ms)
 	return state_updated;
 }
 
-static button_event_t process_button(struct button *btn, const uint32_t time_ms)
+static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 {
-	const uint32_t activity_mask = STATE_PRESSED | STATE_DOWN
-		| STATE_DEBOUNCING;
+	const uint32_t activity_mask = ACTION_PRESSED | ACTION_DOWN
+		| ACTION_DEBOUNCING;
 	const uint32_t elapsed_ms = time_ms - btn->timestamp;
 	const uint32_t pulses = elapsed_ms / btn->param.sampling_interval_ms;
-	button_state_t state = STATE_IDLE;
-	button_event_t event = BUTTON_EVT_NONE;
+	action_t action = ACTION_IDLE;
+	button_state_t state = BUTTON_STATE_UNKNOWN;
 
 	if (!pulses) {
 		goto out;
@@ -256,43 +257,46 @@ static button_event_t process_button(struct button *btn, const uint32_t time_ms)
 	const waveform_t waveform = update_state(btn, pulses);
 
 	if (is_button_pressed(btn)) {
-		state = STATE_PRESSED;
-		event = BUTTON_EVT_PRESSED;
+		action = ACTION_PRESSED;
+		state = BUTTON_STATE_PRESSED;
 		process_pressed(btn, time_ms);
 	} else if (is_button_released(btn)) {
-		state = STATE_RELEASED;
-		event = BUTTON_EVT_RELEASED;
+		action = ACTION_RELEASED;
+		state = BUTTON_STATE_RELEASED;
 		process_released(btn, time_ms);
 	} else if (is_button_down(btn)) {
-		state = STATE_DOWN;
+		action = ACTION_DOWN;
 		if (process_holding(btn, time_ms)) {
-			event = BUTTON_EVT_HOLDING;
+			state = BUTTON_STATE_HOLDING;
 		}
 	} else if (is_button_up(btn)) {
-		state = STATE_UP;
+		action = ACTION_UP;
 	} else if (waveform) {
-		state = STATE_DEBOUNCING;
+		action = ACTION_DEBOUNCING;
 	}
 
-	if (!(state & activity_mask) && is_click_window_closed(btn, time_ms)) {
+	if (!(action & activity_mask) && is_click_window_closed(btn, time_ms)) {
 		btn->data.clicks = 0;
 	}
 
+	if (state != BUTTON_STATE_UNKNOWN) {
+		btn->state = state;
+	}
 	btn->timestamp = time_ms;
 out:
-	return event;
+	return state;
 }
 
 static button_error_t do_step(struct button *btn, const uint32_t time_ms)
 {
-	const button_event_t event =
+	const button_state_t state =
 		process_button(btn, time_ms);
 
-	if (event != BUTTON_EVT_NONE && btn->callback) {
-		(*btn->callback)(btn, event, 0, btn->callback_ctx);
+	if (state != BUTTON_STATE_UNKNOWN && btn->callback) {
+		(*btn->callback)(btn, state, 0, btn->callback_ctx);
 
-		if (event == BUTTON_EVT_RELEASED) {
-			(*btn->callback)(btn, BUTTON_EVT_CLICK,
+		if (state == BUTTON_STATE_RELEASED) {
+			(*btn->callback)(btn, BUTTON_STATE_CLICK,
 					btn->data.clicks, btn->callback_ctx);
 		}
 	}
@@ -356,6 +360,11 @@ button_error_t button_get_param(const struct button *btn,
 bool button_busy(const struct button *btn)
 {
 	return !is_button_up(btn);
+}
+
+button_state_t button_state(const struct button *btn)
+{
+	return btn->state;
 }
 
 button_error_t button_enable(struct button *btn)

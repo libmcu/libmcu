@@ -4,10 +4,10 @@
 The debouncer that I implemented here learned from [Elliot Williams's Debounce Your Noisy Buttons article](https://hackaday.com/2015/12/10/embed-with-elliot-debounce-your-noisy-buttons-part-ii/).
 
 ## Integration Guide
-### Define Parameters
+### Default Parameters
 * `BUTTON_MAX`
   - The maximum number of buttons. The default is 1.
-* `BUTTON_SAMPLING_PERIOD_MS`
+* `BUTTON_SAMPLING_INTERVAL_MS`
   - The sampling period. The default is 10 milliseconds.
 * `BUTTON_MIN_PRESS_TIME_MS`
   - The default is 60 milliseconds.
@@ -22,8 +22,8 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
 This is platform specific, something like in case of NRF5:
 
 ```c
-int testbtn_get_state(void) {
-	return (int)nrf_gpio_pin_read(USER_BUTTON);
+button_level_t testbtn_get_state(void *ctx) {
+	return nrf_gpio_pin_read(USER_BUTTON)? BUTTON_LEVEL_HIGH : BUTTON_LEVEL_LOW;
 }
 void testbtn_hw_init(void) {
 	nrf_gpio_cfg_input(USER_BUTTON, NRF_GPIO_PIN_PULLUP);
@@ -33,48 +33,44 @@ void testbtn_hw_init(void) {
 > Interrupt can be a trigger to scan button states rather than polling all the
 > time wasting cpu resource.
 
-### Initialize the module
-A time function to calculate elapsed time should be provided when initializing:
-`button_init(get_time_ms)`. The prototype is `unsigned int get_time_ms(void)`.
-
-As an example:
+### Create a button
 
 ```c
-unsigned int get_time_ms(void) {
-	return xTaskGetTickCount() * 1000 / configTICK_RATE_HZ;
-}
-```
-
-### Register buttons
-
-```c
-static void on_button_event(enum button_event event,
-		const struct button_data *info, void *ctx) {
+static void on_button_event(struct button *btn, const button_state_t event,
+		const uint8_t clicks, void *ctx) {
 	switch (event) {
-	case BUTTON_EVT_CLICK:
-		debug("%d click(s)", info->click);
+	case BUTTON_STATE_CLICK:
+        printf("%d click(s)\n", clicks);
 		break;
-	case BUTTON_EVT_PRESSED:
-		debug("pressed at %lu", info->time_pressed);
+	case BUTTON_STATE_PRESSED:
+        printf("pressed\n");
 		break;
-	case BUTTON_EVT_RELEASED:
-		debug("released at %lu", info->time_released);
+	case BUTTON_STATE_RELEASED:
+        printf("released\n");
 		break;
-	case BUTTON_EVT_HOLDING:
-		debug("holding at %lu", info->time_repeat);
+	case BUTTON_STATE_HOLDING:
+        printf("holding\n");
 		break;
 	}
 }
 
-void register_buttons(void) {
-	button_register(testbtn_get_state, on_button_event, 0);
+int main(void) {
+	struct button *btn = button_new(testbtn_get_state, 0, on_button_event, 0);
+    button_enable(btn);
+
+    while (1) {
+        const uint32_t now = millis();
+        button_step(btn, now);
+    }
+
+    button_disable(btn);
+    button_delete(btn);
 }
 ```
 
-### And scan
-
-```c
-button_step();
-```
-
 then registered handler will be called when button activity detected.
+
+## Notes
+- Every changes of button state will be notified to the registered handler.
+  - For example, if the button is pressed and held, the handler will be called with BUTTON_STATE_PRESSED and BUTTON_STATE_HOLDING.
+  - If the button is pressed, held and one more click is detected, the handler will be called 7 times in total, with BUTTON_STATE_PRESSED, BUTTON_STATE_HOLDING, BUTTON_STATE_RELEASED, BUTTON_STATE_CLICK with 1 click, BUTTON_STATE_PRESSED, BUTTON_STATE_RELEASE and BUTTON_STATE_CLICK with 2 clicks.
