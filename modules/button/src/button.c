@@ -188,7 +188,6 @@ static bool is_click_window_closed(const struct button *btn,
 	return time_ms - btn->data.time_released >= btn->param.click_window_ms;
 }
 
-#include <stdio.h>
 static waveform_t update_state(struct button *btn, const uint32_t pulses)
 {
 	/* If the elapsed time is greater than the sampling interval, update
@@ -284,15 +283,8 @@ out:
 	return event;
 }
 
-button_error_t button_step(struct button *btn, const uint32_t time_ms)
+static button_error_t do_step(struct button *btn, const uint32_t time_ms)
 {
-	if (btn == NULL) {
-		return BUTTON_ERROR_INVALID_PARAM;
-	}
-	if (!btn->active) {
-		return BUTTON_ERROR_DISABLED;
-	}
-
 	const button_event_t event =
 		process_button(btn, time_ms);
 
@@ -306,6 +298,33 @@ button_error_t button_step(struct button *btn, const uint32_t time_ms)
 	}
 
 	return BUTTON_ERROR_NONE;
+}
+
+button_error_t button_step(struct button *btn, const uint32_t time_ms)
+{
+	if (btn == NULL) {
+		return BUTTON_ERROR_INVALID_PARAM;
+	}
+	if (!btn->active) {
+		return BUTTON_ERROR_DISABLED;
+	}
+
+	return do_step(btn, time_ms);
+}
+
+button_error_t button_step_elapsed(struct button *btn,
+		const uint32_t time_elapsed_ms)
+{
+	if (btn == NULL) {
+		return BUTTON_ERROR_INVALID_PARAM;
+	}
+	if (!btn->active) {
+		return BUTTON_ERROR_DISABLED;
+	}
+
+	const uint32_t time_ms = btn->timestamp + time_elapsed_ms;
+
+	return do_step(btn, time_ms);
 }
 
 button_error_t button_set_param(struct button *btn,

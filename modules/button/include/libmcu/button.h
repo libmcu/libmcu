@@ -139,6 +139,18 @@ button_error_t button_get_param(const struct button *btn,
 button_error_t button_step(struct button *btn, const uint32_t time_ms);
 
 /**
+ * @brief Steps the button state machine by the elapsed time.
+ *
+ * @param[in] btn Pointer to the button instance.
+ * @param[in] time_elapsed_ms Elapsed time in milliseconds to
+ *	      step the state machine.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_step_elapsed(struct button *btn,
+		const uint32_t time_elapsed_ms);
+
+/**
  * @brief Checks if the button is currently busy.
  *
  * @param btn Pointer to the button instance.

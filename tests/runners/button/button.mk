@@ -8,6 +8,7 @@ SRC_FILES = \
 
 TEST_SRC_FILES = \
 	src/button/button_test.cpp \
+	src/button/button_elapsed_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
