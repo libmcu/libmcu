@@ -20,7 +20,6 @@ typedef enum {
 	BUTTON_ERROR_INVALID_PARAM,
 	BUTTON_ERROR_INCORRECT_PARAM,
 	BUTTON_ERROR_DISABLED,
-	BUTTON_ERROR_BUSY,
 } button_error_t;
 
 typedef enum {
@@ -126,8 +125,8 @@ button_error_t button_set_param(struct button *btn,
  *
  * @return Error code indicating success or failure.
  */
-button_error_t button_get_param(struct button *btn,
-		const struct button_param *param);
+button_error_t button_get_param(const struct button *btn,
+		struct button_param *param);
 
 /**
  * @brief Steps the button state machine by a given time.
