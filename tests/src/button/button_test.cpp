@@ -326,6 +326,46 @@ TEST(Button, busy_ShouldReturnFalse_WhenDebouncingFiltered) {
 	finish();
 }
 
+TEST(Button, enable_ShouldReturnError_WhenNullGiven) {
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_enable(0));
+}
+
+TEST(Button, disable_ShouldReturnError_WhenNullGiven) {
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_disable(0));
+}
+
+TEST(Button, set_param_ShouldReturnError_WhenNullGiven) {
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_set_param(0, 0));
+}
+
+TEST(Button, get_param_ShouldReturnError_WhenNullGiven) {
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_get_param(0, 0));
+}
+
+TEST(Button, get_param_ShouldReturnParam_WhenValidButtonGiven) {
+	struct button_param param = {0};
+	prepare();
+	LONGS_EQUAL(BUTTON_ERROR_NONE, button_get_param(button, &param));
+	finish();
+}
+
+TEST(Button, set_param_ShouldReturnError_WhenInCorrectParamGiven) {
+	struct button_param param = {0};
+	prepare();
+	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
+	finish();
+}
+
+TEST(Button, step_ShouldReturnError_WhenNullGiven) {
+	LONGS_EQUAL(BUTTON_ERROR_INVALID_PARAM, button_step(0, 0));
+}
+
+TEST(Button, step_ShouldReturnError_WhenNotEnabled) {
+	button = button_new(get_button_state, 0, on_button_event, 0);
+	LONGS_EQUAL(BUTTON_ERROR_DISABLED, button_step(button, 0));
+	button_delete(button);
+}
+
 TEST(Button, busy_ShouldReturnFalse_WhenClickWindowExpired) {
 	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(56, "get_button_state").andReturnValue(0);

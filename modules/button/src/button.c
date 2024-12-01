@@ -263,10 +263,8 @@ static button_event_t process_button(struct button *btn, const uint32_t time_ms)
 		state = STATE_DEBOUNCING;
 	}
 
-	if (!(state & activity_mask)) {
-		if (is_click_window_closed(btn, time_ms)) {
-			btn->data.clicks = 0;
-		}
+	if (!(state & activity_mask) && is_click_window_closed(btn, time_ms)) {
+		btn->data.clicks = 0;
 	}
 
 	btn->timestamp = time_ms;
@@ -313,7 +311,8 @@ button_error_t button_set_param(struct button *btn,
 	return BUTTON_ERROR_NONE;
 }
 
-button_error_t button_get_param(struct button *btn, struct button_param *param)
+button_error_t button_get_param(const struct button *btn,
+		struct button_param *param)
 {
 	if (btn == NULL || param == NULL) {
 		return BUTTON_ERROR_INVALID_PARAM;
@@ -323,7 +322,7 @@ button_error_t button_get_param(struct button *btn, struct button_param *param)
 	return BUTTON_ERROR_NONE;
 }
 
-bool button_busy(struct button *btn)
+bool button_busy(const struct button *btn)
 {
 	return !is_button_up(btn);
 }

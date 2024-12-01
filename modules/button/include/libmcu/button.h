@@ -126,7 +126,8 @@ button_error_t button_set_param(struct button *btn,
  *
  * @return Error code indicating success or failure.
  */
-button_error_t button_get_param(struct button *btn, struct button_param *param);
+button_error_t button_get_param(struct button *btn,
+		const struct button_param *param);
 
 /**
  * @brief Steps the button state machine by a given time.
@@ -148,7 +149,7 @@ button_error_t button_step(struct button *btn, const uint32_t time_ms);
  *
  * @return True if the button is busy, false otherwise.
  */
-bool button_busy(struct button *btn);
+bool button_busy(const struct button *btn);
 
 #if defined(__cplusplus)
 }
