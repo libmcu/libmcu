@@ -6,7 +6,7 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
 ### Timing Diagram
 ![timing diagram](timing_diagram.png)
 
-Note that the sampling period is 10 milliseconds, the debounce duration is 20 milliseconds, the repeat delay is 50 milliseconds, and the repeat rate is 20 milliseconds in the diagram for convenience.
+Note that the sampling period is 5 milliseconds, the debounce duration is 10 milliseconds, the repeat delay is 30 milliseconds, and the repeat rate is 20 milliseconds in the diagram for convenience.
 
 ## Integration Guide
 ### Default Parameters
