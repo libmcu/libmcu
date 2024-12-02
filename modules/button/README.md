@@ -43,19 +43,16 @@ void testbtn_hw_init(void) {
 
 ```c
 static void on_button_event(struct button *btn, const button_state_t event,
-		const uint8_t clicks, void *ctx) {
+		const uint16_t clicks, const uint16_t repeats, void *ctx) {
 	switch (event) {
-	case BUTTON_STATE_CLICK:
-        printf("%d click(s)\n", clicks);
-		break;
 	case BUTTON_STATE_PRESSED:
-        printf("pressed\n");
+        printf("pressed; %u click(s)\n", clicks);
 		break;
 	case BUTTON_STATE_RELEASED:
-        printf("released\n");
+        printf("released: %u click(s), %u repeat(s)\n", clicks, repeats);
 		break;
 	case BUTTON_STATE_HOLDING:
-        printf("holding\n");
+        printf("holding; %u repeat(s)\n", repeats);
 		break;
 	}
 }
@@ -65,8 +62,15 @@ int main(void) {
     button_enable(btn);
 
     while (1) {
+#if DO_DELTA_TIME
+        const uint32_t now = millis();
+        button_step_delta(btn, now - t0);
+        t0 = now;
+#else
         const uint32_t now = millis();
         button_step(btn, now);
+#endif
+        ...
     }
 
     button_disable(btn);

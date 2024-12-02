@@ -339,8 +339,7 @@ button_error_t button_step(struct button *btn, const uint32_t time_ms)
 	return do_step(btn, time_ms);
 }
 
-button_error_t button_step_elapsed(struct button *btn,
-		const uint32_t time_elapsed_ms)
+button_error_t button_step_delta(struct button *btn, const uint32_t delta_ms)
 {
 	if (btn == NULL) {
 		return BUTTON_ERROR_INVALID_PARAM;
@@ -349,7 +348,7 @@ button_error_t button_step_elapsed(struct button *btn,
 		return BUTTON_ERROR_DISABLED;
 	}
 
-	const uint32_t time_ms = btn->timestamp + time_elapsed_ms;
+	const uint32_t time_ms = btn->timestamp + delta_ms;
 
 	return do_step(btn, time_ms);
 }
