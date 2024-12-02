@@ -3,6 +3,7 @@
 ## Overview
 The debouncer that I implemented here learned from [Elliot Williams's Debounce Your Noisy Buttons article](https://hackaday.com/2015/12/10/embed-with-elliot-debounce-your-noisy-buttons-part-ii/).
 
+### Timing Diagram
 ![timing diagram](timing_diagram.png)
 
 Note that the sampling period is 10 milliseconds, the debounce duration is 20 milliseconds, the repeat delay is 50 milliseconds, and the repeat rate is 20 milliseconds in the diagram for convenience.
@@ -48,22 +49,22 @@ void testbtn_hw_init(void) {
 
 ```c
 static void on_button_event(struct button *btn, const button_state_t event,
-		const uint16_t clicks, const uint16_t repeats, void *ctx) {
-	switch (event) {
-	case BUTTON_STATE_PRESSED:
+                            const uint16_t clicks, const uint16_t repeats, void *ctx) {
+    switch (event) {
+    case BUTTON_STATE_PRESSED:
         printf("pressed; %u click(s)\n", clicks);
-		break;
-	case BUTTON_STATE_RELEASED:
+        break;
+    case BUTTON_STATE_RELEASED:
         printf("released: %u click(s), %u repeat(s)\n", clicks, repeats);
-		break;
-	case BUTTON_STATE_HOLDING:
+        break;
+    case BUTTON_STATE_HOLDING:
         printf("holding; %u repeat(s)\n", repeats);
-		break;
-	}
+        break;
+    }
 }
 
 int main(void) {
-	struct button *btn = button_new(testbtn_get_state, 0, on_button_event, 0);
+    struct button *btn = button_new(testbtn_get_state, 0, on_button_event, 0);
     button_enable(btn);
 
     while (1) {
@@ -88,4 +89,9 @@ then registered handler will be called when button activity detected.
 ## Notes
 - Every changes of button state will be notified to the registered handler.
   - For example, if the button is pressed and held, the handler will be called with BUTTON_STATE_PRESSED and BUTTON_STATE_HOLDING.
-  - If the button is pressed, held and one more click is detected, the handler will be called 7 times in total, with BUTTON_STATE_PRESSED, BUTTON_STATE_HOLDING, BUTTON_STATE_RELEASED, BUTTON_STATE_CLICK with 1 click, BUTTON_STATE_PRESSED, BUTTON_STATE_RELEASE and BUTTON_STATE_CLICK with 2 clicks.
+  - If the button is pressed, held and one more click is detected, the handler will be called 5 times in total:
+    - `BUTTON_STATE_PRESSED` with click count 1.
+    - `BUTTON_STATE_HOLDING` with click count 1 and repeat count 1.
+    - `BUTTON_STATE_RELEASED` with click count 1 and repeat count 1.
+    - `BUTTON_STATE_PRESSED` with click count 2.
+    - `BUTTON_STATE_RELEASE` with click count 2.
