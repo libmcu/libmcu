@@ -92,18 +92,18 @@ static void free_button(struct button *btn)
 static void get_default_param(struct button_param *param)
 {
 	*param = (struct button_param) {
-		.sampling_interval_ms = BUTTON_SAMPLING_PERIOD_MS,
-		.min_press_time_ms = BUTTON_DEBOUNCE_DURATION_MS,
+		.sampling_period_ms = BUTTON_SAMPLING_PERIOD_MS,
+		.debounce_duration_ms = BUTTON_DEBOUNCE_DURATION_MS,
 		.repeat_delay_ms = BUTTON_REPEAT_DELAY_MS,
 		.repeat_rate_ms = BUTTON_REPEAT_RATE_MS,
 		.click_window_ms = BUTTON_CLICK_WINDOW_MS,
-		.max_sampling_interval_ms = BUTTON_SAMPLING_TIMEOUT_MS,
+		.sampling_timeout_ms = BUTTON_SAMPLING_TIMEOUT_MS,
 	};
 }
 
 static uint16_t get_min_pressed_pulse_count(const struct button *btn)
 {
-	return btn->param.min_press_time_ms / btn->param.sampling_interval_ms;
+	return btn->param.debounce_duration_ms / btn->param.sampling_period_ms;
 }
 
 static waveform_t get_min_pressed_waveform(const struct button *btn)
@@ -135,18 +135,18 @@ static void update_waveform(waveform_t *waveform, const button_level_t pressed)
 static bool is_param_ok(const struct button_param *param,
 		const uint16_t min_pulse_count)
 {
-	if (!param->sampling_interval_ms) {
+	if (!param->sampling_period_ms) {
 		return false;
 	}
 
-	if (param->min_press_time_ms < param->sampling_interval_ms) {
+	if (param->debounce_duration_ms < param->sampling_period_ms) {
 		return false;
 	}
 
-	if (param->max_sampling_interval_ms < param->min_press_time_ms ||
-			param->max_sampling_interval_ms < param->repeat_delay_ms ||
-			param->max_sampling_interval_ms < param->repeat_rate_ms ||
-			param->max_sampling_interval_ms < param->click_window_ms) {
+	if (param->sampling_timeout_ms < param->debounce_duration_ms ||
+			param->sampling_timeout_ms < param->repeat_delay_ms ||
+			param->sampling_timeout_ms < param->repeat_rate_ms ||
+			param->sampling_timeout_ms < param->click_window_ms) {
 		return false;
 	}
 
@@ -265,12 +265,12 @@ out:
 static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 {
 	const uint32_t elapsed_ms = time_ms - btn->timestamp;
-	uint32_t pulses = elapsed_ms / btn->param.sampling_interval_ms;
+	uint32_t pulses = elapsed_ms / btn->param.sampling_period_ms;
 	button_state_t state = BUTTON_STATE_UNKNOWN;
 
 	if (!pulses) {
 		goto out;
-	} else if (elapsed_ms > btn->param.max_sampling_interval_ms) {
+	} else if (elapsed_ms > btn->param.sampling_timeout_ms) {
 		/* synchronize the timestamp as it's been too long since
 		 * the last update. The button state is assumed to be the same
 		 * as before. */
@@ -364,13 +364,13 @@ button_error_t button_set_param(struct button *btn,
 
 	memcpy(&copy, param, sizeof(copy));
 
-	if (!copy.max_sampling_interval_ms) {
-		copy.max_sampling_interval_ms = BUTTON_SAMPLING_TIMEOUT_MS;
+	if (!copy.sampling_timeout_ms) {
+		copy.sampling_timeout_ms = BUTTON_SAMPLING_TIMEOUT_MS;
 	}
 
-	if (copy.sampling_interval_ms &&
-			is_param_ok(&copy, copy.min_press_time_ms
-				/ copy.sampling_interval_ms)) {
+	if (copy.sampling_period_ms &&
+			is_param_ok(&copy, copy.debounce_duration_ms
+				/ copy.sampling_period_ms)) {
 		memcpy(&btn->param, &copy, sizeof(copy));
 		return BUTTON_ERROR_NONE;
 	}

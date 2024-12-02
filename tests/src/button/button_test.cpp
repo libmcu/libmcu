@@ -400,7 +400,7 @@ TEST(Button, set_param_ShouldSetMaxSamplingInterval_WhenZeroValueOfItGiven) {
 	struct button_param param;
 	prepare();
 	button_get_param(button, &param);
-	param.max_sampling_interval_ms = 0;
+	param.sampling_timeout_ms = 0;
 	LONGS_EQUAL(BUTTON_ERROR_NONE, button_set_param(button, &param));
 	finish();
 }
@@ -409,7 +409,7 @@ TEST(Button, set_param_ShouldReturnError_WhenSamplingIntervalIsZero) {
 	struct button_param param;
 	prepare();
 	button_get_param(button, &param);
-	param.sampling_interval_ms = 0;
+	param.sampling_period_ms = 0;
 	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
 	finish();
 }
@@ -418,7 +418,7 @@ TEST(Button, set_param_ShouldReturnError_WhenMinPressTimeIsLessThanSamplingInter
 	struct button_param param;
 	prepare();
 	button_get_param(button, &param);
-	param.min_press_time_ms = param.sampling_interval_ms - 1;
+	param.sampling_timeout_ms = param.sampling_period_ms - 1;
 	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
 	finish();
 }
@@ -427,8 +427,8 @@ TEST(Button, set_param_ShouldReturnError_WhenWaveformIsTooLong) {
 	struct button_param param;
 	prepare();
 	button_get_param(button, &param);
-	param.min_press_time_ms = 30;
-	param.sampling_interval_ms = 1;
+	param.sampling_timeout_ms = 30;
+	param.sampling_period_ms = 1;
 	LONGS_EQUAL(BUTTON_ERROR_INCORRECT_PARAM, button_set_param(button, &param));
 	finish();
 }

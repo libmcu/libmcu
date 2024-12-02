@@ -35,12 +35,12 @@ typedef enum {
 } button_state_t;
 
 struct button_param {
-	uint16_t sampling_interval_ms; /**< interval to check the button state */
-	uint16_t min_press_time_ms; /**< minimum time to consider as a press */
+	uint16_t sampling_period_ms; /**< period to check the button state */
+	uint16_t debounce_duration_ms; /**< duration to debounce the button */
 	uint16_t repeat_delay_ms; /**< delay before the repeat event */
 	uint16_t repeat_rate_ms; /**< rate of the repeat event */
 	uint16_t click_window_ms; /**< time window to consider as a click */
-	uint16_t max_sampling_interval_ms; /**< maximum interval to check
+	uint16_t sampling_timeout_ms; /**< maximum interval to check
 						the button state */
 };
 
