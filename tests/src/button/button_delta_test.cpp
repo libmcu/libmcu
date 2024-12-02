@@ -47,7 +47,7 @@ TEST_GROUP(ButtonElapsed) {
 	}
 	void step(uint32_t count) {
 		for (uint32_t i = 0; i < count; i++) {
-			LONGS_EQUAL(BUTTON_ERROR_NONE, button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS));
+			LONGS_EQUAL(BUTTON_ERROR_NONE, button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS));
 		}
 	}
 };
@@ -267,7 +267,7 @@ TEST(ButtonElapsed, step_ShouldDoNothing_WhenCalledDelayedAfterNoiseGiven) {
 
 	prepare();
 	step(3+2);
-	button_step_delta(button, BUTTON_MIN_PRESS_TIME_MS);
+	button_step_delta(button, BUTTON_DEBOUNCE_DURATION_MS);
 	finish();
 }
 
@@ -282,7 +282,7 @@ TEST(ButtonElapsed, step_ShouldHandlePressed_WhenCalledDelayedAfterHighGiven) {
 
 	prepare();
 	step(1);
-	button_step_delta(button, BUTTON_MIN_PRESS_TIME_MS);
+	button_step_delta(button, BUTTON_DEBOUNCE_DURATION_MS);
 	finish();
 }
 
@@ -301,7 +301,7 @@ TEST(ButtonElapsed, step_ShouldHandleHolding_WhenCalledDelayed) {
 
 	prepare();
 	step(6);
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 30);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 30);
 	finish();
 }
 
@@ -324,7 +324,7 @@ TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenCalledDelayed) {
 
 	prepare();
 	step(36);
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 20);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 20);
 	finish();
 }
 
@@ -337,7 +337,7 @@ TEST(ButtonElapsed, step_ShouldSkipHoldingEvent_WhenCalledDelayed) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 36);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 36);
 	finish();
 }
 
@@ -350,7 +350,7 @@ TEST(ButtonElapsed, state_ShouldReturnPressed_WhenButtonPressed) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
 	LONGS_EQUAL(BUTTON_STATE_PRESSED, button_state(button));
 	finish();
 }
@@ -369,8 +369,8 @@ TEST(ButtonElapsed, state_ShouldReturnHolding_WhenButtonHolding) {
 		.withParameter("repeats", 1);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 6);
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 30);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 30);
 	LONGS_EQUAL(BUTTON_STATE_HOLDING, button_state(button));
 	finish();
 }
@@ -389,8 +389,8 @@ TEST(ButtonElapsed, state_ShouldReturnReleased_WhenButtonReleased) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 6);
-	button_step_delta(button, BUTTON_SAMPLING_INTERVAL_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
 	LONGS_EQUAL(BUTTON_STATE_RELEASED, button_state(button));
 	finish();
 }

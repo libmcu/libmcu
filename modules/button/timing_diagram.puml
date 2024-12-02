@@ -1,0 +1,63 @@
+@startuml
+scale 10 as 100 pixels
+
+clock "sampling interval" as interval with period 10 pulse 1
+binary "signal1" as signal1
+binary "state1" as state1
+binary "signal2" as signal2
+binary "state2" as state2
+binary "signal3" as signal3
+binary "state3" as state3
+
+@0
+signal2 is high
+state2 is high
+@5
+state3 -> signal3 : pressed
+signal3 is {0,1}
+@9
+signal3 is high
+@10
+state1 -> signal1 : pressed
+signal1 is {0,1}
+signal2 -> state2 : repeat-1
+@18
+signal1 is high
+@20
+signal1 -> state1 : detect pressing
+state1 is high
+signal2 -> state2 : repeat-2
+signal3 -> state3 : click-1
+state3 is high
+@32
+signal3 is {0,1}
+@38
+signal3 is low
+@40
+state3 is low
+@42
+signal3 is {0,1}
+@48
+signal3 is high
+@50
+signal2 -> state2 : repeat-3
+@60
+state3 is high
+signal3 -> state3 : click-2
+@62
+state2 -> signal2 : released
+signal2 is {0,1}
+@68
+signal2 is low
+@70
+signal1 -> state1 : holding
+signal2 -> state2 : detect releasing
+state2 is low
+@75
+state1 -> signal1 : released
+signal1 is {0,1}
+@80
+signal1 is low
+signal1 -> state1 : detect releasing
+state1 is low
+@enduml

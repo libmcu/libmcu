@@ -13,11 +13,11 @@
 #if !defined(BUTTON_MAX)
 #define BUTTON_MAX				8
 #endif
-#if !defined(BUTTON_SAMPLING_INTERVAL_MS)
-#define BUTTON_SAMPLING_INTERVAL_MS		10U
+#if !defined(BUTTON_SAMPLING_PERIOD_MS)
+#define BUTTON_SAMPLING_PERIOD_MS		10U
 #endif
-#if !defined(BUTTON_MIN_PRESS_TIME_MS)
-#define BUTTON_MIN_PRESS_TIME_MS		60U
+#if !defined(BUTTON_DEBOUNCE_DURATION_MS)
+#define BUTTON_DEBOUNCE_DURATION_MS		20U
 #endif
 #if !defined(BUTTON_REPEAT_DELAY_MS)
 #define BUTTON_REPEAT_DELAY_MS			300U
@@ -28,10 +28,10 @@
 #if !defined(BUTTON_CLICK_WINDOW_MS)
 #define BUTTON_CLICK_WINDOW_MS			500U
 #endif
-#if !defined(BUTTON_MAX_SAMPLING_INTERVAL_MS)
-#define BUTTON_MAX_SAMPLING_INTERVAL_MS		1000U
+#if !defined(BUTTON_SAMPLING_TIMEOUT_MS)
+#define BUTTON_SAMPLING_TIMEOUT_MS		1000U
 #endif
-static_assert(BUTTON_MIN_PRESS_TIME_MS > BUTTON_SAMPLING_INTERVAL_MS,
+static_assert(BUTTON_DEBOUNCE_DURATION_MS > BUTTON_SAMPLING_PERIOD_MS,
 		"The sampling period time must be less than press hold time.");
 
 typedef enum {
@@ -92,12 +92,12 @@ static void free_button(struct button *btn)
 static void get_default_param(struct button_param *param)
 {
 	*param = (struct button_param) {
-		.sampling_interval_ms = BUTTON_SAMPLING_INTERVAL_MS,
-		.min_press_time_ms = BUTTON_MIN_PRESS_TIME_MS,
+		.sampling_interval_ms = BUTTON_SAMPLING_PERIOD_MS,
+		.min_press_time_ms = BUTTON_DEBOUNCE_DURATION_MS,
 		.repeat_delay_ms = BUTTON_REPEAT_DELAY_MS,
 		.repeat_rate_ms = BUTTON_REPEAT_RATE_MS,
 		.click_window_ms = BUTTON_CLICK_WINDOW_MS,
-		.max_sampling_interval_ms = BUTTON_MAX_SAMPLING_INTERVAL_MS,
+		.max_sampling_interval_ms = BUTTON_SAMPLING_TIMEOUT_MS,
 	};
 }
 
@@ -365,7 +365,7 @@ button_error_t button_set_param(struct button *btn,
 	memcpy(&copy, param, sizeof(copy));
 
 	if (!copy.max_sampling_interval_ms) {
-		copy.max_sampling_interval_ms = BUTTON_MAX_SAMPLING_INTERVAL_MS;
+		copy.max_sampling_interval_ms = BUTTON_SAMPLING_TIMEOUT_MS;
 	}
 
 	if (copy.sampling_interval_ms &&

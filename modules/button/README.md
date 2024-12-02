@@ -3,14 +3,18 @@
 ## Overview
 The debouncer that I implemented here learned from [Elliot Williams's Debounce Your Noisy Buttons article](https://hackaday.com/2015/12/10/embed-with-elliot-debounce-your-noisy-buttons-part-ii/).
 
+![timing diagram](timing_diagram.png)
+
+Note that the sampling period is 10 milliseconds, the debounce duration is 20 milliseconds, the repeat delay is 50 milliseconds, and the repeat rate is 20 milliseconds in the diagram for convenience.
+
 ## Integration Guide
 ### Default Parameters
 * `BUTTON_MAX`
   - The maximum number of buttons. The default is 1.
-* `BUTTON_SAMPLING_INTERVAL_MS`
+* `BUTTON_SAMPLING_PERIOD_MS`
   - The sampling period. The default is 10 milliseconds.
-* `BUTTON_MIN_PRESS_TIME_MS`
-  - The default is 60 milliseconds.
+* `BUTTON_DEBOUNCE_DURATION_MS`
+  - The debounce duration. The default is 20 milliseconds.
 * `BUTTON_REPEAT_DELAY_MS`
   - The repeat handler is called after the defined delay while button holding. The default is 300 milliseconds.
   - Holding functionality will be disabled if the value is 0.
@@ -20,9 +24,10 @@ The debouncer that I implemented here learned from [Elliot Williams's Debounce Y
 * `BUTTON_CLICK_WINDOW_MS`
   - The click handler is called with the number of clicks when another click comes in the time window. The default is 500 milliseconds.
   - Click functionality will be disabled if the value is 0.
-* `BUTTON_MAX_SAMPLING_INTERVAL_MS`
-  - The maximum sampling period. The default is 1000 milliseconds.
-  - If set to 0, the default value, 1000 milliseconds, will be used.
+* `BUTTON_SAMPLING_TIMEOUT_MS`
+  - The timeout for the sampling period. The default is 1000 milliseconds.
+  - If set to 0, the default value will be used.
+  - If step is not called in the defined timeout, the changed until the next step will be ignored. But the last state will be kept.
  
 ### Initialize GPIO to be used for button
 This is platform specific, something like in case of NRF5:

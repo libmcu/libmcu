@@ -46,7 +46,7 @@ TEST_GROUP(Button) {
 		button_delete(button);
 	}
 	void step(uint32_t count) {
-		const uint32_t milliseconds = count * BUTTON_SAMPLING_INTERVAL_MS;
+		const uint32_t milliseconds = count * BUTTON_SAMPLING_PERIOD_MS;
 		for (uint32_t i = 0; i <= milliseconds; i++) {
 			LONGS_EQUAL(BUTTON_ERROR_NONE, button_step(button, i));
 		}
@@ -452,8 +452,8 @@ TEST(Button, step_ShouldDoNothing_WhenCalledDelayedAfterNoiseGiven) {
 
 	prepare();
 	step(3+2);
-	const uint32_t elapsed = (3+2)*BUTTON_SAMPLING_INTERVAL_MS;
-	button_step(button, elapsed + BUTTON_MIN_PRESS_TIME_MS);
+	const uint32_t elapsed = (3+2)*BUTTON_SAMPLING_PERIOD_MS;
+	button_step(button, elapsed + BUTTON_DEBOUNCE_DURATION_MS);
 	finish();
 }
 
@@ -468,8 +468,8 @@ TEST(Button, step_ShouldHandlePressed_WhenCalledDelayedAfterHighGiven) {
 
 	prepare();
 	step(1);
-	const uint32_t elapsed = (1)*BUTTON_SAMPLING_INTERVAL_MS;
-	button_step(button, elapsed + BUTTON_MIN_PRESS_TIME_MS);
+	const uint32_t elapsed = (1)*BUTTON_SAMPLING_PERIOD_MS;
+	button_step(button, elapsed + BUTTON_DEBOUNCE_DURATION_MS);
 	finish();
 }
 
@@ -488,8 +488,8 @@ TEST(Button, step_ShouldHandleHolding_WhenCalledDelayed) {
 
 	prepare();
 	step(6);
-	const uint32_t elapsed = (6)*BUTTON_SAMPLING_INTERVAL_MS;
-	button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * 30);
+	const uint32_t elapsed = (6)*BUTTON_SAMPLING_PERIOD_MS;
+	button_step(button, elapsed + BUTTON_SAMPLING_PERIOD_MS * 30);
 	finish();
 }
 
@@ -512,8 +512,8 @@ TEST(Button, step_ShouldHandleHoldingRepeat_WhenCalledDelayed) {
 
 	prepare();
 	step(36);
-	const uint32_t elapsed = (36)*BUTTON_SAMPLING_INTERVAL_MS;
-	button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * 20);
+	const uint32_t elapsed = (36)*BUTTON_SAMPLING_PERIOD_MS;
+	button_step(button, elapsed + BUTTON_SAMPLING_PERIOD_MS * 20);
 	finish();
 }
 
@@ -564,9 +564,9 @@ TEST(Button, clicks_ShouldReturnNumberOfClicks_WhenCalled) {
 	LONGS_EQUAL(0, button_clicks(button));
 	step(6);
 	LONGS_EQUAL(1, button_clicks(button));
-	const uint32_t elapsed = (6)*BUTTON_SAMPLING_INTERVAL_MS;
+	const uint32_t elapsed = (6)*BUTTON_SAMPLING_PERIOD_MS;
 	for (uint32_t i = 1; i <= 12; i++) {
-		button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * i);
+		button_step(button, elapsed + BUTTON_SAMPLING_PERIOD_MS * i);
 	}
 	LONGS_EQUAL(2, button_clicks(button));
 	finish();
@@ -592,14 +592,14 @@ TEST(Button, repeats_ShouldReturnNumberOfRepeats_WhenCalled) {
 	prepare();
 	step(6);
 	LONGS_EQUAL(0, button_repeats(button));
-	uint32_t elapsed = (6)*BUTTON_SAMPLING_INTERVAL_MS;
+	uint32_t elapsed = (6)*BUTTON_SAMPLING_PERIOD_MS;
 	for (uint32_t i = 1; i <= 30; i++) {
-		button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * i);
+		button_step(button, elapsed + BUTTON_SAMPLING_PERIOD_MS * i);
 	}
 	LONGS_EQUAL(1, button_repeats(button));
-	elapsed += (30)*BUTTON_SAMPLING_INTERVAL_MS;
+	elapsed += (30)*BUTTON_SAMPLING_PERIOD_MS;
 	for (uint32_t i = 1; i <= 30; i++) {
-		button_step(button, elapsed + BUTTON_SAMPLING_INTERVAL_MS * i);
+		button_step(button, elapsed + BUTTON_SAMPLING_PERIOD_MS * i);
 	}
 	LONGS_EQUAL(2, button_repeats(button));
 	finish();
