@@ -11,7 +11,7 @@ Note that the sampling period is 5 milliseconds, the debounce duration is 10 mil
 ## Integration Guide
 ### Default Parameters
 * `BUTTON_MAX`
-  - The maximum number of buttons. The default is 1.
+  - The maximum number of buttons. The default is 8.
 * `BUTTON_SAMPLING_PERIOD_MS`
   - The sampling period. The default is 10 milliseconds.
 * `BUTTON_DEBOUNCE_DURATION_MS`
@@ -34,16 +34,12 @@ Note that the sampling period is 5 milliseconds, the debounce duration is 10 mil
 This is platform specific, something like in case of NRF5:
 
 ```c
-button_level_t testbtn_get_state(void *ctx) {
-	return nrf_gpio_pin_read(USER_BUTTON)? BUTTON_LEVEL_HIGH : BUTTON_LEVEL_LOW;
-}
-void testbtn_hw_init(void) {
-	nrf_gpio_cfg_input(USER_BUTTON, NRF_GPIO_PIN_PULLUP);
+button_level_t get_button_state(void *ctx) {
+	return nrf_gpio_pin_read(YOUR_BUTTON)? BUTTON_LEVEL_HIGH : BUTTON_LEVEL_LOW;
 }
 ```
 
-> Interrupt can be a trigger to scan button states rather than polling all the
-> time wasting cpu resource.
+> Interrupt can be a trigger to scan button states rather than polling which wastes cpu resources.
 
 ### Create a button
 
@@ -52,19 +48,19 @@ static void on_button_event(struct button *btn, const button_state_t event,
                             const uint16_t clicks, const uint16_t repeats, void *ctx) {
     switch (event) {
     case BUTTON_STATE_PRESSED:
-        printf("pressed; %u click(s)\n", clicks);
+        printf("pressed: %u click(s)\n", clicks);
         break;
     case BUTTON_STATE_RELEASED:
         printf("released: %u click(s), %u repeat(s)\n", clicks, repeats);
         break;
     case BUTTON_STATE_HOLDING:
-        printf("holding; %u repeat(s)\n", repeats);
+        printf("holding: %u repeat(s)\n", repeats);
         break;
     }
 }
 
 int main(void) {
-    struct button *btn = button_new(testbtn_get_state, 0, on_button_event, 0);
+    struct button *btn = button_new(get_button_state, 0, on_button_event, 0);
     button_enable(btn);
 
     while (1) {
