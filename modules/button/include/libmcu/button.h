@@ -32,7 +32,6 @@ typedef enum {
 	BUTTON_STATE_PRESSED,
 	BUTTON_STATE_RELEASED,
 	BUTTON_STATE_HOLDING,
-	BUTTON_STATE_CLICK,
 } button_state_t;
 
 struct button_param {
@@ -64,10 +63,12 @@ typedef button_level_t (*button_get_state_func_t)(void *ctx);
  * @param[in] button Pointer to the button structure.
  * @param[in] event The event that occurred.
  * @param[in] clicks The number of clicks detected.
+ * @param[in] repeats The number of repeat presses detected.
  * @param[in] ctx Context pointer passed to the callback function.
  */
 typedef void (*button_callback_t)(struct button *button,
-		const button_state_t event, const uint8_t clicks, void *ctx);
+		const button_state_t event, const uint16_t clicks,
+		const uint16_t repeats, void *ctx);
 
 /**
  * @brief Creates a new button instance.
@@ -168,14 +169,27 @@ bool button_busy(const struct button *btn);
  *
  * @param[in] btn Pointer to the button instance.
  *
- * @note It only returns the current state of the button,
- * `BUTTON_STATE_PRESSED`, `BUTTON_STATE_RELEASED`, or `BUTTON_STATE_HOLDING`.
- * It does not return `BUTTON_STATE_CLICK`. Use the callback function to get the
- * click event.
- *
  * @return The current state of the button.
  */
 button_state_t button_state(const struct button *btn);
+
+/**
+ * @brief Gets the number of clicks detected for the button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ *
+ * @return The number of clicks detected.
+ */
+uint16_t button_clicks(const struct button *btn);
+
+/**
+ * @brief Gets the number of repeat presses detected for the button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ *
+ * @return The number of repeat presses detected.
+ */
+uint16_t button_repeats(const struct button *btn);
 
 #if defined(__cplusplus)
 }

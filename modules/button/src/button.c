@@ -50,7 +50,8 @@ struct button_data {
 	uint32_t time_pressed;
 	uint32_t time_released;
 	uint32_t time_repeat;
-	uint8_t clicks; /**< the number of clicks */
+	uint16_t clicks; /**< the number of clicks */
+	uint16_t repeats; /**< the number of repeats */
 };
 
 struct button {
@@ -216,6 +217,7 @@ static waveform_t update_state(struct button *btn, const uint32_t pulses)
 static bool process_pressed(struct button *btn, const uint32_t time_ms)
 {
 	btn->data.time_pressed = time_ms;
+	btn->data.clicks++;
 	btn->pressed = true;
 	return true;
 }
@@ -224,8 +226,8 @@ static bool process_released(struct button *btn, const uint32_t time_ms)
 {
 	btn->data.time_released = time_ms;
 	btn->pressed = false;
-	btn->data.clicks++;
 	btn->data.time_repeat = 0;
+	btn->data.repeats = 0;
 	return true;
 }
 
@@ -253,6 +255,7 @@ static bool process_holding(struct button *btn, const uint32_t time_ms)
 
 	if (state_updated) {
 		btn->data.time_repeat = time_ms;
+		btn->data.repeats++;
 	}
 
 out:
@@ -261,20 +264,24 @@ out:
 
 static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 {
-	const uint32_t activity_mask = ACTION_PRESSED | ACTION_DOWN
-		| ACTION_DEBOUNCING;
 	const uint32_t elapsed_ms = time_ms - btn->timestamp;
-	const uint32_t pulses = elapsed_ms / btn->param.sampling_interval_ms;
-	action_t action = ACTION_IDLE;
+	uint32_t pulses = elapsed_ms / btn->param.sampling_interval_ms;
 	button_state_t state = BUTTON_STATE_UNKNOWN;
 
 	if (!pulses) {
 		goto out;
 	} else if (elapsed_ms > btn->param.max_sampling_interval_ms) {
-		goto out_updating_timestamp;
+		/* synchronize the timestamp as it's been too long since
+		 * the last update. The button state is assumed to be the same
+		 * as before. */
+		btn->timestamp = time_ms;
+		pulses = 1;
 	}
 
 	const waveform_t waveform = update_state(btn, pulses);
+	const uint32_t activity_mask = ACTION_PRESSED | ACTION_DOWN
+		| ACTION_DEBOUNCING;
+	action_t action = ACTION_IDLE;
 
 	if (is_button_pressed(btn)) {
 		action = ACTION_PRESSED;
@@ -303,7 +310,6 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		btn->state = state;
 	}
 
-out_updating_timestamp:
 	btn->timestamp = time_ms;
 out:
 	return state;
@@ -314,13 +320,8 @@ static button_error_t do_step(struct button *btn, const uint32_t time_ms)
 	const button_state_t state = process_button(btn, time_ms);
 
 	if (state != BUTTON_STATE_UNKNOWN && btn->callback) {
-		(*btn->callback)(btn, state, 0, btn->callback_ctx);
-
-		if (state == BUTTON_STATE_RELEASED &&
-				btn->param.click_window_ms) {
-			(*btn->callback)(btn, BUTTON_STATE_CLICK,
-					btn->data.clicks, btn->callback_ctx);
-		}
+		(*btn->callback)(btn, state, btn->data.clicks,
+				btn->data.repeats, btn->callback_ctx);
 	}
 
 	return BUTTON_ERROR_NONE;
@@ -397,6 +398,16 @@ bool button_busy(const struct button *btn)
 button_state_t button_state(const struct button *btn)
 {
 	return btn->state;
+}
+
+uint16_t button_clicks(const struct button *btn)
+{
+	return btn->data.clicks;
+}
+
+uint16_t button_repeats(const struct button *btn)
+{
+	return btn->data.repeats;
 }
 
 button_error_t button_enable(struct button *btn)
