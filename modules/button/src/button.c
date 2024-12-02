@@ -101,24 +101,25 @@ static void get_default_param(struct button_param *param)
 	};
 }
 
-static uint16_t get_min_pressed_pulse_count(const struct button *btn)
+static uint16_t get_debounce_count(const struct button *btn)
 {
-	return btn->param.debounce_duration_ms / btn->param.sampling_period_ms;
+	return btn->param.debounce_duration_ms
+		/ btn->param.sampling_period_ms + 1;
 }
 
-static waveform_t get_min_pressed_waveform(const struct button *btn)
+static waveform_t get_debounce_bitstream(const struct button *btn)
 {
-	return 1U << get_min_pressed_pulse_count(btn);
+	return 1U << get_debounce_count(btn);
 }
 
-static waveform_t get_waveform_debouncing_mask(const struct button *btn)
+static waveform_t get_debounce_mask(const struct button *btn)
 {
-	return (1U << get_min_pressed_pulse_count(btn)) - 1;
+	return (1U << get_debounce_count(btn)) - 1;
 }
 
 static waveform_t get_waveform_mask(const struct button *btn)
 {
-	return (1U << (get_min_pressed_pulse_count(btn) + 1)) - 1;
+	return (1U << (get_debounce_count(btn) + 1)) - 1;
 }
 
 static waveform_t get_waveform(const struct button *btn)
@@ -133,13 +134,9 @@ static void update_waveform(waveform_t *waveform, const button_level_t pressed)
 }
 
 static bool is_param_ok(const struct button_param *param,
-		const uint16_t min_pulse_count)
+		const uint16_t debounce_count)
 {
 	if (!param->sampling_period_ms) {
-		return false;
-	}
-
-	if (param->debounce_duration_ms < param->sampling_period_ms) {
 		return false;
 	}
 
@@ -150,7 +147,7 @@ static bool is_param_ok(const struct button_param *param,
 		return false;
 	}
 
-	if (min_pulse_count >= (uint16_t)(sizeof(waveform_t) * 8 - 2)) {
+	if (debounce_count >= (uint16_t)(sizeof(waveform_t) * 8 - 2)) {
 		return false;
 	}
 
@@ -164,8 +161,8 @@ static bool is_button_pressed(const struct button *btn)
 	}
 
 	/* 0b0111111 */
-	const waveform_t expected = get_min_pressed_waveform(btn) - 1;
-	const waveform_t mask = get_waveform_debouncing_mask(btn);
+	const waveform_t expected = get_debounce_mask(btn);
+	const waveform_t mask = get_debounce_mask(btn);
 	return (get_waveform(btn) & mask) == expected;
 }
 
@@ -176,19 +173,19 @@ static bool is_button_released(const struct button *btn)
 	}
 
 	/* 0b1000000 */
-	const waveform_t expected = get_min_pressed_waveform(btn);
+	const waveform_t expected = get_debounce_bitstream(btn);
 	return get_waveform(btn) == expected;
 }
 
 static bool is_button_up(const struct button *btn)
 {
-	const waveform_t mask = get_waveform_debouncing_mask(btn);
+	const waveform_t mask = get_debounce_mask(btn);
 	return (get_waveform(btn) & mask) == 0;
 }
 
 static bool is_button_down(const struct button *btn)
 {
-	const waveform_t mask = get_waveform_debouncing_mask(btn);
+	const waveform_t mask = get_debounce_mask(btn);
 	return (get_waveform(btn) & mask) == mask;
 }
 
@@ -265,6 +262,7 @@ out:
 static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 {
 	const uint32_t elapsed_ms = time_ms - btn->timestamp;
+	const uint32_t remaining = elapsed_ms % btn->param.sampling_period_ms;
 	uint32_t pulses = elapsed_ms / btn->param.sampling_period_ms;
 	button_state_t state = BUTTON_STATE_UNKNOWN;
 
@@ -274,7 +272,7 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		/* synchronize the timestamp as it's been too long since
 		 * the last update. The button state is assumed to be the same
 		 * as before. */
-		btn->timestamp = time_ms;
+		btn->timestamp = time_ms - remaining;
 		pulses = 1;
 	}
 
@@ -310,7 +308,7 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		btn->state = state;
 	}
 
-	btn->timestamp = time_ms;
+	btn->timestamp = time_ms - remaining;
 out:
 	return state;
 }

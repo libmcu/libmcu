@@ -74,7 +74,7 @@ TEST(ButtonElapsed, step_ShouldHandlePressed_WhenValidPatternGiven) {
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -82,7 +82,7 @@ TEST(ButtonElapsed, step_ShouldHandlePressed_WhenValidPatternGiven) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	step(2+1+1+1+6);
+	step(2+1+1+1+7);
 	finish();
 }
 
@@ -107,8 +107,8 @@ TEST(ButtonElapsed, step_ShouldIgnoreNoise_WhenNoiseGivenInMiddleOfPressed) {
 }
 
 TEST(ButtonElapsed, step_ShouldHandleReleased_WhenButtonReleased) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -120,7 +120,7 @@ TEST(ButtonElapsed, step_ShouldHandleReleased_WhenButtonReleased) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	step(6+6);
+	step(7+7);
 	finish();
 }
 
@@ -129,7 +129,7 @@ TEST(ButtonElapsed, step_ShouldHandleHolding_WhenButtonKeepPressed) {
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(1, "get_button_state").andReturnValue(0);
-	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(37, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -141,12 +141,12 @@ TEST(ButtonElapsed, step_ShouldHandleHolding_WhenButtonKeepPressed) {
 		.withParameter("repeats", 1);
 
 	prepare();
-	step(2+1+1+1+36);
+	step(2+1+1+1+37);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenButtonKeepPressedLonger) {
-	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(37, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(20, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
@@ -163,12 +163,12 @@ TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenButtonKeepPressedLonger) 
 		.withParameter("repeats", 2);
 
 	prepare();
-	step(36+20);
+	step(37+20);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenButtonKeepPressedMuchLonger) {
-	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(37, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(200, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
@@ -187,15 +187,15 @@ TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenButtonKeepPressedMuchLong
 	}
 
 	prepare();
-	step(36+200);
+	step(37+200);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldHandleClick_WhenTwoClickGiven) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -215,16 +215,16 @@ TEST(ButtonElapsed, step_ShouldHandleClick_WhenTwoClickGiven) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	step(6+6+6+6);
+	step(7+7+7+7);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldHandleClick_WhenOneClickGivenTwice) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(57, "get_button_state").andReturnValue(0);
 
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(57, "get_button_state").andReturnValue(0);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -244,7 +244,7 @@ TEST(ButtonElapsed, step_ShouldHandleClick_WhenOneClickGivenTwice) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	step(6+56+6+56);
+	step(7+57+7+57);
 	finish();
 }
 
@@ -287,7 +287,7 @@ TEST(ButtonElapsed, step_ShouldHandlePressed_WhenCalledDelayedAfterHighGiven) {
 }
 
 TEST(ButtonElapsed, step_ShouldHandleHolding_WhenCalledDelayed) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(30, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
@@ -300,13 +300,13 @@ TEST(ButtonElapsed, step_ShouldHandleHolding_WhenCalledDelayed) {
 		.withParameter("repeats", 1);
 
 	prepare();
-	step(6);
+	step(7);
 	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 30);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenCalledDelayed) {
-	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(37, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(20, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
@@ -323,13 +323,13 @@ TEST(ButtonElapsed, step_ShouldHandleHoldingRepeat_WhenCalledDelayed) {
 		.withParameter("repeats", 2);
 
 	prepare();
-	step(36);
+	step(37);
 	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 20);
 	finish();
 }
 
 TEST(ButtonElapsed, step_ShouldSkipHoldingEvent_WhenCalledDelayed) {
-	mock().expectNCalls(36, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(37, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -337,12 +337,12 @@ TEST(ButtonElapsed, step_ShouldSkipHoldingEvent_WhenCalledDelayed) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 36);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 37);
 	finish();
 }
 
 TEST(ButtonElapsed, state_ShouldReturnPressed_WhenButtonPressed) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -350,13 +350,13 @@ TEST(ButtonElapsed, state_ShouldReturnPressed_WhenButtonPressed) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 7);
 	LONGS_EQUAL(BUTTON_STATE_PRESSED, button_state(button));
 	finish();
 }
 
 TEST(ButtonElapsed, state_ShouldReturnHolding_WhenButtonHolding) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(30, "get_button_state").andReturnValue(1);
 
 	mock().expectOneCall("on_button_event")
@@ -369,15 +369,15 @@ TEST(ButtonElapsed, state_ShouldReturnHolding_WhenButtonHolding) {
 		.withParameter("repeats", 1);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 7);
 	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 30);
 	LONGS_EQUAL(BUTTON_STATE_HOLDING, button_state(button));
 	finish();
 }
 
 TEST(ButtonElapsed, state_ShouldReturnReleased_WhenButtonReleased) {
-	mock().expectNCalls(6, "get_button_state").andReturnValue(1);
-	mock().expectNCalls(6, "get_button_state").andReturnValue(0);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(7, "get_button_state").andReturnValue(0);
 
 	mock().expectOneCall("on_button_event")
 		.withParameter("event", BUTTON_STATE_PRESSED)
@@ -389,8 +389,8 @@ TEST(ButtonElapsed, state_ShouldReturnReleased_WhenButtonReleased) {
 		.withParameter("repeats", 0);
 
 	prepare();
-	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
-	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 6);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 7);
+	button_step_delta(button, BUTTON_SAMPLING_PERIOD_MS * 7);
 	LONGS_EQUAL(BUTTON_STATE_RELEASED, button_state(button));
 	finish();
 }
