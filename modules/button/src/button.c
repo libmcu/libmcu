@@ -192,7 +192,7 @@ static bool is_button_down(const struct button *btn)
 static bool is_click_window_closed(const struct button *btn,
 		const uint32_t time_ms)
 {
-	if (!btn->param.click_window_ms) {
+	if (!btn->param.click_window_ms || btn->data.clicks == 0) {
 		return true;
 	}
 	return time_ms - btn->data.time_released >= btn->param.click_window_ms;
@@ -277,7 +277,7 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		pulses = 1;
 	}
 
-	const waveform_t waveform = update_state(btn, pulses);
+	update_state(btn, pulses);
 
 	if (is_button_pressed(btn)) {
 		state = BUTTON_STATE_PRESSED;
