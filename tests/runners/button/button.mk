@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-COMPONENT_NAME = button
+COMPONENT_NAME = Button
 
 SRC_FILES = \
 	../modules/button/src/button.c \
@@ -8,6 +8,7 @@ SRC_FILES = \
 
 TEST_SRC_FILES = \
 	src/button/button_test.cpp \
+	src/button/button_delta_test.cpp \
 	src/test_all.cpp \
 
 INCLUDE_DIRS = \
@@ -19,7 +20,7 @@ INCLUDE_DIRS = \
 CPPUTEST_CPPFLAGS = \
 	-DBUTTON_MAX=3 \
 	-DBUTTON_SAMPLING_PERIOD_MS=10 \
-	-DBUTTON_MIN_PRESS_TIME_MS=60 \
+	-DBUTTON_DEBOUNCE_DURATION_MS=60 \
 	-DBUTTON_REPEAT_DELAY_MS=300 \
 
 include runners/MakefileRunner

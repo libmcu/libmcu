@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2021 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -12,90 +12,182 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-
-#if !defined(BUTTON_MAX)
-#define BUTTON_MAX				1
-#endif
-#if !defined(BUTTON_SAMPLING_PERIOD_MS)
-#define BUTTON_SAMPLING_PERIOD_MS		10U
-#endif
-#if !defined(BUTTON_MIN_PRESS_TIME_MS)
-#define BUTTON_MIN_PRESS_TIME_MS		60U
-#endif
-#if !defined(BUTTON_REPEAT_DELAY_MS)
-#define BUTTON_REPEAT_DELAY_MS			300U
-#endif
-#if !defined(BUTTON_REPEAT_RATE_MS)
-#define BUTTON_REPEAT_RATE_MS			200U
-#endif
-#if !defined(BUTTON_CLICK_WINDOW_MS)
-#define BUTTON_CLICK_WINDOW_MS			500U
-#endif
+#include <stdbool.h>
 
 typedef enum {
-	BUTTON_BUSY, /**< Too many calls in a sampling period */
-	BUTTON_SCANNING, /**< Activity detected on buttons. Scanning for state */
-	BUTTON_NO_ACTIVITY, /**< No activity detected on buttons */
-} button_rc_t;
+	BUTTON_ERROR_UNKNOWN,
+	BUTTON_ERROR_NONE,
+	BUTTON_ERROR_INVALID_PARAM,
+	BUTTON_ERROR_INCORRECT_PARAM,
+	BUTTON_ERROR_DISABLED,
+} button_error_t;
 
-typedef enum button_event {
-	BUTTON_EVT_PRESSED,
-	BUTTON_EVT_RELEASED,
-	BUTTON_EVT_HOLDING,
-	BUTTON_EVT_CLICK,
-} button_event_t;
+typedef enum {
+	BUTTON_LEVEL_LOW, /**< Released */
+	BUTTON_LEVEL_HIGH, /**< Pressed */
+} button_level_t;
 
-struct button {
-	unsigned int history;
-	unsigned long time_pressed;
-	unsigned long time_released;
-	unsigned long time_repeat;
-	uint8_t click; /**< the number of clicks */
+typedef enum {
+	BUTTON_STATE_UNKNOWN,
+	BUTTON_STATE_PRESSED,
+	BUTTON_STATE_RELEASED,
+	BUTTON_STATE_HOLDING,
+} button_state_t;
+
+struct button_param {
+	uint16_t sampling_period_ms; /**< period to check the button state */
+	uint16_t debounce_duration_ms; /**< duration to debounce the button */
+	uint16_t repeat_delay_ms; /**< delay before the repeat event */
+	uint16_t repeat_rate_ms; /**< rate of the repeat event */
+	uint16_t click_window_ms; /**< time window to consider as a click */
+	uint16_t sampling_timeout_ms; /**< maximum interval to check
+						the button state */
 };
 
-typedef void (*button_handler_t)(button_event_t event,
-		const struct button *button, void *ctx);
-
-void button_init(unsigned long (*get_time_ms)(void));
+struct button;
 
 /**
- * Register a button
+ * @typedef button_get_state_func_t
+ * @brief Function pointer type for getting the state of a button.
  *
- * @param[in] get_button_state a function to get the button state
- * @param[in] handlers @ref struct button_handlers
- * @param[in] ctx user context
+ * @param[in] ctx Context pointer passed to the function.
  *
- * @return a handle if registered successfully. NULL otherwise
+ * @return The current state of the button.
  */
-const struct button *button_register(int (*get_button_state)(void *ctx),
-		button_handler_t handler, void *ctx);
+typedef button_level_t (*button_get_state_func_t)(void *ctx);
 
 /**
- * Replace the button handler
+ * @typedef button_callback_t
+ * @brief Function pointer type for button event callback.
  *
- * @param[in] btn a button handle which is given by @ref button_register
- * @param[in] handler @ref button_handler_t
- * @param[in] ctx user context
- *
- * @return a handle if registered successfully. NULL otherwise
+ * @param[in] button Pointer to the button structure.
+ * @param[in] event The event that occurred.
+ * @param[in] clicks The number of clicks detected.
+ * @param[in] repeats The number of repeat presses detected.
+ * @param[in] ctx Context pointer passed to the callback function.
  */
-void button_update_handler(void *btn, button_handler_t handler, void *ctx);
+typedef void (*button_callback_t)(struct button *button,
+		const button_state_t event, const uint16_t clicks,
+		const uint16_t repeats, void *ctx);
 
 /**
- * Scan all buttons and update the states
+ * @brief Creates a new button instance.
  *
- * @param[in] context user context
+ * @param[in] f_get Function to get the state of the button.
+ * @param[in] f_get_ctx Context for the state function.
+ * @param[in] cb Callback function for button events.
+ * @param[in] cb_ctx Context for the callback function.
  *
- * @return @ref button_rc_t
- *
- * @note On 32-bit systems the millisecond time cycles approximately every 50
- * days. In case of the wraparound, clicks may resulted in false-positive if
- * not button_step() called periodic until BUTTON_NO_ACTIVITY returned.
- *
- * @warn The millisecond time wraparound may add latency by @ref
- * BUTTON_SAMPLIING_PERIOD_MS.
+ * @return Pointer to the new button instance.
  */
-button_rc_t button_step(void);
+struct button *button_new(button_get_state_func_t f_get, void *f_get_ctx,
+		button_callback_t cb, void *cb_ctx);
+
+/**
+ * @brief Deletes a button instance.
+ *
+ * @param[in] btn Pointer to the button instance to delete.
+ */
+void button_delete(struct button *btn);
+
+/**
+ * @brief Enables a button.
+ *
+ * @param[in] btn Pointer to the button instance to enable.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_enable(struct button *btn);
+
+/**
+ * @brief Disables a button.
+ *
+ * @param[in] btn Pointer to the button instance to disable.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_disable(struct button *btn);
+
+/**
+ * @brief Sets parameters for a button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ * @param[in] param Pointer to the parameters to set.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_set_param(struct button *btn,
+		const struct button_param *param);
+
+/**
+ * @brief Gets parameters of a button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ * @param[in] param Pointer to store the retrieved parameters.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_get_param(const struct button *btn,
+		struct button_param *param);
+
+/**
+ * @brief Steps the button by a given time.
+ *
+ * @param[in] btn Pointer to the button instance.
+ * @param[in] time_ms The current time in milliseconds.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_step(struct button *btn, const uint32_t time_ms);
+
+/**
+ * @brief Steps the button by a delta time.
+ *
+ * @param[in] btn Pointer to the button instance.
+ * @param[in] delta_ms Delta time in milliseconds.
+ *
+ * @return Error code indicating success or failure.
+ */
+button_error_t button_step_delta(struct button *btn, const uint32_t delta_ms);
+
+/**
+ * @brief Checks if the button is currently busy.
+ *
+ * @param btn Pointer to the button instance.
+ *
+ * @note A button is considered busy when it is in the process of detecting like
+ *       in the period of debouncing.
+ *
+ * @return True if the button is busy, false otherwise.
+ */
+bool button_busy(const struct button *btn);
+
+/**
+ * @brief Gets the current state of the button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ *
+ * @return The current state of the button.
+ */
+button_state_t button_state(const struct button *btn);
+
+/**
+ * @brief Gets the number of clicks detected for the button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ *
+ * @return The number of clicks detected.
+ */
+uint16_t button_clicks(const struct button *btn);
+
+/**
+ * @brief Gets the number of repeat presses detected for the button.
+ *
+ * @param[in] btn Pointer to the button instance.
+ *
+ * @return The number of repeat presses detected.
+ */
+uint16_t button_repeats(const struct button *btn);
 
 #if defined(__cplusplus)
 }
