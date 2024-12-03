@@ -21,6 +21,8 @@ typedef void (*gpio_callback_t)(struct gpio *gpio, void *ctx);
 struct gpio_api {
 	int (*enable)(struct gpio *self);
 	int (*disable)(struct gpio *self);
+	int (*enable_interrupt)(struct gpio *self);
+	int (*disable_interrupt)(struct gpio *self);
 	int (*set)(struct gpio *self, int value);
 	int (*get)(struct gpio *self);
 	int (*register_callback)(struct gpio *self,
@@ -33,6 +35,14 @@ static inline int gpio_enable(struct gpio *self) {
 
 static inline int gpio_disable(struct gpio *self) {
 	return ((struct gpio_api *)self)->disable(self);
+}
+
+static inline int gpio_enable_interrupt(struct gpio *self) {
+	return ((struct gpio_api *)self)->enable_interrupt(self);
+}
+
+static inline int gpio_disable_interrupt(struct gpio *self) {
+	return ((struct gpio_api *)self)->disable_interrupt(self);
 }
 
 static inline int gpio_set(struct gpio *self, int value) {
