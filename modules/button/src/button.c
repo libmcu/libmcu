@@ -214,6 +214,8 @@ static waveform_t update_state(struct button *btn, const uint32_t pulses)
 static bool process_pressed(struct button *btn, const uint32_t time_ms)
 {
 	btn->data.time_pressed = time_ms;
+	btn->data.time_repeat = 0;
+	btn->data.repeats = 0;
 	btn->data.clicks++;
 	btn->pressed = true;
 	return true;
@@ -223,8 +225,6 @@ static bool process_released(struct button *btn, const uint32_t time_ms)
 {
 	btn->data.time_released = time_ms;
 	btn->pressed = false;
-	btn->data.time_repeat = 0;
-	btn->data.repeats = 0;
 	return true;
 }
 
@@ -263,6 +263,7 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 {
 	const uint32_t elapsed_ms = time_ms - btn->timestamp;
 	const uint32_t remaining = elapsed_ms % btn->param.sampling_period_ms;
+	const uint32_t time_corrected = time_ms - remaining;
 	uint32_t pulses = elapsed_ms / btn->param.sampling_period_ms;
 	button_state_t state = BUTTON_STATE_UNKNOWN;
 
@@ -272,35 +273,25 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		/* synchronize the timestamp as it's been too long since
 		 * the last update. The button state is assumed to be the same
 		 * as before. */
-		btn->timestamp = time_ms - remaining;
+		btn->timestamp = time_corrected;
 		pulses = 1;
 	}
 
 	const waveform_t waveform = update_state(btn, pulses);
-	const uint32_t activity_mask = ACTION_PRESSED | ACTION_DOWN
-		| ACTION_DEBOUNCING;
-	action_t action = ACTION_IDLE;
 
 	if (is_button_pressed(btn)) {
-		action = ACTION_PRESSED;
 		state = BUTTON_STATE_PRESSED;
-		process_pressed(btn, time_ms);
+		process_pressed(btn, time_corrected);
 	} else if (is_button_released(btn)) {
-		action = ACTION_RELEASED;
 		state = BUTTON_STATE_RELEASED;
-		process_released(btn, time_ms);
+		process_released(btn, time_corrected);
 	} else if (is_button_down(btn)) {
-		action = ACTION_DOWN;
-		if (process_holding(btn, time_ms)) {
+		if (process_holding(btn, time_corrected)) {
 			state = BUTTON_STATE_HOLDING;
 		}
-	} else if (is_button_up(btn)) {
-		action = ACTION_UP;
-	} else if (waveform) {
-		action = ACTION_DEBOUNCING;
 	}
 
-	if (!(action & activity_mask) && is_click_window_closed(btn, time_ms)) {
+	if (is_button_up(btn) && is_click_window_closed(btn, time_corrected)) {
 		btn->data.clicks = 0;
 	}
 
@@ -308,7 +299,7 @@ static button_state_t process_button(struct button *btn, const uint32_t time_ms)
 		btn->state = state;
 	}
 
-	btn->timestamp = time_ms - remaining;
+	btn->timestamp = time_corrected;
 out:
 	return state;
 }
@@ -389,7 +380,8 @@ button_error_t button_get_param(const struct button *btn,
 
 bool button_busy(const struct button *btn)
 {
-	return !is_button_up(btn);
+	return !is_button_up(btn) ||
+		!is_click_window_closed(btn, btn->timestamp);
 }
 
 button_state_t button_state(const struct button *btn)
