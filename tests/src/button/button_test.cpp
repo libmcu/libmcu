@@ -348,6 +348,25 @@ TEST(Button, busy_ShouldReturnFalse_WhenDebouncingFiltered) {
 
 TEST(Button, busy_ShouldReturnFalse_WhenClickWindowExpired) {
 	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(57, "get_button_state").andReturnValue(0);
+
+	mock().expectNCalls(1, "on_button_event")
+		.withParameter("event", BUTTON_STATE_PRESSED)
+		.withParameter("clicks", 1)
+		.withParameter("repeats", 0);
+	mock().expectNCalls(1, "on_button_event")
+		.withParameter("event", BUTTON_STATE_RELEASED)
+		.withParameter("clicks", 1)
+		.withParameter("repeats", 0);
+
+	prepare();
+	step(7+57);
+	LONGS_EQUAL(false, button_busy(button));
+	finish();
+}
+
+TEST(Button, busy_ShouldReturnTrue_WhenClickWindowNotExpired) {
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
 	mock().expectNCalls(56, "get_button_state").andReturnValue(0);
 
 	mock().expectNCalls(1, "on_button_event")
@@ -361,7 +380,7 @@ TEST(Button, busy_ShouldReturnFalse_WhenClickWindowExpired) {
 
 	prepare();
 	step(7+56);
-	LONGS_EQUAL(false, button_busy(button));
+	LONGS_EQUAL(true, button_busy(button));
 	finish();
 }
 

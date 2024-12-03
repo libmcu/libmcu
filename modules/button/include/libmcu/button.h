@@ -153,12 +153,13 @@ button_error_t button_step_delta(struct button *btn, const uint32_t delta_ms);
 /**
  * @brief Checks if the button is currently busy.
  *
- * @param btn Pointer to the button instance.
+ * This function checks the status of the specified button to determine if
+ * it is currently busy. A button is considered busy if it is in the middle
+ * of a state transition or an ongoing operation.
  *
- * @note A button is considered busy when it is in the process of detecting like
- *       in the period of debouncing.
+ * @param[in] btn Pointer to the button structure.
  *
- * @return True if the button is busy, false otherwise.
+ * @return bool True if the button is busy, false otherwise.
  */
 bool button_busy(const struct button *btn);
 
