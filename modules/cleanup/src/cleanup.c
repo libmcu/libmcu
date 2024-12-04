@@ -51,8 +51,8 @@ cleanup_error_t cleanup_register(int priority,
 
 	struct list **p = &m.list.next;
 	while (*p != &m.list) {
-		struct cleanup *tmp = list_entry(*p, struct cleanup, link);
-		if (priority > tmp->priority) {
+		const struct cleanup *t = list_entry(*p, struct cleanup, link);
+		if (priority > t->priority) {
 			break;
 		}
 		p = &(*p)->next;
