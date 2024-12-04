@@ -21,6 +21,7 @@ Any feedback would be appreciated.
 * [Application Timer](modules/apptimer)
 * [Button](modules/button)
 * [Buzzer](modules/buzzer)
+* [Cleanup](modules/cleanup)
 * [Command Line Interface](modules/cli)
 * [Common](modules/common)
 * [DFU](modules/dfu)
