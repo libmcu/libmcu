@@ -45,6 +45,7 @@ Any feedback would be appreciated.
 * [SPI](interfaces/spi)
 * [Timer](interfaces/timer)
 * [UART](interfaces/uart)
+* [WDT](interfaces/wdt)
 * [WiFi](interfaces/wifi)
 
 ## Integration Guide
