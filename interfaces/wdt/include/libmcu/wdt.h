@@ -32,6 +32,15 @@ typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
 int wdt_init(wdt_timeout_cb_t cb, void *cb_ctx);
 
 /**
+ * @brief Deinitialize the watchdog timer.
+ *
+ * This function deinitializes the watchdog timer, releasing any resources
+ * that were allocated during initialization. It should be called when the
+ * watchdog timer is no longer needed.
+ */
+void wdt_deinit(void);
+
+/**
  * @brief Create a new watchdog timer instance.
  *
  * @return Pointer to the newly created watchdog timer instance,
