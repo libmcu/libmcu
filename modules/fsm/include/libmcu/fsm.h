@@ -50,10 +50,38 @@ struct fsm {
 	void *ctx;
 };
 
-void fsm_init(struct fsm *fsm, const struct fsm_item *items, size_t item_len,
-		void *ctx);
+/**
+ * @brief Initialize the finite state machine (FSM).
+ *
+ * @param[in] fsm Pointer to the FSM structure to initialize.
+ * @param[in] items Array of FSM items (states and transitions).
+ * @param[in] item_len Length of the items array.
+ * @param[in] ctx Context pointer to be passed to state functions.
+ */
+void fsm_init(struct fsm *fsm,
+		const struct fsm_item *items, size_t item_len, void *ctx);
+
+/**
+ * @brief Perform a step in the FSM, transitioning between states if needed.
+ *
+ * @param[in] fsm Pointer to the FSM structure.
+ */
 void fsm_step(struct fsm *fsm);
+
+/**
+ * @brief Reset the FSM to its initial state.
+ *
+ * @param[in] fsm Pointer to the FSM structure.
+ */
 void fsm_reset(struct fsm *fsm);
+
+/**
+ * @brief Get the current state of the FSM.
+ *
+ * @param[in] fsm Pointer to the FSM structure.
+ *
+ * @return The current state of the FSM.
+ */
 fsm_state_t fsm_state(const struct fsm *fsm);
 
 #if defined(__cplusplus)
