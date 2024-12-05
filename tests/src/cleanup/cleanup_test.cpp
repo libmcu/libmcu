@@ -55,3 +55,14 @@ TEST(Cleanup, ShouldRegisteredFunctionsBeCalledInOrderOfPriority_WhenCleanupIsEx
 
 	cleanup_execute();
 }
+
+TEST(Cleanup, ShouldRegisteredFunctionsBeCalledInFirstComeFirstServeOrder_WhenTheSamePriorityGiven) {
+	mock().strictOrder();
+	mock().expectOneCall("test_func1");
+	mock().expectOneCall("test_func2");
+
+	cleanup_register(1, test_func1, NULL);
+	cleanup_register(1, test_func2, NULL);
+
+	cleanup_execute();
+}

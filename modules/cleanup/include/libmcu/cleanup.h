@@ -55,6 +55,11 @@ cleanup_error_t cleanup_register(int priority,
 
 /**
  * @brief Execute all registered cleanup functions in order of their priority.
+ *
+ * This function will call all registered cleanup functions in order of their
+ * priority, from highest to lowest. When the same priority is given, the
+ * cleanup functions are called first come, first serve style (FIFO) in the
+ * order they were registered.
  */
 void cleanup_execute(void);
 
