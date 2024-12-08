@@ -14,40 +14,40 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-struct timer;
+struct apptmr;
 
-typedef void (*timer_callback_t)(struct timer *self, void *ctx);
+typedef void (*apptmr_callback_t)(struct apptmr *self, void *ctx);
 
-struct timer_api {
-	int (*enable)(struct timer *self);
-	int (*disable)(struct timer *self);
-	int (*start)(struct timer *self, uint32_t timeout_ms);
-	int (*restart)(struct timer *self, uint32_t timeout_ms);
-	int (*stop)(struct timer *self);
+struct apptmr_api {
+	int (*enable)(struct apptmr *self);
+	int (*disable)(struct apptmr *self);
+	int (*start)(struct apptmr *self, uint32_t timeout_ms);
+	int (*restart)(struct apptmr *self, uint32_t timeout_ms);
+	int (*stop)(struct apptmr *self);
 };
 
-static inline int timer_enable(struct timer *self) {
-	return ((struct timer_api *)self)->enable(self);
+static inline int apptmr_enable(struct apptmr *self) {
+	return ((struct apptmr_api *)self)->enable(self);
 }
 
-static inline int timer_disable(struct timer *self) {
-	return ((struct timer_api *)self)->disable(self);
+static inline int apptmr_disable(struct apptmr *self) {
+	return ((struct apptmr_api *)self)->disable(self);
 }
 
-static inline int timer_start(struct timer *self, uint32_t timeout_ms) {
-	return ((struct timer_api *)self)->start(self, timeout_ms);
+static inline int apptmr_start(struct apptmr *self, uint32_t timeout_ms) {
+	return ((struct apptmr_api *)self)->start(self, timeout_ms);
 }
 
-static inline int timer_restart(struct timer *self, uint32_t timeout_ms) {
-	return ((struct timer_api *)self)->restart(self, timeout_ms);
+static inline int apptmr_restart(struct apptmr *self, uint32_t timeout_ms) {
+	return ((struct apptmr_api *)self)->restart(self, timeout_ms);
 }
 
-static inline int timer_stop(struct timer *self) {
-	return ((struct timer_api *)self)->stop(self);
+static inline int apptmr_stop(struct apptmr *self) {
+	return ((struct apptmr_api *)self)->stop(self);
 }
 
-struct timer *timer_create(bool periodic, timer_callback_t callback, void *arg);
-int timer_delete(struct timer *self);
+struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx);
+int apptmr_delete(struct apptmr *self);
 
 #if defined(__cplusplus)
 }
