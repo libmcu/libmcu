@@ -6,8 +6,8 @@
 
 #include "libmcu/fsm.h"
 
-#if !defined(FSM_DEBUG)
-#define FSM_DEBUG(...)
+#if !defined(FSM_INFO)
+#define FSM_INFO(...)
 #endif
 
 static bool process(const struct fsm_item *item,
@@ -25,9 +25,13 @@ static bool process(const struct fsm_item *item,
 			(*item->action.run)(current_state, next_candidate, ctx);
 		}
 
-		FSM_DEBUG("FSM state change from %d to %d",
-				current_state, next_candidate);
-		*next_state = next_candidate;
+		if (current_state != next_candidate) {
+			*next_state = next_candidate;
+
+			FSM_INFO("FSM state change from %d to %d",
+					current_state, next_candidate);
+		}
+
 		return true;
 	}
 

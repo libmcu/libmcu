@@ -45,6 +45,31 @@ int wdt_init(void);
 void wdt_deinit(void);
 
 /**
+ * @brief Enable the watchdog timer.
+ *
+ * This function enables the watchdog timer for the specified instance.
+ * Once enabled, the watchdog timer will start monitoring the system and
+ * will trigger a timeout if not fed within the specified period.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+int wdt_enable(struct wdt *self);
+
+/**
+ * @brief Disable the watchdog timer.
+ *
+ * This function disables the watchdog timer for the specified instance.
+ * Once disabled, the watchdog timer will stop monitoring the system and
+ * will not trigger a timeout.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ * @return 0 on success, negative error code on failure.
+ */
+int wdt_disable(struct wdt *self);
+
+/**
  * @brief Register a callback function for watchdog timeout.
  *
  * This function registers a callback function that will be called when the
@@ -65,19 +90,21 @@ int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx);
 /**
  * @brief Create a new watchdog timer instance.
  *
- * @param[in] period_ms The timeout period in milliseconds for the watchdog
- *                      timer.
- * @param[in] cb Callback function to be called on watchdog timeout.
- * @param[in] cb_ctx User-defined context to be passed to the callback function.
+ * This function creates a new watchdog timer instance with the specified name,
+ * timeout period, and callback function. The watchdog timer will trigger the
+ * callback function if the timeout period elapses without being reset.
  *
- * @note The callback registered here will be called when this watchdog timer
- *       times out and then the callback registered in wdt_init() will be
- *       called.
+ * @param[in] name The name of the watchdog timer instance.
+ * @param[in] period_ms The timeout period in milliseconds.
+ * @param[in] cb The callback function to be called when the timeout period
+ *            elapses.
+ * @param[in] cb_ctx A user-defined context pointer that will be passed to
+ *            the callback function.
  *
- * @return Pointer to the newly created watchdog timer instance,
- *                 or NULL on failure.
+ * @return A pointer to the newly created watchdog timer instance,
+ *         or NULL on failure.
  */
-struct wdt *wdt_new(const uint32_t period_ms,
+struct wdt *wdt_new(const char *name, const uint32_t period_ms,
 		wdt_timeout_cb_t cb, void *cb_ctx);
 
 /**
