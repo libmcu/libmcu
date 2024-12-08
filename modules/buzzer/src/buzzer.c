@@ -24,13 +24,13 @@ static struct buzzer {
 	void *callback_ctx;
 
 	struct pwm_channel *pwm;
-	struct timer *timer;
+	struct apptmr *timer;
 
 	sem_t lock;
 	bool enabled;
 } m;
 
-static void on_timeout(struct timer *timer, void *arg)
+static void on_timeout(struct apptmr *timer, void *arg)
 {
 	struct buzzer *buzzer = (struct buzzer *)arg;
 	struct playing *playing = &buzzer->playing;
@@ -66,12 +66,12 @@ static void on_timeout(struct timer *timer, void *arg)
 				pitch);
 	}
 
-	timer_start(timer, tone->len_ms);
+	apptmr_start(timer, tone->len_ms);
 }
 
 static void play(struct buzzer *buzzer, const struct melody *melody)
 {
-	timer_stop(buzzer->timer);
+	apptmr_stop(buzzer->timer);
 	pwm_stop(buzzer->pwm);
 
 	buzzer->playing.melody = melody;
@@ -81,7 +81,7 @@ static void play(struct buzzer *buzzer, const struct melody *melody)
 	tone_pitch_t pitch = tone_get(tone->note, tone->octave);
 	pwm_start(buzzer->pwm, pitch, PWM_PCT_TO_MILLI(50));
 
-	timer_start(buzzer->timer, tone->len_ms);
+	apptmr_start(buzzer->timer, tone->len_ms);
 }
 
 void buzzer_play(const struct melody *melody)
@@ -127,9 +127,9 @@ void buzzer_init(struct pwm_channel *pwm,
 	m.callback_ctx = on_event_ctx;
 
 	m.pwm = pwm;
-	m.timer = timer_create(false, on_timeout, &m);
+	m.timer = apptmr_create(false, on_timeout, &m);
 
 	pwm_enable(m.pwm);
-	timer_enable(m.timer);
+	apptmr_enable(m.timer);
 	m.enabled = true;
 }

@@ -12,18 +12,18 @@
 #define TIMER_MAX			8
 #endif
 
-struct timer {
-	struct timer_api api;
+struct apptmr {
+	struct apptmr_api api;
 
-	timer_callback_t callback;
+	apptmr_callback_t callback;
 	void *arg;
 	esp_timer_handle_t handle;
 	bool periodic;
 };
 
-static struct timer *new_timer(struct timer *pool, size_t n)
+static struct apptmr *new_apptmr(struct apptmr *pool, size_t n)
 {
-	struct timer empty = { 0, };
+	struct apptmr empty = { 0, };
 
 	for (size_t i = 0; i < n; i++) {
 		if (memcmp(&empty, &pool[i], sizeof(empty)) == 0) {
@@ -34,21 +34,21 @@ static struct timer *new_timer(struct timer *pool, size_t n)
 	return NULL;
 }
 
-static void free_timer(struct timer *timer)
+static void free_apptmr(struct apptmr *apptmr)
 {
-	memset(timer, 0, sizeof(*timer));
+	memset(apptmr, 0, sizeof(*apptmr));
 }
 
 static void callback_wrapper(void *arg)
 {
-	struct timer *p = (struct timer *)arg;
+	struct apptmr *p = (struct apptmr *)arg;
 
 	if (p && p->callback) {
 		(*p->callback)(p, p->arg);
 	}
 }
 
-static int start_timer(struct timer *self, uint32_t timeout_ms)
+static int start_apptmr(struct apptmr *self, uint32_t timeout_ms)
 {
 	uint64_t usec = timeout_ms * 1000;
 	int err;
@@ -62,63 +62,63 @@ static int start_timer(struct timer *self, uint32_t timeout_ms)
 	return err;
 }
 
-static int restart_timer(struct timer *self, uint32_t timeout_ms)
+static int restart_apptmr(struct apptmr *self, uint32_t timeout_ms)
 {
 	uint64_t usec = timeout_ms * 1000;
 	return esp_timer_restart(self->handle, usec);
 }
 
-static int stop_timer(struct timer *self)
+static int stop_apptmr(struct apptmr *self)
 {
 	return esp_timer_stop(self->handle);
 }
 
-static int enable_timer(struct timer *self)
+static int enable_apptmr(struct apptmr *self)
 {
 	return 0;
 }
 
-static int disable_timer(struct timer *self)
+static int disable_apptmr(struct apptmr *self)
 {
 	return 0;
 }
 
-struct timer *timer_create(bool periodic, timer_callback_t callback, void *arg)
+struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 {
-	static struct timer timers[TIMER_MAX];
-	struct timer *timer = new_timer(timers, TIMER_MAX);
+	static struct apptmr apptmrs[TIMER_MAX];
+	struct apptmr *apptmr = new_apptmr(apptmrs, TIMER_MAX);
 
-	if (timer) {
-		*timer = (struct timer) {
+	if (apptmr) {
+		*apptmr = (struct apptmr) {
 			.api = {
-				.enable = enable_timer,
-				.disable = disable_timer,
-				.start = start_timer,
-				.restart = restart_timer,
-				.stop = stop_timer,
+				.enable = enable_apptmr,
+				.disable = disable_apptmr,
+				.start = start_apptmr,
+				.restart = restart_apptmr,
+				.stop = stop_apptmr,
 			},
 
-			.callback = callback,
-			.arg = arg,
+			.callback = cb,
+			.arg = cb_ctx,
 			.periodic = periodic,
 		};
 
 		esp_timer_create_args_t param = {
 			.callback = callback_wrapper,
-			.arg = (void *)timer,
+			.arg = (void *)apptmr,
 		};
 
-		if (esp_timer_create(&param, &timer->handle) != ESP_OK) {
+		if (esp_timer_create(&param, &apptmr->handle) != ESP_OK) {
 			return NULL;
 		}
 	}
 
-	return timer;
+	return apptmr;
 }
 
-int timer_delete(struct timer *self)
+int apptmr_delete(struct apptmr *self)
 {
 	ESP_ERROR_CHECK(esp_timer_delete(self->handle));
-	free_timer(self);
+	free_apptmr(self);
 	return 0;
 }
