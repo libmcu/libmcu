@@ -6,6 +6,7 @@
 
 #include "libmcu/wdt.h"
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
 
@@ -13,6 +14,10 @@
 #include "libmcu/board.h"
 #include "libmcu/list.h"
 #include "libmcu/timext.h"
+
+#if !defined(WDT_INFO)
+#define WDT_INFO(...)
+#endif
 
 #define STACK_SIZE_BYTES	1024
 
@@ -23,6 +28,7 @@
 struct wdt {
 	void *task_handle;
 
+	const char *name;
 	uint32_t period_ms; /* timeout period in milliseconds */
 	uint32_t last_feed_ms; /* last feed time in milliseconds */
 
@@ -30,6 +36,8 @@ struct wdt {
 	void *cb_ctx;
 
 	struct list link;
+
+	bool enabled;
 };
 
 struct wdt_manager {
@@ -47,7 +55,7 @@ static struct wdt_manager m;
 
 static bool is_timedout(struct wdt *wdt, const uint32_t now)
 {
-	return (now - wdt->last_feed_ms) >= wdt->period_ms;
+	return wdt->enabled && (now - wdt->last_feed_ms) >= wdt->period_ms;
 }
 
 static struct wdt *any_timeouts(struct wdt_manager *mgr, const uint32_t now)
@@ -79,6 +87,7 @@ static void *wdt_task(void *e)
 			continue;
 		}
 
+		WDT_INFO("wdt %s timed out", wdt->name);
 		if (wdt->cb) {
 			(*wdt->cb)(wdt, wdt->cb_ctx);
 		}
@@ -99,11 +108,25 @@ int wdt_feed(struct wdt *self)
 	return 0;
 }
 
-struct wdt *wdt_new(const uint32_t period_ms, wdt_timeout_cb_t cb, void *cb_ctx)
+int wdt_enable(struct wdt *self)
+{
+	self->enabled = true;
+	return 0;
+}
+
+int wdt_disable(struct wdt *self)
+{
+	self->enabled = false;
+	return 0;
+}
+
+struct wdt *wdt_new(const char *name, const uint32_t period_ms,
+		wdt_timeout_cb_t cb, void *cb_ctx)
 {
 	struct wdt *wdt = (struct wdt *)malloc(sizeof(*wdt));
 
 	if (wdt) {
+		wdt->name = name;
 		wdt->period_ms = period_ms;
 		wdt->cb = cb;
 		wdt->cb_ctx = cb_ctx;
