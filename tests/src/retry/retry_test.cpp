@@ -9,23 +9,18 @@
 #include "CppUTestExt/MockSupport.h"
 
 #include "libmcu/retry.h"
-#include "libmcu/retry_overrides.h"
-
-void retry_sleep_ms(unsigned int msec)
-{
-	mock().actualCall(__func__).withParameter("msec", msec);
-}
-
-int retry_generate_random(void)
-{
-	return mock().actualCall(__func__).returnIntValueOrDefault(0);
-}
 
 TEST_GROUP(retry) {
 	struct retry retry;
 
 	void setup(void) {
-		retry_init(&retry, 10, 2560000, 5000, 5000);
+		struct retry_param param = {
+			.max_attempts = 10,
+			.min_backoff_ms = 5000,
+			.max_backoff_ms = 2560000,
+			.max_jitter_ms = 5000,
+		};
+		retry_new_static(&retry, &param);
 	}
 	void teardown(void) {
 		mock().checkExpectations();
@@ -33,87 +28,163 @@ TEST_GROUP(retry) {
 	}
 };
 
-TEST(retry, next_ShouldBackoffExponentially) {
+TEST(retry, ShouldBackoffExponentially_WhenZeroJitterGiven) {
 	uint32_t expected = 5000;
-	mock().ignoreOtherCalls();
+	uint32_t actual;
 	for (int i = 0; i < 10; i++) {
-		LONGS_EQUAL(expected, retry_backoff_next(&retry));
+		LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+		LONGS_EQUAL(expected, actual);
 		expected *= 2;
 	}
 }
 
-TEST(retry, next_ShouldBackoffExponentiallyWithJitter) {
+TEST(retry, ShouldBackoffExponentially_WhenNonZeroJitterGiven) {
 	uint32_t expected = 1234;
-	retry_init(&retry, 10, 2560000, 0, 5000);
-	mock().expectOneCall("retry_generate_random").andReturnValue((int)expected);
-	LONGS_EQUAL(expected, retry_backoff_next(&retry));
+	uint32_t actual;
+	LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, (uint16_t)expected));
+	LONGS_EQUAL(expected+5000, actual);
 }
 
-TEST(retry, next_ShouldWrapAroundJitter_WhenGreaterThanMaxJitterGiven) {
-	uint32_t expected = 234;
-	retry_init(&retry, 10, 2560000, 0, 1000);
-	mock().expectOneCall("retry_generate_random").andReturnValue((int)expected);
-	LONGS_EQUAL(expected, retry_backoff_next(&retry));
+TEST(retry, ShouldWrapAroundJitter_WhenGreaterThanMaxJitterGiven) {
+	uint32_t expected = 6234;
+	uint32_t actual;
+	LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, (uint16_t)expected));
+	LONGS_EQUAL(expected, actual);
 }
 
-TEST(retry, retry_ShouldRetry3Times_When3GivenForMaxAttempts) {
-	retry_init(&retry, 3, 0, 0, 0);
-	int cnt = 0;
-	while (retry_backoff(&retry) != RETRY_EXHAUSTED) { cnt++; }
-	LONGS_EQUAL(3, cnt);
-}
-
-TEST(retry, retry_ShouldRetry1Time_When1GivenForMaxAttempts) {
-	retry_init(&retry, 1, 0, 0, 0);
-	int cnt = 0;
-	while (retry_backoff(&retry) != RETRY_EXHAUSTED) { cnt++; }
-	LONGS_EQUAL(1, cnt);
-}
-
-TEST(retry, retry_ShouldRetry0Time_When0GivenForMaxAttempts) {
-	retry_init(&retry, 0, 0, 0, 0);
-	int cnt = 0;
-	while (retry_backoff(&retry) != RETRY_EXHAUSTED) { cnt++; }
-	LONGS_EQUAL(0, cnt);
-}
-
-TEST(retry, retry_ShouldSleepForInRange) {
-	uint32_t base = retry.min_backoff_ms;
-	mock().expectNCalls(10, "retry_generate_random");
-	mock().expectNCalls(10, "retry_sleep_ms").ignoreOtherParameters();
-	while (retry_backoff(&retry) != RETRY_EXHAUSTED) {
-		CHECK(retry.previous_backoff_ms <= base + retry.max_jitter_ms);
-		base = retry.previous_backoff_ms * 2;
+TEST(retry, ShouldReturnExhausted_WhenMaxAttemptsReached) {
+	uint32_t actual;
+	for (int i = 0; i < 10; i++) {
+		LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
 	}
+	LONGS_EQUAL(RETRY_ERROR_EXHAUSTED, retry_backoff(&retry, &actual, 0));
 }
 
-TEST(retry, init_ShouldSetMaxJitterMsToMinBackOffMs_WhenMinBackoffGreater) {
-	retry_init(&retry, 10, 1, 2, 0);
-	LONGS_EQUAL(2, retry.max_backoff_ms);
+TEST(retry, ShouldReturnExhausted_WhenMaxAttemptsReached_WhenMaxAttempts1Given) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 1,
+	};
+	retry_new_static(&retry, &param);
+	LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+	LONGS_EQUAL(RETRY_ERROR_EXHAUSTED, retry_backoff(&retry, &actual, 0));
 }
 
-TEST(retry, reset_ShouldResetAttemptsAndPreviousBackOffMs) {
-	mock().expectOneCall("retry_generate_random");
-	retry_backoff_next(&retry);
+TEST(retry, ShouldReturnExhausted_WhenMaxAttemptsReached_WhenMaxAttempts0Given) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 0,
+	};
+	retry_new_static(&retry, &param);
+	LONGS_EQUAL(RETRY_ERROR_EXHAUSTED, retry_backoff(&retry, &actual, 0));
+}
+
+TEST(retry, ShouldReturnInvalidParam_WhenNullRetryGiven) {
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_backoff(&retry, NULL, 0));
+}
+
+TEST(retry, ShouldReturnInvalidParam_WhenNullOutParamGiven) {
+	uint32_t actual;
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_backoff(NULL, &actual, 0));
+}
+
+
+
+TEST(retry, ShouldSetMaxJitterMsToMinBackOffMs_WhenMinBackoffGreater) {
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 2,
+		.max_backoff_ms = 1,
+	};
+	retry_new_static(&retry, &param);
+	LONGS_EQUAL(2, retry.param.max_backoff_ms);
+}
+
+TEST(retry, ShouldResetAttemptsAndPreviousBackOffMs) {
+	uint32_t actual;
+	retry_backoff(&retry, &actual, 0);
 	LONGS_EQUAL(1, retry.attempts);
 	retry_reset(&retry);
 	LONGS_EQUAL(0, retry.attempts);
 }
 
 TEST(retry, exhausted_ShouldReturnTrue_WhenExhausted) {
-	retry_init(&retry, 0, 0, 0, 0);
-	LONGS_EQUAL(1, retry_exhausted(&retry));
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 0,
+	};
+	retry_new_static(&retry, &param);
+	LONGS_EQUAL(true, retry_exhausted(&retry));
 
-	retry_init(&retry, 1, 0, 0, 0);
-	retry_backoff_next(&retry);
-	LONGS_EQUAL(1, retry_exhausted(&retry));
+	param.max_attempts = 1;
+	retry_new_static(&retry, &param);
+	LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+	LONGS_EQUAL(true, retry_exhausted(&retry));
 }
 
 TEST(retry, exhausted_ShouldReturnFalse_WhenNotExhausted) {
-	mock().ignoreOtherCalls();
-	for (uint16_t i = 0; i < retry.max_attempts; i++) {
-		LONGS_EQUAL(0, retry_exhausted(&retry));
-		retry_backoff_next(&retry);
+	uint32_t actual;
+	for (int i = 0; i < 10; i++) {
+		LONGS_EQUAL(false, retry_exhausted(&retry));
+		retry_backoff(&retry, &actual, 0);
 	}
-	LONGS_EQUAL(1, retry_exhausted(&retry));
+	LONGS_EQUAL(true, retry_exhausted(&retry));
+}
+
+TEST(retry, first_ShouldRetrunTrue_WhenCalledFirstTime) {
+	LONGS_EQUAL(true, retry_first(&retry));
+}
+
+TEST(retry, first_ShouldRetrunFalse_WhenCalledSecondTime) {
+	uint32_t actual;
+	retry_backoff(&retry, &actual, 0);
+	LONGS_EQUAL(false, retry_first(&retry));
+}
+
+TEST(retry, new_ShouldReturnInvalidParam_WhenNullRetryGiven) {
+	struct retry_param param = {
+		.max_attempts = 0,
+	};
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_new_static(NULL, &param));
+}
+
+TEST(retry, new_ShouldReturnInvalidParam_WhenNullParamGiven) {
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_new_static(&retry, NULL));
+}
+
+TEST(retry, ShouldNotExceedMaxBackoffMs) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	retry_new_static(&retry, &param);
+	for (int i = 0; i < 10; i++) {
+		LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+		CHECK(actual <= 10);
+	}
+}
+
+TEST(retry, ShouldReturnPreviousBackoffMs) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	retry_new_static(&retry, &param);
+	retry_backoff(&retry, &actual, 0);
+	LONGS_EQUAL(1, retry_get_backoff(&retry));
+}
+
+TEST(retry, ShouldReturnDynamicallyAllocatedRetryInstance) {
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	struct retry *new_retry = retry_new(&param);
+	CHECK(new_retry != NULL);
+	retry_delete(new_retry);
 }
