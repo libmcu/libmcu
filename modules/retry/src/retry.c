@@ -1,16 +1,21 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
 
 #include "libmcu/retry.h"
-#include "libmcu/retry_overrides.h"
+#include <stdlib.h>
 
-static uint16_t get_jitter(uint16_t max_jitter_ms)
+#if !defined(RETRY_INFO)
+#define RETRY_INFO(...)
+#endif
+
+static uint16_t get_jitter(const uint16_t max_jitter_ms,
+		const uint16_t jitter_seed)
 {
 	if (max_jitter_ms) {
-		return (uint16_t)retry_generate_random() % max_jitter_ms;
+		return jitter_seed % max_jitter_ms;
 	}
 	return 0;
 }
@@ -21,30 +26,50 @@ static void reset_backoff(struct retry *self)
 	self->previous_backoff_ms = 0;
 }
 
-static bool is_exhausted(const struct retry *self)
+static retry_error_t init(struct retry *self, const struct retry_param *param)
 {
-	return self->attempts >= self->max_attempts;
+	if (!self || !param) {
+		return RETRY_ERROR_INVALID_PARAM;
+	}
+
+	self->param = *param;
+
+	if (self->param.min_backoff_ms > self->param.max_backoff_ms) {
+		self->param.max_backoff_ms = self->param.min_backoff_ms;
+	}
+
+	reset_backoff(self);
+
+	return RETRY_ERROR_NONE;
 }
 
-static uint32_t calc_backoff_time(const struct retry *self)
+static bool is_exhausted(const struct retry *self)
 {
-	uint16_t jitter = get_jitter(self->max_jitter_ms);
+	return self->attempts >= self->param.max_attempts;
+}
+
+static uint32_t calc_backoff_time(const struct retry *self,
+		const uint16_t jitter_seed)
+{
+	const uint16_t jitter =
+		get_jitter(self->param.max_jitter_ms, jitter_seed);
 	uint32_t backoff = self->previous_backoff_ms * 2 + jitter;
 
 	if (self->previous_backoff_ms == 0) {
-		backoff = (uint32_t)self->min_backoff_ms + jitter;
+		backoff = (uint32_t)self->param.min_backoff_ms + jitter;
 	}
 
-	if (backoff > self->max_backoff_ms) {
-		backoff = self->max_backoff_ms - self->max_jitter_ms + jitter;
+	if (backoff > self->param.max_backoff_ms) {
+		backoff = self->param.max_backoff_ms -
+			self->param.max_jitter_ms + jitter;
 	}
 
 	return backoff;
 }
 
-static uint32_t next_backoff(struct retry *self)
+static uint32_t update(struct retry *self, const uint16_t jitter_seed)
 {
-	unsigned int backoff_time = calc_backoff_time(self);
+	unsigned int backoff_time = calc_backoff_time(self, jitter_seed);
 
 	self->attempts++;
 	self->previous_backoff_ms = backoff_time;
@@ -52,21 +77,27 @@ static uint32_t next_backoff(struct retry *self)
 	return backoff_time;
 }
 
-retry_error_t retry_backoff(struct retry *self)
+retry_error_t retry_backoff(struct retry *self,
+		uint32_t *next_backoff_ms, const uint16_t jitter_seed)
 {
+	if (!self || !next_backoff_ms) {
+		return RETRY_ERROR_INVALID_PARAM;
+	}
 	if (is_exhausted(self)) {
-		return RETRY_EXHAUSTED;
+		return RETRY_ERROR_EXHAUSTED;
 	}
 
-	unsigned int backoff_time = next_backoff(self);
-	RETRY_DEBUG("Retry in %u ms, %u/%u", backoff_time,
-			self->attempts, self->max_attempts);
+	*next_backoff_ms = update(self, jitter_seed);
 
-	if (backoff_time) {
-		retry_sleep_ms(backoff_time);
-	}
+	RETRY_INFO("Retry in %u ms, %u/%u", *next_backoff_ms,
+			self->attempts, self->param.max_attempts);
 
-	return RETRY_RUNNING;
+	return RETRY_ERROR_NONE;
+}
+
+uint32_t retry_get_backoff(const struct retry *self)
+{
+	return self->previous_backoff_ms;
 }
 
 void retry_reset(struct retry *self)
@@ -79,25 +110,34 @@ bool retry_exhausted(const struct retry *self)
 	return is_exhausted(self);
 }
 
-uint32_t retry_backoff_next(struct retry *self)
+bool retry_first(const struct retry *self)
 {
-	return next_backoff(self);
+	return self->attempts == 0;
 }
 
-void retry_init(struct retry *self, uint16_t max_attempts,
-		uint32_t max_backoff_ms, uint16_t min_backoff_ms,
-		uint16_t max_jitter_ms)
+retry_error_t retry_new_static(struct retry *self,
+		const struct retry_param *param)
 {
-	if (min_backoff_ms > max_backoff_ms) {
-		max_backoff_ms = min_backoff_ms;
+	return init(self, param);
+}
+
+retry_error_t retry_new(const struct retry_param *param)
+{
+	struct retry *p = (struct retry *)malloc(sizeof(struct retry));
+	if (!p) {
+		return RETRY_ERROR_NOMEM;
 	}
 
-	*self = (struct retry) {
-		.max_backoff_ms = max_backoff_ms,
-		.min_backoff_ms = min_backoff_ms,
-		.max_jitter_ms = max_jitter_ms,
-		.max_attempts = max_attempts,
-	};
+	retry_error_t err = init(p, param);
+	if (err != RETRY_ERROR_NONE) {
+		free(p);
+		return err;
+	}
 
-	reset_backoff(self);
+	return RETRY_ERROR_NONE;
+}
+
+void retry_delete(struct retry *self)
+{
+	free(self);
 }

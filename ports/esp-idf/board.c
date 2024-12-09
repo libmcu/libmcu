@@ -11,7 +11,6 @@
 #include "freertos/task.h"
 
 #include "esp_timer.h"
-#include "esp_mac.h"
 #include "esp_system.h"
 #include "esp_random.h"
 
