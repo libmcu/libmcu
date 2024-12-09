@@ -140,3 +140,51 @@ TEST(retry, first_ShouldRetrunFalse_WhenCalledSecondTime) {
 	retry_backoff(&retry, &actual, 0);
 	LONGS_EQUAL(false, retry_first(&retry));
 }
+
+TEST(retry, new_ShouldReturnInvalidParam_WhenNullRetryGiven) {
+	struct retry_param param = {
+		.max_attempts = 0,
+	};
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_new_static(NULL, &param));
+}
+
+TEST(retry, new_ShouldReturnInvalidParam_WhenNullParamGiven) {
+	LONGS_EQUAL(RETRY_ERROR_INVALID_PARAM, retry_new_static(&retry, NULL));
+}
+
+TEST(retry, ShouldNotExceedMaxBackoffMs) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	retry_new_static(&retry, &param);
+	for (int i = 0; i < 10; i++) {
+		LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+		CHECK(actual <= 10);
+	}
+}
+
+TEST(retry, ShouldReturnPreviousBackoffMs) {
+	uint32_t actual;
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	retry_new_static(&retry, &param);
+	retry_backoff(&retry, &actual, 0);
+	LONGS_EQUAL(1, retry_get_backoff(&retry));
+}
+
+TEST(retry, ShouldReturnDynamicallyAllocatedRetryInstance) {
+	struct retry_param param = {
+		.max_attempts = 10,
+		.min_backoff_ms = 1,
+		.max_backoff_ms = 10,
+	};
+	struct retry *new_retry = retry_new(&param);
+	CHECK(new_retry != NULL);
+	retry_delete(new_retry);
+}

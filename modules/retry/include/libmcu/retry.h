@@ -42,9 +42,9 @@ struct retry {
  *
  * @param[in] param The parameters for the retry instance.
  *
- * @return A retry_error_t indicating success or failure.
+ * @return A pointer to the newly created retry instance, or NULL on failure.
  */
-retry_error_t retry_new(const struct retry_param *param);
+struct retry *retry_new(const struct retry_param *param);
 
 /**
  * @brief Delete the retry instance.
@@ -122,12 +122,12 @@ uint32_t retry_get_backoff(const struct retry *self);
  * @param[in]  self The retry instance.
  * @param[out] next_backoff_ms Pointer to store the calculated next backoff
  *             time in milliseconds.
- * @param[in]  jitter_seed The seed value for generating random jitter.
+ * @param[in]  random_jitter The random jitter value to add to the backoff time.
  *
  * @return A retry_error_t indicating success or failure.
  */
 retry_error_t retry_backoff(struct retry *self,
-		uint32_t *next_backoff_ms, const uint16_t jitter_seed);
+		uint32_t *next_backoff_ms, const uint16_t random_jitter);
 
 #if defined(__cplusplus)
 }

@@ -12,10 +12,10 @@
 #endif
 
 static uint16_t get_jitter(const uint16_t max_jitter_ms,
-		const uint16_t jitter_seed)
+		const uint16_t random_jitter)
 {
 	if (max_jitter_ms) {
-		return jitter_seed % max_jitter_ms;
+		return random_jitter % max_jitter_ms;
 	}
 	return 0;
 }
@@ -49,10 +49,10 @@ static bool is_exhausted(const struct retry *self)
 }
 
 static uint32_t calc_backoff_time(const struct retry *self,
-		const uint16_t jitter_seed)
+		const uint16_t random_jitter)
 {
 	const uint16_t jitter =
-		get_jitter(self->param.max_jitter_ms, jitter_seed);
+		get_jitter(self->param.max_jitter_ms, random_jitter);
 	uint32_t backoff = self->previous_backoff_ms * 2 + jitter;
 
 	if (self->previous_backoff_ms == 0) {
@@ -67,9 +67,9 @@ static uint32_t calc_backoff_time(const struct retry *self,
 	return backoff;
 }
 
-static uint32_t update(struct retry *self, const uint16_t jitter_seed)
+static uint32_t update(struct retry *self, const uint16_t random_jitter)
 {
-	unsigned int backoff_time = calc_backoff_time(self, jitter_seed);
+	unsigned int backoff_time = calc_backoff_time(self, random_jitter);
 
 	self->attempts++;
 	self->previous_backoff_ms = backoff_time;
@@ -78,7 +78,7 @@ static uint32_t update(struct retry *self, const uint16_t jitter_seed)
 }
 
 retry_error_t retry_backoff(struct retry *self,
-		uint32_t *next_backoff_ms, const uint16_t jitter_seed)
+		uint32_t *next_backoff_ms, const uint16_t random_jitter)
 {
 	if (!self || !next_backoff_ms) {
 		return RETRY_ERROR_INVALID_PARAM;
@@ -87,7 +87,7 @@ retry_error_t retry_backoff(struct retry *self,
 		return RETRY_ERROR_EXHAUSTED;
 	}
 
-	*next_backoff_ms = update(self, jitter_seed);
+	*next_backoff_ms = update(self, random_jitter);
 
 	RETRY_INFO("Retry in %u ms, %u/%u", *next_backoff_ms,
 			self->attempts, self->param.max_attempts);
@@ -121,20 +121,19 @@ retry_error_t retry_new_static(struct retry *self,
 	return init(self, param);
 }
 
-retry_error_t retry_new(const struct retry_param *param)
+struct retry *retry_new(const struct retry_param *param)
 {
 	struct retry *p = (struct retry *)malloc(sizeof(struct retry));
 	if (!p) {
-		return RETRY_ERROR_NOMEM;
+		return NULL;
 	}
 
-	retry_error_t err = init(p, param);
-	if (err != RETRY_ERROR_NONE) {
+	if (init(p, param) != RETRY_ERROR_NONE) {
 		free(p);
-		return err;
+		return NULL;
 	}
 
-	return RETRY_ERROR_NONE;
+	return p;
 }
 
 void retry_delete(struct retry *self)
