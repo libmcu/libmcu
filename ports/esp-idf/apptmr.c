@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "libmcu/timer.h"
+#include "libmcu/apptmr.h"
 #include <string.h>
 #include "esp_timer.h"
 
-#if !defined(TIMER_MAX)
-#define TIMER_MAX			8
+#if !defined(APPTMR_MAX)
+#define APPTMR_MAX			8
 #endif
 
 struct apptmr {
@@ -46,6 +46,11 @@ static void callback_wrapper(void *arg)
 	if (p && p->callback) {
 		(*p->callback)(p, p->arg);
 	}
+}
+
+static void trigger(struct apptmr *self)
+{
+	callback_wrapper(self);
 }
 
 static int start_apptmr(struct apptmr *self, uint32_t timeout_ms)
@@ -85,8 +90,8 @@ static int disable_apptmr(struct apptmr *self)
 
 struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 {
-	static struct apptmr apptmrs[TIMER_MAX];
-	struct apptmr *apptmr = new_apptmr(apptmrs, TIMER_MAX);
+	static struct apptmr apptmrs[APPTMR_MAX];
+	struct apptmr *apptmr = new_apptmr(apptmrs, APPTMR_MAX);
 
 	if (apptmr) {
 		*apptmr = (struct apptmr) {
@@ -96,6 +101,7 @@ struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 				.start = start_apptmr,
 				.restart = restart_apptmr,
 				.stop = stop_apptmr,
+				.trigger = trigger,
 			},
 
 			.callback = cb,

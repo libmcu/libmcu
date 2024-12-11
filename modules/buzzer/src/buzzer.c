@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <semaphore.h>
 
-#include "libmcu/timer.h"
+#include "libmcu/apptmr.h"
 
 struct playing {
 	const struct melody *melody;
