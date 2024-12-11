@@ -44,7 +44,7 @@ Any feedback would be appreciated.
 * [KVStore](interfaces/kvstore)
 * [PWM](interfaces/pwm)
 * [SPI](interfaces/spi)
-* [Timer](interfaces/timer)
+* [Application Timer](interfaces/apptmr)
 * [UART](interfaces/uart)
 * [WDT](interfaces/wdt)
 * [WiFi](interfaces/wifi)

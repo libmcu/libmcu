@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef LIBMCU_TIMER_H
-#define LIBMCU_TIMER_H
+#ifndef LIBMCU_APPTMR_H
+#define LIBMCU_APPTMR_H
 
 #if defined(__cplusplus)
 extern "C" {
@@ -24,6 +24,7 @@ struct apptmr_api {
 	int (*start)(struct apptmr *self, uint32_t timeout_ms);
 	int (*restart)(struct apptmr *self, uint32_t timeout_ms);
 	int (*stop)(struct apptmr *self);
+	void (*trigger)(struct apptmr *self);
 };
 
 static inline int apptmr_enable(struct apptmr *self) {
@@ -46,11 +47,17 @@ static inline int apptmr_stop(struct apptmr *self) {
 	return ((struct apptmr_api *)self)->stop(self);
 }
 
+static inline void apptmr_trigger(struct apptmr *self) {
+	((struct apptmr_api *)self)->trigger(self);
+}
+
 struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx);
 int apptmr_delete(struct apptmr *self);
+
+void apptmr_create_hook(struct apptmr *self);
 
 #if defined(__cplusplus)
 }
 #endif
 
-#endif /* LIBMCU_TIMER_H */
+#endif /* LIBMCU_APPTMR_H */

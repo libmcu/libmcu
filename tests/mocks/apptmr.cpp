@@ -3,6 +3,8 @@
 
 struct apptmr {
 	struct apptmr_api api;
+	apptmr_callback_t cb;
+	void *cb_ctx;
 };
 
 static int enable(struct apptmr *self) {
@@ -37,6 +39,13 @@ static int stop(struct apptmr *self) {
 		.returnIntValue();
 }
 
+static void trigger(struct apptmr *self)
+{
+	if (self->cb) {
+		(*self->cb)(self, self->cb_ctx);
+	}
+}
+
 struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 {
 	struct apptmr *self = new struct apptmr;
@@ -45,6 +54,10 @@ struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 	self->api.start = start;
 	self->api.restart = restart;
 	self->api.stop = stop;
+	self->api.trigger = trigger;
+	self->cb = cb;
+	self->cb_ctx = cb_ctx;
+	apptmr_create_hook(self);
 	return self;
 }
 
