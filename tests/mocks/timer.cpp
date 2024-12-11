@@ -1,5 +1,5 @@
 #include "CppUTestExt/MockSupport.h"
-#include "libmcu/apptmr.h"
+#include "libmcu/timer.h"
 
 struct apptmr {
 	struct apptmr_api api;

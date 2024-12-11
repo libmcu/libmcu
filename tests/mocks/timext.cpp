@@ -9,3 +9,8 @@ void timeout_set(unsigned long *goal, unsigned long msec) {
 	mock().actualCall(__func__)
 		.withParameter("msec", msec);
 }
+
+void sleep_ms(unsigned long msec) {
+	mock().actualCall(__func__)
+		.withParameter("msec", msec);
+}
