@@ -71,7 +71,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize_When254BytesDataGiven) {
 
 TEST(COBS, encode_ShouldReturnEncodedSize_When255BytesDataWithLeadingZeroGiven) {
 	uint8_t data[0xff] = { 0, };
-	uint8_t expected[258] = { 0x01, 0xFF, };
+	uint8_t expected[0xff+2] = { 0x01, 0xFF, };
 	for (size_t i = 0; i < sizeof(data); i++) {
 		data[i] = (uint8_t)i;
 		expected[i+2] = (uint8_t)(i + 1);

@@ -62,10 +62,9 @@ TEST_GROUP(ACTOR) {
 	void teardown(void) {
                 /* give some time space for new threads to take place to run
                  * before killed */
-                usleep(100);
                 actor_deinit();
-		sem_destroy(&done);
                 usleep(100);
+		sem_destroy(&done);
 
 		mock().checkExpectations();
 		mock().clear();
