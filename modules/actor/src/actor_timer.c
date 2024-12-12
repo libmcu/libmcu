@@ -41,6 +41,7 @@ static int add_to_list(struct list *entry, struct list *head)
 {
 	struct list *p;
 
+	ACTOR_DEBUG("#1");
 	list_for_each(p, head) {
 		if (p == entry) {
 			ACTOR_WARN("the timer(%p) exists in the queue(%p)",
@@ -49,7 +50,9 @@ static int add_to_list(struct list *entry, struct list *head)
 		}
 	}
 
+	ACTOR_DEBUG("#2");
 	list_add_tail(entry, head);
+	ACTOR_DEBUG("#3");
 
 	return 0;
 }
