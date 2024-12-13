@@ -22,7 +22,7 @@ Initialize a rate limiter with a defined capacity and leak rate:
 #include "libmcu/ratelim.h"
 
 struct ratelim bucket;
-ratelim_init(&bucket, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
+ratelim_init(&bucket, RATELIM_UNIT_SECONCD, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
 ```
 
 ### Request Handling

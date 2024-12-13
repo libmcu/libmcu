@@ -28,7 +28,8 @@ TEST_GROUP(RateLim) {
 
 	void setup(void) {
 		mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
-		ratelim_init(&bucket, DEFAULT_CAP, DEFAULT_RATE);
+		ratelim_init(&bucket,
+				RATELIM_UNIT_SECOND, DEFAULT_CAP, DEFAULT_RATE);
 	}
 	void teardown(void) {
 		mock().checkExpectations();
@@ -115,13 +116,13 @@ TEST(RateLim, request_ShouldReturnTrue_WhenBucketLeakHappenEverySecondAndRequest
 
 TEST(RateLim, request_ShouldReturnFalse_WhenCapacityIsZero) {
 	mock().expectNCalls(2, "time").andReturnValue(DEFAULT_TIME);
-	ratelim_init(&bucket, 0, DEFAULT_RATE);
+	ratelim_init(&bucket, RATELIM_UNIT_SECOND, 0, DEFAULT_RATE);
 	CHECK_FALSE(ratelim_request(&bucket));
 }
 
 TEST(RateLim, request_ShouldReturnFalse_WhenBucketIsFullAndLeakRateIsZero) {
 	mock().expectNCalls(DEFAULT_CAP+1, "time").andReturnValue(DEFAULT_TIME);
-	ratelim_init(&bucket, DEFAULT_CAP, 0);
+	ratelim_init(&bucket, RATELIM_UNIT_SECOND, DEFAULT_CAP, 0);
 	for (int i = 0; i < DEFAULT_CAP; i++) {
 		CHECK_TRUE(ratelim_request(&bucket));
 	}
@@ -135,4 +136,53 @@ TEST(RateLim, request_format_ShouldCallFormatFunc_WhenRequestIsSuccessful) {
 		.withStringParameter("format", "hello, world")
 		.andReturnValue(0);
 	ratelim_request_format(&bucket, format_func, "hello, world");
+}
+
+TEST(RateLim, ShouldCalculatePerHourBase_WhenUnitIsHour) {
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	ratelim_init(&bucket, RATELIM_UNIT_HOUR, DEFAULT_CAP, DEFAULT_RATE);
+	for (int i = 0; i < DEFAULT_CAP; i++) {
+		mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+i);
+		CHECK_TRUE(ratelim_request(&bucket));
+	}
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+DEFAULT_CAP);
+	CHECK_FALSE(ratelim_request(&bucket));
+
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+3600);
+	CHECK_TRUE(ratelim_request(&bucket));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+3600);
+	CHECK_FALSE(ratelim_request(&bucket));
+}
+
+TEST(RateLim, ShouldCalculatePerMinuteBase_WhenUnitIsMinute) {
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	ratelim_init(&bucket, RATELIM_UNIT_MINUTE, DEFAULT_CAP, DEFAULT_RATE);
+	for (int i = 0; i < DEFAULT_CAP; i++) {
+		mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+i);
+		CHECK_TRUE(ratelim_request(&bucket));
+	}
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+DEFAULT_CAP);
+	CHECK_FALSE(ratelim_request(&bucket));
+
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+60);
+	CHECK_TRUE(ratelim_request(&bucket));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+60);
+	CHECK_FALSE(ratelim_request(&bucket));
+}
+
+TEST(RateLim, ShouldLeakMultipleTokens_WhenRequestMultipleTokens) {
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	ratelim_init(&bucket, RATELIM_UNIT_SECOND, DEFAULT_CAP, DEFAULT_RATE);
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	CHECK_TRUE(ratelim_request_ext(&bucket, DEFAULT_CAP));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	CHECK_FALSE(ratelim_request_ext(&bucket, 1));
+}
+
+TEST(RateLim, request_ext_ShouldReturnFalse_WhenRequestMoreThanCapacity) {
+	CHECK_FALSE(ratelim_request_ext(&bucket, DEFAULT_CAP+1));
+}
+
+TEST(RateLim, request_ext_ShouldReturnTrue_WhenZeroTokenRequested) {
+	CHECK_TRUE(ratelim_request_ext(&bucket, 0));
 }
