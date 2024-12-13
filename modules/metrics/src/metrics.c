@@ -24,7 +24,7 @@ static_assert(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8),
 
 struct metrics {
 	metric_key_t key;
-	int32_t value;
+	metric_value_t value;
 	bool is_set;
 } LIBMCU_PACKED;
 
@@ -38,12 +38,12 @@ static char const *key_strings[] = {
 };
 #endif
 
-static struct metrics *get_item_by_index(uint32_t index)
+static struct metrics *get_item_by_index(const metric_key_t index)
 {
 	return &metrics[index];
 }
 
-static uint32_t get_index_by_key(metric_key_t key)
+static metric_key_t get_index_by_key(const metric_key_t key)
 {
 	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
 		if (get_item_by_index(i)->key == key) {
@@ -55,7 +55,7 @@ static uint32_t get_index_by_key(metric_key_t key)
 	return 0;
 }
 
-static struct metrics *get_obj_from_key(metric_key_t key)
+static struct metrics *get_obj_from_key(const metric_key_t key)
 {
 	return get_item_by_index(get_index_by_key(key));
 }
@@ -65,19 +65,48 @@ static bool is_metric_set(const struct metrics *p)
 	return p->is_set;
 }
 
-static void set_metric_value(metric_key_t key, int32_t value)
+static void set_metric_value(const metric_key_t key, const metric_value_t value)
 {
 	get_obj_from_key(key)->value = value;
 	get_obj_from_key(key)->is_set = true;
 }
 
-static int32_t get_metric_value(metric_key_t key)
+static metric_value_t get_metric_value(const metric_key_t key)
 {
 	return get_obj_from_key(key)->value;
 }
 
-static void iterate_all(void (*callback_each)(metric_key_t key, int32_t value,
-					      void *ctx), void *ctx)
+static void set_metric_value_if_min(const metric_key_t key,
+		const metric_value_t value)
+{
+	const struct metrics *p = get_obj_from_key(key);
+
+	if (is_metric_set(p)) {
+		if (value < p->value) {
+			set_metric_value(key, value);
+		}
+	} else {
+		set_metric_value(key, value);
+	}
+}
+
+static void set_metric_value_if_max(const metric_key_t key,
+		const metric_value_t value)
+{
+	const struct metrics *p = get_obj_from_key(key);
+
+	if (is_metric_set(p)) {
+		if (value > p->value) {
+			set_metric_value(key, value);
+		}
+	} else {
+		set_metric_value(key, value);
+	}
+}
+
+static void iterate_all(void (*callback_each)(const metric_key_t key,
+				const metric_value_t value, void *ctx),
+		void *ctx)
 {
 	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_item_by_index(i);
@@ -110,7 +139,7 @@ static uint32_t count_metrics_updated(void)
 	return nr_updated;
 }
 
-static size_t encode_all(uint8_t *buf, size_t bufsize)
+static size_t encode_all(uint8_t *buf, const size_t bufsize)
 {
 	size_t written = metrics_encode_header(buf, bufsize,
 			METRICS_KEY_MAX, count_metrics_updated());
@@ -131,16 +160,39 @@ static void initialize_metrics(void)
 	reset_all();
 }
 
-void metrics_set(metric_key_t key, int32_t val)
+void metrics_set(const metric_key_t key, const metric_value_t val)
 {
 	metrics_lock();
 	set_metric_value(key, val);
 	metrics_unlock();
 }
 
-int32_t metrics_get(metric_key_t key)
+void metrics_set_if_min(const metric_key_t key, const metric_value_t val)
 {
-	int32_t value;
+	metrics_lock();
+	set_metric_value_if_min(key, val);
+	metrics_unlock();
+}
+
+void metrics_set_if_max(const metric_key_t key, const metric_value_t val)
+{
+	metrics_lock();
+	set_metric_value_if_max(key, val);
+	metrics_unlock();
+}
+
+void metrics_set_max_min(const metric_key_t k_max, const metric_key_t k_min,
+		const metric_value_t val)
+{
+	metrics_lock();
+	set_metric_value_if_max(k_max, val);
+	set_metric_value_if_min(k_min, val);
+	metrics_unlock();
+}
+
+metric_value_t metrics_get(const metric_key_t key)
+{
+	metric_value_t value;
 
 	metrics_lock();
 	value = get_metric_value(key);
@@ -149,21 +201,21 @@ int32_t metrics_get(metric_key_t key)
 	return value;
 }
 
-void metrics_increase(metric_key_t key)
+void metrics_increase(const metric_key_t key)
 {
 	metrics_lock();
 	set_metric_value(key, get_metric_value(key) + 1);
 	metrics_unlock();
 }
 
-void metrics_increase_by(metric_key_t key, int32_t n)
+void metrics_increase_by(const metric_key_t key, const metric_value_t n)
 {
 	metrics_lock();
 	set_metric_value(key, get_metric_value(key) + n);
 	metrics_unlock();
 }
 
-bool metrics_is_set(metric_key_t key)
+bool metrics_is_set(const metric_key_t key)
 {
 	metrics_lock();
 	bool is_set = is_metric_set(get_obj_from_key(key));
@@ -178,7 +230,7 @@ void metrics_reset(void)
 	metrics_unlock();
 }
 
-size_t metrics_collect(void *buf, size_t bufsize)
+size_t metrics_collect(void *buf, const size_t bufsize)
 {
 	size_t written;
 
@@ -189,8 +241,9 @@ size_t metrics_collect(void *buf, size_t bufsize)
 	return written;
 }
 
-void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
-					   void *ctx), void *ctx)
+void metrics_iterate(void (*callback_each)(const metric_key_t key,
+				const metric_value_t value, void *ctx),
+		void *ctx)
 {
 	iterate_all(callback_each, ctx);
 }
@@ -201,13 +254,13 @@ size_t metrics_count(void)
 }
 
 #if !defined(METRICS_NO_KEY_STRING)
-const char *metrics_stringify_key(metric_key_t key)
+const char *metrics_stringify_key(const metric_key_t key)
 {
 	return key_strings[key];
 }
 #endif
 
-void metrics_init(bool force)
+void metrics_init(const bool force)
 {
 	struct metrics *p = get_item_by_index(METRICS_KEY_MAGIC);
 

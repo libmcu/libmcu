@@ -147,6 +147,65 @@ TEST(metrics, stringify_key_ShouldReturnString_WhenKeyGiven) {
 	STRCMP_EQUAL("ReportInterval", p);
 }
 
+TEST(metrics, is_set_ShouldReturnTrue_WhenReportIntervalIsSet) {
+	metrics_set(ReportInterval, 0);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+}
+
+TEST(metrics, is_set_ShouldReturnFalse_WhenReportIntervalIsNotSet) {
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+}
+
+TEST(metrics, count_ShouldReturnNumberOfMetrics) {
+	LONGS_EQUAL(7, metrics_count());
+}
+
+TEST(metrics, set_if_min_ShouldSetMinValue_WhenNotSet) {
+	metrics_set_if_min(ReportInterval, 123);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_min_ShouldSetMinValue_WhenSmallerValueGiven) {
+	metrics_set_if_min(ReportInterval, 123);
+	metrics_set_if_min(ReportInterval, 122);
+	LONGS_EQUAL(122, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_min_ShouldNotSetMinValue_WhenLargerValueGiven) {
+	metrics_set_if_min(ReportInterval, 123);
+	metrics_set_if_min(ReportInterval, 124);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_min_ShouldNotSetMinValue_WhenSameValueGiven) {
+	metrics_set_if_min(ReportInterval, 123);
+	metrics_set_if_min(ReportInterval, 123);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_max_ShouldSetMaxValue_WhenNotSet) {
+	metrics_set_if_max(ReportInterval, 123);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_max_ShouldSetMaxValue_WhenLargerValueGiven) {
+	metrics_set_if_max(ReportInterval, 123);
+	metrics_set_if_max(ReportInterval, 124);
+	LONGS_EQUAL(124, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_max_ShouldNotSetMaxValue_WhenSmallerValueGiven) {
+	metrics_set_if_max(ReportInterval, 123);
+	metrics_set_if_max(ReportInterval, 122);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_if_max_ShouldNotSetMaxValue_WhenSameValueGiven) {
+	metrics_set_if_max(ReportInterval, 123);
+	metrics_set_if_max(ReportInterval, 123);
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+}
+
 TEST(metrics, test) {
 	metrics_set(WallTime, 10);
 	// 1. metrics_init()
