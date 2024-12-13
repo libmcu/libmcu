@@ -19,7 +19,7 @@ extern "C" {
 #define METRICS_USER_DEFINES		"metrics.def"
 #endif
 
-#define METRICS_VALUE(x)		((int32_t)(x))
+#define METRICS_VALUE(x)		((metric_value_t)(x))
 
 enum {
 #define METRICS_DEFINE(key)		key,
@@ -28,6 +28,7 @@ enum {
 };
 
 typedef uint16_t metric_key_t;
+typedef int32_t metric_value_t;
 
 /**
  * @brief Sets the value of a specific metric.
@@ -38,7 +39,44 @@ typedef uint16_t metric_key_t;
  * @param[in] key The metric key to be set.
  * @param[in] val The value to set for the specified metric key.
  */
-void metrics_set(metric_key_t key, int32_t val);
+void metrics_set(const metric_key_t key, const metric_value_t val);
+
+/**
+ * @brief Set the metric value if it is less than the current value.
+ *
+ * This function sets the metric value for the given key if the provided
+ * value is less than the current value of the metric.
+ *
+ * @param[in] key The key identifying the metric.
+ * @param[in] val The value to set if it is less than the current value.
+ */
+void metrics_set_if_min(const metric_key_t key, const metric_value_t val);
+
+/**
+ * @brief Set the metric value if it is greater than the current value.
+ *
+ * This function sets the metric value for the given key if the provided
+ * value is greater than the current value of the metric.
+ *
+ * @param[in] key The key identifying the metric.
+ * @param[in] val The value to set if it is greater than the current value.
+ */
+void metrics_set_if_max(const metric_key_t key, const metric_value_t val);
+
+/**
+ * @brief Set the maximum and minimum metric values.
+ *
+ * This function sets the maximum and minimum metric values for the given
+ * keys based on the provided value. If the provided value is greater than
+ * the current maximum value, it updates the maximum metric. If the provided
+ * value is less than the current minimum value, it updates the minimum metric.
+ *
+ * @param[in] k_max The key identifying the maximum metric.
+ * @param[in] k_min The key identifying the minimum metric.
+ * @param[in] val The value to compare and set as the new maximum or minimum.
+ */
+void metrics_set_max_min(const metric_key_t k_max, const metric_key_t k_min,
+		const metric_value_t val);
 
 /**
  * @brief Retrieves the value of a specific metric.
@@ -47,9 +85,9 @@ void metrics_set(metric_key_t key, int32_t val);
  *
  * @param[in] key The metric key to retrieve the value for.
  *
- * @return int32_t The current value of the specified metric key.
+ * @return metric_value_t The current value of the specified metric key.
  */
-int32_t metrics_get(metric_key_t key);
+metric_value_t metrics_get(const metric_key_t key);
 
 /**
  * @brief Increases the value of a specific metric by 1.
@@ -58,7 +96,7 @@ int32_t metrics_get(metric_key_t key);
  *
  * @param[in] key The metric key to be increased.
  */
-void metrics_increase(metric_key_t key);
+void metrics_increase(const metric_key_t key);
 
 /**
  * @brief Increases the value of a specific metric by a given amount.
@@ -69,7 +107,7 @@ void metrics_increase(metric_key_t key);
  * @param[in] key The metric key to be increased.
  * @param[in] n The amount to increase the value of the specified metric key by.
  */
-void metrics_increase_by(metric_key_t key, int32_t n);
+void metrics_increase_by(const metric_key_t key, const metric_value_t n);
 
 /**
  * @brief Resets all metrics to their default values.
@@ -88,7 +126,7 @@ void metrics_reset(void);
  *
  * @return bool True if the metric key is set, false otherwise.
  */
-bool metrics_is_set(metric_key_t key);
+bool metrics_is_set(const metric_key_t key);
 
 /**
  * @brief Traversing all metrics firing callback
@@ -99,8 +137,9 @@ bool metrics_is_set(metric_key_t key);
  * @warn This function does not guarantee synchronization. Any metrics may be
  *       updated while the callback is running.
  */
-void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
-					   void *ctx), void *ctx);
+void metrics_iterate(void (*callback_each)(const metric_key_t key,
+				const metric_value_t value, void *ctx),
+		void *ctx);
 
 /**
  * @brief Collects all metrics into the provided buffer.
@@ -114,7 +153,7 @@ void metrics_iterate(void (*callback_each)(metric_key_t key, int32_t value,
  *
  * @return size_t The number of bytes written to the buffer.
  */
-size_t metrics_collect(void *buf, size_t bufsize);
+size_t metrics_collect(void *buf, const size_t bufsize);
 
 /**
  * @brief Retrieves the count of all metrics.
@@ -134,7 +173,7 @@ size_t metrics_count(void);
  *
  * @param force If true, forces re-initialization of the metrics module.
  */
-void metrics_init(bool force);
+void metrics_init(const bool force);
 
 #if !defined(METRICS_NO_KEY_STRING)
 /**
@@ -148,7 +187,7 @@ void metrics_init(bool force);
  *
  * @return const char* The string representation of the specified metric key.
  */
-const char *metrics_stringify_key(metric_key_t key);
+const char *metrics_stringify_key(const metric_key_t key);
 #endif
 
 #if defined(__cplusplus)
