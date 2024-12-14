@@ -186,3 +186,20 @@ TEST(RateLim, request_ext_ShouldReturnFalse_WhenRequestMoreThanCapacity) {
 TEST(RateLim, request_ext_ShouldReturnTrue_WhenZeroTokenRequested) {
 	CHECK_TRUE(ratelim_request_ext(&bucket, 0));
 }
+
+TEST(RateLim, ShouldLeakEveryHalfMinute_WhenRateIsTwoPerMinute) {
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME);
+	ratelim_init(&bucket, RATELIM_UNIT_MINUTE, DEFAULT_CAP, 2);
+	for (int i = 0; i < DEFAULT_CAP; i++) {
+		mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+i);
+		CHECK_TRUE(ratelim_request(&bucket));
+	}
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+30-1);
+	CHECK_FALSE(ratelim_request(&bucket));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+30);
+	CHECK_TRUE(ratelim_request(&bucket));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+30+30-1);
+	CHECK_FALSE(ratelim_request(&bucket));
+	mock().expectOneCall("time").andReturnValue(DEFAULT_TIME+30+30);
+	CHECK_TRUE(ratelim_request(&bucket));
+}
