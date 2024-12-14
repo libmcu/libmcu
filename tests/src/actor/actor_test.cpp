@@ -60,10 +60,7 @@ TEST_GROUP(ACTOR) {
 		actor_init(msgbuf, sizeof(msgbuf), 4096UL);
 	}
 	void teardown(void) {
-                /* give some time space for new threads to take place to run
-                 * before killed */
                 actor_deinit();
-                usleep(100);
 		sem_destroy(&done);
 
 		mock().checkExpectations();
