@@ -21,15 +21,15 @@ static bool process(const struct fsm_item *item,
 	fsm_state_t next_candidate = item->state.next;
 
 	if (item->event && (*item->event)(current_state, next_candidate, ctx)) {
-		if (item->action.run) {
-			(*item->action.run)(current_state, next_candidate, ctx);
-		}
-
 		if (current_state != next_candidate) {
 			*next_state = next_candidate;
 
 			FSM_INFO("FSM state change from %d to %d",
 					current_state, next_candidate);
+		}
+
+		if (item->action.run) {
+			(*item->action.run)(current_state, next_candidate, ctx);
 		}
 
 		return true;
