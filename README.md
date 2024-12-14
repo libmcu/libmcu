@@ -30,6 +30,7 @@ Any feedback would be appreciated.
 * [Metrics](modules/metrics)
 * [Power Management](modules/pm)
 * [PubSub](modules/pubsub)
+* [RateLim](modules/ratelim)
 * [Retry with exponential backoff](modules/retry)
 * [Runner](modules/runner)
 * [Time Extension](modules/common)
