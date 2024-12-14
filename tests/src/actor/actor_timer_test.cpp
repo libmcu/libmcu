@@ -63,10 +63,6 @@ TEST_GROUP(ACTOR_TIMER) {
 	}
 	void teardown(void) {
                 actor_deinit();
-                /* FIXME: without the delay, the test sometimes goes hang in the
-                 * github action. It seems like the newly created thread doesn't
-                 * get the semaphore even though it's posted by actor_timer. */
-                usleep(100);
 		sem_destroy(&done);
 		pthread_mutex_destroy(&lock);
 

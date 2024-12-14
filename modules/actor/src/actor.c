@@ -60,8 +60,12 @@ struct core {
 	pthread_t thread;
 	pthread_attr_t thread_attr;
 	sem_t dispatch_event;
+	sem_t ready;
+	sem_t terminated;
 
 	int priority;
+
+	bool running;
 };
 
 static struct actor_ctx {
@@ -174,15 +178,19 @@ static void *dispatcher(void *e)
 {
 	struct core *core = (struct core *)e;
 
+	core->running = true;
+	sem_post(&core->ready);
+
 	ACTOR_INFO("Dispatcher(%d) started", core->priority);
 
-	while (1) {
+	while (core->running) {
 		sem_wait(&core->dispatch_event);
 		dispatch_actor(core);
 	}
 
-	pthread_exit(NULL);
-	return NULL;
+	sem_post(&core->terminated);
+
+	return 0;
 }
 
 static int initialize_scheduler(struct actor_ctx *ctx, size_t stack_size_bytes)
@@ -191,6 +199,10 @@ static int initialize_scheduler(struct actor_ctx *ctx, size_t stack_size_bytes)
 		struct core *core = &ctx->core[i];
 
 		int rc = sem_init(&core->dispatch_event, 0, 0);
+		assert(rc == 0);
+		rc = sem_init(&core->ready, 0, 0);
+		assert(rc == 0);
+		rc = sem_init(&core->terminated, 0, 0);
 		assert(rc == 0);
 
 		list_init(&core->runq);
@@ -220,9 +232,18 @@ static int deinitialize_scheduler(struct actor_ctx *ctx)
 {
 	for (int i = 0; i < ACTOR_PRIORITY_MAX; i++) {
 		struct core *core = &ctx->core[i];
-#if defined(UNIT_TEST)
-		pthread_cancel(core->thread);
-#endif
+
+		/* to make sure the dispatcher thread is created before
+		 * destroying. */
+		sem_wait(&core->ready);
+
+		core->running = false;
+		sem_post(&core->dispatch_event);
+
+		/* wait until the dispatcher thread is terminated. */
+		sem_wait(&core->terminated);
+		sem_destroy(&core->terminated);
+		sem_destroy(&core->ready);
 		sem_destroy(&core->dispatch_event);
 	}
 
