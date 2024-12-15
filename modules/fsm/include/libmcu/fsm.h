@@ -62,11 +62,17 @@ void fsm_init(struct fsm *fsm,
 		const struct fsm_item *items, size_t item_len, void *ctx);
 
 /**
- * @brief Perform a step in the FSM, transitioning between states if needed.
+ * @brief Perform a single step in the finite state machine.
  *
- * @param[in] fsm Pointer to the FSM structure.
+ * This function advances the finite state machine (FSM) by one step,
+ * transitioning to the next state based on the current state and the
+ * defined state transitions.
+ *
+ * @param[in] fsm A pointer to the finite state machine structure.
+ *
+ * @return The new state of the finite state machine after the step.
  */
-void fsm_step(struct fsm *fsm);
+fsm_state_t fsm_step(struct fsm *fsm);
 
 /**
  * @brief Reset the FSM to its initial state.
