@@ -153,6 +153,11 @@ int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx)
 	return 0;
 }
 
+const char *wdt_name(const struct wdt *self)
+{
+	return self->name;
+}
+
 int wdt_init(void)
 {
 	m.min_period_ms = CONFIG_TASK_WDT_TIMEOUT_S * 1000;
