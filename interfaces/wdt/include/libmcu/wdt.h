@@ -123,6 +123,17 @@ void wdt_delete(struct wdt *self);
  */
 int wdt_feed(struct wdt *self);
 
+/**
+ * @brief Get the name of the watchdog timer.
+ *
+ * This function returns the name of the specified watchdog timer instance.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ *
+ * @return The name of the watchdog timer.
+ */
+const char *wdt_name(const struct wdt *self);
+
 #if defined(__cplusplus)
 }
 #endif
