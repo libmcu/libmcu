@@ -33,34 +33,92 @@ struct actor {
 	int priority;
 };
 
-int actor_init(void *mem, size_t memsize, size_t stack_size_bytes);
-int actor_deinit(void);
-
-struct actor *actor_new(actor_handler_t handler, int priority);
-struct actor *actor_set(struct actor *actor,
-		actor_handler_t handler, int priority);
+/**
+ * @brief Initialize the actor system.
+ *
+ * This function initializes the actor system with the provided memory
+ * and stack size.
+ *
+ * @param[in] mem Pointer to the memory to be used by the actor system.
+ * @param[in] memsize Size of the memory in bytes.
+ * @param[in] stack_size_bytes Size of the stack for each actor in bytes.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+int actor_init(void *mem, const size_t memsize, const size_t stack_size_bytes);
 
 /**
- * @brief Send a message to an actor
+ * @brief Deinitialize the actor system.
  *
- * @param actor actor who gets the message
- * @param msg message to send
+ * This function deinitializes the actor system, releasing any resources
+ * that were allocated.
  *
- * @return 0 on success otherwise error
+ * @return 0 on success, negative error code on failure.
+ */
+int actor_deinit(void);
+
+/**
+ * @brief Create a new actor.
+ *
+ * This function creates a new actor with the specified handler and priority.
+ *
+ * @param[in] handler Function pointer to the actor's handler function.
+ * @param[in] priority Priority of the actor.
+ *
+ * @return Pointer to the created actor instance, or NULL on failure.
+ */
+struct actor *actor_new(actor_handler_t handler, const int priority);
+
+/**
+ * @brief Set the handler and priority of an existing actor.
+ *
+ * This function sets the handler and priority of the specified actor.
+ *
+ * @param[in] actor Pointer to the actor instance.
+ * @param[in] handler Function pointer to the actor's handler function.
+ * @param[in] priority Priority of the actor.
+ *
+ * @return Pointer to the updated actor instance.
+ */
+struct actor *actor_set(struct actor *actor,
+		actor_handler_t handler, const int priority);
+
+/**
+ * @brief Send a message to an actor.
+ *
+ * This function sends a message to the specified actor.
+ *
+ * @param[in] actor Pointer to the actor instance.
+ * @param[in] msg Pointer to the message to be sent.
+ *
+ * @return 0 on success, negative error code on failure.
  */
 int actor_send(struct actor *actor, struct actor_msg *msg);
-int actor_send_defer(struct actor *actor, struct actor_msg *msg,
-		uint32_t millisec_delay);
+
+/**
+ * @brief Send a deferred message to an actor.
+ *
+ * This function sends a message to the specified actor after a delay.
+ *
+ * @param[in] actor Pointer to the actor instance.
+ * @param[in] msg Pointer to the message to be sent.
+ * @param[in] millisec_delay Delay in milliseconds before the message is sent.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+int actor_send_defer(struct actor *actor,
+		struct actor_msg *msg, const uint32_t millisec_delay);
 
 /**
  * @brief Allocate a memory block of requested size + header
  *
- * @param payload_size size of data to be used by application
+ * @param[in] payload_size size of data to be used by application
  *
  * @return pointer of the memory block on success, NULL otherwise
  */
-struct actor_msg *actor_alloc(size_t payload_size);
+struct actor_msg *actor_alloc(const size_t payload_size);
 int actor_free(struct actor_msg *msg);
+
 size_t actor_cap(void);
 size_t actor_len(void);
 
