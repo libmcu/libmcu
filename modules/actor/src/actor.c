@@ -250,7 +250,7 @@ static int deinitialize_scheduler(struct actor_ctx *ctx)
 	return 0;
 }
 
-struct actor_msg *actor_alloc(size_t payload_size)
+struct actor_msg *actor_alloc(const size_t payload_size)
 {
 	struct list *p = NULL;
 
@@ -344,7 +344,7 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 }
 
 int actor_send_defer(struct actor *actor, struct actor_msg *msg,
-		uint32_t millisec_delay)
+		const uint32_t millisec_delay)
 {
 	struct actor_timer *timer = actor_timer_new(actor, msg, millisec_delay);
 
@@ -358,7 +358,7 @@ int actor_send_defer(struct actor *actor, struct actor_msg *msg,
 }
 
 struct actor *actor_set(struct actor *actor,
-		actor_handler_t handler, int priority)
+		actor_handler_t handler, const int priority)
 {
 	assert(actor);
 	assert(handler);
@@ -373,7 +373,7 @@ struct actor *actor_set(struct actor *actor,
 	return actor;
 }
 
-int actor_init(void *mem, size_t memsize, size_t stack_size_bytes)
+int actor_init(void *mem, const size_t memsize, const size_t stack_size_bytes)
 {
 	const size_t mask = sizeof(uintptr_t) - 1;
 	const size_t remainder = (size_t)mem & mask;

@@ -12,6 +12,10 @@
 #define APPTMR_MAX			8
 #endif
 
+#if !defined(APPTMR_INFO)
+#define APPTMR_INFO(...)
+#endif
+
 struct apptmr {
 	struct apptmr_api api;
 
@@ -21,9 +25,11 @@ struct apptmr {
 	bool periodic;
 };
 
+static int count_created;
+
 static struct apptmr *new_apptmr(struct apptmr *pool, size_t n)
 {
-	struct apptmr empty = { 0, };
+	const struct apptmr empty = { 0, };
 
 	for (size_t i = 0; i < n; i++) {
 		if (memcmp(&empty, &pool[i], sizeof(empty)) == 0) {
@@ -53,9 +59,9 @@ static void trigger(struct apptmr *self)
 	callback_wrapper(self);
 }
 
-static int start_apptmr(struct apptmr *self, uint32_t timeout_ms)
+static int start_apptmr(struct apptmr *self, const uint32_t timeout_ms)
 {
-	uint64_t usec = timeout_ms * 1000;
+	const uint64_t usec = timeout_ms * 1000;
 	int err;
 
 	if (self->periodic) {
@@ -67,9 +73,9 @@ static int start_apptmr(struct apptmr *self, uint32_t timeout_ms)
 	return err;
 }
 
-static int restart_apptmr(struct apptmr *self, uint32_t timeout_ms)
+static int restart_apptmr(struct apptmr *self, const uint32_t timeout_ms)
 {
-	uint64_t usec = timeout_ms * 1000;
+	const uint64_t usec = timeout_ms * 1000;
 	return esp_timer_restart(self->handle, usec);
 }
 
@@ -86,6 +92,16 @@ static int enable_apptmr(struct apptmr *self)
 static int disable_apptmr(struct apptmr *self)
 {
 	return 0;
+}
+
+int apptmr_cap(void)
+{
+	return APPTMR_MAX;
+}
+
+int apptmr_len(void)
+{
+	return count_created;
 }
 
 struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
@@ -117,6 +133,9 @@ struct apptmr *apptmr_create(bool periodic, apptmr_callback_t cb, void *cb_ctx)
 		if (esp_timer_create(&param, &apptmr->handle) != ESP_OK) {
 			return NULL;
 		}
+
+		count_created++;
+		APPTMR_INFO("apptmr created(%d): %p\n", count_created, apptmr);
 	}
 
 	return apptmr;
@@ -126,5 +145,7 @@ int apptmr_delete(struct apptmr *self)
 {
 	ESP_ERROR_CHECK(esp_timer_delete(self->handle));
 	free_apptmr(self);
+	count_created--;
+	APPTMR_INFO("apptmr deleted(%d): %p\n", count_created, self);
 	return 0;
 }

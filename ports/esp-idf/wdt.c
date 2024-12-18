@@ -15,14 +15,18 @@
 #include "libmcu/list.h"
 #include "libmcu/timext.h"
 
-#if !defined(WDT_INFO)
-#define WDT_INFO(...)
+#if !defined(WDT_STACK_SIZE_BYTES)
+#define WDT_STACK_SIZE_BYTES	1024U
 #endif
 
-#define STACK_SIZE_BYTES	1024
+#define STACK_SIZE_BYTES	WDT_STACK_SIZE_BYTES
 
 #if !defined(MIN)
 #define MIN(a, b)		((a) > (b)? (b) : (a))
+#endif
+
+#if !defined(WDT_INFO)
+#define WDT_INFO(...)
 #endif
 
 struct wdt {
