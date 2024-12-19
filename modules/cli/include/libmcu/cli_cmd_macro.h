@@ -145,11 +145,11 @@ extern "C" {
 
 #define DEFINE_CLI_CMD(name, desc)	\
 	static cli_cmd_error_t cli_cmd_##name##_handler(int argc, \
-			const char *argv[], const void *env); \
+			const char *argv[], void *env); \
 	const struct cli_cmd cli_cmd_##name = { #name, \
 			cli_cmd_##name##_handler, desc }; \
 	static cli_cmd_error_t cli_cmd_##name##_handler(int argc, \
-			const char *argv[], const void *env)
+			const char *argv[], void *env)
 
 #define DEFINE_CLI_CMD_LIST(name, ...)	\
 	CLI_ASSERT(CLI_CPP_NARG(__VA_ARGS__) <= CLI_CPP_MAX_CMD); \

@@ -31,13 +31,15 @@ LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
 LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value)
 {
-	unused(key);
+	const uint32_t kval = (const uint32_t)key;
+	const size_t len = sizeof(kval) + sizeof(value);
 
-	if (bufsize < sizeof(value)) {
+	if (bufsize < len) {
 		return 0;
 	}
 
-	memcpy(buf, &value, sizeof(value));
+	memcpy(buf, &kval, sizeof(kval));
+	memcpy(&buf[sizeof(kval)], &value, sizeof(value));
 
-	return sizeof(value);
+	return len;
 }

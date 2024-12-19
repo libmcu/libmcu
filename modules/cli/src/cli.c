@@ -321,7 +321,7 @@ static void report_result(struct cli_io const *io, cli_cmd_error_t err,
 }
 
 static cli_cmd_error_t process_command(struct cli const *cli,
-		int argc, char const *argv[], void const *env)
+		int argc, char const *argv[], void *env)
 {
 	if (argc <= 0) {
 		return CLI_CMD_BLANK;
@@ -394,7 +394,7 @@ void cli_register_cmdlist(struct cli *cli, const struct cli_cmd **cmdlist)
 }
 
 void cli_init(struct cli *cli, struct cli_io const *io,
-		void *buf, size_t bufsize)
+		void *buf, size_t bufsize, void *env)
 {
 	CLI_ASSERT(cli != NULL && io != NULL &&
 			buf != NULL && bufsize >= CLI_CMD_MAXLEN);
@@ -409,6 +409,7 @@ void cli_init(struct cli *cli, struct cli_io const *io,
 	cli->history_active = 0;
 	cli->buf = (char *)buf;
 	cli->bufsize = bufsize;
+	cli->env = env;
 
 	io->write(CLI_PROMPT_START_MESSAGE, strlen(CLI_PROMPT_START_MESSAGE));
 	io->write(CLI_PROMPT, strlen(CLI_PROMPT));

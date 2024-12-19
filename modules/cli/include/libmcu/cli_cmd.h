@@ -28,7 +28,7 @@ typedef enum {
 } cli_cmd_error_t;
 
 typedef cli_cmd_error_t (*cli_cmd_func_t)(int argc, const char *argv[],
-		const void *env);
+		void *env);
 
 struct cli_cmd {
 	char const *name;
