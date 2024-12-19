@@ -66,7 +66,7 @@ TEST_GROUP(cli) {
 		read_index = 0;
 
 		DEFINE_CLI_CMD_LIST(cmd_list, exit, args, error, invalid);
-		cli_init(&cli, &io, cli_buffer, sizeof(cli_buffer));
+		cli_init(&cli, &io, cli_buffer, sizeof(cli_buffer), 0);
 		cli_register_cmdlist(&cli, cmd_list);
 	}
 	void teardown() {

@@ -21,7 +21,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize2_WhenOneZeroByteGiven) {
 	uint8_t zero = 0;
 	uint8_t expected[] = { 0x01, 0x01, 0x00 };
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(2, cobs_encode(actual, sizeof(actual), &zero, sizeof(zero)));
+	LONGS_EQUAL(3, cobs_encode(actual, sizeof(actual), &zero, sizeof(zero)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -29,7 +29,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize3_WhenTwoZeroByteGiven) {
 	uint8_t data[] = { 0x00, 0x00 };
 	uint8_t expected[] = { 0x01, 0x01, 0x01, 0x00 };
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(3, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(4, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -37,7 +37,7 @@ TEST(COBS, encode_ShouldReplaceZeroValueWithOverhead_WhenZeroValueInMiddleGiven)
 	uint8_t data[] = { 0x11, 0x22, 0x00, 0x33 };
 	uint8_t expected[] = { 0x03, 0x11, 0x22, 0x02, 0x33, 0x00 };
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(5, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(6, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -45,7 +45,7 @@ TEST(COBS, encode_ShouldReplaceZeroValueWithOverhead_WhenZeroValuesTail) {
 	uint8_t data[] = { 0x11, 0x00, 0x00, 0x00 };
 	uint8_t expected[] = { 0x02, 0x11, 0x01, 0x01, 0x01, 0x00 };
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(5, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(6, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -53,7 +53,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize_WhenNonZeroVauleGiven) {
 	uint8_t data[] = { 0x11, 0x22, 0x33, 0x44 };
 	uint8_t expected[] = { 0x05, 0x11, 0x22, 0x33, 0x44, 0x00 };
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(5, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(6, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -92,7 +92,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize_When255BytesDataGiven) {
 	expected[255] = 0x02;
 	expected[256] = 0xff;
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(257, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(258, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -106,7 +106,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize_When255BytesDataWithZeroTailGiven) {
 	expected[255] = 0x01;
 	expected[256] = 0x01;
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(257, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(258, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 
@@ -120,7 +120,7 @@ TEST(COBS, encode_ShouldReturnEncodedSize_When255BytesDataWithZeroValueGiven) {
 	expected[254] = 0x02;
 	expected[255] = 0x01;
 	uint8_t actual[sizeof(expected)];
-	LONGS_EQUAL(256, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
+	LONGS_EQUAL(257, cobs_encode(actual, sizeof(actual), &data, sizeof(data)));
 	MEMCMP_EQUAL(expected, actual, sizeof(expected));
 }
 

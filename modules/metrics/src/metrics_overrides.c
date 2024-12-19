@@ -39,7 +39,7 @@ LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 	}
 
 	memcpy(buf, &kval, sizeof(kval));
-	memcpy(&buf[sizeof(kval)], &value, sizeof(value));
+	memcpy(&((uint8_t *)buf)[sizeof(kval)], &value, sizeof(value));
 
 	return len;
 }
