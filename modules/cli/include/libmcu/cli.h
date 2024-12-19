@@ -37,10 +37,12 @@ struct cli {
 
 	char *buf;
 	size_t bufsize;
+
+	void *env;
 };
 
 void cli_init(struct cli *cli, struct cli_io const *io,
-		void *buf, size_t bufsize);
+		void *buf, size_t bufsize, void *env);
 void cli_register_cmdlist(struct cli *cli, const struct cli_cmd **cmdlist);
 void cli_run(struct cli *cli, void (*sleep)(void));
 cli_cmd_error_t cli_step(struct cli *cli);

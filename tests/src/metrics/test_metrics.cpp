@@ -134,11 +134,11 @@ TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenZeroedValueGiven) 
 }
 
 TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenReportIntervalValueSet) {
-	uint8_t expected_encoded_data[128] = { 0x78, 0x56, 0x34, 0x12, };
+	uint8_t expected_encoded_data[128] = { 0, 0, 0, 0, 0x78, 0x56, 0x34, 0x12, };
 	uint8_t buf[128];
 	metrics_set(ReportInterval, 0x12345678);
 	size_t size = metrics_collect(buf, sizeof(buf));
-	LONGS_EQUAL(4, size);
+	LONGS_EQUAL(8, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
 }
 

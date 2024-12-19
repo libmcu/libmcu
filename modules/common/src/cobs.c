@@ -37,7 +37,7 @@ size_t cobs_encode(uint8_t *buf, size_t bufsize,
 	buf[group_head_index] = group_len;
 	buf[MIN(o, bufsize - 1)] = 0;
 
-	return o;
+	return o+1;
 }
 
 size_t cobs_decode(uint8_t *buf, size_t bufsize,
