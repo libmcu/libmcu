@@ -25,8 +25,8 @@
 #define MIN(a, b)		((a) > (b)? (b) : (a))
 #endif
 
-#if !defined(WDT_INFO)
-#define WDT_INFO(...)
+#if !defined(WDT_ERROR)
+#define WDT_ERROR(...)
 #endif
 
 struct wdt {
@@ -51,6 +51,9 @@ struct wdt_manager {
 
 	wdt_timeout_cb_t cb;
 	void *cb_ctx;
+
+	wdt_periodic_cb_t periodic_cb;
+	void *periodic_cb_ctx;
 
 	uint32_t min_period_ms;
 };
@@ -82,21 +85,24 @@ static void *wdt_task(void *e)
 	ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
 	while (1) {
+		if (mgr->periodic_cb) {
+			(*mgr->periodic_cb)(mgr->periodic_cb_ctx);
+		}
+
 		struct wdt *wdt = any_timeouts(mgr,
 				board_get_time_since_boot_ms());
 
-		if (!wdt) {
-			esp_task_wdt_reset();
-			sleep_ms(mgr->min_period_ms);
-			continue;
-		}
+		if (wdt) {
+			WDT_ERROR("wdt %s timed out", wdt->name);
 
-		WDT_INFO("wdt %s timed out", wdt->name);
-		if (wdt->cb) {
-			(*wdt->cb)(wdt, wdt->cb_ctx);
-		}
-		if (mgr->cb) {
-			(*mgr->cb)(wdt, mgr->cb_ctx);
+			if (wdt->cb) {
+				(*wdt->cb)(wdt, wdt->cb_ctx);
+			}
+			if (mgr->cb) {
+				(*mgr->cb)(wdt, mgr->cb_ctx);
+			}
+		} else {
+			esp_task_wdt_reset();
 		}
 
 		sleep_ms(mgr->min_period_ms);
@@ -162,9 +168,11 @@ const char *wdt_name(const struct wdt *self)
 	return self->name;
 }
 
-int wdt_init(void)
+int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
 {
 	m.min_period_ms = CONFIG_TASK_WDT_TIMEOUT_S * 1000;
+	m.periodic_cb = cb;
+	m.periodic_cb_ctx = cb_ctx;
 	list_init(&m.list);
 
 #if !CONFIG_ESP_TASK_WDT_INIT
