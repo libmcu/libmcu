@@ -24,6 +24,21 @@ struct wdt;
 typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
 
 /**
+ * @typedef wdt_periodic_cb_t
+ * @brief Type definition for the periodic callback function.
+ *
+ * This type defines a function pointer for a callback function that is
+ * periodically called by the watchdog timer (WDT) module. The callback
+ * function is intended to be used for user-defined actions that need to be
+ * executed at regular intervals. The smallest timeout period of all registered
+ * watchdog timers is used as the interval for the periodic callback function.
+ *
+ * @param ctx A pointer to user-defined context data that will be passed to
+ *            the callback function when it is called.
+ */
+typedef void (*wdt_periodic_cb_t)(void *ctx);
+
+/**
  * @brief Initialize the watchdog timer module.
  *
  * This function initializes the watchdog timer module. It should be called
@@ -33,7 +48,7 @@ typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_init(void);
+int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx);
 
 /**
  * @brief Deinitialize the watchdog timer.

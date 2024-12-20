@@ -148,6 +148,18 @@ int apptmr_cap(void);
  */
 int apptmr_len(void);
 
+/**
+ * @brief Global timeout hook function for application timer.
+ *
+ * This function is called whenever any registered application timer
+ * reaches its timeout. It serves as a common hook that can be used to
+ * perform actions that need to be executed whenever any timer expires.
+ *
+ * @param self Pointer to the application timer instance that triggered
+ *             the timeout.
+ */
+void apptmr_global_timeout_hook(struct apptmr *self);
+
 #if defined(UNIT_TEST)
 /**
  * @brief Hook function for unit testing application timer creation.
