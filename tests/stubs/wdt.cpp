@@ -35,7 +35,10 @@ int wdt_feed(struct wdt *self) {
 	return 0;
 }
 
-int wdt_init(void) {
+int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
+{
+	(void)cb;
+	(void)cb_ctx;
 	return 0;
 }
 
