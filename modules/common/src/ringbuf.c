@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -32,7 +32,7 @@ static size_t get_available(const struct ringbuf *handle)
 	return get_capacity(handle) - get_length(handle);
 }
 
-static void initialize(struct ringbuf *handle, size_t bufsize)
+static void initialize(struct ringbuf *handle, const size_t bufsize)
 {
 	memset(handle->buffer, 0, bufsize);
 
@@ -42,23 +42,48 @@ static void initialize(struct ringbuf *handle, size_t bufsize)
 	handle->outdex = 0;
 }
 
-static size_t read_core(const struct ringbuf *handle,
-		size_t offset, void *buf, size_t bufsize)
+static uint8_t *get_pointer(const struct ringbuf *handle,
+		const size_t offset, size_t *contiguous)
 {
-	bufsize = MIN(get_length(handle), bufsize);
+	size_t index = GET_INDEX(handle->outdex+offset, handle->capacity);
+	uint8_t *p = &handle->buffer[index];
 
-	size_t index = GET_INDEX(handle->outdex + offset, handle->capacity);
-	size_t contiguous = handle->capacity - index;
-	size_t remained = (contiguous < bufsize)? bufsize - contiguous : 0;
-	size_t cut = bufsize - remained;
+	if (offset >= get_length(handle)) {
+		p = NULL;
+		index = handle->capacity;
+	}
 
-	memcpy(buf, &handle->buffer[index], cut);
-	memcpy((uint8_t *)buf + cut, handle->buffer, remained);
+	if (contiguous) {
+		*contiguous = handle->capacity - index;
+	}
 
-	return bufsize;
+	return p;
 }
 
-static bool consume_core(struct ringbuf *handle, size_t consume_size)
+static size_t read_core(const struct ringbuf *handle,
+		const size_t offset, void *buf, const size_t bufsize)
+{
+	size_t contiguous;
+	const uint8_t *p = get_pointer(handle, offset, &contiguous);
+	const uint8_t *base = handle->buffer;
+	size_t bytes_read = 0;
+
+	if (p) {
+		const size_t len = MIN(get_length(handle), bufsize);
+		const size_t remained = (contiguous < len + offset)?
+			len - (contiguous + offset) : 0;
+		const size_t cut = len - remained;
+
+		memcpy(buf, p, cut);
+		memcpy((uint8_t *)buf + cut, base, remained);
+
+		bytes_read = len;
+	}
+
+	return bytes_read;
+}
+
+static bool consume_core(struct ringbuf *handle, const size_t consume_size)
 {
 	if (get_length(handle) < consume_size) {
 		return false;
@@ -69,26 +94,24 @@ static bool consume_core(struct ringbuf *handle, size_t consume_size)
 	return true;
 }
 
-size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize)
+size_t ringbuf_write(struct ringbuf *handle,
+		const void *data, const size_t datasize)
 {
-	if (get_available(handle) < datasize) {
-		return 0;
-	}
+	const size_t len = MIN(get_available(handle), datasize);
+	const size_t index = GET_INDEX(handle->index, handle->capacity);
+	const size_t contiguous = handle->capacity - index;
+	const size_t remained = (contiguous < len)? len - contiguous : 0;
+	const size_t cut = len - remained;
 
-	size_t index = GET_INDEX(handle->index, handle->capacity);
-	size_t contiguous = handle->capacity - index;
-	size_t remained = (contiguous < datasize)? datasize - contiguous : 0;
+	memcpy(handle->buffer + index, data, cut);
+	memcpy(handle->buffer, ((const uint8_t *)data + cut), remained);
 
-	memcpy(handle->buffer + index, data, datasize - remained);
-	memcpy(handle->buffer, ((const uint8_t *)data + datasize - remained),
-			remained);
+	handle->index += len;
 
-	handle->index += datasize;
-
-	return datasize;
+	return len;
 }
 
-size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size)
+size_t ringbuf_write_cancel(struct ringbuf *handle, const size_t size)
 {
 	if (get_length(handle) < size) {
 		return 0;
@@ -100,23 +123,35 @@ size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size)
 }
 
 size_t ringbuf_peek(const struct ringbuf *handle,
-		size_t offset, void *buf, size_t bufsize)
+		const size_t offset, void *buf, const size_t bufsize)
 {
 	return read_core(handle, offset, buf, bufsize);
 }
 
-bool ringbuf_consume(struct ringbuf *handle, size_t consume_size)
+const void *ringbuf_peek_pointer(const struct ringbuf *handle,
+		const size_t offset, size_t *contiguous)
+{
+	const void *p = get_pointer(handle, offset, contiguous);
+
+	if (contiguous) {
+		*contiguous = MIN(*contiguous, get_length(handle) - offset);
+	}
+
+	return p;
+}
+
+bool ringbuf_consume(struct ringbuf *handle, const size_t consume_size)
 {
 	return consume_core(handle, consume_size);
 }
 
 size_t ringbuf_read(struct ringbuf *handle,
-		size_t offset, void *buf, size_t bufsize)
+		const size_t offset, void *buf, const size_t bufsize)
 {
 	size_t bytes_read = read_core(handle, offset, buf, bufsize);
 
 	if (bytes_read > 0) {
-		consume_core(handle, bytes_read);
+		consume_core(handle, bytes_read + offset);
 	}
 
 	return bytes_read;
@@ -124,15 +159,16 @@ size_t ringbuf_read(struct ringbuf *handle,
 
 size_t ringbuf_length(const struct ringbuf *handle)
 {
-	return get_length((const struct ringbuf *)handle);
+	return get_length(handle);
 }
 
 size_t ringbuf_capacity(const struct ringbuf *handle)
 {
-	return get_capacity((const struct ringbuf *)handle);
+	return get_capacity(handle);
 }
 
-bool ringbuf_create_static(struct ringbuf *handle, void *buf, size_t bufsize)
+bool ringbuf_create_static(struct ringbuf *handle,
+		void *buf, const size_t bufsize)
 {
 	if (handle == NULL || buf == NULL || bufsize == 0) {
 		return false;
@@ -144,7 +180,7 @@ bool ringbuf_create_static(struct ringbuf *handle, void *buf, size_t bufsize)
 	return true;
 }
 
-struct ringbuf *ringbuf_create(size_t space_size)
+struct ringbuf *ringbuf_create(const size_t space_size)
 {
 	struct ringbuf *instance = NULL;
 

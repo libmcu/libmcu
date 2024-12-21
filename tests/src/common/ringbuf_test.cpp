@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -41,10 +41,10 @@ TEST(RingBuffer, init_ShouldReturnTrue_WhenInitializeSuccessfully) {
 	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
 }
 
-TEST(RingBuffer, write_ShouldReturnZero_WhenWriteSizeIsLargerThanSpaceSize) {
+TEST(RingBuffer, write_ShouldWriteAsMuchAsLeft_WhenWriteSizeIsLargerThanSpaceSize) {
 	prepare_test();
 	uint8_t buf[129];
-	LONGS_EQUAL(0, ringbuf_write(&ringbuf_obj, buf, sizeof(buf)));
+	LONGS_EQUAL(128, ringbuf_write(&ringbuf_obj, buf, sizeof(buf)));
 }
 
 TEST(RingBuffer, write_ShouldReturnWrittenSize_WhenWrittenSuccessfully) {
@@ -63,7 +63,7 @@ TEST(RingBuffer, write_ShouldReturnZero_WhenFull) {
 		written_total += written;
 	}
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
-	LONGS_EQUAL(2, ringbuf_left(&ringbuf_obj));
+	LONGS_EQUAL(0, ringbuf_left(&ringbuf_obj));
 }
 
 TEST(RingBuffer, used_plus_left_ShouldMatchToSpaceTotalSize) {
@@ -147,7 +147,7 @@ TEST(RingBuffer, read_write_ShouldWorkAsWell_WhenDataWrappedOverOffsetZero) {
 		written_total += written;
 	}
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
-	LONGS_EQUAL(11, ringbuf_left(&ringbuf_obj));
+	LONGS_EQUAL(0, ringbuf_left(&ringbuf_obj));
 
 	uint8_t buf[sizeof(test_data)];
 	LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
@@ -157,9 +157,15 @@ TEST(RingBuffer, read_write_ShouldWorkAsWell_WhenDataWrappedOverOffsetZero) {
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
 
 	do {
-		LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
-		MEMCMP_EQUAL(test_data, buf, sizeof(buf));
-		written_total -= sizeof(buf);
+		const size_t n = ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf));
+		if (ringbuf_length(&ringbuf_obj) == 0) {
+			MEMCMP_EQUAL("3456789012", buf, n);
+		} else if (ringbuf_length(&ringbuf_obj) < sizeof(buf)) {
+			MEMCMP_EQUAL("1234567890112", buf, n);
+		} else {
+			MEMCMP_EQUAL(test_data, buf, n);
+		}
+		written_total -= n;
 	} while (written_total);
 
 	LONGS_EQUAL(0, ringbuf_length(&ringbuf_obj));
@@ -212,4 +218,81 @@ TEST(RingBuffer, new_ShouldReturnNull_WhenOutOfMemory2) {
 	cpputest_malloc_set_out_of_memory_countdown(2);
 	POINTERS_EQUAL(NULL, ringbuf_create(32));
 	cpputest_malloc_set_not_out_of_memory();
+}
+
+TEST(RingBuffer, read_ShouldConsumeOffsetAsWell_WhenOffsetIsNotZero) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	uint8_t buf[5];
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(buf), ringbuf_read(&ringbuf_obj, 5, buf, sizeof(buf)));
+	LONGS_EQUAL(4, ringbuf_length(&ringbuf_obj));
+}
+
+TEST(RingBuffer, read_ShouldReturnZero_WhenOffsetIsEqualOrLargerThanUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	uint8_t buf[5];
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	LONGS_EQUAL(0, ringbuf_read(&ringbuf_obj, sizeof(test_data), buf, sizeof(buf)));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnNull_WhenOffsetIsLargerThanUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	POINTERS_EQUAL(NULL, ringbuf_peek_pointer(&ringbuf_obj, sizeof(test_data)+1, NULL));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnNull_WhenOffsetIsSameAsUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	POINTERS_EQUAL(NULL, ringbuf_peek_pointer(&ringbuf_obj, sizeof(test_data), NULL));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenSuccessful) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, &contiguous);
+	POINTERS_EQUAL(ringbuf_space, ptr);
+	LONGS_EQUAL(sizeof(test_data), contiguous);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenOffsetIsNotZero) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 5, &contiguous);
+	POINTERS_EQUAL(ringbuf_space+5, ptr);
+	LONGS_EQUAL(sizeof(test_data)-5, contiguous);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenNullSizePointerGiven) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, NULL);
+	POINTERS_EQUAL(ringbuf_space, ptr);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldSetOnlyContiguousSize_WhenWraparound) {
+	prepare_test();
+	const uint8_t test_data[] = "123456789012";
+	while (ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data)));
+	while (1) {
+		uint8_t buf[sizeof(test_data)];
+		ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf));
+		if (ringbuf_length(&ringbuf_obj) < sizeof(buf)) {
+			break;
+		}
+	};
+
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, &contiguous);
+	POINTERS_EQUAL(&ringbuf_space[SPACE_SIZE-11], ptr);
+	LONGS_EQUAL(11, contiguous);
 }
