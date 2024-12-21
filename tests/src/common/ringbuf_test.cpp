@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2020 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
@@ -41,10 +41,10 @@ TEST(RingBuffer, init_ShouldReturnTrue_WhenInitializeSuccessfully) {
 	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
 }
 
-TEST(RingBuffer, write_ShouldReturnZero_WhenWriteSizeIsLargerThanSpaceSize) {
+TEST(RingBuffer, write_ShouldWriteAsMuchAsLeft_WhenWriteSizeIsLargerThanSpaceSize) {
 	prepare_test();
 	uint8_t buf[129];
-	LONGS_EQUAL(0, ringbuf_write(&ringbuf_obj, buf, sizeof(buf)));
+	LONGS_EQUAL(128, ringbuf_write(&ringbuf_obj, buf, sizeof(buf)));
 }
 
 TEST(RingBuffer, write_ShouldReturnWrittenSize_WhenWrittenSuccessfully) {
@@ -63,7 +63,7 @@ TEST(RingBuffer, write_ShouldReturnZero_WhenFull) {
 		written_total += written;
 	}
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
-	LONGS_EQUAL(2, ringbuf_left(&ringbuf_obj));
+	LONGS_EQUAL(0, ringbuf_left(&ringbuf_obj));
 }
 
 TEST(RingBuffer, used_plus_left_ShouldMatchToSpaceTotalSize) {
@@ -147,7 +147,7 @@ TEST(RingBuffer, read_write_ShouldWorkAsWell_WhenDataWrappedOverOffsetZero) {
 		written_total += written;
 	}
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
-	LONGS_EQUAL(11, ringbuf_left(&ringbuf_obj));
+	LONGS_EQUAL(0, ringbuf_left(&ringbuf_obj));
 
 	uint8_t buf[sizeof(test_data)];
 	LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
@@ -157,9 +157,15 @@ TEST(RingBuffer, read_write_ShouldWorkAsWell_WhenDataWrappedOverOffsetZero) {
 	LONGS_EQUAL(written_total, ringbuf_length(&ringbuf_obj));
 
 	do {
-		LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
-		MEMCMP_EQUAL(test_data, buf, sizeof(buf));
-		written_total -= sizeof(buf);
+		const size_t n = ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf));
+		if (ringbuf_length(&ringbuf_obj) == 0) {
+			MEMCMP_EQUAL("3456789012", buf, n);
+		} else if (ringbuf_length(&ringbuf_obj) < sizeof(buf)) {
+			MEMCMP_EQUAL("1234567890112", buf, n);
+		} else {
+			MEMCMP_EQUAL(test_data, buf, n);
+		}
+		written_total -= n;
 	} while (written_total);
 
 	LONGS_EQUAL(0, ringbuf_length(&ringbuf_obj));
