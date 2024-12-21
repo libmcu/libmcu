@@ -71,21 +71,18 @@ static bool consume_core(struct ringbuf *handle, size_t consume_size)
 
 size_t ringbuf_write(struct ringbuf *handle, const void *data, size_t datasize)
 {
-	if (get_available(handle) < datasize) {
-		return 0;
-	}
+	const size_t n = MIN(get_available(handle), datasize);
+	const size_t index = GET_INDEX(handle->index, handle->capacity);
+	const size_t contiguous = handle->capacity - index;
+	const size_t remained = (contiguous < n)? n - contiguous : 0;
 
-	size_t index = GET_INDEX(handle->index, handle->capacity);
-	size_t contiguous = handle->capacity - index;
-	size_t remained = (contiguous < datasize)? datasize - contiguous : 0;
+	memcpy(handle->buffer + index, data, n - remained);
+	memcpy(handle->buffer,
+			((const uint8_t *)data + n - remained), remained);
 
-	memcpy(handle->buffer + index, data, datasize - remained);
-	memcpy(handle->buffer, ((const uint8_t *)data + datasize - remained),
-			remained);
+	handle->index += n;
 
-	handle->index += datasize;
-
-	return datasize;
+	return n;
 }
 
 size_t ringbuf_write_cancel(struct ringbuf *handle, size_t size)
