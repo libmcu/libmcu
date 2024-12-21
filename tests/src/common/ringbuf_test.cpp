@@ -219,3 +219,80 @@ TEST(RingBuffer, new_ShouldReturnNull_WhenOutOfMemory2) {
 	POINTERS_EQUAL(NULL, ringbuf_create(32));
 	cpputest_malloc_set_not_out_of_memory();
 }
+
+TEST(RingBuffer, read_ShouldConsumeOffsetAsWell_WhenOffsetIsNotZero) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	uint8_t buf[5];
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(buf), ringbuf_read(&ringbuf_obj, 5, buf, sizeof(buf)));
+	LONGS_EQUAL(4, ringbuf_length(&ringbuf_obj));
+}
+
+TEST(RingBuffer, read_ShouldReturnZero_WhenOffsetIsEqualOrLargerThanUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	uint8_t buf[5];
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	LONGS_EQUAL(0, ringbuf_read(&ringbuf_obj, sizeof(test_data), buf, sizeof(buf)));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnNull_WhenOffsetIsLargerThanUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	POINTERS_EQUAL(NULL, ringbuf_peek_pointer(&ringbuf_obj, sizeof(test_data)+1, NULL));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnNull_WhenOffsetIsSameAsUsedSize) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	POINTERS_EQUAL(NULL, ringbuf_peek_pointer(&ringbuf_obj, sizeof(test_data), NULL));
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenSuccessful) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, &contiguous);
+	POINTERS_EQUAL(ringbuf_space, ptr);
+	LONGS_EQUAL(sizeof(test_data), contiguous);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenOffsetIsNotZero) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 5, &contiguous);
+	POINTERS_EQUAL(ringbuf_space+5, ptr);
+	LONGS_EQUAL(sizeof(test_data)-5, contiguous);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldReturnPointer_WhenNullSizePointerGiven) {
+	prepare_test();
+	const uint8_t test_data[] = "1234567890123";
+	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, NULL);
+	POINTERS_EQUAL(ringbuf_space, ptr);
+}
+
+TEST(RingBuffer, peek_pointer_ShouldSetOnlyContiguousSize_WhenWraparound) {
+	prepare_test();
+	const uint8_t test_data[] = "123456789012";
+	while (ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data)));
+	while (1) {
+		uint8_t buf[sizeof(test_data)];
+		ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf));
+		if (ringbuf_length(&ringbuf_obj) < sizeof(buf)) {
+			break;
+		}
+	};
+
+	size_t contiguous;
+	const uint8_t *ptr = (const uint8_t *)ringbuf_peek_pointer(&ringbuf_obj, 0, &contiguous);
+	POINTERS_EQUAL(&ringbuf_space[SPACE_SIZE-11], ptr);
+	LONGS_EQUAL(11, contiguous);
+}

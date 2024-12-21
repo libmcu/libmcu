@@ -84,6 +84,26 @@ size_t ringbuf_peek(const struct ringbuf *handle,
 		const size_t offset, void *buf, const size_t bufsize);
 
 /**
+ * @brief Peeks at the data in the ring buffer and returns a pointer.
+ *
+ * This function returns a pointer to the data in the ring buffer starting
+ * from a specified offset. This allows direct access to the data without
+ * copying it to another buffer. The caller must ensure that the data is
+ * not modified while it is being accessed.
+ *
+ * @param[in] handle Pointer to the ring buffer handle.
+ * @param[in] offset The offset from the current read pointer to start
+ *            accessing.
+ * @param[out] contiguous Pointer to a variable where the size of
+ *             the accessible contiguous data will be stored.
+ *
+ * @return Pointer to the data in the ring buffer, or NULL if the offset is
+ *         invalid.
+ */
+const void *ringbuf_peek_pointer(const struct ringbuf *handle,
+		const size_t offset, size_t *contiguous);
+
+/**
  * @brief Consumes data from the ring buffer.
  *
  * This function advances the read pointer by the specified amount,
@@ -150,6 +170,17 @@ size_t ringbuf_capacity(const struct ringbuf *handle);
  * @param[out] buf Pointer to the statically allocated buffer.
  * @param[in] bufsize The size of the static buffer, in bytes.
  *
+ * @note The size of the buffer must be a power of 2. If the specified size is
+ *       not a power of 2, the actual buffer size will be rounded down to a
+ *       power of 2.
+ *
+ * @note The buffer must be statically allocated and must remain valid for the
+ *       lifetime of the ring buffer.
+ *
+ * @note The buffer should be aligned to the maximum alignment requirement of
+ *       the system. For example, if the system requires 4-byte alignment,
+ *       the buffer should be aligned to a 4-byte boundary.
+ *
  * @return true if the ring buffer was successfully initialized, false
  *         otherwise.
  */
@@ -164,6 +195,10 @@ bool ringbuf_create_static(struct ringbuf *handle,
  * manage this buffer.
  *
  * @param[in] space_size The size of the buffer to be allocated, in bytes.
+ *
+ * @note The size of the buffer must be a power of 2. If the specified size is
+ *       not a power of 2, the actual buffer size will be rounded down to a
+ *       power of 2.
  *
  * @return Pointer to the newly created ring buffer handle, or NULL if
  *         the allocation fails.

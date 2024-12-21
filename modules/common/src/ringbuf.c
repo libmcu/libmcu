@@ -42,19 +42,45 @@ static void initialize(struct ringbuf *handle, const size_t bufsize)
 	handle->outdex = 0;
 }
 
+static uint8_t *get_pointer(const struct ringbuf *handle,
+		const size_t offset, size_t *contiguous)
+{
+	size_t index = GET_INDEX(handle->outdex+offset, handle->capacity);
+	uint8_t *p = &handle->buffer[index];
+
+	if (offset >= get_length(handle)) {
+		p = NULL;
+		index = handle->capacity;
+	}
+
+	if (contiguous) {
+		*contiguous = handle->capacity - index;
+	}
+
+	return p;
+}
+
 static size_t read_core(const struct ringbuf *handle,
 		const size_t offset, void *buf, const size_t bufsize)
 {
-	const size_t len = MIN(get_length(handle), bufsize);
-	const size_t index = GET_INDEX(handle->outdex+offset, handle->capacity);
-	const size_t contiguous = handle->capacity - index;
-	const size_t remained = (contiguous < len)? len - contiguous : 0;
-	const size_t cut = len - remained;
+	size_t contiguous;
+	const uint8_t *p = get_pointer(handle, offset, &contiguous);
+	const uint8_t *base = handle->buffer;
+	size_t bytes_read = 0;
 
-	memcpy(buf, &handle->buffer[index], cut);
-	memcpy((uint8_t *)buf + cut, handle->buffer, remained);
+	if (p) {
+		const size_t len = MIN(get_length(handle), bufsize);
+		const size_t remained = (contiguous < len + offset)?
+			len - (contiguous + offset) : 0;
+		const size_t cut = len - remained;
 
-	return len;
+		memcpy(buf, p, cut);
+		memcpy((uint8_t *)buf + cut, base, remained);
+
+		bytes_read = len;
+	}
+
+	return bytes_read;
 }
 
 static bool consume_core(struct ringbuf *handle, const size_t consume_size)
@@ -102,6 +128,18 @@ size_t ringbuf_peek(const struct ringbuf *handle,
 	return read_core(handle, offset, buf, bufsize);
 }
 
+const void *ringbuf_peek_pointer(const struct ringbuf *handle,
+		const size_t offset, size_t *contiguous)
+{
+	const void *p = get_pointer(handle, offset, contiguous);
+
+	if (contiguous) {
+		*contiguous = MIN(*contiguous, get_length(handle) - offset);
+	}
+
+	return p;
+}
+
 bool ringbuf_consume(struct ringbuf *handle, const size_t consume_size)
 {
 	return consume_core(handle, consume_size);
@@ -113,7 +151,7 @@ size_t ringbuf_read(struct ringbuf *handle,
 	size_t bytes_read = read_core(handle, offset, buf, bufsize);
 
 	if (bytes_read > 0) {
-		consume_core(handle, bytes_read);
+		consume_core(handle, bytes_read + offset);
 	}
 
 	return bytes_read;
