@@ -14,7 +14,7 @@ extern "C" {
 #include <stdbool.h>
 #include <limits.h>
 
-static inline bool is_power2(unsigned int x)
+static inline bool is_power2(const unsigned long x)
 {
 	return (x != 0) && ((x & (x - 1)) == 0);
 }

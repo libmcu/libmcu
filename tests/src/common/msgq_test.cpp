@@ -250,6 +250,12 @@ TEST(MessageQueue, len_ShouldCallSyncFunctions_WhenLockAndUnlockAreSet) {
 
 TEST(MessageQueue, calc_size_ShouldReturnTotalBytesRequiredForNumberOfMessages) {
 	struct msg { uint8_t data[4]; };
-	LONGS_EQUAL((sizeof(msg)+sizeof(msgq_msg_meta_t))*10,
-			msgq_calc_size(10, sizeof(msg)));
+	LONGS_EQUAL(120, (sizeof(msg)+sizeof(msgq_msg_meta_t))*10);
+	LONGS_EQUAL(120+8, msgq_calc_size(10, sizeof(msg)));
+}
+
+TEST(MessageQueue, calc_size_ShouldReturnRoundUpToPowerOfTwo) {
+	LONGS_EQUAL(16, msgq_calc_size(1, 1));
+	LONGS_EQUAL(16, msgq_calc_size(1, 8));
+	LONGS_EQUAL(32, msgq_calc_size(1, 9));
 }

@@ -10,6 +10,7 @@
 #include <errno.h>
 
 #include "libmcu/ringbuf.h"
+#include "libmcu/bitops.h"
 
 struct msgq {
 	struct ringbuf *ringbuf;
@@ -176,7 +177,10 @@ int msgq_set_sync(struct msgq *q,
 
 size_t msgq_calc_size(const size_t n, const size_t max_msg_size)
 {
-	return (sizeof(msgq_msg_meta_t) + max_msg_size) * n;
+	const size_t requested = (sizeof(msgq_msg_meta_t) + max_msg_size) * n;
+	const int bit = flsl((long)requested);
+	const int bit_corrected = is_power2(requested)? bit-1 : bit;
+	return 1UL << bit_corrected;
 }
 
 struct msgq *msgq_create(const size_t capacity_bytes)
