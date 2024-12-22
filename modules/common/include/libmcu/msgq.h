@@ -153,6 +153,19 @@ size_t msgq_available(const struct msgq *q);
  */
 size_t msgq_next_msg_size(const struct msgq *q);
 
+/**
+ * @brief Calculate the total size of the message queue.
+ *
+ * This function calculates the total size required for a message queue
+ * based on the number of messages and the maximum size of each message.
+ *
+ * @param[in] n The number of messages in the queue.
+ * @param[in] max_msg_size The maximum size of each message.
+ *
+ * @return The total size required for the message queue.
+ */
+size_t msgq_calc_size(const size_t n, const size_t max_msg_size);
+
 #if defined(__cplusplus)
 }
 #endif

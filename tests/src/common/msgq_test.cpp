@@ -247,3 +247,9 @@ TEST(MessageQueue, len_ShouldCallSyncFunctions_WhenLockAndUnlockAreSet) {
 	msgq_set_sync(msgq, f_lock, f_unlock, sync_ctx);
 	msgq_len(msgq);
 }
+
+TEST(MessageQueue, calc_size_ShouldReturnTotalBytesRequiredForNumberOfMessages) {
+	struct msg { uint8_t data[4]; };
+	LONGS_EQUAL((sizeof(msg)+sizeof(msgq_msg_meta_t))*10,
+			msgq_calc_size(10, sizeof(msg)));
+}

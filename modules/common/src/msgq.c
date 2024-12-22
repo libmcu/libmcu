@@ -174,6 +174,11 @@ int msgq_set_sync(struct msgq *q,
 	return 0;
 }
 
+size_t msgq_calc_size(const size_t n, const size_t max_msg_size)
+{
+	return (sizeof(msgq_msg_meta_t) + max_msg_size) * n;
+}
+
 struct msgq *msgq_create(const size_t capacity_bytes)
 {
 	struct msgq *q;
