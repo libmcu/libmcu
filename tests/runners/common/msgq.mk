@@ -5,6 +5,7 @@ COMPONENT_NAME = MessageQueue
 SRC_FILES = \
 	../modules/common/src/msgq.c \
 	../modules/common/src/ringbuf.c \
+	../modules/common/src/bitops.c \
 	stubs/bitops.c \
 
 TEST_SRC_FILES = \
