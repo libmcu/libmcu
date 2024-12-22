@@ -296,3 +296,15 @@ TEST(RingBuffer, peek_pointer_ShouldSetOnlyContiguousSize_WhenWraparound) {
 	POINTERS_EQUAL(&ringbuf_space[SPACE_SIZE-11], ptr);
 	LONGS_EQUAL(11, contiguous);
 }
+
+TEST(RingBuffer, read_ShouldReturnZero_WhenRingBufferIsEmpty) {
+	prepare_test();
+	uint8_t buf[5];
+	LONGS_EQUAL(0, ringbuf_read(&ringbuf_obj, 0, buf, sizeof(buf)));
+}
+
+TEST(RingBuffer, peek_ShouldReturnZero_WhenRingBufferIsEmpty) {
+	prepare_test();
+	uint8_t buf[5];
+	LONGS_EQUAL(0, ringbuf_peek(&ringbuf_obj, 0, buf, sizeof(buf)));
+}
