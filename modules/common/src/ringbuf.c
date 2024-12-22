@@ -8,6 +8,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#include <stdatomic.h>
+#endif
 
 #include "libmcu/compiler.h"
 #include "libmcu/bitops.h"
@@ -34,8 +37,6 @@ static size_t get_available(const struct ringbuf *handle)
 
 static void initialize(struct ringbuf *handle, const size_t bufsize)
 {
-	memset(handle->buffer, 0, bufsize);
-
 	handle->capacity = 1U << (flsl((long)bufsize) - 1); /* should be
 							       power of 2 */
 	handle->index = 0;
@@ -89,6 +90,9 @@ static bool consume_core(struct ringbuf *handle, const size_t consume_size)
 		return false;
 	}
 
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+		atomic_thread_fence(memory_order_acquire);
+#endif
 	handle->outdex += consume_size;
 
 	return true;
@@ -106,6 +110,9 @@ size_t ringbuf_write(struct ringbuf *handle,
 	memcpy(handle->buffer + index, data, cut);
 	memcpy(handle->buffer, ((const uint8_t *)data + cut), remained);
 
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+	atomic_thread_fence(memory_order_release);
+#endif
 	handle->index += len;
 
 	return len;
@@ -117,6 +124,9 @@ size_t ringbuf_write_cancel(struct ringbuf *handle, const size_t size)
 		return 0;
 	}
 
+#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+	atomic_thread_fence(memory_order_release);
+#endif
 	handle->index -= size;
 
 	return size;
