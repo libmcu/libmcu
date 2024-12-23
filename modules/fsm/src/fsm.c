@@ -50,12 +50,23 @@ fsm_state_t fsm_step(struct fsm *fsm)
 		}
 	}
 
+	if (fsm->cb && current_state != fsm->state.present) {
+		(*fsm->cb)(fsm, fsm->state.present, current_state, fsm->cb_ctx);
+	}
+
 	return fsm->state.present;
 }
 
 fsm_state_t fsm_state(const struct fsm *fsm)
 {
 	return fsm->state.present;
+}
+
+void fsm_set_state_change_cb(struct fsm *fsm,
+		fsm_state_change_cb_t cb, void *cb_ctx)
+{
+	fsm->cb = cb;
+	fsm->cb_ctx = cb_ctx;
 }
 
 void fsm_reset(struct fsm *fsm)
