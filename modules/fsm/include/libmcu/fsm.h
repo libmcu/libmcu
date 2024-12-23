@@ -28,6 +28,10 @@ typedef void (*fsm_handler_t)(fsm_state_t state, fsm_state_t next_state,
 typedef bool (*fsm_event_t)(fsm_state_t state, fsm_state_t next_state,
 		void *ctx);
 
+struct fsm;
+typedef void (*fsm_state_change_cb_t)(struct fsm *fsm,
+		fsm_state_t new_state, fsm_state_t prev_state, void *ctx);
+
 struct fsm_action {
 	fsm_handler_t run;
 };
@@ -48,6 +52,9 @@ struct fsm {
 	const struct fsm_item *item;
 	size_t item_len;
 	void *ctx;
+
+	fsm_state_change_cb_t cb;
+	void *cb_ctx;
 };
 
 /**
@@ -60,6 +67,21 @@ struct fsm {
  */
 void fsm_init(struct fsm *fsm,
 		const struct fsm_item *items, size_t item_len, void *ctx);
+
+/**
+ * @brief Set the callback for state changes in the finite state machine.
+ *
+ * This function sets a callback function that will be called whenever the
+ * state of the finite state machine (FSM) changes. The callback function
+ * will be provided with the FSM instance, the new state, and the user-defined
+ * context.
+ *
+ * @param[in] fsm Pointer to the FSM structure.
+ * @param[in] cb The callback function to be called on state changes.
+ * @param[in] cb_ctx User-defined context to be passed to the callback function.
+ */
+void fsm_set_state_change_cb(struct fsm *fsm,
+		fsm_state_change_cb_t cb, void *cb_ctx);
 
 /**
  * @brief Perform a single step in the finite state machine.
