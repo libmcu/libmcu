@@ -49,11 +49,13 @@ static void callback_wrapper(void *arg)
 {
 	struct apptmr *p = (struct apptmr *)arg;
 
-	apptmr_global_timeout_hook(p);
+	apptmr_global_pre_timeout_hook(p);
 
 	if (p && p->callback) {
 		(*p->callback)(p, p->arg);
 	}
+
+	apptmr_global_post_timeout_hook(p);
 }
 
 static void trigger(struct apptmr *self)
