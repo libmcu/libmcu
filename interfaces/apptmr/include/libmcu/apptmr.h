@@ -149,16 +149,30 @@ int apptmr_cap(void);
 int apptmr_len(void);
 
 /**
- * @brief Global timeout hook function for application timer.
+ * @brief Global timeout pre hook function for application timer.
  *
  * This function is called whenever any registered application timer
  * reaches its timeout. It serves as a common hook that can be used to
  * perform actions that need to be executed whenever any timer expires.
+ * This function is called before the global timeout callback is executed.
  *
  * @param self Pointer to the application timer instance that triggered
  *             the timeout.
  */
-void apptmr_global_timeout_hook(struct apptmr *self);
+void apptmr_global_pre_timeout_hook(struct apptmr *self);
+
+/**
+ * @brief Global timeout post hook function for application timer.
+ *
+ * This function is called whenever any registered application timer
+ * reaches its timeout. It serves as a common hook that can be used to
+ * perform actions that need to be executed whenever any timer expires.
+ * This function is called after the global timeout callback is executed.
+ *
+ * @param self Pointer to the application timer instance that triggered
+ *             the timeout.
+ */
+void apptmr_global_post_timeout_hook(struct apptmr *self);
 
 #if defined(UNIT_TEST)
 /**
