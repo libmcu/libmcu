@@ -97,7 +97,7 @@ TEST(RingBuffer, read_ShouldReturnLengthOfBytesRead_WhenLargerBufferGivenWithOff
 	const uint8_t test_data[] = "1234567890123";
 	uint8_t buf[80] = { 0, };
 	ringbuf_write(&ringbuf_obj, test_data, sizeof(test_data));
-	LONGS_EQUAL(sizeof(test_data), ringbuf_read(&ringbuf_obj, 1, buf, sizeof(test_data)));
+	LONGS_EQUAL(sizeof(test_data)-1, ringbuf_read(&ringbuf_obj, 1, buf, sizeof(test_data)));
 }
 
 TEST(RingBuffer, peek_ShouldReturnDataSizeRead_WhenSuccessfulWithOffset) {
