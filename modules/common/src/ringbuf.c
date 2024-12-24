@@ -46,7 +46,7 @@ static void initialize(struct ringbuf *handle, const size_t bufsize)
 static uint8_t *get_pointer(const struct ringbuf *handle,
 		const size_t offset, size_t *contiguous)
 {
-	size_t index = GET_INDEX(handle->outdex+offset, handle->capacity);
+	size_t index = GET_INDEX(handle->outdex + offset, handle->capacity);
 	uint8_t *p = &handle->buffer[index];
 
 	if (offset >= get_length(handle)) {
@@ -70,9 +70,8 @@ static size_t read_core(const struct ringbuf *handle,
 	size_t bytes_read = 0;
 
 	if (p) {
-		const size_t len = MIN(get_length(handle), bufsize);
-		const size_t remained = (contiguous < len + offset)?
-			len - (contiguous + offset) : 0;
+		const size_t len = MIN(get_length(handle) - offset, bufsize);
+		const size_t remained = contiguous < len? len - contiguous : 0;
 		const size_t cut = len - remained;
 
 		memcpy(buf, p, cut);
