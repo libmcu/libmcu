@@ -3,7 +3,8 @@
 include projects/version.mk
 include projects/toolchain.mk
 
-LIBMCU_MODULES ?= $(patsubst modules/%, %, $(wildcard modules/*))
+excludes := trace
+LIBMCU_MODULES ?= $(filter-out $(excludes), $(patsubst modules/%, %, $(wildcard modules/*)))
 LIBMCU_INTERFACES ?= $(patsubst interfaces/%, %, $(wildcard interfaces/*))
 include projects/modules.mk
 include projects/interfaces.mk

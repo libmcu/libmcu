@@ -36,6 +36,7 @@ LIBMCU_WARNING_FLAGS ?= \
 	-Werror \
 	-Wall \
 	-Wextra \
+	-Wpedantic \
 	-Wc++-compat \
 	-Wformat=2 \
 	-Wmissing-prototypes \
@@ -61,13 +62,24 @@ LIBMCU_WARNING_FLAGS ?= \
 	-Wstrict-overflow=5 \
 	-Wno-long-long \
 	-Wswitch-default \
-	-Wstack-usage=$(STACK_LIMIT)
+	\
+	-Wno-error=format-nonliteral \
+
 	#-Wformat-truncation=2
 	#-Wformat-overflow
 	#-Wabi=11 -Wlogical-op
-	#-Wpedantic
 	#-Wnested-externs
 	#-Wswitch-enum
+
+COMPILER := $(shell $(CC) --version 2>/dev/null | head -n 1 | grep -i clang >/dev/null && echo clang || echo gcc)
+ifeq ($(COMPILER), clang)
+else
+LIBMCU_WARNING_FLAGS += -Wstack-usage=$(STACK_LIMIT) -Wno-error=inline
+endif
+
+ifeq ($(shell uname), Darwin)
+else
+endif
 
 ## Linker options
 LIBMCU_LDFLAGS ?= \
