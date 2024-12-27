@@ -33,8 +33,6 @@ Any feedback would be appreciated.
 * [RateLim](modules/ratelim)
 * [Retry with exponential backoff](modules/retry)
 * [Runner](modules/runner)
-* [Time Extension](modules/common)
-* [Trace](modules/trace)
 
 ## Interfaces
 * [ADC](interfaces/adc)
