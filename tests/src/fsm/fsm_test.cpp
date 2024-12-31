@@ -71,7 +71,7 @@ TEST_GROUP(FSM) {
 };
 
 TEST(FSM, ShouldBeStateA_WhenInitialized) {
-	LONGS_EQUAL(A, fsm_state(&fsm));
+	LONGS_EQUAL(A, fsm_get_state(&fsm));
 }
 
 TEST(FSM, ShouldCheckFirstRegisteredEventFirst) {
@@ -103,7 +103,7 @@ TEST(FSM, ShouldChangeState_WhenEventReturnTrue) {
 	mock().expectOneCall("is_state_b").andReturnValue(true);
 	mock().expectOneCall("do_state_b");
 	LONGS_EQUAL(B, fsm_step(&fsm));
-	LONGS_EQUAL(B, fsm_state(&fsm));
+	LONGS_EQUAL(B, fsm_get_state(&fsm));
 }
 
 TEST(FSM, ShouldIgnoreNullAction_WhenEventReturnTrue) {
