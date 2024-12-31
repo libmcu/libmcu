@@ -110,7 +110,7 @@ void fsm_reset(struct fsm *fsm);
  *
  * @return The current state of the FSM.
  */
-fsm_state_t fsm_state(const struct fsm *fsm);
+fsm_state_t fsm_get_state(const struct fsm *fsm);
 
 #if defined(__cplusplus)
 }

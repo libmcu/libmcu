@@ -57,7 +57,7 @@ fsm_state_t fsm_step(struct fsm *fsm)
 	return fsm->state.present;
 }
 
-fsm_state_t fsm_state(const struct fsm *fsm)
+fsm_state_t fsm_get_state(const struct fsm *fsm)
 {
 	return fsm->state.present;
 }
