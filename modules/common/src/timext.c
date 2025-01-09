@@ -6,6 +6,7 @@
 
 #include "libmcu/timext.h"
 #include <string.h>
+#include <stdint.h>
 
 static void strcpy_iso8601_removing_unsupported(char *buf, size_t bufsize,
 		const char *str)
@@ -28,8 +29,8 @@ static void strcpy_iso8601_removing_unsupported(char *buf, size_t bufsize,
 
 static int get_time_difference_from_timezone(const char *str)
 {
+	const size_t len = strlen(str);
 	char *p, *t;
-	const int len = strlen(str);
 
 	/* find time string */
 	if ((t = strstr(str, "T")) == NULL) {
@@ -40,7 +41,7 @@ static int get_time_difference_from_timezone(const char *str)
 		return 0;
 	}
 
-	const int tzlen = len - (int)((uintptr_t)p - (uintptr_t)str);
+	const size_t tzlen = len - (size_t)((uintptr_t)p - (uintptr_t)str);
 	const int hour = (p[1] - '0') * 10 + (p[2] - '0');
 	int min = 0;
 
