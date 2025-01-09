@@ -27,7 +27,7 @@ struct ringbuf {
 
 #define DEFINE_RINGBUF(_name, _bufsize) \
 	static uint8_t LIBMCU_CONCAT(_name, _buf)[_bufsize]; \
-	struct ringbuf _name = { \
+	static struct ringbuf _name = { \
 		.capacity = _bufsize, \
 		.index = 0, \
 		.outdex = 0, \
