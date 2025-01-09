@@ -19,7 +19,9 @@ static inline bool is_power2(const unsigned long x)
 	return (x != 0) && ((x & (x - 1)) == 0);
 }
 
+#if !defined(_STRING_H_)
 int flsl(long x);
+#endif
 
 #if defined(__cplusplus)
 }

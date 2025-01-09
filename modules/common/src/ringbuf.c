@@ -90,7 +90,7 @@ static bool consume_core(struct ringbuf *handle, const size_t consume_size)
 	}
 
 #if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
-		atomic_thread_fence(memory_order_acquire);
+	atomic_thread_fence(memory_order_acquire);
 #endif
 	handle->outdex += consume_size;
 
