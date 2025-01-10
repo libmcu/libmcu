@@ -79,7 +79,6 @@ endif
 
 ifeq ($(shell uname), Darwin)
 else
-LIBMCU_CFLAGS += -D_GNU_SOURCE -D__USE_XOPEN
 endif
 
 ## Linker options
