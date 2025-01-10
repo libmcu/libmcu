@@ -20,3 +20,7 @@ uint32_t board_random(void) {
 unsigned long board_get_current_stack_watermark(void) {
 	return 0;
 }
+
+const char *board_get_serial_number_string(void) {
+	return NULL;
+}
