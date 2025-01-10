@@ -19,6 +19,7 @@ bool timeout_is_expired(unsigned long goal);
 
 void sleep_ms(unsigned long msec);
 
+#if defined(_GNU_SOURCE)
 /**
  * @brief Converts an ISO 8601 formatted time string to a time_t value.
  *
@@ -32,6 +33,7 @@ void sleep_ms(unsigned long msec);
  *         parsing fails.
  */
 time_t iso8601_convert_to_time(const char *tstr);
+#endif
 
 #if defined(__cplusplus)
 }

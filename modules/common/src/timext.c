@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#if defined(_GNU_SOURCE)
 static void strcpy_iso8601_removing_unsupported(char *buf, size_t bufsize,
 		const char *str)
 {
@@ -73,3 +74,4 @@ time_t iso8601_convert_to_time(const char *tstr)
 
 	return t;
 }
+#endif
