@@ -115,6 +115,20 @@ dfu_error_t dfu_write(struct dfu *dfu, uint32_t offset,
 dfu_error_t dfu_finish(struct dfu *dfu);
 
 /**
+ * @brief Aborts the ongoing DFU operation.
+ *
+ * This function aborts the current DFU operation for the given DFU instance.
+ * It stops any ongoing update tasks and cleans up any resources associated with
+ * the update.
+ *
+ * @param[in] dfu Pointer to the DFU instance for which the update is to be
+ *            aborted.
+ *
+ * @return A dfu_error_t indicating the result of the operation.
+ */
+dfu_error_t dfu_abort(struct dfu *dfu);
+
+/**
  * @brief Commits the DFU process, making the update permanent.
  *
  * @param[in,out] dfu A pointer to the DFU instance.
