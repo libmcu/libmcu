@@ -35,6 +35,23 @@ void sleep_ms(unsigned long msec);
 time_t iso8601_convert_to_time(const char *tstr);
 #endif
 
+/**
+ * @brief Converts a time_t value to an ISO 8601 dateTime string.
+ *
+ * This function converts a time_t value to an ISO 8601 dateTime string in the
+ * format "YYYY-MM-DDTHH:MM:SSZ". The resulting string is stored in the provided
+ * buffer.
+ *
+ * @param[in] t The time_t value to convert.
+ * @param[out] buf A buffer to store the resulting dateTime string.
+ * @param[in] bufsize The size of the buffer. The buffer should be at least 21
+ *            characters long to accommodate the full dateTime string and the
+ *            null terminator.
+ *
+ * @return 0 on success, while a negative value indicates an error.
+ */
+int iso8601_convert_to_string(time_t t, char *buf, size_t bufsize);
+
 #if defined(__cplusplus)
 }
 #endif
