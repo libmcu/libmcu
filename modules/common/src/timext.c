@@ -75,3 +75,10 @@ time_t iso8601_convert_to_time(const char *tstr)
 	return t;
 }
 #endif
+
+int iso8601_convert_to_string(time_t t, char *buf, size_t bufsize)
+{
+	const struct tm *tm_info;
+	tm_info = gmtime(&t);
+	return (int)strftime(buf, bufsize, "%Y-%m-%dT%H:%M:%SZ", tm_info);
+}
