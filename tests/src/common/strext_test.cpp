@@ -33,3 +33,15 @@ TEST(STREXT, strtrim_ShouldRemoveLeadingAndTrailingSpaces) {
 	strtrim(s1, ' ');
 	STRCMP_EQUAL("remove leading and trailing spaces", s1);
 }
+
+TEST(STREXT, strupper_ShouldConvertLowercaseToUppercase) {
+	char s1[] = "hello, world!";
+	strupper(s1);
+	STRCMP_EQUAL("HELLO, WORLD!", s1);
+}
+
+TEST(STREXT, strlower_ShouldConvertUppercaseToLowercase) {
+	char s1[] = "HELLO, WORLD!";
+	strlower(s1);
+	STRCMP_EQUAL("hello, world!", s1);
+}

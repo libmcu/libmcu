@@ -38,3 +38,23 @@ char *strtrim(char *s, const char c)
 
 	return s;
 }
+
+void strupper(char *s)
+{
+	while (s && *s) {
+		if (*s >= 'a' && *s <= 'z') {
+			*s = *s - 'a' + 'A';
+		}
+		s++;
+	}
+}
+
+void strlower(char *s)
+{
+	while (s && *s) {
+		if (*s >= 'A' && *s <= 'Z') {
+			*s = *s - 'A' + 'a';
+		}
+		s++;
+	}
+}
