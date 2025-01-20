@@ -1,8 +1,8 @@
 # libmcu
 ![Build Status](https://github.com/onkwon/libmcu/workflows/build/badge.svg)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=security_rating)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=onkwon_libmcu&metric=coverage)](https://sonarcloud.io/dashboard?id=onkwon_libmcu)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=security_rating)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=coverage)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
 [![codecov](https://codecov.io/gh/onkwon/libmcu/branch/master/graph/badge.svg?token=KBLNIEKUF4)](https://codecov.io/gh/onkwon/libmcu)
 
 ## Overview
