@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 Kyunghwan Kwon <k@mononn.com>
+ * SPDX-FileCopyrightText: 2024 권경환 Kyunghwan Kwon <k@libmcu.org>
  *
  * SPDX-License-Identifier: MIT
  */
