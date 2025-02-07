@@ -163,14 +163,28 @@ int spi_write(struct spi_device *dev, const void *data, size_t data_len)
 
 int spi_writeread(struct spi_device *dev,
 		const void *txdata, size_t txdata_len,
-		void *rxbuf, size_t rxbuf_len)
+		void *rxbuf, size_t rx_len)
 {
+	const size_t total_len = txdata_len + rx_len;
 	int rc = 0;
+	uint8_t *full_rx;
+	uint8_t *full_tx;
+
+	if ((full_rx = (uint8_t *)calloc(1, total_len)) == NULL) {
+		rc = -ENOMEM;
+		goto out;
+	}
+	if ((full_tx = (uint8_t *)calloc(1, total_len)) == NULL) {
+		rc = -ENOMEM;
+		goto out_free_rx;
+	}
+
+	memcpy(full_tx, txdata, txdata_len);
+
 	spi_transaction_t transaction = {
-		.length = txdata_len * 8,
-		.rxlength = rxbuf_len * 8,
-		.tx_buffer = txdata,
-		.rx_buffer = rxbuf,
+		.length = (txdata_len + rx_len) * 8,
+		.tx_buffer = full_tx,
+		.rx_buffer = full_rx,
 		.user = (void *)dev,
 	};
 
@@ -178,14 +192,20 @@ int spi_writeread(struct spi_device *dev,
 		rc = -EIO;
 	}
 
+	memcpy(rxbuf, &full_rx[txdata_len], rx_len);
+
+	free(full_tx);
+out_free_rx:
+	free(full_rx);
+out:
 	return rc;
 }
 
-int spi_read(struct spi_device *dev, void *buf, size_t bufsize)
+int spi_read(struct spi_device *dev, void *buf, size_t rx_len)
 {
 	unused(dev);
 	unused(buf);
-	unused(bufsize);
+	unused(rx_len);
 	return -ENOTSUP;
 }
 
@@ -212,7 +232,6 @@ int spi_enable(struct spi_device *dev)
 		.mode = dev->mode,
 		.spics_io_num = dev->pin_cs,
 		.queue_size = DEFAULT_QUEUE_SIZE,
-		/*.flags = SPI_DEVICE_HALFDUPLEX,*/
 	};
 
 	esp_err_t err =

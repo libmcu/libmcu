@@ -118,12 +118,12 @@ int spi_write(struct spi_device *dev, const void *data, size_t data_len);
  *
  * @param[in] dev The SPI device.
  * @param[out] buf The buffer where the read data will be stored.
- * @param[in] bufsize The size of the buffer.
+ * @param[in] rx_len The length of the data to be read.
  *
  * @return 0 if the operation is successful, otherwise returns a non-zero error
  *         code.
  */
-int spi_read(struct spi_device *dev, void *buf, size_t bufsize);
+int spi_read(struct spi_device *dev, void *buf, size_t rx_len);
 
 /**
  * @brief Write and read data from a SPI device.
@@ -135,14 +135,14 @@ int spi_read(struct spi_device *dev, void *buf, size_t bufsize);
  * @param[in] txdata The data to be written.
  * @param[in] txdata_len The length of the data to be written.
  * @param[out] rxbuf The buffer where the read data will be stored.
- * @param[in] rxbuf_len The size of the buffer.
+ * @param[in] rx_len The length of the data to be read.
  *
  * @return 0 if the operation is successful, otherwise returns a non-zero error
  *         code.
  */
 int spi_writeread(struct spi_device *dev,
 		const void *txdata, size_t txdata_len,
-		void *rxbuf, size_t rxbuf_len);
+		void *rxbuf, size_t rx_len);
 
 #if defined(__cplusplus)
 }
