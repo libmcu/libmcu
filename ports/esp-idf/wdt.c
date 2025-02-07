@@ -65,6 +65,11 @@ static bool is_timedout(struct wdt *wdt, const uint32_t now)
 	return wdt->enabled && (now - wdt->last_feed_ms) >= wdt->period_ms;
 }
 
+static void feed_wdt(struct wdt *self)
+{
+	self->last_feed_ms = board_get_time_since_boot_ms();
+}
+
 static struct wdt *any_timeouts(struct wdt_manager *mgr, const uint32_t now)
 {
 	struct list *p;
@@ -114,13 +119,14 @@ static void *wdt_task(void *e)
 
 int wdt_feed(struct wdt *self)
 {
-	self->last_feed_ms = board_get_time_since_boot_ms();
+	feed_wdt(self);
 	return 0;
 }
 
 int wdt_enable(struct wdt *self)
 {
 	self->enabled = true;
+	feed_wdt(self);
 	return 0;
 }
 
@@ -136,13 +142,15 @@ struct wdt *wdt_new(const char *name, const uint32_t period_ms,
 	struct wdt *wdt = (struct wdt *)malloc(sizeof(*wdt));
 
 	if (wdt) {
-		wdt->name = name;
-		wdt->period_ms = period_ms;
-		wdt->cb = cb;
-		wdt->cb_ctx = cb_ctx;
-		wdt->task_handle = board_get_current_thread();
-		list_add(&wdt->link, &m.list);
+		*wdt = (struct wdt) {
+			.name = name,
+			.period_ms = period_ms,
+			.cb = cb,
+			.cb_ctx = cb_ctx,
+			.task_handle = board_get_current_thread(),
+		};
 
+		list_add(&wdt->link, &m.list);
 		m.min_period_ms = MIN(m.min_period_ms, period_ms);
 	}
 	
