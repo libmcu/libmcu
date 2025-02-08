@@ -39,6 +39,7 @@ struct cli {
 	size_t bufsize;
 
 	void *env;
+	bool pause;
 };
 
 void cli_init(struct cli *cli, struct cli_io const *io,
