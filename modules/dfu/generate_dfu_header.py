@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument('--type', required=True, choices=['app', 'loader', 'updator'], help="DFU type")
     parser.add_argument('--output', required=True, help="Output file path")
     parser.add_argument('--vector', type=lambda x: int(x, 0), default=0, help="Vector address (default: 0)")
-    parser.add_argument('--iv', required=True, help="Initialization Vector (IV) as a 32-character hex string")
+    parser.add_argument('--iv', required=False, default='00000000000000000000000000000000', help="Initialization Vector (IV) as a 32-character hex string")
     parser.add_argument('--signature', required=True, help="Signature as a hex string (up to 128 characters)")
 
     args = parser.parse_args()
