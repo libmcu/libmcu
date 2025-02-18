@@ -59,22 +59,7 @@ static void set_current(const struct runner *runner)
 	m.current = runner;
 }
 
-const struct runner *runner_current(void)
-{
-	return get_current();
-}
-
-runner_t runner_type(const struct runner *runner)
-{
-	return runner->type;
-}
-
-runner_t runner_current_type(void)
-{
-	return get_current_type();
-}
-
-int runner_change(const runner_t new_runner_type)
+static int change_current(const runner_t new_runner_type, bool bypass)
 {
 	int rc = 0;
 
@@ -92,28 +77,53 @@ int runner_change(const runner_t new_runner_type)
 	}
 
 	if (m.pre_change_cb) {
-		if (!m.pre_change_cb(new_runner_type, m.pre_change_cb_ctx)) {
+		if (!(*m.pre_change_cb)(new_runner_type, m.pre_change_cb_ctx)) {
 			rc = -EFAULT;
 			goto out;
 		}
 	}
 
-	if (old_runner->api->terminate) {
+	if (!bypass && old_runner->api->terminate) {
 		old_runner->api->terminate();
 	}
 
 	set_current(new_runner);
 
-	if (new_runner->api->prepare) {
+	if (!bypass && new_runner->api->prepare) {
 		rc = new_runner->api->prepare(m.ctx);
 	}
 
 	if (m.post_change_cb) {
-		m.post_change_cb(new_runner_type, m.post_change_cb_ctx);
+		(*m.post_change_cb)(new_runner_type, m.post_change_cb_ctx);
 	}
 
 out:
 	return rc;
+}
+
+const struct runner *runner_current(void)
+{
+	return get_current();
+}
+
+runner_t runner_type(const struct runner *runner)
+{
+	return runner->type;
+}
+
+runner_t runner_current_type(void)
+{
+	return get_current_type();
+}
+
+int runner_change(const runner_t new_runner_type)
+{
+	return change_current(new_runner_type, false);
+}
+
+int runner_change_bypass(const runner_t new_runner_type)
+{
+	return change_current(new_runner_type, true);
 }
 
 void runner_start(const runner_t runner_type)

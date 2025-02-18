@@ -71,10 +71,70 @@ int runner_init(const struct runner *runners, size_t nr_runners, void *ctx);
  */
 int runner_register_change_cb(runner_change_cb_t pre_cb, void *pre_ctx,
 		runner_change_cb_t post_cb, void *post_ctx);
+
+/**
+ * @brief Start the specified runner.
+ *
+ * This function starts the runner of the specified type.
+ *
+ * @param[in] runner_type The type of the runner to start.
+ */
 void runner_start(const runner_t runner_type);
+
+/**
+ * @brief Change the runner type with pre/post callbacks and prepare/terminate.
+ *
+ * This function changes the current runner type to the specified new runner
+ * type. It will call the pre-change and post-change callbacks if they are
+ * defined, and it will also call the runner's prepare and terminate functions.
+ *
+ * @param[in] new_runner_type The new runner type to switch to.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
 int runner_change(const runner_t new_runner_type);
+
+/**
+ * @brief Change the runner type without pre/post callbacks and without
+ * prepare/terminate.
+ *
+ * This function changes the current runner type to the specified new runner
+ * type without calling any pre-change or post-change callbacks, and without
+ * calling the runner's prepare or terminate functions.
+ *
+ * @param[in] new_runner_type The new runner type to switch to.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int runner_change_bypass(const runner_t new_runner_type);
+
+/**
+ * @brief Get the current runner.
+ *
+ * This function returns a pointer to the current runner.
+ *
+ * @return A pointer to the current runner.
+ */
 const struct runner *runner_current(void);
+
+/**
+ * @brief Get the type of the specified runner.
+ *
+ * This function returns the type of the specified runner.
+ *
+ * @param[in] runner A pointer to the runner.
+ *
+ * @return The type of the specified runner.
+ */
 runner_t runner_type(const struct runner *runner);
+
+/**
+ * @brief Get the type of the current runner.
+ *
+ * This function returns the type of the current runner.
+ *
+ * @return The type of the current runner.
+ */
 runner_t runner_current_type(void);
 
 #if defined(__cplusplus)
