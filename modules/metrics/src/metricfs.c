@@ -130,7 +130,6 @@ static bool on_clear_iteration(struct metricfs *fs,
 	(void)ctx;
 
 	if (kvstore_clear(fs->kvstore, keystr) >= 0) {
-		fs->outdex += 1;
 		return true;
 	}
 
@@ -141,6 +140,7 @@ static int iterate(struct metricfs *fs, iterator_fn_t fn,
 		struct iterator_ctx *ctx, const uint16_t max_count)
 {
 	const metricfs_id_t outdex = fs->outdex;
+	int err = 0;
 
 	for (uint16_t i = 0; i < max_count; i++) {
 		const metricfs_id_t id = outdex + i;
@@ -150,11 +150,13 @@ static int iterate(struct metricfs *fs, iterator_fn_t fn,
 		ctx->id = id;
 
 		if (!(*fn)(fs, keystr, ctx)) {
-			return -EIO;
+			err = -EIO;
 		}
+
+		fs->outdex += 1;
 	}
 
-	return 0;
+	return err;
 }
 
 int metricfs_write(struct metricfs *fs,
