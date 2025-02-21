@@ -15,6 +15,7 @@
 #include "mbedtls/pk.h"
 #include "mbedtls/x509_csr.h"
 #include "mbedtls/x509_crt.h"
+#include "mbedtls/version.h"
 
 static int generate_ec_prikey(uint8_t *key_buf, size_t key_bufsize)
 {
@@ -66,11 +67,15 @@ static int get_pubkey_from_prikey(uint8_t *pub_buf, size_t pub_bufsize,
 
 	mbedtls_pk_init(&pk);
 
-	if ((err = mbedtls_pk_parse_key(&pk, prikey, prikey_len, NULL, 0))) {
-		goto out_cleanup;
-	}
-
-	if ((err = mbedtls_pk_write_pubkey_pem(&pk, pub_buf, pub_bufsize))) {
+#if MBEDTLS_VERSION_MAJOR < 3
+	err = mbedtls_pk_parse_key(&pk, prikey, prikey_len, NULL, 0);
+#else
+	mbedtls_hmac_drbg_context hmac_drbg;
+	err = mbedtls_pk_parse_key(&pk, prikey, prikey_len, NULL, 0,
+			mbedtls_hmac_drbg_random, &hmac_drbg);
+#endif
+	if (err || (err = mbedtls_pk_write_pubkey_pem(&pk,
+			pub_buf, pub_bufsize))) {
 		goto out_cleanup;
 	}
 
@@ -173,8 +178,13 @@ int pki_generate_csr(uint8_t *csr_buf, size_t csr_bufsize,
 		goto out_free;
 	}
 
-	if ((rc = mbedtls_pk_parse_key(&pk, prikey, prikey_len + 1, NULL, 0))
-			!= 0) {
+#if MBEDTLS_VERSION_MAJOR < 3
+	rc = mbedtls_pk_parse_key(&pk, prikey, prikey_len + 1, NULL, 0);
+#else
+	rc = mbedtls_pk_parse_key(&pk, prikey, prikey_len + 1, NULL, 0,
+			mbedtls_hmac_drbg_random, &hmac_drbg);
+#endif
+	if (rc != 0) {
 		goto out_free;
 	}
 
