@@ -11,9 +11,11 @@
 extern "C" {
 #endif
 
-#include "cli.h"
+struct cli;
+struct cli_io;
 
 const struct cli_io *cli_io_create(void);
+void cli_start(struct cli *cli);
 
 #if defined(__cplusplus)
 }
