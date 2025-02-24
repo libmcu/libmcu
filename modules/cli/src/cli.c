@@ -367,9 +367,6 @@ static cli_cmd_error_t cli_step_core(struct cli *cli)
 
 cli_cmd_error_t cli_step(struct cli *cli)
 {
-	if (cli->pause) {
-		return CLI_CMD_SUCCESS;
-	}
 	return cli_step_core(cli);
 }
 
