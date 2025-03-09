@@ -1,0 +1,49 @@
+name: Check version.h before release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
+
+      - name: Extract version from version.h
+        id: get_header_version
+        run: |
+          HEADER_VERSION_MAJOR=$(awk '/#define LIBMCU_VERSION_MAJOR/ {print $3}' modules/common/include/libmcu/version.h)
+          HEADER_VERSION_MINOR=$(awk '/#define LIBMCU_VERSION_MINOR/ {print $3}' modules/common/include/libmcu/version.h)
+          HEADER_VERSION_BUILD=$(awk '/#define LIBMCU_VERSION_BUILD/ {print $3}' modules/common/include/libmcu/version.h)
+
+          HEADER_VERSION="$HEADER_VERSION_MAJOR.$HEADER_VERSION_MINOR.$HEADER_VERSION_BUILD"
+
+          echo "Extracted header version: $HEADER_VERSION"
+          echo "HEADER_VERSION=$HEADER_VERSION" >> $GITHUB_ENV
+
+      - name: Compare versions
+        run: |
+          if [ "$TAG_VERSION" != "$HEADER_VERSION" ]; then
+            echo "::error:: version.h numeric version ($HEADER_VERSION) does not match git tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version match! Proceeding with release."
+
+      - name: Trigger Release Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: release-approved
+          client-payload: '{"tag": "${{ env.TAG_VERSION }}"}'
