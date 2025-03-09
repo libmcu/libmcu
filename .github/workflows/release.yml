@@ -1,40 +1,41 @@
 name: release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  repository_dispatch:
+    types: [release-approved]
 
 jobs:
   build:
     name: Create Release
     runs-on: ubuntu-latest
     container: libmcu/ci:latest
+
     steps:
       - name: Clone Repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Build Project
-        run: CROSS_COMPILE=arm-none-eabi VERSION=${GITHUB_REF#refs/tags/} make
+
       - name: Get Version
         id: get_version
         run: |
-          echo ::set-output name=HASH::$(cat build/libmcu_*.sha256)
-          echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: |
-            ${{ steps.get_version.outputs.HASH }}
+          TAG_VERSION="${{ github.event.client_payload.tag }}"
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
 
-            ## Features
-            ## Bug Fixes
-          draft: true
-          prerelease: false
+      - name: Build Project
+        run: CROSS_COMPILE=arm-none-eabi VERSION=${{ env.TAG_VERSION }} make
+
+      - name: Calculate Hash
+        id: hash
+        run: |
+          HASH=$(cat build/libmcu_*.sha256)
+          echo "HASH=$HASH" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        run: |
+          gh release create v${{ env.TAG_VERSION }} \
+            --title "v${{ env.TAG_VERSION }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
