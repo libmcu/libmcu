@@ -42,7 +42,7 @@ static int get_time_difference_from_timezone(const char *str)
 		return 0;
 	}
 
-	const size_t tzlen = len - (size_t)((uintptr_t)p - (uintptr_t)str);
+	const size_t tzlen = len - ((uintptr_t)p - (uintptr_t)str);
 	const int hour = (p[1] - '0') * 10 + (p[2] - '0');
 	int min = 0;
 

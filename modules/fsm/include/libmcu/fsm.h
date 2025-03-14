@@ -16,9 +16,9 @@ extern "C" {
 #include <stdint.h>
 
 #define FSM_ITEM(present_state, event_func, action_func, next_state) { \
-		.state = (struct fsm_state) { present_state, next_state }, \
+		.state = { .present = present_state, .next = next_state }, \
 		.event = event_func, \
-		.action = action_func, \
+		.action = { .run = action_func }, \
 	}
 
 typedef int16_t fsm_state_t;

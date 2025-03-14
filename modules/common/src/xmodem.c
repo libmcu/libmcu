@@ -220,7 +220,7 @@ static xmodem_error_t check_buffer(const struct packet *packet, size_t index)
 			return XMODEM_ERROR_RETRY;
 		}
 	} else if (index == 2) {
-		if ((uint8_t)~packet->seq != (uint8_t)packet->seq_inverted) {
+		if ((uint8_t)~packet->seq != packet->seq_inverted) {
 			return XMODEM_ERROR_RETRY;
 		}
 	}
@@ -231,7 +231,7 @@ static xmodem_error_t read_packet(struct packet *packet,
 		size_t data_size, bool use_crc, uint32_t timeout_ms)
 {
 	const uint32_t t_started = millis();
-	size_t *index = (size_t *)&packet->received;
+	size_t *index = &packet->received;
 	xmodem_error_t err = XMODEM_ERROR_TIMEOUT;
 	uint32_t t_read = t_started;
 	uint32_t t_now;
