@@ -10,7 +10,11 @@ A toolkit for firmware development.
 libmcu prioritizes simplicity and minimal code size. Dynamic memory allocation
 is avoided whenever possible, and no linker script tweaks are required.
 
-Documentation for each module is available in its corresponding subdirectory.
+All code is written in standard C99 for maximum portability. Its modular
+directory structure, naming conventions, and interface boundaries are designed
+to be intuitive and scalable across a wide range of embedded platforms.
+
+Documentation for each module is located in its respective subdirectory.
 You can also find usage examples in [examples](examples) and test cases in
 [tests](tests/src).
 
@@ -25,20 +29,22 @@ libmcu/
 ├── modules/       # Platform-independent logic modules (actor, metrics, pubsub, etc.)
 ├── interfaces/    # Vendor-neutral HAL abstraction interfaces (UART, GPIO, etc.)
 ├── ports/         # Platform-specific backend implementations (e.g., STM32 HAL, simulation)
+├── config/        # Build integration scripts (e.g., modules.mk, interfaces.mk)
 ├── tests/         # Unit tests for modules and interfaces
 ├── examples/      # Integration examples for users
-├── config/        # Build integration scripts (e.g., modules.mk, interfaces.mk)
 ```
 
-### Naming Philosophy
+### Naming Guidelines
 
-- `modules/` contains **logic modules**, which implement platform-agnostic behavior
-- `interfaces/` defines **hardware abstraction interfaces (HAL)** that isolate platform details
-- `ports/` implements those interfaces for specific hardware platforms (e.g., STM32, mock)
+- `modules/` contains **logic modules** that implement platform-agnostic behavior
+- `interfaces/` defines **hardware abstraction interfaces (HAL)** that isolate platform-specific details
+- `ports/` provides platform-specific implementations of those interfaces (e.g., STM32, ESP-IDF)
 
-This structure makes the separation of concerns between logic, hardware abstraction, and platform adaptation clear and extensible.
+This structure clearly separates logic, hardware abstraction, and platform
+adaptation, making the system easier to maintain and extend.
 
-All public symbols follow the `lm_` prefix convention to avoid symbol collisions and maintain namespace clarity.
+All public symbols follow the `lm_` prefix convention to avoid name collisions
+and to maintain a consistent global namespace.
 
 ## Modules
 * [Actor](modules/actor)
@@ -140,12 +146,4 @@ FetchContent_MakeAvailable(libmcu)
 
 ## License
 
-MIT License. See `LICENSE` file.
-
-## OSS Notes
-
-libmcu is an open-source project (OSS), licensed under MIT, and welcomes
-community contributions. All code is written in standard C99 for maximum
-portability. Its modular directory structure, naming conventions, and interface
-boundaries are designed to be intuitive and scalable across a wide range of
-embedded platforms.
+MIT License. See [LICENSE](LICENSE) file.
