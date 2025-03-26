@@ -22,24 +22,24 @@
 #define I2C_DEFAULT_TIMEOUT_MS			100
 #endif
 
-struct i2c_device {
-	struct i2c_device_api api;
-	struct i2c *bus;
+struct lm_i2c_device {
+	struct lm_i2c_device_api api;
+	struct lm_i2c *bus;
 	uint8_t slave_addr;
 	uint32_t freq_hz;
 	i2c_master_dev_handle_t handle;
 };
 
-struct i2c {
-	struct i2c_bus_api api;
-	struct i2c_pin pin;
-	struct i2c_device devices[I2C_MAX_DEVICE];
+struct lm_i2c {
+	struct lm_i2c_bus_api api;
+	struct lm_i2c_pin pin;
+	struct lm_i2c_device devices[I2C_MAX_DEVICE];
 	i2c_master_bus_handle_t handle;
 	uint8_t channel;
 	pthread_mutex_t mutex;
 };
 
-static int read_i2c(struct i2c_device *dev,
+static int read_i2c(struct lm_i2c_device *dev,
 		void *buf, size_t bufsize, uint32_t timeout_ms)
 {
 	pthread_mutex_lock(&dev->bus->mutex);
@@ -56,7 +56,7 @@ static int read_i2c(struct i2c_device *dev,
 	return 0;
 }
 
-static int write_i2c(struct i2c_device *dev,
+static int write_i2c(struct lm_i2c_device *dev,
 		const void *data, size_t data_len, uint32_t timeout_ms)
 {
 	pthread_mutex_lock(&dev->bus->mutex);
@@ -71,7 +71,7 @@ static int write_i2c(struct i2c_device *dev,
 	return 0;
 }
 
-static int read_reg(struct i2c_device *dev,
+static int read_reg(struct lm_i2c_device *dev,
 		uint32_t reg_addr, uint8_t reg_addr_bits,
 		void *buf, size_t bufsize, uint32_t timeout_ms)
 {
@@ -96,7 +96,7 @@ static int read_reg(struct i2c_device *dev,
 	return 0;
 }
 
-static int write_reg(struct i2c_device *dev,
+static int write_reg(struct lm_i2c_device *dev,
 		uint32_t reg_addr, uint8_t reg_addr_bits,
 		const void *data, size_t data_len, uint32_t timeout_ms)
 {
@@ -134,15 +134,15 @@ static int write_reg(struct i2c_device *dev,
 	return 0;
 }
 
-static struct i2c_device *new_device(struct i2c *bus)
+static struct lm_i2c_device *new_device(struct lm_i2c *bus)
 {
-	struct i2c_device empty = { 0, };
+	struct lm_i2c_device empty = { 0, };
 
 	for (int i = 0; i < I2C_MAX_DEVICE; i++) {
-		struct i2c_device *dev = &bus->devices[i];
+		struct lm_i2c_device *dev = &bus->devices[i];
 		if (memcmp(dev, &empty, sizeof(empty)) == 0) {
 			dev->bus = bus;
-			dev->api = (struct i2c_device_api) {
+			dev->api = (struct lm_i2c_device_api) {
 				.read = read_i2c,
 				.write = write_i2c,
 				.read_reg = read_reg,
@@ -155,15 +155,15 @@ static struct i2c_device *new_device(struct i2c *bus)
 	return NULL;
 }
 
-static void del_device(struct i2c_device *dev)
+static void del_device(struct lm_i2c_device *dev)
 {
 	memset(dev, 0, sizeof(*dev));
 }
 
-static struct i2c_device *create_device(struct i2c *bus,
+static struct lm_i2c_device *create_device(struct lm_i2c *bus,
 		uint8_t slave_addr, uint32_t freq_hz)
 {
-	struct i2c_device *dev = NULL;
+	struct lm_i2c_device *dev = NULL;
 
 	pthread_mutex_lock(&bus->mutex);
 
@@ -188,7 +188,7 @@ out:
 	return dev;
 }
 
-static void delete_device(struct i2c_device *dev)
+static void delete_device(struct lm_i2c_device *dev)
 {
 	pthread_mutex_lock(&dev->bus->mutex);
 	i2c_master_bus_rm_device(dev->handle);
@@ -196,7 +196,7 @@ static void delete_device(struct i2c_device *dev)
 	pthread_mutex_unlock(&dev->bus->mutex);
 }
 
-static int enable_i2c(struct i2c *bus)
+static int enable_i2c(struct lm_i2c *bus)
 {
 	i2c_master_bus_config_t conf = {
 		.clk_source = I2C_CLK_SRC_DEFAULT, /* SOC_MOD_CLK_APB */
@@ -219,7 +219,7 @@ static int enable_i2c(struct i2c *bus)
 	return -err;
 }
 
-static int disable_i2c(struct i2c *bus)
+static int disable_i2c(struct lm_i2c *bus)
 {
 	pthread_mutex_lock(&bus->mutex);
 	int err = i2c_master_bus_wait_all_done(bus->handle,
@@ -231,7 +231,7 @@ static int disable_i2c(struct i2c *bus)
 	return err == ESP_OK? 0 : -err;
 }
 
-static int reset_i2c(struct i2c *bus)
+static int reset_i2c(struct lm_i2c *bus)
 {
 	pthread_mutex_lock(&bus->mutex);
 	int rc = i2c_master_bus_wait_all_done(bus->handle,
@@ -241,15 +241,15 @@ static int reset_i2c(struct i2c *bus)
 	return rc == ESP_OK? 0 : -rc;
 }
 
-struct i2c *i2c_create(uint8_t channel, const struct i2c_pin *pin)
+struct lm_i2c *lm_i2c_create(uint8_t channel, const struct lm_i2c_pin *pin)
 {
-	static struct i2c i2c[I2C_MAX_BUS];
+	static struct lm_i2c i2c[I2C_MAX_BUS];
 
 	if (channel >= I2C_MAX_BUS) {
 		return NULL;
 	}
 
-	i2c[channel].api = (struct i2c_bus_api) {
+	i2c[channel].api = (struct lm_i2c_bus_api) {
 		.enable = enable_i2c,
 		.disable = disable_i2c,
 		.create_device = create_device,
@@ -265,7 +265,7 @@ struct i2c *i2c_create(uint8_t channel, const struct i2c_pin *pin)
 	return &i2c[channel];
 }
 
-void i2c_delete(struct i2c *bus)
+void lm_i2c_delete(struct lm_i2c *bus)
 {
 	memset(bus, 0, sizeof(*bus));
 }

@@ -14,39 +14,43 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-struct uart;
+#if !defined(LM_GPIO_PIN_UNASSIGNED)
+#define LM_GPIO_PIN_UNASSIGNED		-1
+#endif
 
-typedef void (*uart_rx_callback_t)(struct uart *self, void *ctx);
+struct lm_uart;
 
-typedef enum {
-	UART_PARITY_NONE,
-	UART_PARITY_EVEN,
-	UART_PARITY_ODD,
-} uart_parity_t;
+typedef void (*lm_uart_rx_callback_t)(struct lm_uart *self, void *ctx);
 
 typedef enum {
-	UART_STOPBIT_1,
-	UART_STOPBIT_2,
-	UART_STOPBIT_1_5,
-} uart_stopbit_t;
+	LM_UART_PARITY_NONE,
+	LM_UART_PARITY_EVEN,
+	LM_UART_PARITY_ODD,
+} lm_uart_parity_t;
 
 typedef enum {
-	UART_FLOWCTRL_NONE,
-	UART_FLOWCTRL_RTS,
-	UART_FLOWCTRL_CTS,
-	UART_FLOWCTRL_CTS_RTS,
-} uart_flowctrl_t;
+	LM_UART_STOPBIT_1,
+	LM_UART_STOPBIT_2,
+	LM_UART_STOPBIT_1_5,
+} lm_uart_stopbit_t;
 
-struct uart_config {
+typedef enum {
+	LM_UART_FLOWCTRL_NONE,
+	LM_UART_FLOWCTRL_RTS,
+	LM_UART_FLOWCTRL_CTS,
+	LM_UART_FLOWCTRL_CTS_RTS,
+} lm_uart_flowctrl_t;
+
+struct lm_uart_config {
 	uint32_t baudrate;
 	uint8_t databit;
-	uart_parity_t parity;
-	uart_stopbit_t stopbit;
-	uart_flowctrl_t flowctrl;
+	lm_uart_parity_t parity;
+	lm_uart_stopbit_t stopbit;
+	lm_uart_flowctrl_t flowctrl;
 	uint32_t rx_timeout_ms;
 };
 
-struct uart_pin {
+struct lm_uart_pin {
 	int rx;
 	int tx;
 	int rts;
@@ -63,7 +67,7 @@ struct uart_pin {
  * @param[in] pin Pointer to the UART pin configuration structure.
  * @return Pointer to the created UART instance, or NULL on failure.
  */
-struct uart *uart_create(uint8_t channel, const struct uart_pin *pin);
+struct lm_uart *lm_uart_create(uint8_t channel, const struct lm_uart_pin *pin);
 
 /**
  * @brief Delete a UART instance.
@@ -73,7 +77,7 @@ struct uart *uart_create(uint8_t channel, const struct uart_pin *pin);
  *
  * @param[in] self Pointer to the UART instance to be deleted.
  */
-void uart_delete(struct uart *self);
+void lm_uart_delete(struct lm_uart *self);
 
 /**
  * @brief Enable the UART interface.
@@ -84,7 +88,7 @@ void uart_delete(struct uart *self);
  * @param[in] baudrate The baud rate for UART communication.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_enable(struct uart *self, uint32_t baudrate);
+int lm_uart_enable(struct lm_uart *self, uint32_t baudrate);
 
 /**
  * @brief Disable the UART interface.
@@ -94,7 +98,7 @@ int uart_enable(struct uart *self, uint32_t baudrate);
  * @param[in] self Pointer to the UART instance.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_disable(struct uart *self);
+int lm_uart_disable(struct lm_uart *self);
 
 /**
  * @brief Write data to the UART interface.
@@ -106,7 +110,7 @@ int uart_disable(struct uart *self);
  * @param[in] data_len Length of the data to be written.
  * @return Number of bytes written, or a negative error code on failure.
  */
-int uart_write(struct uart *self, const void *data, size_t data_len);
+int lm_uart_write(struct lm_uart *self, const void *data, size_t data_len);
 
 /**
  * @brief Read data from the UART interface.
@@ -118,7 +122,7 @@ int uart_write(struct uart *self, const void *data, size_t data_len);
  * @param[in] bufsize Size of the buffer.
  * @return Number of bytes read, or a negative error code on failure.
  */
-int uart_read(struct uart *self, void *buf, size_t bufsize);
+int lm_uart_read(struct lm_uart *self, void *buf, size_t bufsize);
 
 /**
  * @brief Register a callback for UART receive events.
@@ -131,8 +135,8 @@ int uart_read(struct uart *self, void *buf, size_t bufsize);
  * @param[in] cb_ctx User-defined context to be passed to the callback function.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_register_rx_callback(struct uart *self,
-		uart_rx_callback_t cb, void *cb_ctx);
+int lm_uart_register_rx_callback(struct lm_uart *self,
+		lm_uart_rx_callback_t cb, void *cb_ctx);
 
 /**
  * @brief Configure the UART interface.
@@ -143,7 +147,7 @@ int uart_register_rx_callback(struct uart *self,
  * @param[in] config Pointer to the UART configuration structure.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_configure(struct uart *self, const struct uart_config *config);
+int lm_uart_configure(struct lm_uart *self, const struct lm_uart_config *config);
 
 /**
  * @brief Flush the UART interface.
@@ -154,7 +158,7 @@ int uart_configure(struct uart *self, const struct uart_config *config);
  * @param[in] self Pointer to the UART instance.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_flush(struct uart *self);
+int lm_uart_flush(struct lm_uart *self);
 
 /**
  * @brief Clear the UART receive buffer.
@@ -165,7 +169,7 @@ int uart_flush(struct uart *self);
  * @param[in] self Pointer to the UART instance.
  * @return 0 on success, or a negative error code on failure.
  */
-int uart_clear(struct uart *self);
+int lm_uart_clear(struct lm_uart *self);
 
 #if defined(__cplusplus)
 }

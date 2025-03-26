@@ -14,25 +14,25 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#if !defined(SPI_PIN_UNASSIGNED)
-#define SPI_PIN_UNASSIGNED		-1
+#if !defined(LM_SPI_PIN_UNASSIGNED)
+#define LM_SPI_PIN_UNASSIGNED		-1
 #endif
 
 typedef enum {
-	SPI_MODE_0, /* CPOL=0, CPHA=0 */
-	SPI_MODE_1, /* CPOL=0, CPHA=1 */
-	SPI_MODE_2, /* CPOL=1, CPHA=0 */
-	SPI_MODE_3, /* CPOL=1, CPHA=1 */
-} spi_mode_t;
+	LM_SPI_MODE_0, /* CPOL=0, CPHA=0 */
+	LM_SPI_MODE_1, /* CPOL=0, CPHA=1 */
+	LM_SPI_MODE_2, /* CPOL=1, CPHA=0 */
+	LM_SPI_MODE_3, /* CPOL=1, CPHA=1 */
+} lm_spi_mode_t;
 
-struct spi_pin {
+struct lm_spi_pin {
 	int miso;
 	int mosi;
 	int sclk;
 };
 
-struct spi;
-struct spi_device;
+struct lm_spi;
+struct lm_spi_device;
 
 /**
  * @brief Create a SPI instance.
@@ -46,7 +46,7 @@ struct spi_device;
  * @return A pointer to the created SPI instance. If the creation fails,
  *         the function returns NULL.
  */
-struct spi *spi_create(uint8_t channel, const struct spi_pin *pin);
+struct lm_spi *lm_spi_create(uint8_t channel, const struct lm_spi_pin *pin);
 
 /**
  * @brief Delete a SPI instance.
@@ -55,7 +55,7 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin);
  *
  * @param[in] self The SPI instance to be deleted.
  */
-void spi_delete(struct spi *self);
+void lm_spi_destroy(struct lm_spi *self);
 
 /**
  * Creates a new SPI device.
@@ -67,8 +67,8 @@ void spi_delete(struct spi *self);
  *
  * @return A pointer to the created SPI device.
  */
-struct spi_device *spi_create_device(struct spi *self,
-		spi_mode_t mode, uint32_t freq_hz, int pin_cs);
+struct lm_spi_device *lm_spi_create_device(struct lm_spi *self,
+		lm_spi_mode_t mode, uint32_t freq_hz, int pin_cs);
 
 /**
  * Deletes an SPI device.
@@ -77,7 +77,7 @@ struct spi_device *spi_create_device(struct spi *self,
  *
  * @return 0 on success, or a negative error code on failure.
  */
-int spi_delete_device(struct spi_device *dev);
+int lm_spi_delete_device(struct lm_spi_device *dev);
 
 /**
  * Enables an SPI device.
@@ -86,7 +86,7 @@ int spi_delete_device(struct spi_device *dev);
  *
  * @return 0 on success, or a negative error code on failure.
  */
-int spi_enable(struct spi_device *dev);
+int lm_spi_enable(struct lm_spi_device *dev);
 
 /**
  * Disables an SPI device.
@@ -95,7 +95,7 @@ int spi_enable(struct spi_device *dev);
  *
  * @return 0 on success, or a negative error code on failure.
  */
-int spi_disable(struct spi_device *dev);
+int lm_spi_disable(struct lm_spi_device *dev);
 
 /**
  * @brief Write data to a SPI device.
@@ -109,7 +109,7 @@ int spi_disable(struct spi_device *dev);
  * @return 0 if the operation is successful, otherwise returns a non-zero error
  *         code.
  */
-int spi_write(struct spi_device *dev, const void *data, size_t data_len);
+int lm_spi_write(struct lm_spi_device *dev, const void *data, size_t data_len);
 
 /**
  * @brief Read data from a SPI device.
@@ -123,7 +123,7 @@ int spi_write(struct spi_device *dev, const void *data, size_t data_len);
  * @return 0 if the operation is successful, otherwise returns a non-zero error
  *         code.
  */
-int spi_read(struct spi_device *dev, void *buf, size_t rx_len);
+int lm_spi_read(struct lm_spi_device *dev, void *buf, size_t rx_len);
 
 /**
  * @brief Write and read data from a SPI device.
@@ -140,7 +140,7 @@ int spi_read(struct spi_device *dev, void *buf, size_t rx_len);
  * @return 0 if the operation is successful, otherwise returns a non-zero error
  *         code.
  */
-int spi_writeread(struct spi_device *dev,
+int lm_spi_writeread(struct lm_spi_device *dev,
 		const void *txdata, size_t txdata_len,
 		void *rxbuf, size_t rx_len);
 

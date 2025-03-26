@@ -20,9 +20,9 @@
 #define MAX_SPI			2 /* SPI2 and SPI3 */
 #define DEFAULT_QUEUE_SIZE	7
 
-struct spi_device {
-	struct spi *spi;
-	spi_mode_t mode;
+struct lm_spi_device {
+	struct lm_spi *spi;
+	lm_spi_mode_t mode;
 	uint32_t freq_hz;
 	int pin_cs;
 
@@ -31,15 +31,15 @@ struct spi_device {
 	bool enabled;
 };
 
-struct spi {
-	struct spi_pin pin;
+struct lm_spi {
+	struct lm_spi_pin pin;
 
 	spi_host_device_t host;
 
-	struct spi_device device[SPI_MAX_DEVICES];
+	struct lm_spi_device device[SPI_MAX_DEVICES];
 };
 
-static bool is_bus_initialized(const struct spi *self)
+static bool is_bus_initialized(const struct lm_spi *self)
 {
 	for (int i = 0; i < SPI_MAX_DEVICES; i++) {
 		if (self->device[i].handle) {
@@ -50,7 +50,7 @@ static bool is_bus_initialized(const struct spi *self)
 	return false;
 }
 
-static bool is_already_assigned_pin(const struct spi *self, int pin_cs)
+static bool is_already_assigned_pin(const struct lm_spi *self, int pin_cs)
 {
 	for (int i = 0; i < SPI_MAX_DEVICES; i++) {
 		if (self->device[i].pin_cs == pin_cs) {
@@ -61,7 +61,7 @@ static bool is_already_assigned_pin(const struct spi *self, int pin_cs)
 	return false;
 }
 
-static struct spi_device *alloc_device(struct spi *self)
+static struct lm_spi_device *alloc_device(struct lm_spi *self)
 {
 	for (int i = 0; i < SPI_MAX_DEVICES; i++) {
 		if (self->device[i].handle == NULL) {
@@ -72,14 +72,14 @@ static struct spi_device *alloc_device(struct spi *self)
 	return NULL;
 }
 
-static void free_device(struct spi_device *device)
+static void free_device(struct lm_spi_device *device)
 {
 	device->spi = NULL;
-	device->pin_cs = SPI_PIN_UNASSIGNED;
+	device->pin_cs = LM_SPI_PIN_UNASSIGNED;
 	device->handle = NULL;
 }
 
-static int count_assigned_devices(struct spi *self)
+static int count_assigned_devices(struct lm_spi *self)
 {
 	int count = 0;
 
@@ -117,7 +117,8 @@ static int convert_freq_to_clock_div(uint32_t freq_hz)
 	return SPI_MASTER_FREQ_8M;
 }
 
-static int disable_spi_device(struct spi_device *dev, bool free_after_disable)
+static int disable_spi_device(struct lm_spi_device *dev,
+		bool free_after_disable)
 {
 	if (!dev->enabled || !dev->handle) {
 		return -EALREADY;
@@ -142,7 +143,7 @@ static int disable_spi_device(struct spi_device *dev, bool free_after_disable)
 	return 0;
 }
 
-int spi_write(struct spi_device *dev, const void *data, size_t data_len)
+int lm_spi_write(struct lm_spi_device *dev, const void *data, size_t data_len)
 {
 	if (!data || data_len == 0) {
 		return -EINVAL;
@@ -161,7 +162,7 @@ int spi_write(struct spi_device *dev, const void *data, size_t data_len)
 	return (int)data_len;
 }
 
-int spi_writeread(struct spi_device *dev,
+int lm_spi_writeread(struct lm_spi_device *dev,
 		const void *txdata, size_t txdata_len,
 		void *rxbuf, size_t rx_len)
 {
@@ -201,7 +202,7 @@ out:
 	return rc;
 }
 
-int spi_read(struct spi_device *dev, void *buf, size_t rx_len)
+int lm_spi_read(struct lm_spi_device *dev, void *buf, size_t rx_len)
 {
 	unused(dev);
 	unused(buf);
@@ -209,7 +210,7 @@ int spi_read(struct spi_device *dev, void *buf, size_t rx_len)
 	return -ENOTSUP;
 }
 
-int spi_enable(struct spi_device *dev)
+int lm_spi_enable(struct lm_spi_device *dev)
 {
 	if (!is_bus_initialized(dev->spi)) {
 		spi_bus_config_t buscfg = {
@@ -244,15 +245,15 @@ int spi_enable(struct spi_device *dev)
 	return err;
 }
 
-int spi_disable(struct spi_device *dev)
+int lm_spi_disable(struct lm_spi_device *dev)
 {
 	return disable_spi_device(dev, false);
 }
 
-struct spi_device *spi_create_device(struct spi *self,
-		spi_mode_t mode, uint32_t freq_hz, int pin_cs)
+struct lm_spi_device *lm_spi_create_device(struct lm_spi *self,
+		lm_spi_mode_t mode, uint32_t freq_hz, int pin_cs)
 {
-	struct spi_device *device = alloc_device(self);
+	struct lm_spi_device *device = alloc_device(self);
 
 	if (device) {
 		device->spi = self;
@@ -264,14 +265,14 @@ struct spi_device *spi_create_device(struct spi *self,
 	return device;
 }
 
-int spi_delete_device(struct spi_device *dev)
+int lm_spi_delete_device(struct lm_spi_device *dev)
 {
 	return disable_spi_device(dev, true);
 }
 
-struct spi *spi_create(uint8_t channel, const struct spi_pin *pin)
+struct lm_spi *lm_spi_create(uint8_t channel, const struct lm_spi_pin *pin)
 {
-	static struct spi spi[MAX_SPI];
+	static struct lm_spi spi[MAX_SPI];
 
 	/* accept only SPI2 and SPI3 */
 	if (channel < 2 || channel >= (2 + MAX_SPI)) {
@@ -308,9 +309,9 @@ struct spi *spi_create(uint8_t channel, const struct spi_pin *pin)
 	return &spi[channel];
 }
 
-void spi_delete(struct spi *self)
+void lm_spi_destroy(struct lm_spi *self)
 {
 	for (int i = 0; i < SPI_MAX_DEVICES; i++) {
-		spi_delete_device(&self->device[i]);
+		lm_spi_delete_device(&self->device[i]);
 	}
 }

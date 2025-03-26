@@ -16,8 +16,8 @@
 #define DEFAULT_ESP_LEDC_TIMER_BIT	LEDC_TIMER_9_BIT
 #endif
 
-struct pwm_channel {
-	struct pwm *pwm;
+struct lm_pwm_channel {
+	struct lm_pwm *pwm;
 
 	uint8_t id;
 	int pin;
@@ -25,22 +25,23 @@ struct pwm_channel {
 	bool enabled;
 };
 
-struct pwm {
+struct lm_pwm {
 	ledc_timer_t timer;
 	ledc_mode_t speed_mode;
 	ledc_timer_bit_t duty_resolution;
 	uint32_t freq_hz;
 
-	struct pwm_channel *channels[LEDC_CHANNEL_MAX];
+	struct lm_pwm_channel *channels[LEDC_CHANNEL_MAX];
 };
 
 /* NOTE: the timers are multiplexed to the ledc channels. thus the same channel
  * for different timers will not work. */
-static struct pwm_channel channels[LEDC_CHANNEL_MAX];
+static struct lm_pwm_channel channels[LEDC_CHANNEL_MAX];
 
-static struct pwm_channel *alloc_channel(struct pwm *self, int ch, int pin)
+static struct lm_pwm_channel *alloc_channel(struct lm_pwm *self,
+		int ch, int pin)
 {
-	struct pwm_channel *channel = &channels[ch];
+	struct lm_pwm_channel *channel = &channels[ch];
 
 	if (channel->pwm) {
 		return NULL;
@@ -53,12 +54,12 @@ static struct pwm_channel *alloc_channel(struct pwm *self, int ch, int pin)
 	return channel;
 }
 
-static void free_channel(struct pwm_channel *ch)
+static void free_channel(struct lm_pwm_channel *ch)
 {
 	ch->pwm = NULL;
 }
 
-static bool is_timer_enabled(struct pwm *self)
+static bool is_timer_enabled(struct lm_pwm *self)
 {
 	for (int i = 0; i < LEDC_CHANNEL_MAX; i++) {
 		if (self->channels[i]) {
@@ -69,7 +70,7 @@ static bool is_timer_enabled(struct pwm *self)
 	return false;
 }
 
-static void initialize_ledc(struct pwm *self, int ch, int pin)
+static void initialize_ledc(struct lm_pwm *self, int ch, int pin)
 {
 	ledc_timer_config_t ledc_timer = {
 		.speed_mode       = self->speed_mode,
@@ -92,13 +93,13 @@ static void initialize_ledc(struct pwm *self, int ch, int pin)
 	ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 }
 
-static int update_frequency(struct pwm_channel *ch, uint32_t hz)
+static int update_frequency(struct lm_pwm_channel *ch, uint32_t hz)
 {
 	int err = ledc_set_freq(ch->pwm->speed_mode, ch->pwm->timer, hz);
 	return err == ESP_OK ? 0 : -err;
 }
 
-static int update_duty(struct pwm_channel *ch, uint32_t millipercent)
+static int update_duty(struct lm_pwm_channel *ch, uint32_t millipercent)
 {
 	uint32_t resolution = 1024; /* 10-bit */
 
@@ -126,17 +127,17 @@ static int update_duty(struct pwm_channel *ch, uint32_t millipercent)
 	return err == ESP_OK ? 0 : -err;
 }
 
-int pwm_update_duty(struct pwm_channel *ch, uint32_t millipercent)
+int lm_pwm_update_duty(struct lm_pwm_channel *ch, uint32_t millipercent)
 {
 	return update_duty(ch, millipercent);
 }
 
-int pwm_update_frequency(struct pwm_channel *ch, uint32_t hz)
+int lm_pwm_update_frequency(struct lm_pwm_channel *ch, uint32_t hz)
 {
 	return update_frequency(ch, hz);
 }
 
-int pwm_start(struct pwm_channel *ch,
+int lm_pwm_start(struct lm_pwm_channel *ch,
 		uint32_t freq_hz, uint32_t duty_millipercent)
 {
 	int err = update_frequency(ch, freq_hz);
@@ -144,13 +145,13 @@ int pwm_start(struct pwm_channel *ch,
 	return err;
 }
 
-int pwm_stop(struct pwm_channel *ch)
+int lm_pwm_stop(struct lm_pwm_channel *ch)
 {
 	int err = ledc_stop(ch->pwm->speed_mode, ch->id, 0);
 	return err == ESP_OK ? 0 : -err;
 }
 
-int pwm_enable(struct pwm_channel *ch)
+int lm_pwm_enable(struct lm_pwm_channel *ch)
 {
 	if (ch->enabled) {
 		return -EALREADY;
@@ -162,13 +163,14 @@ int pwm_enable(struct pwm_channel *ch)
 	return 0;
 }
 
-int pwm_disable(struct pwm_channel *ch)
+int lm_pwm_disable(struct lm_pwm_channel *ch)
 {
 	ch->enabled = false;
 	return 0;
 }
 
-struct pwm_channel *pwm_create_channel(struct pwm *self, int ch, int pin)
+struct lm_pwm_channel *lm_pwm_create_channel(struct lm_pwm *self,
+		int ch, int pin)
 {
 	self->channels[ch] = alloc_channel(self, ch, pin);
 
@@ -179,10 +181,10 @@ struct pwm_channel *pwm_create_channel(struct pwm *self, int ch, int pin)
 		self->freq_hz = 1000;
 	}
 
-	return (struct pwm_channel *)self->channels[ch];
+	return (struct lm_pwm_channel *)self->channels[ch];
 }
 
-int pwm_delete_channel(struct pwm_channel *ch)
+int lm_pwm_delete_channel(struct lm_pwm_channel *ch)
 {
 	free_channel(ch);
 
@@ -192,12 +194,12 @@ int pwm_delete_channel(struct pwm_channel *ch)
 	return 0;
 }
 
-struct pwm *pwm_create(uint8_t timer)
+struct lm_pwm *lm_pwm_create(uint8_t timer)
 {
 	assert(timer < LEDC_TIMER_MAX);
 
-	static struct pwm pwms[LEDC_TIMER_MAX];
-	struct pwm *pwm = &pwms[timer];
+	static struct lm_pwm pwms[LEDC_TIMER_MAX];
+	struct lm_pwm *pwm = &pwms[timer];
 
 	memset(pwm, 0, sizeof(*pwm));
 	pwm->timer = timer;
@@ -205,7 +207,7 @@ struct pwm *pwm_create(uint8_t timer)
 	return pwm;
 }
 
-int pwm_delete(struct pwm *self)
+int lm_pwm_delete(struct lm_pwm *self)
 {
 	return 0;
 }

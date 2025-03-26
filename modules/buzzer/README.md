@@ -23,7 +23,7 @@ Before using the buzzer, initialize the module with the appropriate configuratio
 #define PWM_CHANNEL 1
 #define PWM_PIN     1
 
-struct pwm_channel *pwm_ch = pwm_create_channel(pwm, PWM_CHANNEL, PWM_PIN);
+struct lm_pwm_channel *pwm_ch = lm_pwm_create_channel(pwm, PWM_CHANNEL, PWM_PIN);
 
 buzzer_init(pwm_ch, 0, 0);
 ```
