@@ -33,8 +33,8 @@
 #define cal_del			adc_cali_delete_scheme_line_fitting
 #endif
 
-struct adc {
-	struct adc_api api;
+struct lm_adc {
+	struct lm_adc_api api;
 
 	adc_oneshot_unit_handle_t handle;
 	adc_cali_handle_t cal_handle;
@@ -42,12 +42,12 @@ struct adc {
 	bool activated;
 };
 
-static int channel_to_esp(adc_channel_t channel)
+static int channel_to_esp(lm_adc_channel_t channel)
 {
 	return channel? __builtin_ctz(channel) + 1 : 0;
 }
 
-static int convert_to_millivolts(struct adc *self, int value)
+static int convert_to_millivolts(struct lm_adc *self, int value)
 {
 	int mv;
 
@@ -62,7 +62,7 @@ static int convert_to_millivolts(struct adc *self, int value)
 	return mv;
 }
 
-static int read_adc(struct adc *self, adc_channel_t channel)
+static int read_adc(struct lm_adc *self, lm_adc_channel_t channel)
 {
 	int adc;
 
@@ -78,7 +78,7 @@ static int read_adc(struct adc *self, adc_channel_t channel)
 	return adc;
 }
 
-static int measure(struct adc *self)
+static int measure(struct lm_adc *self)
 {
 	if (!self || !self->activated) {
 		return -EPIPE;
@@ -87,7 +87,7 @@ static int measure(struct adc *self)
 	return 0;
 }
 
-static int init_channel(struct adc *self, adc_channel_t channel)
+static int init_channel(struct lm_adc *self, lm_adc_channel_t channel)
 {
 	if (!self || !self->activated) {
 		return -EPIPE;
@@ -110,7 +110,7 @@ static int init_channel(struct adc *self, adc_channel_t channel)
 	return 0;
 }
 
-static int calibrate_adc(struct adc *self)
+static int calibrate_adc(struct lm_adc *self)
 {
 	if (!self || !self->activated) {
 		return -EPIPE;
@@ -129,7 +129,7 @@ static int calibrate_adc(struct adc *self)
 	return 0;
 }
 
-static int enable_adc(struct adc *self)
+static int enable_adc(struct lm_adc *self)
 {
 	if (!self) {
 		return -EPIPE;
@@ -149,7 +149,7 @@ static int enable_adc(struct adc *self)
 	return 0;
 }
 
-static int disable_adc(struct adc *self)
+static int disable_adc(struct lm_adc *self)
 {
 	if (!self) {
 		return -EPIPE;
@@ -164,16 +164,16 @@ static int disable_adc(struct adc *self)
 	return 0;
 }
 
-struct adc *adc_create(uint8_t adc_num)
+struct lm_adc *lm_adc_create(uint8_t adc_num)
 {
-	static struct adc adc[ADC_MAX];
+	static struct lm_adc adc[ADC_MAX];
 
 	if (--adc_num >= ADC_MAX || adc[adc_num].activated) {
 		return NULL;
 	}
 
 	for (int i = 0; i < ADC_MAX; i++) {
-		adc[i].api = (struct adc_api) {
+		adc[i].api = (struct lm_adc_api) {
 			.enable = enable_adc,
 			.disable = disable_adc,
 			.init_channel = init_channel,
@@ -189,12 +189,12 @@ struct adc *adc_create(uint8_t adc_num)
 	return &adc[adc_num];
 }
 
-int adc_delete(struct adc *self)
+int lm_adc_delete(struct lm_adc *self)
 {
 	if (!self) {
 		return -EPIPE;
 	} else if (self->activated) {
-		adc_disable(self);
+		lm_adc_disable(self);
 	}
 
 	memset(self, 0, sizeof(*self));

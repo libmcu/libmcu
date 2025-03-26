@@ -12,13 +12,14 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
-#include "libmcu/pwm.h"
 #include "melody.h"
 
 typedef struct buzzer_callbacks {
 	void (*on_frequency_changed)(void *ctx, uint16_t hz);
 	void (*on_stop)(void *ctx);
 } buzzer_callback_t;
+
+struct lm_pwm_channel;
 
 /**
  * @brief Initialize the buzzer module.
@@ -28,7 +29,7 @@ typedef struct buzzer_callbacks {
  * @param[in] on_event_ctx Context pointer to be passed to the callback
  *            function.
  */
-void buzzer_init(struct pwm_channel *pwm,
+void buzzer_init(struct lm_pwm_channel *pwm,
 		buzzer_callback_t *on_event, void *on_event_ctx);
 
 /**

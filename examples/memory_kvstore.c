@@ -121,6 +121,12 @@ static int memory_kvstore_read(struct kvstore *kvstore,
 	return 0;
 }
 
+static int memory_kvstore_open(struct kvstore *kvstore, const char *ns)
+{
+	(void)kvstore;
+	return 0;
+}
+
 void memory_kvstore_destroy(struct kvstore *kvstore)
 {
 	struct list *p, *n;
@@ -158,6 +164,7 @@ struct kvstore *memory_kvstore_create(char const *ns)
 
 	p->api.write = memory_kvstore_write;
 	p->api.read = memory_kvstore_read;
+	p->api.open = memory_kvstore_open;
 	list_init(&p->keylist_head);
 	strcpy(p->namespace, ns);
 	p->namespace[len] = '\0';
