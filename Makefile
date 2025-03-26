@@ -15,7 +15,7 @@ export BASEDIR
 export BUILDIR
 export Q
 
-include projects/runner.mk
+include config/runner.mk
 
 .PHONY: test
 test:
