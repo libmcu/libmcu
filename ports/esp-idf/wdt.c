@@ -98,7 +98,7 @@ static void *wdt_task(void *e)
 				board_get_time_since_boot_ms());
 
 		if (wdt) {
-			WDT_ERROR("wdt %s timed out", wdt->name);
+			WDT_ERROR("wdt \"%s\" timed out", wdt->name);
 
 			if (wdt->cb) {
 				(*wdt->cb)(wdt, wdt->cb_ctx);
