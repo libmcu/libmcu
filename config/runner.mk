@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-include projects/version.mk
-include projects/toolchain.mk
+include config/version.mk
+include config/toolchain.mk
 
 excludes := trace
 LIBMCU_MODULES ?= $(filter-out $(excludes), $(patsubst modules/%, %, $(wildcard modules/*)))
 LIBMCU_INTERFACES ?= $(patsubst interfaces/%, %, $(wildcard interfaces/*))
-include projects/modules.mk
-include projects/interfaces.mk
+include config/modules.mk
+include config/interfaces.mk
 LIBMCU_MODULES_INCS += $(libmcu-basedir)modules/common/include/libmcu/posix
 
 SRCS += $(LIBMCU_MODULES_SRCS) $(LIBMCU_INTERFACES_SRCS)

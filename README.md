@@ -95,13 +95,13 @@ LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
 # The commented lines below are optional. All modules and interfaces included
 # by default if not specified.
 #LIBMCU_MODULES := actor metrics
-include $(LIBMCU_ROOT)/projects/modules.mk
+include $(LIBMCU_ROOT)/config/modules.mk
 
 <SRC_FILES> += $(LIBMCU_MODULES_SRCS)
 <INC_PATHS> += $(LIBMCU_MODULES_INCS)
 
 #LIBMCU_INTERFACES := gpio pwm
-include $(LIBMCU_ROOT)/projects/interfaces.mk
+include $(LIBMCU_ROOT)/config/interfaces.mk
 
 <SRC_FILES> += $(LIBMCU_INTERFACES_SRCS)
 <INC_PATHS> += $(LIBMCU_INTERFACES_INCS)
@@ -118,10 +118,10 @@ or
 ```cmake
 set(LIBMCU_ROOT <THIRD_PARTY_DIR>/libmcu)
 #list(APPEND LIBMCU_MODULES metrics pubsub)
-include(${LIBMCU_ROOT}/projects/modules.cmake)
+include(${LIBMCU_ROOT}/config/modules.cmake)
 
 #list(APPEND LIBMCU_INTERFACES i2c uart)
-include(${LIBMCU_ROOT}/projects/interfaces.cmake)
+include(${LIBMCU_ROOT}/config/interfaces.cmake)
 
 # Add ${LIBMCU_MODULES_SRCS} to your target sources
 # Add ${LIBMCU_MODULES_INCS} to your target includes
