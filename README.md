@@ -5,16 +5,40 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=coverage)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
 [![codecov](https://codecov.io/gh/onkwon/libmcu/branch/master/graph/badge.svg?token=KBLNIEKUF4)](https://codecov.io/gh/onkwon/libmcu)
 
-## Overview
 A toolkit for firmware development.
 
-Simplicity and code size are considered first while trying to avoid dynamic
-allocation as much as possible. No linker script tweak required.
+libmcu prioritizes simplicity and minimal code size. Dynamic memory allocation
+is avoided whenever possible, and no linker script tweaks are required.
 
-The documentation of each modules are under the subdirectories. Some usage
-examples can also be found under [examples](examples) and [test cases](tests/src).
+Documentation for each module is available in its corresponding subdirectory.
+You can also find usage examples in [examples](examples) and test cases in
+[tests](tests/src).
 
-Any feedback would be appreciated.
+Feedback, suggestions, and contributions are always welcome.
+
+## Project Structure
+
+libmcu is organized into three clear layers:
+
+```plaintext
+libmcu/
+├── modules/       # Platform-independent logic modules (actor, metrics, pubsub, etc.)
+├── interfaces/    # Vendor-neutral HAL abstraction interfaces (UART, GPIO, etc.)
+├── ports/         # Platform-specific backend implementations (e.g., STM32 HAL, simulation)
+├── tests/         # Unit tests for modules and interfaces
+├── examples/      # Integration examples for users
+├── config/        # Build integration scripts (e.g., modules.mk, interfaces.mk)
+```
+
+### Naming Philosophy
+
+- `modules/` contains **logic modules**, which implement platform-agnostic behavior
+- `interfaces/` defines **hardware abstraction interfaces (HAL)** that isolate platform details
+- `ports/` implements those interfaces for specific hardware platforms (e.g., STM32, mock)
+
+This structure makes the separation of concerns between logic, hardware abstraction, and platform adaptation clear and extensible.
+
+All public symbols follow the `lm_` prefix convention to avoid symbol collisions and maintain namespace clarity.
 
 ## Modules
 * [Actor](modules/actor)
@@ -49,7 +73,7 @@ Any feedback would be appreciated.
 * [WiFi](interfaces/wifi)
 
 ## Integration Guide
-The library can be intergrated in your project as a [git
+The library can be integrated into your project as a [git
 submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules), using [CMake
 FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html), or
 [downloading](https://github.com/libmcu/libmcu/archive/refs/heads/main.zip)
@@ -113,3 +137,15 @@ FetchContent_Declare(libmcu
 )
 FetchContent_MakeAvailable(libmcu)
 ```
+
+## License
+
+MIT License. See `LICENSE` file.
+
+## OSS Notes
+
+libmcu is an open-source project (OSS), licensed under MIT, and welcomes
+community contributions. All code is written in standard C99 for maximum
+portability. Its modular directory structure, naming conventions, and interface
+boundaries are designed to be intuitive and scalable across a wide range of
+embedded platforms.
