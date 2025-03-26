@@ -21,10 +21,14 @@ jobs:
       - name: Get latest tag or PR base branch
         id: get_tag
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            TAG_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
-          else
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            TAG_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+            if [[ -z "$TAG_VERSION" ]]; then
+              echo "No valid tags found. Setting TAG_VERSION to 'unknown'."
+              TAG_VERSION="unknown"
+            fi
           fi
           echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
 
