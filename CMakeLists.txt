@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(libmcu LANGUAGES C CXX)
 
-include(${CMAKE_CURRENT_LIST_DIR}/config/modules.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/config/interfaces.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/project/modules.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/project/interfaces.cmake)
 
 add_library(${PROJECT_NAME} STATIC
 	${LIBMCU_MODULES_SRCS}
