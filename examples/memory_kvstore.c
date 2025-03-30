@@ -42,7 +42,7 @@ static struct kvstore *find_namespace(char const *namespace)
 	struct list *p;
 	list_for_each(p, &namespace_list_head) {
 		struct kvstore *obj =
-			list_entry(p, typeof(*obj), namespace_list);
+			list_entry(p, struct kvstore, namespace_list);
 		if (!strncmp(obj->namespace, namespace,
 					KVSTORE_MAX_NAMESPACE_LENGTH)) {
 			return obj;
@@ -57,7 +57,7 @@ static struct memory_kvstore_entry *find_key(struct kvstore const *obj,
 	struct list *p;
 	list_for_each(p, &obj->keylist_head) {
 		struct memory_kvstore_entry *entry =
-			list_entry(p, typeof(*entry), list);
+			list_entry(p, struct memory_kvstore_entry, list);
 		if (!strncmp(entry->key, key, KVSTORE_MAX_KEY_LENGTH)) {
 			return entry;
 		}
@@ -124,6 +124,7 @@ static int memory_kvstore_read(struct kvstore *kvstore,
 static int memory_kvstore_open(struct kvstore *kvstore, const char *ns)
 {
 	(void)kvstore;
+	(void)ns;
 	return 0;
 }
 
@@ -133,7 +134,7 @@ void memory_kvstore_destroy(struct kvstore *kvstore)
 
 	list_for_each_safe(p, n, &kvstore->keylist_head) {
 		struct memory_kvstore_entry *entry =
-			list_entry(p, typeof(*entry), list);
+			list_entry(p, struct memory_kvstore_entry, list);
 		free(entry->key);
 		free(entry->value);
 		free(entry);
