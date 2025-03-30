@@ -49,7 +49,7 @@ struct logging_context {
 	const void *lr;
 };
 
-typedef unsigned long (*logging_time_func_t)(void);
+typedef uint32_t (*logging_time_func_t)(void);
 
 #if !defined(get_program_counter)
 #define get_program_counter()		libmcu_get_pc()

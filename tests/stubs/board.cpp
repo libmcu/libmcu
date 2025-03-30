@@ -1,7 +1,7 @@
 #include "CppUTestExt/MockSupport.h"
 #include "libmcu/board.h"
 
-unsigned long board_get_time_since_boot_ms(void) {
+uint32_t board_get_time_since_boot_ms(void) {
 	return 0;
 }
 
@@ -17,7 +17,7 @@ uint32_t board_random(void) {
 	return 0;
 }
 
-unsigned long board_get_current_stack_watermark(void) {
+uint32_t board_get_current_stack_watermark(void) {
 	return 0;
 }
 

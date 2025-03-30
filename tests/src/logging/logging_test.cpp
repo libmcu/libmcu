@@ -14,9 +14,9 @@
 
 static const char *TAG = "logging";
 
-static unsigned long get_time(void) {
-	return (unsigned long)mock().actualCall(__func__)
-		.returnLongIntValueOrDefault(0);
+static uint32_t get_time(void) {
+	return (uint32_t)mock().actualCall(__func__)
+		.returnUnsignedIntValueOrDefault(0);
 }
 static size_t backend_write(const void *data, size_t datasize) {
 	return mock().actualCall(__func__)

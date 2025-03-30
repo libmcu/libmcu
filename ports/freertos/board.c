@@ -17,7 +17,7 @@ void *board_get_current_thread(void)
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_time_since_boot_ms(void)
+uint32_t board_get_time_since_boot_ms(void)
 {
 	static uint64_t elapsed_ticks;
 	static uint32_t previous_count;
@@ -40,23 +40,23 @@ unsigned long board_get_time_since_boot_ms(void)
 		taskEXIT_CRITICAL();
 	}
 
-	return (unsigned long)((elapsed_ticks * 1000) / configTICK_RATE_HZ);
+	return (uint32_t)((elapsed_ticks * 1000) / configTICK_RATE_HZ);
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_current_stack_watermark(void)
+uint32_t board_get_current_stack_watermark(void)
 {
-	return (unsigned long)uxTaskGetStackHighWaterMark(NULL) * sizeof(long);
+	return (uint32_t)uxTaskGetStackHighWaterMark(NULL) * sizeof(long);
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_heap_watermark(void)
+uint32_t board_get_heap_watermark(void)
 {
-	return (unsigned long)xPortGetMinimumEverFreeHeapSize();
+	return (uint32_t)xPortGetMinimumEverFreeHeapSize();
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_free_heap_bytes(void)
+uint32_t board_get_free_heap_bytes(void)
 {
-	return (unsigned long)xPortGetFreeHeapSize();
+	return (uint32_t)xPortGetFreeHeapSize();
 }

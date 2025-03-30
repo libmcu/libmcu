@@ -11,13 +11,14 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
 
-void timeout_set(unsigned long *goal, unsigned long msec);
-bool timeout_is_expired(unsigned long goal);
+void timeout_set(uint32_t *goal, uint32_t msec);
+bool timeout_is_expired(uint32_t goal);
 
-void sleep_ms(unsigned long msec);
+void sleep_ms(uint32_t msec);
 
 #if defined(_GNU_SOURCE)
 /**

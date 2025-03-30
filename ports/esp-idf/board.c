@@ -21,10 +21,10 @@ void *board_get_current_thread(void)
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_time_since_boot_ms(void)
+uint32_t board_get_time_since_boot_ms(void)
 {
 	const int64_t elapsed_usec = esp_timer_get_time();
-	return (unsigned long)(elapsed_usec / 1000);
+	return (uint32_t)(elapsed_usec / 1000);
 }
 
 LIBMCU_NO_INSTRUMENT
@@ -34,19 +34,19 @@ uint64_t board_get_time_since_boot_us(void)
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_current_stack_watermark(void)
+uint32_t board_get_current_stack_watermark(void)
 {
-	return (unsigned long)uxTaskGetStackHighWaterMark(NULL);
+	return (uint32_t)uxTaskGetStackHighWaterMark(NULL);
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_heap_watermark(void)
+uint32_t board_get_heap_watermark(void)
 {
 	return esp_get_minimum_free_heap_size();
 }
 
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_free_heap_bytes(void)
+uint32_t board_get_free_heap_bytes(void)
 {
 	return esp_get_free_heap_size();
 }
