@@ -74,7 +74,7 @@ void board_init(void)
 
 LIBMCU_WEAK
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_time_since_boot_ms(void)
+uint32_t board_get_time_since_boot_ms(void)
 {
 	return 0;
 }
@@ -86,20 +86,20 @@ uint32_t board_random(void)
 }
 
 LIBMCU_WEAK
-unsigned long board_get_free_heap_bytes(void)
+uint32_t board_get_free_heap_bytes(void)
 {
 	return 0;
 }
 
 LIBMCU_WEAK
-unsigned long board_get_heap_watermark(void)
+uint32_t board_get_heap_watermark(void)
 {
 	return 0;
 }
 
 LIBMCU_WEAK
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_current_stack_watermark(void)
+uint32_t board_get_current_stack_watermark(void)
 {
 	return 0;
 }

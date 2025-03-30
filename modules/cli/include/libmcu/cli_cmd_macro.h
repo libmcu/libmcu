@@ -122,9 +122,14 @@ extern "C" {
 	CLI_CPP_EXPAND_NESTED(macroname, (a1)) CLI_CPP_COMMA \
 	CLI_CPP_APPLY_31(macroname, a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20,a21,a22,a23,a24,a25,a26,a27,a28,a29,a30,a31,a32)
 
+#define CLI_CPP_NARG_(...)		CLI_CPP_ARG_N(__VA_ARGS__)
+#if defined(__clang__)
+#define CLI_CPP_NARG(...)		\
+	CLI_CPP_NARG_(__VA_OPT__(_0, ) __VA_ARGS__, CLI_CPP_RSEQ_N())
+#else
 #define CLI_CPP_NARG(...)		\
 	CLI_CPP_NARG_(_0, ## __VA_ARGS__, CLI_CPP_RSEQ_N())
-#define CLI_CPP_NARG_(...)		CLI_CPP_ARG_N(__VA_ARGS__)
+#endif
 
 #define CLI_CPP_REF			&
 #define CLI_CPP_COMMA			,

@@ -14,9 +14,9 @@
 
 // stubs for dependancies
 extern "C" {
-LIBMCU_NO_INSTRUMENT unsigned long board_get_time_since_boot_ms(void) { return 0; }
+LIBMCU_NO_INSTRUMENT uint32_t board_get_time_since_boot_ms(void) { return 0; }
 LIBMCU_NO_INSTRUMENT
-unsigned long board_get_current_stack_watermark(void) { return 0; }
+uint32_t board_get_current_stack_watermark(void) { return 0; }
 LIBMCU_NO_INSTRUMENT void *board_get_current_thread(void) { return 0; }
 }
 

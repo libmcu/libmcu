@@ -42,7 +42,7 @@ const char *board_name(void);
 board_reboot_reason_t board_get_reboot_reason(void);
 const char *board_get_reboot_reason_string(board_reboot_reason_t reason);
 
-unsigned long board_get_time_since_boot_ms(void);
+uint32_t board_get_time_since_boot_ms(void);
 uint64_t board_get_time_since_boot_us(void);
 
 int board_register_idle_hook(int opt, board_idle_hook_t func);
@@ -61,10 +61,10 @@ uint32_t board_random(void);
  */
 uint8_t board_cpuload(int core_id, uint32_t period_sec);
 
-unsigned long board_get_free_heap_bytes(void);
-unsigned long board_get_total_heap_bytes(void);
-unsigned long board_get_heap_watermark(void);
-unsigned long board_get_current_stack_watermark(void);
+uint32_t board_get_free_heap_bytes(void);
+uint32_t board_get_total_heap_bytes(void);
+uint32_t board_get_heap_watermark(void);
+uint32_t board_get_current_stack_watermark(void);
 
 void *board_get_current_thread(void);
 
