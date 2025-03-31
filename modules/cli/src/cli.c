@@ -36,6 +36,7 @@ enum cli_special_key {
 	CTRL_N = 0x0E, /* down */
 	CTRL_P = 0x10, /* up */
 	ESC    = 0x1B,
+	DEL    = 0x7F, /* del */
 };
 
 enum cli_escape_char {
@@ -196,12 +197,13 @@ static char *readline(struct cli *cli)
 			break;
 		}
 
-		buf[(*pos)++] = '\0';
+		buf[*pos] = '\0';
 		*pos = 0;
+		res = buf;
 
 		cli->io->write("\n", 1);
-		res = buf;
 		break;
+	case DEL: /* fall through */
 	case '\b': /* backspace */
 		if (*pos > 0) {
 			(*pos)--;
