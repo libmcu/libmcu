@@ -76,7 +76,7 @@ size_t base64_encode(char *buf, const void *data, size_t datasize)
 	const uint8_t *in = (const uint8_t *)data;
 	size_t outdex = 0;
 
-	for (size_t i = 0; i < datasize; i += 3) {
+	for (size_t i = 0; (i+3) < datasize && (outdex+4) < datasize; i += 3) {
 		const bool c1 = (i+1) < datasize;
 		const bool c2 = (i+2) < datasize;
 
