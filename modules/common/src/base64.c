@@ -37,11 +37,11 @@ static uint8_t from_word(uint32_t word, int offset)
 	return (word >> (offset * 8)) & 0xffU;
 }
 
-static size_t decode(uint8_t *out, const char *in, size_t insize)
+static size_t decode(uint8_t *out, const char *in, size_t insize, size_t maxlen)
 {
 	size_t outdex = 0;
 
-	for (size_t i = 0; i < insize; i += 4) {
+	for (size_t i = 0; i < insize && (outdex+3) <= maxlen; i += 4) {
 		const bool e1 = (in[i+2] == '=');
 		const bool e2 = (in[i+3] == '=');
 
@@ -61,22 +61,13 @@ static size_t decode(uint8_t *out, const char *in, size_t insize)
 	return outdex;
 }
 
-size_t base64_decode(void *buf, const char *str, size_t strsize)
-{
-	return decode((uint8_t *)buf, str, strsize);
-}
-
-size_t base64_decode_overwrite(char *inout, size_t input_size)
-{
-	return decode((uint8_t *)inout, inout, input_size);
-}
-
-size_t base64_encode(char *buf, const void *data, size_t datasize)
+size_t lm_base64_encode(char *buf, size_t bufsize,
+		const void *data, size_t datasize)
 {
 	const uint8_t *in = (const uint8_t *)data;
 	size_t outdex = 0;
 
-	for (size_t i = 0; (i+3) < datasize && (outdex+4) < datasize; i += 3) {
+	for (size_t i = 0; i < datasize && (outdex+4) <= bufsize; i += 3) {
 		const bool c1 = (i+1) < datasize;
 		const bool c2 = (i+2) < datasize;
 
@@ -92,4 +83,16 @@ size_t base64_encode(char *buf, const void *data, size_t datasize)
 	}
 
 	return outdex;
+}
+
+size_t lm_base64_decode(void *buf, size_t bufsize,
+		const char *str, size_t strsize)
+{
+	return decode((uint8_t *)buf, str, strsize, bufsize);
+}
+
+size_t lm_base64_decode_overwrite(char *inout, size_t input_size,
+		size_t maxlen)
+{
+	return decode((uint8_t *)inout, inout, input_size, maxlen);
 }
