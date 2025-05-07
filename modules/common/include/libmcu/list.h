@@ -77,9 +77,9 @@ static inline LIBMCU_ALWAYS_INLINE bool list_empty(const struct list *head)
 	return false;
 }
 
-static inline LIBMCU_ALWAYS_INLINE int list_count(struct list *head)
+static inline LIBMCU_ALWAYS_INLINE int list_count(const struct list *head)
 {
-	struct list *p;
+	const struct list *p;
 	int n = 0;
 	list_for_each(p, head) {
 		n++;
