@@ -25,10 +25,10 @@ extern "C" {
 #define LOGGING_TAGS_MAXNUM			8
 #endif
 #if !defined(LOGGING_TAG)
-#define __FILENAME__				\
+#define FILENAME_TAG				\
 	(__builtin_strrchr(__FILE__, '/')?	\
 		__builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
-#define LOGGING_TAG				__FILENAME__
+#define LOGGING_TAG				FILENAME_TAG
 #endif
 
 #define logging_set_level(level)	\
