@@ -27,6 +27,11 @@
 
 typedef uint16_t logging_magic_t;
 
+struct logging_tag {
+	const char *tag;
+	logging_t min_log_level;
+};
+
 typedef struct {
 	unsigned long timestamp;
 	uintptr_t pc;
@@ -44,11 +49,6 @@ static_assert(LOGGING_TYPE_MAX <= (1U << (sizeof(logging_t) * 8)) - 1,
 static_assert(LOGGING_MESSAGE_MAXLEN
 		< (1U << (sizeof(((logging_data_t *)0)->message_length) * 8)),
 		"MESSAGE_MAXLEN must not exceed its data type size.");
-
-struct logging_tag {
-	const char *tag;
-	logging_t min_log_level;
-};
 
 static struct {
 	struct logging_tag tags[LOGGING_TAGS_MAXNUM];
@@ -494,7 +494,7 @@ size_t logging_stringify(char *buf, size_t bufsize, const void *log)
 	size_t msglen = 0;
 	size_t len = (size_t)snprintf(buf, bufsize-2, "%lu:%s:%s: ",
 			p->timestamp, stringify_type(p->type),
-			p->tag->tag? p->tag->tag : "null");
+			(p->tag && p->tag->tag)? p->tag->tag : "null");
 	buf[bufsize-1] = '\0';
 
 	if (len > 0) {
