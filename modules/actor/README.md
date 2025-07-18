@@ -2,7 +2,7 @@
 
 This is an implementation of Actor Model which is a conceptual concurrent computation model. Check out what Actor Model is [here in wikipedia](https://en.wikipedia.org/wiki/Actor_model).
 
-All actors with the same priority share one execution context. So every actor should be implemented in the way of run-to-completion. This implementation decision is maid for the resource-constrained microcontrollers. You can run actors in another separated execution context as giving it a different priority.
+All actors with the same priority share one execution context. So every actor should be implemented in the way of run-to-completion. This implementation decision is made for the resource-constrained microcontrollers. You can run actors in another separated execution context as giving it a different priority.
 
 ## Integration Guide
 
