@@ -34,6 +34,7 @@ typedef struct {
 	logging_magic_t magic;
 	uint16_t message_length;
 	logging_t type;
+	const struct logging_tag *tag;
 	uint8_t message[];
 } LIBMCU_PACKED logging_data_t;
 static_assert(sizeof(logging_t) == sizeof(uint8_t),
@@ -299,6 +300,7 @@ size_t logging_write(logging_t type, const struct logging_context *ctx, ...)
 	logging_data_t *log = (logging_data_t *)buf;
 	pack_log(log, type, ctx->pc, ctx->lr);
 	pack_message(log, ctx);
+	log->tag = tag;
 
 	for (int i = 0; i < LOGGING_MAX_BACKENDS; i++) {
 		if (m.backends[i]) {
@@ -490,9 +492,9 @@ size_t logging_stringify(char *buf, size_t bufsize, const void *log)
 {
 	const logging_data_t *p = (const logging_data_t *)log;
 	size_t msglen = 0;
-	size_t len = (size_t)snprintf(buf, bufsize-2, "%lu: [%s] <%p,%p> ",
+	size_t len = (size_t)snprintf(buf, bufsize-2, "%lu:%s:%s: ",
 			p->timestamp, stringify_type(p->type),
-			(void *)p->pc, (void *)p->lr);
+			p->tag->tag? p->tag->tag : "null");
 	buf[bufsize-1] = '\0';
 
 	if (len > 0) {
