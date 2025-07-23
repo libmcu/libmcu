@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "libmcu/ip.h"
 
 #if !defined(WIFI_SSID_MAX_LEN)
 #define WIFI_SSID_MAX_LEN		32U
@@ -78,6 +79,8 @@ struct wifi_iface_info {
 	uint8_t channel;
 	int8_t rssi;
 	enum wifi_security security;
+
+	lm_ip_info_t ip_info;
 };
 
 struct wifi_scan_result {
