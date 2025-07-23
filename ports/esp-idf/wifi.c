@@ -14,6 +14,16 @@
 #include "esp_event.h"
 #include "esp_mac.h"
 
+static_assert(sizeof(((lm_ip_info_t *)0)->v4.ip) ==
+		sizeof(((ip_event_got_ip_t *)0)->ip_info.ip),
+		"IP address size mismatch");
+static_assert(sizeof(((lm_ip_info_t *)0)->v4.gateway) ==
+		sizeof(((ip_event_got_ip_t *)0)->ip_info.gw),
+		"Gateway address size mismatch");
+static_assert(sizeof(((lm_ip_info_t *)0)->v4.netmask) ==
+		sizeof(((ip_event_got_ip_t *)0)->ip_info.netmask),
+		"Netmask size mismatch");
+
 #if !defined(WIFI_EVENT_CALLBACK_CAP)
 #define WIFI_EVENT_CALLBACK_CAPACITY		2U
 #endif
@@ -37,10 +47,7 @@ struct wifi {
 
 	struct wifi_iface_info status;
 
-	struct {
-		uint8_t v4[4];
-		uint32_t v6[4];
-	} ip;
+	lm_ip_info_t ip_info;
 
 	esp_event_handler_instance_t wifi_events;
 	esp_event_handler_instance_t ip_acquisition_events;
@@ -69,7 +76,7 @@ static void handle_scan_result_core(struct wifi *self,
 	struct wifi_scan_result res = { 0, };
 
 	for (int i = 0; i < n; i++) {
-		res.ssid_len = strnlen((const char *)scanned[i].ssid,
+		res.ssid_len = (uint8_t)strnlen((const char *)scanned[i].ssid,
 				WIFI_SSID_MAX_LEN);
 		strncpy((char *)res.ssid, (const char *)scanned[i].ssid,
 				res.ssid_len);
@@ -118,16 +125,21 @@ static void handle_scan_done(struct wifi *self)
 
 static void handle_connected_event(struct wifi *self, ip_event_got_ip_t *ip)
 {
+	lm_ip_info_t *info = &self->ip_info;
 	self->state = ESP32_STATE_STA_CONNECTED;
-	memcpy(&self->ip, &ip->ip_info.ip, sizeof(self->ip));
+	memcpy(&info->v4.ip, &ip->ip_info.ip, sizeof(info->v4.ip));
+	memcpy(&info->v4.gateway, &ip->ip_info.gw, sizeof(info->v4.gateway));
+	memcpy(&info->v4.netmask, &ip->ip_info.netmask, sizeof(info->v4.netmask));
 	raise_event_with_data(self, WIFI_EVT_CONNECTED, 0);
 }
-
 
 /* https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/event-handling.html#event-ids-and-corresponding-data-structures */
 static void on_wifi_events(void *arg, esp_event_base_t event_base,
 		int32_t event_id, void *event_data)
 {
+	unused(event_base);
+	unused(event_data);
+
 	struct wifi *self = (struct wifi *)arg;
 
 	switch (event_id) {
@@ -146,7 +158,7 @@ static void on_wifi_events(void *arg, esp_event_base_t event_base,
 		break;
 	case WIFI_EVENT_STA_DISCONNECTED:
 		self->state = ESP32_STATE_STA_STARTED;
-		memset(&self->ip, 0, sizeof(self->ip));
+		memset(&self->ip_info, 0, sizeof(self->ip_info));
 		raise_event_with_data(self, WIFI_EVT_DISCONNECTED, 0);
 		break;
 	case WIFI_EVENT_SCAN_DONE:
@@ -164,6 +176,8 @@ static void on_wifi_events(void *arg, esp_event_base_t event_base,
 static void on_ip_events(void *arg, esp_event_base_t event_base,
 		int32_t event_id, void *event_data)
 {
+	unused(event_base);
+
 	struct wifi *self = (struct wifi *)arg;
 
 	switch (event_id) {
@@ -295,6 +309,8 @@ static int disconnect_wifi(struct wifi *self)
 
 static int scan_wifi(struct wifi *self)
 {
+	unused(self);
+
 	if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK ||
 			esp_wifi_scan_start(&(wifi_scan_config_t) {
 						.show_hidden = true,
@@ -307,17 +323,20 @@ static int scan_wifi(struct wifi *self)
 
 static int enable_wifi(struct wifi *self)
 {
+	unused(self);
 	return esp_wifi_start() == ESP_OK ? 0 : -EAGAIN;
 }
 
 static int disable_wifi(struct wifi *self)
 {
+	unused(self);
 	return esp_wifi_stop() == ESP_OK ? 0 : -EBUSY;
 }
 
 static int get_status(struct wifi *self, struct wifi_iface_info *info)
 {
 	memcpy(info, &self->status, sizeof(self->status));
+	memcpy(&info->ip_info, &self->ip_info, sizeof(self->ip_info));
 	return 0;
 }
 
@@ -347,6 +366,8 @@ static int register_event_callback(struct wifi *self,
 
 struct wifi *wifi_create(int id)
 {
+	unused(id);
+
 	static struct wifi esp_iface = {
 		.api = {
 			.connect = connect_wifi,
