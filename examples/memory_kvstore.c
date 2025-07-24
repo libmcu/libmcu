@@ -23,7 +23,7 @@
 
 struct kvstore {
 	struct kvstore_api api;
-	char *namespace;
+	char *ns;
 	struct list namespace_list;
 	struct list keylist_head;
 };
@@ -37,14 +37,13 @@ struct memory_kvstore_entry {
 
 static DEFINE_LIST_HEAD(namespace_list_head);
 
-static struct kvstore *find_namespace(char const *namespace)
+static struct kvstore *find_namespace(char const *ns)
 {
 	struct list *p;
 	list_for_each(p, &namespace_list_head) {
 		struct kvstore *obj =
 			list_entry(p, struct kvstore, namespace_list);
-		if (!strncmp(obj->namespace, namespace,
-					KVSTORE_MAX_NAMESPACE_LENGTH)) {
+		if (!strncmp(obj->ns, ns, KVSTORE_MAX_NAMESPACE_LENGTH)) {
 			return obj;
 		}
 	}
@@ -80,10 +79,11 @@ static int memory_kvstore_write(struct kvstore *kvstore,
 	} else {
 		size_t len = strnlen(key, KVSTORE_MAX_KEY_LENGTH);
 
-		if (!(entry = malloc(sizeof(*entry)))) {
+		if (!(entry = (struct memory_kvstore_entry *)
+				malloc(sizeof(*entry)))) {
 			goto err;
 		}
-		if (!(entry->key = malloc(len+1))) {
+		if (!(entry->key = (char *)malloc(len+1))) {
 			goto err_free_entry;
 		}
 		if (!(entry->value = malloc(size))) {
@@ -141,7 +141,7 @@ void memory_kvstore_destroy(struct kvstore *kvstore)
 	}
 
 	list_del(&kvstore->namespace_list, &namespace_list_head);
-	free(kvstore->namespace);
+	free(kvstore->ns);
 	free(kvstore);
 }
 
@@ -155,10 +155,10 @@ struct kvstore *memory_kvstore_create(char const *ns)
 
 	size_t len = strnlen(ns, KVSTORE_MAX_NAMESPACE_LENGTH);
 
-	if (!(p = malloc(sizeof(*p)))) {
+	if (!(p = (struct kvstore *)malloc(sizeof(*p)))) {
 		return NULL;
 	}
-	if (!(p->namespace = malloc(len+1))) {
+	if (!(p->ns = (char *)malloc(len+1))) {
 		free(p);
 		return NULL;
 	}
@@ -167,8 +167,8 @@ struct kvstore *memory_kvstore_create(char const *ns)
 	p->api.read = memory_kvstore_read;
 	p->api.open = memory_kvstore_open;
 	list_init(&p->keylist_head);
-	strcpy(p->namespace, ns);
-	p->namespace[len] = '\0';
+	strcpy(p->ns, ns);
+	p->ns[len] = '\0';
 	list_add(&p->namespace_list, &namespace_list_head);
 
 	return p;
