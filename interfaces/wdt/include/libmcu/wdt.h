@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 struct wdt;
 
@@ -22,6 +23,16 @@ struct wdt;
  * @param[in] ctx User-defined context for the callback.
  */
 typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
+
+/**
+ * @brief Callback function type for iterating over watchdog timers.
+ *
+ * This callback is invoked for each watchdog timer during iteration.
+ *
+ * @param[in] wdt Pointer to the current watchdog timer instance.
+ * @param[in] ctx User-defined context passed to the callback.
+ */
+typedef void (*wdt_foreach_cb_t)(struct wdt *wdt, void *ctx);
 
 /**
  * @typedef wdt_periodic_cb_t
@@ -148,6 +159,44 @@ int wdt_feed(struct wdt *self);
  * @return The name of the watchdog timer.
  */
 const char *wdt_name(const struct wdt *self);
+
+/**
+ * @brief Iterate over all registered watchdog timers.
+ *
+ * This function invokes the provided callback for each registered
+ * watchdog timer.
+ *
+ * @param[in] cb Callback function to be invoked for each watchdog timer.
+ * @param[in] cb_ctx User-defined context to pass to the callback.
+ */
+void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx);
+
+/**
+ * @brief Get the timeout period of the specified watchdog timer.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ *
+ * @return Timeout period in milliseconds.
+ */
+uint32_t wdt_get_period(const struct wdt *self);
+
+/**
+ * @brief Get the time elapsed since the last feed of the watchdog timer.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ *
+ * @return Time in milliseconds since the last feed.
+ */
+uint32_t wdt_get_time_since_last_feed(const struct wdt *self);
+
+/**
+ * @brief Check if the specified watchdog timer is enabled.
+ *
+ * @param[in] self Pointer to the watchdog timer instance.
+ *
+ * @return true if the watchdog timer is enabled, false otherwise.
+ */
+bool wdt_is_enabled(const struct wdt *self);
 
 #if defined(__cplusplus)
 }

@@ -324,13 +324,15 @@ static int scan_wifi(struct wifi *self)
 static int enable_wifi(struct wifi *self)
 {
 	unused(self);
-	return esp_wifi_start() == ESP_OK ? 0 : -EAGAIN;
+	esp_err_t err = esp_wifi_start();
+	return err == ESP_OK? 0 : -err;
 }
 
 static int disable_wifi(struct wifi *self)
 {
 	unused(self);
-	return esp_wifi_stop() == ESP_OK ? 0 : -EBUSY;
+	esp_err_t err = esp_wifi_stop();
+	return err == ESP_OK? 0 : -err;
 }
 
 static int get_status(struct wifi *self, struct wifi_iface_info *info)

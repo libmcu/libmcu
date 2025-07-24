@@ -123,6 +123,11 @@ int wdt_feed(struct wdt *self)
 	return 0;
 }
 
+bool wdt_is_enabled(const struct wdt *self)
+{
+	return self->enabled;
+}
+
 int wdt_enable(struct wdt *self)
 {
 	self->enabled = true;
@@ -171,21 +176,41 @@ int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx)
 	return 0;
 }
 
+uint32_t wdt_get_period(const struct wdt *self)
+{
+	return self->period_ms;
+}
+
+uint32_t wdt_get_time_since_last_feed(const struct wdt *self)
+{
+	return board_get_time_since_boot_ms() - self->last_feed_ms;
+}
+
 const char *wdt_name(const struct wdt *self)
 {
 	return self->name;
 }
 
+void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx)
+{
+	struct list *p;
+
+	list_for_each(p, &m.list) {
+		struct wdt *wdt = list_entry(p, struct wdt, link);
+		(*cb)(wdt, cb_ctx);
+	}
+}
+
 int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
 {
-	m.min_period_ms = CONFIG_TASK_WDT_TIMEOUT_S * 1000;
+	m.min_period_ms = (CONFIG_TASK_WDT_TIMEOUT_S * 1000) / 2;
 	m.periodic_cb = cb;
 	m.periodic_cb_ctx = cb_ctx;
 	list_init(&m.list);
 
 #if !CONFIG_ESP_TASK_WDT_INIT
 	esp_task_wdt_config_t twdt_config = {
-		.timeout_ms = CONFIG_TASK_WDT_TIMEOUT_S,
+		.timeout_ms = (CONFIG_TASK_WDT_TIMEOUT_S * 1000) / 2,
 		.idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,
 		.trigger_panic = false,
 	};
