@@ -46,6 +46,7 @@ struct wdt {
 
 struct wdt_manager {
 	pthread_t thread;
+	pthread_mutex_t mutex;
 
 	struct list list;
 
@@ -73,8 +74,9 @@ static void feed_wdt(struct wdt *self)
 static struct wdt *any_timeouts(struct wdt_manager *mgr, const uint32_t now)
 {
 	struct list *p;
+	struct list *n;
 
-	list_for_each(p, &mgr->list) {
+	list_for_each_safe(p, n, &mgr->list) {
 		struct wdt *wdt = list_entry(p, struct wdt, link);
 		if (is_timedout(wdt, now)) {
 			return wdt;
@@ -155,8 +157,10 @@ struct wdt *wdt_new(const char *name, const uint32_t period_ms,
 			.task_handle = board_get_current_thread(),
 		};
 
+		pthread_mutex_lock(&m.mutex);
 		list_add(&wdt->link, &m.list);
 		m.min_period_ms = MIN(m.min_period_ms, period_ms);
+		pthread_mutex_unlock(&m.mutex);
 	}
 	
 	return wdt;
@@ -164,14 +168,19 @@ struct wdt *wdt_new(const char *name, const uint32_t period_ms,
 
 void wdt_delete(struct wdt *self)
 {
+	pthread_mutex_lock(&m.mutex);
 	list_del(&self->link, &m.list);
+	pthread_mutex_unlock(&m.mutex);
+
 	free(self);
 }
 
 int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx)
 {
+	pthread_mutex_lock(&m.mutex);
 	m.cb = cb;
 	m.cb_ctx = cb_ctx;
+	pthread_mutex_unlock(&m.mutex);
 
 	return 0;
 }
@@ -194,8 +203,9 @@ const char *wdt_name(const struct wdt *self)
 void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx)
 {
 	struct list *p;
+	struct list *n;
 
-	list_for_each(p, &m.list) {
+	list_for_each_safe(p, n, &m.list) {
 		struct wdt *wdt = list_entry(p, struct wdt, link);
 		(*cb)(wdt, cb_ctx);
 	}
@@ -207,6 +217,7 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
 	m.periodic_cb = cb;
 	m.periodic_cb_ctx = cb_ctx;
 	list_init(&m.list);
+	pthread_mutex_init(&m.mutex, NULL);
 
 #if !CONFIG_ESP_TASK_WDT_INIT
 	esp_task_wdt_config_t twdt_config = {
@@ -232,6 +243,7 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
 void wdt_deinit(void)
 {
 	pthread_exit(&m.thread);
+	pthread_mutex_destroy(&m.mutex);
 #if !CONFIG_ESP_TASK_WDT_INIT
 	ESP_ERROR_CHECK(esp_task_wdt_deinit());
 #endif
