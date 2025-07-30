@@ -24,3 +24,7 @@ uint32_t board_get_current_stack_watermark(void) {
 const char *board_get_serial_number_string(void) {
 	return mock().actualCall(__func__).returnStringValue();
 }
+
+void *board_get_current_thread(void) {
+	return mock().actualCall(__func__).returnPointerValue();
+}
