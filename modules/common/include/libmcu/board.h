@@ -78,6 +78,16 @@ void *board_get_current_thread(void);
  */
 int board_get_revision(void);
 
+/**
+ * @brief Switches the board to factory mode.
+ *
+ * This function transitions the board into factory mode, which is typically
+ * used for manufacturing or provisioning purposes.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int board_switch_to_factory(void);
+
 #if defined(__cplusplus)
 }
 #endif
