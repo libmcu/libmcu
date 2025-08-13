@@ -67,6 +67,18 @@ struct dfu_image_header {
 struct dfu;
 
 /**
+ * @typedef dfu_selftest_fn_t
+ * @brief Function pointer type for performing a self-test.
+ *
+ * This function is used to execute a self-test during the firmware update
+ * process to ensure the system is functioning correctly.
+ *
+ * @param[in] ctx A pointer to the context data required for the self-test.
+ * @return true if the self-test passes, false otherwise.
+ */
+typedef bool (*dfu_selftest_fn_t)(void *ctx);
+
+/**
  * @brief Creates a new DFU (Device Firmware Update) instance.
  *
  * @param[in] data_block_size The size of the data block to be used for the DFU
@@ -177,6 +189,29 @@ dfu_error_t dfu_invalidate(dfu_slot_t slot);
  * @return true if verification is pending, false otherwise.
  */
 bool dfu_is_pending_verify(void);
+
+/**
+ * @brief Performs a self-test to validate the current firmware.
+ *
+ * This function executes a self-test to ensure the firmware is functioning
+ * as expected. It is typically used during the firmware update process.
+ *
+ * @return true if the self-test passes, false otherwise.
+ */
+bool dfu_selftest(void);
+
+/**
+ * @brief Registers a self-test function for the DFU process.
+ *
+ * This function allows the user to register a self-test function that will
+ * be executed during the firmware update process to validate the system.
+ *
+ * @param[in] fn The self-test function to register.
+ * @param[in] fn_ctx A pointer to the context data required by the self-test
+ *                   function.
+ * @return dfu_error_t A dfu_error_t indicating the result of the operation.
+ */
+dfu_error_t dfu_register_selftest(dfu_selftest_fn_t fn, void *fn_ctx);
 
 #if defined(__cplusplus)
 }
