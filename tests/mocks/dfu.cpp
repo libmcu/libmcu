@@ -36,8 +36,30 @@ dfu_error_t dfu_abort(struct dfu *dfu) {
 		.returnIntValue();
 }
 
-dfu_error_t dfu_commit(struct dfu *dfu) {
+dfu_error_t dfu_accept(void) {
 	return (dfu_error_t)mock().actualCall(__func__)
+		.returnIntValue();
+}
+
+dfu_error_t dfu_reject_and_rollback(void) {
+	return (dfu_error_t)mock().actualCall(__func__)
+		.returnIntValue();
+}
+
+bool dfu_is_pending_verify(void) {
+	return mock().actualCall(__func__)
+		.returnBoolValue();
+}
+
+bool dfu_selftest(void) {
+	return mock().actualCall(__func__)
+		.returnBoolValue();
+}
+
+dfu_error_t dfu_register_selftest(dfu_selftest_fn_t fn, void *fn_ctx) {
+	return (dfu_error_t)mock().actualCall(__func__)
+		.withParameter("fn", fn)
+		.withParameter("fn_ctx", fn_ctx)
 		.returnIntValue();
 }
 
