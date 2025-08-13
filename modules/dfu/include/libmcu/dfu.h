@@ -130,13 +130,25 @@ dfu_error_t dfu_finish(struct dfu *dfu);
 dfu_error_t dfu_abort(struct dfu *dfu);
 
 /**
- * @brief Commits the DFU process, making the update permanent.
+ * @brief Confirms the current running image as valid and cancels rollback.
  *
- * @param[in,out] dfu A pointer to the DFU instance.
+ * This function is called after the self-test passes during operation.
+ * It marks the currently running image (test boot) as valid and prevents
+ * the system from rolling back to the previous image.
  *
- * @return A dfu_error_t indicating the result of the operation.
+ * @return dfu_error_t DFU error code indicating the result of the operation.
  */
-dfu_error_t dfu_commit(struct dfu *dfu);
+dfu_error_t dfu_accept(void);
+
+/**
+ * @brief Declares the current running image as faulty and rolls back.
+ *
+ * This function marks the current image as invalid, triggers a rollback
+ * to the previous valid image, and immediately reboots the system.
+ *
+ * @return dfu_error_t DFU error code indicating the result of the operation.
+ */
+dfu_error_t dfu_reject_and_rollback(void);
 
 /**
  * @brief Checks if the provided image header is valid.
