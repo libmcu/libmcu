@@ -168,6 +168,16 @@ bool dfu_is_valid_header(const struct dfu_image_header *header);
  */
 dfu_error_t dfu_invalidate(dfu_slot_t slot);
 
+/**
+ * @brief Checks if a verification process is pending for the firmware update.
+ *
+ * This function determines whether the firmware update requires verification
+ * before it can be finalized.
+ *
+ * @return true if verification is pending, false otherwise.
+ */
+bool dfu_is_pending_verify(void);
+
 #if defined(__cplusplus)
 }
 #endif
