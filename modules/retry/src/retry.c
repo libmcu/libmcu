@@ -45,7 +45,8 @@ static retry_error_t init(struct retry *self, const struct retry_param *param)
 
 static bool is_exhausted(const struct retry *self)
 {
-	return self->attempts >= self->param.max_attempts;
+	return self->param.max_attempts &&
+		self->attempts >= self->param.max_attempts;
 }
 
 static uint32_t calc_backoff_time(const struct retry *self,
