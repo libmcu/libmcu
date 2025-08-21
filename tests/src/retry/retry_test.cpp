@@ -70,13 +70,15 @@ TEST(retry, ShouldReturnExhausted_WhenMaxAttemptsReached_WhenMaxAttempts1Given) 
 	LONGS_EQUAL(RETRY_ERROR_EXHAUSTED, retry_backoff(&retry, &actual, 0));
 }
 
-TEST(retry, ShouldReturnExhausted_WhenMaxAttemptsReached_WhenMaxAttempts0Given) {
+TEST(retry, ShouldRetryUnlimited_WhenMaxAttempts0Given) {
 	uint32_t actual;
 	struct retry_param param = {
 		.max_attempts = 0,
 	};
 	retry_new_static(&retry, &param);
-	LONGS_EQUAL(RETRY_ERROR_EXHAUSTED, retry_backoff(&retry, &actual, 0));
+	for (int i = 0; i < 100; i++) {
+		LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
+	}
 }
 
 TEST(retry, ShouldReturnInvalidParam_WhenNullRetryGiven) {
@@ -111,12 +113,8 @@ TEST(retry, ShouldResetAttemptsAndPreviousBackOffMs) {
 TEST(retry, exhausted_ShouldReturnTrue_WhenExhausted) {
 	uint32_t actual;
 	struct retry_param param = {
-		.max_attempts = 0,
+		.max_attempts = 1,
 	};
-	retry_new_static(&retry, &param);
-	LONGS_EQUAL(true, retry_exhausted(&retry));
-
-	param.max_attempts = 1;
 	retry_new_static(&retry, &param);
 	LONGS_EQUAL(RETRY_ERROR_NONE, retry_backoff(&retry, &actual, 0));
 	LONGS_EQUAL(true, retry_exhausted(&retry));
