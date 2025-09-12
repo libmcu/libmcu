@@ -7,6 +7,7 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "libmcu/board.h"
 
 #define SEC_TO_USEC(sec)		((sec) * 1000 * 1000)
 #define MIN_TO_USEC(min)		((min) * 60 * 1000 * 1000)

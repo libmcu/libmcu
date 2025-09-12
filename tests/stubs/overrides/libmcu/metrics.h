@@ -18,6 +18,7 @@ typedef uint16_t metric_key_t;
 #define metrics_increase(k)
 #define metrics_increase_by(k, n)
 #define metrics_reset()
+#define metrics_unset(k)
 #define metrics_iterate(f, a)
 #define metrics_collect(a, b)
 #define metrics_count()

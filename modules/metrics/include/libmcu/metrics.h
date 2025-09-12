@@ -117,6 +117,13 @@ void metrics_increase_by(const metric_key_t key, const metric_value_t n);
 void metrics_reset(void);
 
 /**
+ * @brief Unsets the specified metric to an unset state.
+ *
+ * @param[in] key The metric key to be unset.
+ */
+void metrics_unset(const metric_key_t key);
+
+/**
  * @brief Checks if a specific metric is set.
  *
  * This function checks if the specified metric key has been set to a

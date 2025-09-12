@@ -218,7 +218,7 @@ void metrics_increase_by(const metric_key_t key, const metric_value_t n)
 bool metrics_is_set(const metric_key_t key)
 {
 	metrics_lock();
-	bool is_set = is_metric_set(get_obj_from_key(key));
+	const bool is_set = is_metric_set(get_obj_from_key(key));
 	metrics_unlock();
 	return is_set;
 }
@@ -227,6 +227,17 @@ void metrics_reset(void)
 {
 	metrics_lock();
 	reset_all();
+	metrics_unlock();
+}
+
+void metrics_unset(const metric_key_t key)
+{
+	metrics_lock();
+	struct metrics *p = get_obj_from_key(key);
+	if (is_metric_set(p)) {
+		p->value = 0;
+		p->is_set = false;
+	}
 	metrics_unlock();
 }
 
