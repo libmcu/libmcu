@@ -206,6 +206,26 @@ TEST(metrics, set_if_max_ShouldNotSetMaxValue_WhenSameValueGiven) {
 	LONGS_EQUAL(123, metrics_get(ReportInterval));
 }
 
+TEST(metrics, unset_ShouldResetMetric_WhenMetricIsSet) {
+	metrics_set(ReportInterval, 123);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(123, metrics_get(ReportInterval));
+
+	metrics_unset(ReportInterval);
+	
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+}
+
+TEST(metrics, unset_ShouldDoNothing_WhenMetricIsNotSet) {
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	
+	metrics_unset(ReportInterval);
+	
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+}
+
 TEST(metrics, test) {
 	metrics_set(WallTime, 10);
 	// 1. metrics_init()
