@@ -21,6 +21,14 @@ extern "C" {
 #define ACTOR_PRIORITY_BASE		1
 #endif
 
+#define ACTOR_DEFINE(name, fn, pri)				\
+	struct actor name = {					\
+		.handler = fn,					\
+		.priority = pri,				\
+		.link = { .next = &name.link, },		\
+		.messages = { .next = &name.messages, },	\
+	}
+
 struct actor;
 struct actor_msg;
 
