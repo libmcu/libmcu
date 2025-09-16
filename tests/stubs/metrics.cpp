@@ -23,6 +23,10 @@ void metrics_set_max_min(const metric_key_t k_max, const metric_key_t k_min,
 	(void)val;
 }
 
+void metrics_unset(const metric_key_t key) {
+	(void)key;
+}
+
 metric_value_t metrics_get(const metric_key_t key) {
 	(void)key;
 	return 0;
