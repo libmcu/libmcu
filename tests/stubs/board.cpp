@@ -28,3 +28,7 @@ const char *board_get_serial_number_string(void) {
 void *board_get_current_thread(void) {
 	return NULL;
 }
+
+int board_switch_to_factory(void) {
+	return 0;
+}
