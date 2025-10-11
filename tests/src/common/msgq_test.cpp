@@ -59,7 +59,7 @@ TEST(MessageQueue, cap_ShouldReturnQueueCapacity) {
 
 TEST(MessageQueue, cap_ShouldReturnPowerOfTwo_WhenCapacityIsNotPowerOfTwo) {
 	struct msgq *q = msgq_create(150);
-	LONGS_EQUAL(128, msgq_cap(q));
+	LONGS_EQUAL(256, msgq_cap(q)); /* Rounds up to next power of 2 */
 	msgq_destroy(q);
 }
 

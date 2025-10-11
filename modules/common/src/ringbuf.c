@@ -183,6 +183,15 @@ bool ringbuf_create_static(struct ringbuf *handle,
 		return false;
 	}
 
+	/* For static buffers, the size should be a power of 2 to avoid
+	 * capacity loss. If not, we need a larger buffer. */
+	const size_t required_size = roundup_pow2(bufsize);
+	if (required_size > bufsize) {
+		/* The provided buffer is not a power of 2 and would need a
+		 * larger size. Return false to indicate insufficient buffer. */
+		return false;
+	}
+
 	handle->buffer = (uint8_t *)buf;
 	initialize(handle, bufsize);
 
@@ -196,15 +205,19 @@ struct ringbuf *ringbuf_create(const size_t space_size)
 	if (space_size == 0) {
 		return NULL;
 	}
+
+	/* Round up to the next power of 2 to ensure full capacity usage */
+	const size_t actual_size = roundup_pow2(space_size);
+
 	if (!(instance = (struct ringbuf *)calloc(1, sizeof(*instance)))) {
 		return NULL;
 	}
-	if (!(instance->buffer = (uint8_t *)calloc(1, space_size))) {
+	if (!(instance->buffer = (uint8_t *)calloc(1, actual_size))) {
 		free(instance);
 		return NULL;
 	}
 
-	initialize(instance, space_size);
+	initialize(instance, actual_size);
 
 	return instance;
 }
