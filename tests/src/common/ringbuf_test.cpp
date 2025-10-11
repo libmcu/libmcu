@@ -644,3 +644,95 @@ TEST(RingBuffer, resize_ShouldWorkCorrectly_WhenIndexWrapsAround) {
 
 	ringbuf_destroy(handle);
 }
+
+TEST(RingBuffer, available_ShouldReturnCapacity_WhenBufferIsEmpty) {
+	struct ringbuf *handle = ringbuf_create(128);
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+	LONGS_EQUAL(0, ringbuf_length(handle));
+	LONGS_EQUAL(128, ringbuf_available(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, available_ShouldReturnZero_WhenBufferIsFull) {
+	struct ringbuf *handle = ringbuf_create(128);
+	uint8_t data[128];
+	memset(data, 0xAA, sizeof(data));
+
+	ringbuf_write(handle, data, sizeof(data));
+	LONGS_EQUAL(128, ringbuf_length(handle));
+	LONGS_EQUAL(0, ringbuf_available(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, available_ShouldEqualCapacityMinusLength) {
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "Test data with 50 bytes in total for testing!";
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	const size_t length = ringbuf_length(handle);
+	const size_t capacity = ringbuf_capacity(handle);
+	const size_t available = ringbuf_available(handle);
+
+	LONGS_EQUAL(capacity - length, available);
+	LONGS_EQUAL(128 - sizeof(test_data), available);
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, available_ShouldUpdateAfterWrite) {
+	struct ringbuf *handle = ringbuf_create(128);
+
+	LONGS_EQUAL(128, ringbuf_available(handle));
+
+	const uint8_t data1[] = "First write";
+	ringbuf_write(handle, data1, sizeof(data1));
+	LONGS_EQUAL(128 - sizeof(data1), ringbuf_available(handle));
+
+	const uint8_t data2[] = "Second write";
+	ringbuf_write(handle, data2, sizeof(data2));
+	LONGS_EQUAL(128 - sizeof(data1) - sizeof(data2), ringbuf_available(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, available_ShouldUpdateAfterRead) {
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "Test data for reading and checking availability";
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(128 - sizeof(test_data), ringbuf_available(handle));
+
+	/* Read half of the data */
+	uint8_t buf[25];
+	ringbuf_read(handle, 0, buf, sizeof(buf));
+	LONGS_EQUAL(128 - sizeof(test_data) + sizeof(buf), ringbuf_available(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, available_ShouldWorkWithStaticBuffer) {
+	struct ringbuf ringbuf;
+	uint8_t buffer[64];
+
+	ringbuf_create_static(&ringbuf, buffer, sizeof(buffer));
+	LONGS_EQUAL(64, ringbuf_available(&ringbuf));
+
+	const uint8_t test_data[] = "Static buffer test";
+	ringbuf_write(&ringbuf, test_data, sizeof(test_data));
+	LONGS_EQUAL(64 - sizeof(test_data), ringbuf_available(&ringbuf));
+}
+
+TEST(RingBuffer, available_ShouldUpdateAfterResize) {
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "Data before resize";
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(128 - sizeof(test_data), ringbuf_available(handle));
+
+	/* Resize to 256 */
+	ringbuf_resize(handle, 256);
+	LONGS_EQUAL(256 - sizeof(test_data), ringbuf_available(handle));
+
+	ringbuf_destroy(handle);
+}

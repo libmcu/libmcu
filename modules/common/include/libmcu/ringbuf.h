@@ -160,6 +160,20 @@ size_t ringbuf_length(const struct ringbuf *handle);
 size_t ringbuf_capacity(const struct ringbuf *handle);
 
 /**
+ * @brief Gets the available space in the ring buffer.
+ *
+ * This function returns the number of bytes of available space in the ring
+ * buffer, which is the amount of data that can be written to the buffer
+ * without overwriting existing data.
+ *
+ * @param[in] handle Pointer to the ring buffer handle.
+ *
+ * @return The number of bytes of available space in the ring buffer.
+ *         This is equal to (capacity - length).
+ */
+size_t ringbuf_available(const struct ringbuf *handle);
+
+/**
  * @brief Initializes a ring buffer with a static buffer.
  *
  * This function initializes a ring buffer using a statically allocated
