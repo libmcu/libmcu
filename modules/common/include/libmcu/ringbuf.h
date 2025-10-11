@@ -171,8 +171,8 @@ size_t ringbuf_capacity(const struct ringbuf *handle);
  * @param[in] bufsize The size of the static buffer, in bytes.
  *
  * @note The size of the buffer must be a power of 2. If the specified size is
- *       not a power of 2, the actual buffer size will be rounded down to a
- *       power of 2.
+ *       not a power of 2, the function will return false to indicate that a
+ *       larger buffer (rounded up to the next power of 2) is required.
  *
  * @note The buffer must be statically allocated and must remain valid for the
  *       lifetime of the ring buffer.
@@ -182,7 +182,7 @@ size_t ringbuf_capacity(const struct ringbuf *handle);
  *       the buffer should be aligned to a 4-byte boundary.
  *
  * @return true if the ring buffer was successfully initialized, false
- *         otherwise.
+ *         otherwise (including when bufsize is not a power of 2).
  */
 bool ringbuf_create_static(struct ringbuf *handle,
 		void *buf, const size_t bufsize);
@@ -196,9 +196,10 @@ bool ringbuf_create_static(struct ringbuf *handle,
  *
  * @param[in] space_size The size of the buffer to be allocated, in bytes.
  *
- * @note The size of the buffer must be a power of 2. If the specified size is
- *       not a power of 2, the actual buffer size will be rounded down to a
- *       power of 2.
+ * @note If the specified size is not a power of 2, the actual buffer size
+ *       will be automatically rounded up to the next power of 2 to ensure
+ *       the full requested capacity is available. For example, requesting
+ *       100 bytes will allocate 128 bytes.
  *
  * @return Pointer to the newly created ring buffer handle, or NULL if
  *         the allocation fails.

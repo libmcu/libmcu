@@ -308,3 +308,65 @@ TEST(RingBuffer, peek_ShouldReturnZero_WhenRingBufferIsEmpty) {
 	uint8_t buf[5];
 	LONGS_EQUAL(0, ringbuf_peek(&ringbuf_obj, 0, buf, sizeof(buf)));
 }
+
+TEST(RingBuffer, create_ShouldRoundUpToPowerOfTwo_WhenSizeIsNotPowerOfTwo) {
+	/* Request 100 bytes, should get 128 bytes (rounded up) */
+	struct ringbuf *handle = ringbuf_create(100);
+	CHECK(handle);
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, create_ShouldKeepSizeUnchanged_WhenSizeIsPowerOfTwo) {
+	/* Request 128 bytes (already power of 2), should get 128 bytes */
+	struct ringbuf *handle = ringbuf_create(128);
+	CHECK(handle);
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, create_ShouldRoundUpCorrectly_WhenSizeIs1) {
+	/* Request 1 byte, should get 1 byte (already power of 2) */
+	struct ringbuf *handle = ringbuf_create(1);
+	CHECK(handle);
+	LONGS_EQUAL(1, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, create_ShouldRoundUpCorrectly_WhenSizeIs150) {
+	/* Request 150 bytes, should get 256 bytes (rounded up) */
+	struct ringbuf *handle = ringbuf_create(150);
+	CHECK(handle);
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, create_static_ShouldReturnFalse_WhenSizeIsNotPowerOfTwo) {
+	/* Static buffer with non-power-of-2 size should fail */
+	struct ringbuf ringbuf;
+	uint8_t buf[100];
+	CHECK_EQUAL(false, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
+}
+
+TEST(RingBuffer, create_static_ShouldReturnTrue_WhenSizeIsPowerOfTwo) {
+	/* Static buffer with power-of-2 size should succeed */
+	struct ringbuf ringbuf;
+	uint8_t buf[128];
+	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
+	LONGS_EQUAL(128, ringbuf_capacity(&ringbuf));
+}
+
+TEST(RingBuffer, create_static_ShouldReturnTrue_WhenSizeIs1) {
+	/* Static buffer with size 1 (power of 2) should succeed */
+	struct ringbuf ringbuf;
+	uint8_t buf[1];
+	CHECK_EQUAL(true, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
+	LONGS_EQUAL(1, ringbuf_capacity(&ringbuf));
+}
+
+TEST(RingBuffer, create_static_ShouldReturnFalse_WhenSizeIs3) {
+	/* Static buffer with size 3 (not power of 2) should fail */
+	struct ringbuf ringbuf;
+	uint8_t buf[3];
+	CHECK_EQUAL(false, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
+}
