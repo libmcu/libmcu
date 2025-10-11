@@ -176,6 +176,45 @@ size_t ringbuf_capacity(const struct ringbuf *handle)
 	return get_capacity(handle);
 }
 
+bool ringbuf_resize(struct ringbuf *handle, size_t new_size)
+{
+	if (handle == NULL || new_size == 0) {
+		return false;
+	}
+
+	const size_t actual_new_size = roundup_pow2(new_size);
+
+	if (actual_new_size == handle->capacity) {
+		return true;
+	}
+
+	const size_t data_len = get_length(handle);
+
+	/* cannot shrink below current data size */
+	if (actual_new_size < data_len) {
+		return false;
+	}
+
+	uint8_t *new_buffer = (uint8_t *)calloc(1, actual_new_size);
+	if (new_buffer == NULL) {
+		return false;
+	}
+
+	if (data_len > 0) { /* copy existing data to new buffer */
+		read_core(handle, 0, new_buffer, data_len);
+	}
+
+	free(handle->buffer); /* free old buffer */
+
+	/* update handle with new buffer and reset indices */
+	handle->buffer = new_buffer;
+	handle->capacity = actual_new_size;
+	handle->index = data_len;
+	handle->outdex = 0;
+
+	return true;
+}
+
 bool ringbuf_create_static(struct ringbuf *handle,
 		void *buf, const size_t bufsize)
 {

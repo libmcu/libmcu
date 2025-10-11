@@ -207,6 +207,34 @@ bool ringbuf_create_static(struct ringbuf *handle,
 struct ringbuf *ringbuf_create(const size_t space_size);
 
 /**
+ * @brief Resizes a dynamically allocated ring buffer.
+ *
+ * This function resizes a ring buffer that was created with ringbuf_create().
+ * It preserves existing data in the buffer when resizing. The new size will
+ * be automatically rounded up to the next power of 2.
+ *
+ * @param[in] handle Pointer to the ring buffer handle to be resized.
+ * @param[in] new_size The new size for the buffer, in bytes.
+ *
+ * @note This function only works with dynamically allocated ring buffers
+ *       created by ringbuf_create(). It will fail for static ring buffers
+ *       created by ringbuf_create_static().
+ *
+ * @note When shrinking the buffer, if the new size is smaller than the
+ *       current data length, the function will fail and return false.
+ *
+ * @note The new size will be rounded up to the next power of 2. For example,
+ *       requesting 100 bytes will allocate 128 bytes.
+ *
+ * @note All existing data in the buffer will be preserved after resizing.
+ *
+ * @return true if the resize was successful, false otherwise (including
+ *         when the handle is NULL, new_size is 0, memory allocation fails,
+ *         or shrinking below current data size).
+ */
+bool ringbuf_resize(struct ringbuf *handle, size_t new_size);
+
+/**
  * @brief Destroys a ring buffer and frees its resources.
  *
  * This function destroys the specified ring buffer and frees any

@@ -370,3 +370,277 @@ TEST(RingBuffer, create_static_ShouldReturnFalse_WhenSizeIs3) {
 	uint8_t buf[3];
 	CHECK_EQUAL(false, ringbuf_create_static(&ringbuf, buf, sizeof(buf)));
 }
+
+TEST(RingBuffer, resize_ShouldReturnFalse_WhenHandleIsNull) {
+	CHECK_EQUAL(false, ringbuf_resize(NULL, 256));
+}
+
+TEST(RingBuffer, resize_ShouldReturnFalse_WhenNewSizeIsZero) {
+	struct ringbuf *handle = ringbuf_create(128);
+	CHECK_EQUAL(false, ringbuf_resize(handle, 0));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldReturnTrue_WhenSizeIsUnchanged) {
+	/* Resize to same size (128) should succeed without doing anything */
+	struct ringbuf *handle = ringbuf_create(128);
+	CHECK_EQUAL(true, ringbuf_resize(handle, 128));
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldExpandBuffer_WhenNewSizeIsLarger) {
+	/* Expand from 128 to 256 bytes */
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "1234567890123";
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+
+	/* Resize to 256 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* Data should be preserved */
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+	uint8_t buf[sizeof(test_data)];
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(handle, 0, buf, sizeof(buf)));
+	MEMCMP_EQUAL(test_data, buf, sizeof(test_data));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldShrinkBuffer_WhenNewSizeIsSmaller) {
+	/* Shrink from 256 to 128 bytes (with data that fits) */
+	struct ringbuf *handle = ringbuf_create(256);
+	const uint8_t test_data[] = "1234567890123";
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+
+	/* Resize to 128 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 128));
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+
+	/* Data should be preserved */
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+	uint8_t buf[sizeof(test_data)];
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(handle, 0, buf, sizeof(buf)));
+	MEMCMP_EQUAL(test_data, buf, sizeof(test_data));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldReturnFalse_WhenShrinkingBelowDataSize) {
+	/* Try to shrink below current data size */
+	struct ringbuf *handle = ringbuf_create(256);
+	uint8_t test_data[200];
+	memset(test_data, 0xAA, sizeof(test_data));
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+
+	/* Try to resize to 128 (smaller than 200 bytes of data) */
+	CHECK_EQUAL(false, ringbuf_resize(handle, 128));
+
+	/* Buffer should remain unchanged */
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldWorkWithEmptyBuffer) {
+	/* Resize empty buffer */
+	struct ringbuf *handle = ringbuf_create(128);
+	LONGS_EQUAL(0, ringbuf_length(handle));
+
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+	LONGS_EQUAL(0, ringbuf_length(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldPreserveDataWithFullBuffer) {
+	/* Resize when buffer is full */
+	struct ringbuf *handle = ringbuf_create(128);
+	uint8_t test_data[128];
+	for (size_t i = 0; i < sizeof(test_data); i++) {
+		test_data[i] = (uint8_t)i;
+	}
+
+	ringbuf_write(handle, test_data, sizeof(test_data));
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+
+	/* Resize to 256 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* All data should be preserved */
+	LONGS_EQUAL(sizeof(test_data), ringbuf_length(handle));
+	uint8_t buf[sizeof(test_data)];
+	LONGS_EQUAL(sizeof(test_data), ringbuf_read(handle, 0, buf, sizeof(buf)));
+	MEMCMP_EQUAL(test_data, buf, sizeof(test_data));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldPreserveDataWithWraparound) {
+	/* Resize when data is wrapped around */
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "123456789012";
+
+	/* Fill buffer */
+	while (ringbuf_write(handle, test_data, sizeof(test_data)));
+
+	/* Read some data to create wraparound */
+	uint8_t buf[sizeof(test_data)];
+	ringbuf_read(handle, 0, buf, sizeof(buf));
+
+	/* Write again to create wraparound */
+	size_t written = ringbuf_write(handle, test_data, sizeof(test_data));
+	CHECK(written > 0);
+
+	const size_t data_len_before = ringbuf_length(handle);
+
+	/* Resize to 256 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* Data length should be preserved */
+	LONGS_EQUAL(data_len_before, ringbuf_length(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldRoundUpToNextPowerOfTwo) {
+	/* Request 200 bytes, should get 256 */
+	struct ringbuf *handle = ringbuf_create(128);
+	CHECK_EQUAL(true, ringbuf_resize(handle, 200));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldReturnFalse_WhenOutOfMemory) {
+	struct ringbuf *handle = ringbuf_create(128);
+	cpputest_malloc_set_out_of_memory();
+	CHECK_EQUAL(false, ringbuf_resize(handle, 256));
+	cpputest_malloc_set_not_out_of_memory();
+
+	/* Buffer should remain unchanged */
+	LONGS_EQUAL(128, ringbuf_capacity(handle));
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldPreserveRemainingData_WhenPartiallyConsumed) {
+	/* Test: Write data -> Read partial -> Resize -> Check remaining data */
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t test_data[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	const size_t data_size = sizeof(test_data);
+
+	/* Write 63 bytes */
+	ringbuf_write(handle, test_data, data_size);
+	LONGS_EQUAL(data_size, ringbuf_length(handle));
+
+	/* Read and consume only 30 bytes */
+	uint8_t buf_partial[30];
+	LONGS_EQUAL(sizeof(buf_partial), ringbuf_read(handle, 0, buf_partial, sizeof(buf_partial)));
+	MEMCMP_EQUAL(test_data, buf_partial, sizeof(buf_partial));
+
+	/* Now 33 bytes should remain (63 - 30) */
+	const size_t remaining = data_size - sizeof(buf_partial);
+	LONGS_EQUAL(remaining, ringbuf_length(handle));
+
+	/* Resize to 256 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* Remaining data should still be 33 bytes */
+	LONGS_EQUAL(remaining, ringbuf_length(handle));
+
+	/* Read remaining data and verify it matches the unconsumed portion */
+	uint8_t buf_remaining[remaining];
+	LONGS_EQUAL(remaining, ringbuf_read(handle, 0, buf_remaining, sizeof(buf_remaining)));
+	MEMCMP_EQUAL(test_data + sizeof(buf_partial), buf_remaining, remaining);
+
+	/* Buffer should now be empty */
+	LONGS_EQUAL(0, ringbuf_length(handle));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldHandleComplexScenario_WriteReadWriteResize) {
+	/* Complex scenario: Write -> Read partial -> Write more -> Resize */
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t data1[] = "First batch of data with 50 bytes total here!";
+	const uint8_t data2[] = "Second batch";
+
+	/* Write first batch (47 bytes) */
+	ringbuf_write(handle, data1, sizeof(data1));
+	LONGS_EQUAL(sizeof(data1), ringbuf_length(handle));
+
+	/* Consume 20 bytes */
+	uint8_t buf[50];
+	LONGS_EQUAL(20, ringbuf_read(handle, 0, buf, 20));
+	MEMCMP_EQUAL(data1, buf, 20);
+	LONGS_EQUAL(sizeof(data1) - 20, ringbuf_length(handle));
+
+	/* Write second batch (13 bytes) */
+	ringbuf_write(handle, data2, sizeof(data2));
+	const size_t total_remaining = sizeof(data1) - 20 + sizeof(data2);
+	LONGS_EQUAL(total_remaining, ringbuf_length(handle));
+
+	/* Resize to 256 */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* Data length should be preserved */
+	LONGS_EQUAL(total_remaining, ringbuf_length(handle));
+
+	/* Verify first remaining part from data1 */
+	uint8_t verify_buf[total_remaining];
+	LONGS_EQUAL(total_remaining, ringbuf_read(handle, 0, verify_buf, sizeof(verify_buf)));
+
+	/* Should have remaining part of data1 followed by data2 */
+	MEMCMP_EQUAL(data1 + 20, verify_buf, sizeof(data1) - 20);
+	MEMCMP_EQUAL(data2, verify_buf + sizeof(data1) - 20, sizeof(data2));
+
+	ringbuf_destroy(handle);
+}
+
+TEST(RingBuffer, resize_ShouldWorkCorrectly_WhenIndexWrapsAround) {
+	/* Test with index/outdex values that have wrapped around capacity */
+	struct ringbuf *handle = ringbuf_create(128);
+	const uint8_t pattern[] = "0123456789ABCDEF"; /* 17 bytes */
+
+	/* Fill buffer multiple times to make index/outdex large */
+	for (int i = 0; i < 20; i++) {
+		/* Write 17 bytes */
+		ringbuf_write(handle, pattern, sizeof(pattern));
+		/* Read 17 bytes */
+		uint8_t buf[sizeof(pattern)];
+		ringbuf_read(handle, 0, buf, sizeof(buf));
+	}
+
+	/* At this point, index and outdex are both around 340 (20 * 17)
+	 * but buffer is empty */
+	LONGS_EQUAL(0, ringbuf_length(handle));
+
+	/* Now write some data */
+	const uint8_t final_data[] = "FINAL TEST DATA";
+	ringbuf_write(handle, final_data, sizeof(final_data));
+	LONGS_EQUAL(sizeof(final_data), ringbuf_length(handle));
+
+	/* Resize */
+	CHECK_EQUAL(true, ringbuf_resize(handle, 256));
+	LONGS_EQUAL(256, ringbuf_capacity(handle));
+
+	/* Data should be preserved */
+	LONGS_EQUAL(sizeof(final_data), ringbuf_length(handle));
+	uint8_t buf[sizeof(final_data)];
+	LONGS_EQUAL(sizeof(final_data), ringbuf_read(handle, 0, buf, sizeof(buf)));
+	MEMCMP_EQUAL(final_data, buf, sizeof(final_data));
+
+	ringbuf_destroy(handle);
+}
