@@ -176,6 +176,11 @@ size_t ringbuf_capacity(const struct ringbuf *handle)
 	return get_capacity(handle);
 }
 
+size_t ringbuf_available(const struct ringbuf *handle)
+{
+	return get_available(handle);
+}
+
 bool ringbuf_resize(struct ringbuf *handle, size_t new_size)
 {
 	if (handle == NULL || new_size == 0) {
