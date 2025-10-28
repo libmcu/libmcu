@@ -614,3 +614,23 @@ TEST(Button, repeats_ShouldReturnNumberOfRepeats_WhenCalled) {
 	LONGS_EQUAL(2, button_repeats(button));
 	finish();
 }
+
+TEST(Button, step_ShouldHandleReleased_WhenButtonReleasedLongAgo) {
+	mock().expectNCalls(7, "get_button_state").andReturnValue(1);
+	mock().expectNCalls(10, "get_button_state").andReturnValue(0);
+
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_STATE_PRESSED)
+		.withParameter("clicks", 1)
+		.withParameter("repeats", 0);
+	mock().expectOneCall("on_button_event")
+		.withParameter("event", BUTTON_STATE_RELEASED)
+		.withParameter("clicks", 1)
+		.withParameter("repeats", 0);
+
+	prepare();
+	button_step(button, 7*BUTTON_SAMPLING_PERIOD_MS);
+	button_step(button, 7*BUTTON_SAMPLING_PERIOD_MS +
+			10*BUTTON_SAMPLING_PERIOD_MS);
+	finish();
+}

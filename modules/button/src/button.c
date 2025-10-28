@@ -174,7 +174,8 @@ static bool is_button_released(const struct button *btn)
 
 	/* 0b1000000 */
 	const waveform_t expected = get_debounce_bitstream(btn);
-	return get_waveform(btn) == expected;
+	const waveform_t actual = get_waveform(btn);
+	return actual == expected || actual == 0;
 }
 
 static bool is_button_up(const struct button *btn)
