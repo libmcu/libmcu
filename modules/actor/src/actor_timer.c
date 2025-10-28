@@ -91,6 +91,26 @@ static bool is_timed_out(const struct actor_timer *timer)
 	return timer->timeout_ms == 0;
 }
 
+size_t actor_timer_count_messages(struct actor *actor)
+{
+	size_t cnt = 0;
+	struct list *p;
+
+	actor_lock();
+
+	list_for_each(p, &m.timer_armed) {
+		struct actor_timer *timer =
+			list_entry(p, struct actor_timer, link);
+		if (timer->actor == actor && timer->msg) {
+			cnt++;
+		}
+	}
+
+	actor_unlock();
+
+	return cnt;
+}
+
 size_t actor_timer_cap(void)
 {
 	return m.cap;

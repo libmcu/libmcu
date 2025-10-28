@@ -12,6 +12,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "libmcu/assert.h"
 #include "libmcu/compiler.h"
@@ -146,22 +147,28 @@ static void dispatch_actor(struct core *core)
 	struct msg *p;
 
 	actor_lock();
+	actor = pop_actor(&core->runq);
+	actor_unlock();
 
-	if ((actor = pop_actor(&core->runq)) == NULL) {
-		actor_unlock();
+	if (actor == NULL) {
 		ACTOR_WARN("No actor found");
 		return;
 	}
 
-	if ((p = pop_message(&actor->messages))) {
+	pthread_mutex_lock(&actor->mutex);
+	p = pop_message(&actor->messages);
+	pthread_mutex_unlock(&actor->mutex);
+
+	if (p) {
 		message = (struct actor_msg *)(void *)p->payload;
 
+		/* reschedule if there are more messages */
 		if (has_message(&actor->messages)) {
+			actor_lock();
 			push_actor(actor, core);
+			actor_unlock();
 		}
 	}
-
-	actor_unlock();
 
 	ACTOR_DEBUG("dispatch(%d) %p: %p", core->priority, actor, message);
 
@@ -193,7 +200,9 @@ static void *dispatcher(void *e)
 	return 0;
 }
 
-static int initialize_scheduler(struct actor_ctx *ctx, size_t stack_size_bytes)
+static int initialize_scheduler(struct actor_ctx *ctx,
+		actor_stack_size_getter_t stack_size_getter,
+		void *stack_size_getter_ctx)
 {
 	for (int i = 0; i < ACTOR_PRIORITY_MAX; i++) {
 		struct core *core = &ctx->core[i];
@@ -212,6 +221,8 @@ static int initialize_scheduler(struct actor_ctx *ctx, size_t stack_size_bytes)
 #else
 		core->priority = ACTOR_PRIORITY_BASE + i;
 #endif
+		const size_t stack_size_bytes = (*stack_size_getter)
+			(core->priority, stack_size_getter_ctx);
 
 		struct sched_param param;
 		pthread_attr_init(&core->thread_attr);
@@ -299,12 +310,12 @@ int actor_free(struct actor_msg *msg)
 	return 0;
 }
 
-size_t actor_cap(void)
+size_t actor_mem_cap(void)
 {
 	return m.msgpool.cap;
 }
 
-size_t actor_len(void)
+size_t actor_mem_len(void)
 {
 	struct list *head = &m.msgpool.free_list.head;
 
@@ -324,21 +335,24 @@ int actor_send(struct actor *actor, struct actor_msg *msg)
 	bool need_schedule = true;
 	int rc = 0;
 
-	actor_lock();
-
 	if (msg) {
 		struct msg *p = list_entry(msg, struct msg, payload);
-		if ((rc = push_message(p, actor)) != 0) {
+
+		pthread_mutex_lock(&actor->mutex);
+		rc = push_message(p, actor);
+		pthread_mutex_unlock(&actor->mutex);
+
+		if (rc != 0) {
 			need_schedule = false;
 			ACTOR_WARN("Duplicate message %p", msg);
 		}
 	}
 
 	if (need_schedule) {
+		actor_lock();
 		schedule_actor(actor, &m);
+		actor_unlock();
 	}
-
-	actor_unlock();
 
 	return rc;
 }
@@ -357,6 +371,18 @@ int actor_send_defer(struct actor *actor, struct actor_msg *msg,
 	return 0;
 }
 
+size_t actor_count_messages(struct actor *actor)
+{
+	assert(actor);
+
+	pthread_mutex_lock(&actor->mutex);
+	size_t cnt = (size_t)list_count(&actor->messages);
+	cnt += actor_timer_count_messages(actor);
+	pthread_mutex_unlock(&actor->mutex);
+
+	return cnt;
+}
+
 struct actor *actor_set(struct actor *actor,
 		actor_handler_t handler, const int priority)
 {
@@ -370,16 +396,60 @@ struct actor *actor_set(struct actor *actor,
 	list_init(&actor->link);
 	list_init(&actor->messages);
 
+	pthread_mutex_init(&actor->mutex, NULL);
+
 	return actor;
 }
 
-int actor_init(void *mem, const size_t memsize, const size_t stack_size_bytes)
+void actor_unset(struct actor *actor)
+{
+	assert(actor);
+
+	struct msg *msg;
+
+	pthread_mutex_lock(&actor->mutex);
+	while ((msg = pop_message(&actor->messages))) {
+		actor_free((struct actor_msg *)(void *)msg->payload);
+	}
+	pthread_mutex_unlock(&actor->mutex);
+}
+
+struct actor *actor_new(actor_handler_t handler, const int priority)
+{
+	struct actor *actor = (struct actor *)calloc(1, sizeof(*actor));
+
+	if (!actor) {
+		return NULL;
+	}
+
+	memset(actor, 0, sizeof(*actor));
+
+	actor_set(actor, handler, priority);
+
+	return actor;
+}
+
+void actor_delete(struct actor *actor)
+{
+	if (!actor) {
+		return;
+	}
+
+	actor_unset(actor);
+	pthread_mutex_destroy(&actor->mutex);
+	free(actor);
+}
+
+int actor_init(void *mem, const size_t memsize,
+		actor_stack_size_getter_t stack_size_getter,
+		void *stack_size_getter_ctx)
 {
 	const size_t mask = sizeof(uintptr_t) - 1;
 	const size_t remainder = (size_t)mem & mask;
 
 	assert(mem);
 	assert(memsize >= (sizeof(struct actor_msg) + remainder));
+	assert(stack_size_getter);
 
 	memset(&m, 0, sizeof(m));
 	m.msgpool.buf = (void *)(((uintptr_t)mem + mask) & ~mask);
@@ -401,7 +471,8 @@ int actor_init(void *mem, const size_t memsize, const size_t stack_size_bytes)
 	ACTOR_INFO("%lu free entries initialized.", max_index);
 	ACTOR_DEBUG("%lu bytes wasted.", memsize - m.msgpool.cap);
 
-	return initialize_scheduler(&m, stack_size_bytes);
+	return initialize_scheduler(&m, stack_size_getter,
+			stack_size_getter_ctx);
 }
 
 int actor_deinit(void)

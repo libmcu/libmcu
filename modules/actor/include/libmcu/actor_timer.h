@@ -29,6 +29,8 @@ int actor_timer_step(uint32_t elapsed_ms);
 size_t actor_timer_cap(void);
 size_t actor_timer_len(void);
 
+size_t actor_timer_count_messages(struct actor *actor);
+
 #if defined(__cplusplus)
 }
 #endif
