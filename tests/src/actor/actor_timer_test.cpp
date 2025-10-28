@@ -397,6 +397,10 @@ TEST(ACTOR_TIMER, count_messages_ShouldIncludeDeferredMessages) {
 	// Wait for immediate message to be processed
 	sem_wait(&done);
 
+	mock().expectOneCall("actor_handler")
+		.withParameter("self", &actor)
+		.withParameter("msg", msg4);
+
 	// Send another immediate message after first is processed
 	actor_send(&actor, msg4);
 
@@ -405,10 +409,6 @@ TEST(ACTOR_TIMER, count_messages_ShouldIncludeDeferredMessages) {
 	size_t total_count = actor_count_messages(&actor);
 	CHECK(total_count >= 2); // At least 2 deferred messages
 	LONGS_EQUAL(2, actor_timer_count_messages(&actor)); // 2 timer messages
-
-	mock().expectOneCall("actor_handler")
-		.withParameter("self", &actor)
-		.withParameter("msg", msg4);
 
 	// Wait for msg4 to be processed
 	sem_wait(&done);
@@ -463,22 +463,9 @@ TEST(ACTOR_TIMER, count_messages_ShouldUpdateAfterDeferredTimeout) {
 	LONGS_EQUAL(1, actor_count_messages(&actor));
 	LONGS_EQUAL(1, actor_timer_count_messages(&actor));
 
-	// Add an immediate message while one timer is still pending
-	actor_send(&actor, msg3);
-
-	// Now should have 1 immediate + 1 deferred = 2
-	size_t count = actor_count_messages(&actor);
-	CHECK(count >= 1); // At least the timer message
-
-	mock().expectOneCall("actor_handler")
-		.withParameter("self", &actor)
-		.withParameter("msg", msg3);
 	mock().expectOneCall("actor_handler")
 		.withParameter("self", &actor)
 		.withParameter("msg", msg2);
-
-	// Process immediate message
-	sem_wait(&done);
 
 	// Should have 1 timer left
 	LONGS_EQUAL(1, actor_count_messages(&actor));

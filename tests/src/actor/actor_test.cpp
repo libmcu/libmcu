@@ -293,7 +293,6 @@ TEST(ACTOR, send_ShouldSucceed_WhenNullMessageGiven) {
 	sem_wait(&done);
 
 	actor_unset(&actor1);
-	pthread_mutex_destroy(&actor1.mutex);
 }
 
 TEST(ACTOR, send_ShouldReturnError_WhenDuplicateMessage) {
@@ -316,5 +315,4 @@ TEST(ACTOR, send_ShouldReturnError_WhenDuplicateMessage) {
 	sem_wait(&done);
 
 	actor_unset(&actor1);
-	pthread_mutex_destroy(&actor1.mutex);
 }

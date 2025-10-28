@@ -412,6 +412,8 @@ void actor_unset(struct actor *actor)
 		actor_free((struct actor_msg *)(void *)msg->payload);
 	}
 	pthread_mutex_unlock(&actor->mutex);
+
+	pthread_mutex_destroy(&actor->mutex);
 }
 
 struct actor *actor_new(actor_handler_t handler, const int priority)
@@ -421,8 +423,6 @@ struct actor *actor_new(actor_handler_t handler, const int priority)
 	if (!actor) {
 		return NULL;
 	}
-
-	memset(actor, 0, sizeof(*actor));
 
 	actor_set(actor, handler, priority);
 
@@ -436,7 +436,6 @@ void actor_delete(struct actor *actor)
 	}
 
 	actor_unset(actor);
-	pthread_mutex_destroy(&actor->mutex);
 	free(actor);
 }
 
