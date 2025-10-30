@@ -72,17 +72,18 @@ static uint32_t get_deadline_ms(const struct wdt *wdt)
 static uint32_t get_time_until_deadline_ms(const struct wdt *wdt, uint32_t now)
 {
 	const uint32_t deadline_ms = get_deadline_ms(wdt);
+	const uint32_t diff = deadline_ms - now;
 
-	if (now >= deadline_ms) {
+	if (diff > wdt->period_ms) {
 		return 0;
 	}
 
-	return deadline_ms - now;
+	return diff;
 }
 
 static bool is_timedout(struct wdt *wdt, uint32_t now)
 {
-	return wdt->enabled && (now >= get_deadline_ms(wdt));
+	return wdt->enabled && get_time_until_deadline_ms(wdt, now) == 0;
 }
 
 static void feed_wdt(struct wdt *self, uint32_t now)
@@ -100,9 +101,11 @@ static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 		*next_deadline_ms = mgr->min_period_ms;
 	}
 
+	pthread_mutex_lock(&mgr->mutex);
 	list_for_each_safe(p, n, &mgr->list) {
 		struct wdt *wdt = list_entry(p, struct wdt, link);
 		if (is_timedout(wdt, now)) {
+			pthread_mutex_unlock(&mgr->mutex);
 			return wdt;
 		}
 		if (next_deadline_ms) {
@@ -110,6 +113,7 @@ static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 			*next_deadline_ms = MIN(*next_deadline_ms, t);
 		}
 	}
+	pthread_mutex_unlock(&mgr->mutex);
 
 	return NULL;
 }
@@ -177,8 +181,8 @@ bool wdt_is_enabled(const struct wdt *self)
 
 int wdt_enable(struct wdt *self)
 {
-	self->enabled = true;
 	feed_wdt(self, board_get_time_since_boot_ms());
+	self->enabled = true;
 	return 0;
 }
 
@@ -269,6 +273,8 @@ void wdt_stop(void)
 
 int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
 {
+	int err = 0;
+
 	m.min_period_ms = (CONFIG_TASK_WDT_TIMEOUT_S * 1000) / 2;
 	m.periodic_cb = cb;
 	m.periodic_cb_ctx = cb_ctx;
@@ -282,7 +288,7 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
 		.idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,
 		.trigger_panic = false,
 	};
-	int err = esp_task_wdt_init(&twdt_config);
+	err = esp_task_wdt_init(&twdt_config);
 
 	if (err != ESP_OK) {
 		return -err;
@@ -293,11 +299,11 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
 
 		pthread_attr_init(&attr);
 		pthread_attr_setstacksize(&attr, STACK_SIZE_BYTES);
-
-		return pthread_create(&m.thread, &attr, wdt_task, &m);
+		err = pthread_create(&m.thread, &attr, wdt_task, &m);
+		pthread_attr_destroy(&attr);
 	}
 
-	return 0;
+	return err;
 }
 
 void wdt_deinit(void)
