@@ -113,7 +113,7 @@ void wdt_stop(void);
  *       in missing short-period task watchdogs or, if limits are exceeded,
  *       the system may reset.
  *
- * @param next_deadline_ms Pointer to a variable where the next deadline
+ * @param[out] next_deadline_ms Pointer to a variable where the next deadline
  *                         (in milliseconds) will be stored.
  *
  * @return 0 on success, negative error code on failure.

@@ -97,10 +97,6 @@ static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 	struct list *p;
 	struct list *n;
 
-	if (next_deadline_ms) {
-		*next_deadline_ms = mgr->min_period_ms;
-	}
-
 	pthread_mutex_lock(&mgr->mutex);
 	list_for_each_safe(p, n, &mgr->list) {
 		struct wdt *wdt = list_entry(p, struct wdt, link);
@@ -108,7 +104,7 @@ static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 			pthread_mutex_unlock(&mgr->mutex);
 			return wdt;
 		}
-		if (next_deadline_ms) {
+		if (next_deadline_ms && wdt->enabled) {
 			const uint32_t t = get_time_until_deadline_ms(wdt, now);
 			*next_deadline_ms = MIN(*next_deadline_ms, t);
 		}
@@ -122,6 +118,10 @@ static int process_timeouts(struct wdt_manager *mgr, uint32_t *next_deadline_ms)
 {
 	if (mgr->periodic_cb) {
 		(*mgr->periodic_cb)(mgr->periodic_cb_ctx);
+	}
+
+	if (next_deadline_ms) {
+		*next_deadline_ms = mgr->min_period_ms;
 	}
 
 	struct wdt *wdt = any_timeouts(mgr,
@@ -148,6 +148,7 @@ static int process_timeouts(struct wdt_manager *mgr, uint32_t *next_deadline_ms)
 static void *wdt_task(void *e)
 {
 	struct wdt_manager *mgr = (struct wdt_manager *)e;
+	ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
 	while (1) {
 		uint32_t next_deadline_ms;
@@ -155,6 +156,7 @@ static void *wdt_task(void *e)
 		sleep_ms(next_deadline_ms);
 	}
 
+	esp_task_wdt_delete(NULL);
 	return 0;
 }
 
@@ -262,13 +264,17 @@ void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx)
 
 int wdt_start(void)
 {
-	ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+	if (!m.threaded) {
+		ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+	}
 	return 0;
 }
 
 void wdt_stop(void)
 {
-	esp_task_wdt_delete(NULL);
+	if (!m.threaded) {
+		esp_task_wdt_delete(NULL);
+	}
 }
 
 int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
