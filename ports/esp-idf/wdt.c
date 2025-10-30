@@ -9,11 +9,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <errno.h>
 
-#include "esp_task_wdt.h"
 #include "libmcu/board.h"
 #include "libmcu/list.h"
 #include "libmcu/timext.h"
+
+#include "esp_task_wdt.h"
 
 #if !defined(WDT_STACK_SIZE_BYTES)
 #define WDT_STACK_SIZE_BYTES	1024U
@@ -57,33 +59,90 @@ struct wdt_manager {
 	void *periodic_cb_ctx;
 
 	uint32_t min_period_ms;
+	bool threaded;
 };
 
 static struct wdt_manager m;
 
-static bool is_timedout(struct wdt *wdt, const uint32_t now)
+static uint32_t get_deadline_ms(const struct wdt *wdt)
 {
-	return wdt->enabled && (now - wdt->last_feed_ms) >= wdt->period_ms;
+	return wdt->last_feed_ms + wdt->period_ms;
 }
 
-static void feed_wdt(struct wdt *self)
+static uint32_t get_time_until_deadline_ms(const struct wdt *wdt, uint32_t now)
 {
-	self->last_feed_ms = board_get_time_since_boot_ms();
+	const uint32_t deadline_ms = get_deadline_ms(wdt);
+	const uint32_t diff = deadline_ms - now;
+
+	if (diff > wdt->period_ms) {
+		return 0;
+	}
+
+	return diff;
 }
 
-static struct wdt *any_timeouts(struct wdt_manager *mgr, const uint32_t now)
+static bool is_timedout(struct wdt *wdt, uint32_t now)
+{
+	return wdt->enabled && get_time_until_deadline_ms(wdt, now) == 0;
+}
+
+static void feed_wdt(struct wdt *self, uint32_t now)
+{
+	self->last_feed_ms = now;
+}
+
+static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
+		uint32_t *next_deadline_ms)
 {
 	struct list *p;
 	struct list *n;
 
+	pthread_mutex_lock(&mgr->mutex);
 	list_for_each_safe(p, n, &mgr->list) {
 		struct wdt *wdt = list_entry(p, struct wdt, link);
 		if (is_timedout(wdt, now)) {
+			pthread_mutex_unlock(&mgr->mutex);
 			return wdt;
 		}
+		if (next_deadline_ms && wdt->enabled) {
+			const uint32_t t = get_time_until_deadline_ms(wdt, now);
+			*next_deadline_ms = MIN(*next_deadline_ms, t);
+		}
 	}
+	pthread_mutex_unlock(&mgr->mutex);
 
 	return NULL;
+}
+
+static int process_timeouts(struct wdt_manager *mgr, uint32_t *next_deadline_ms)
+{
+	if (mgr->periodic_cb) {
+		(*mgr->periodic_cb)(mgr->periodic_cb_ctx);
+	}
+
+	if (next_deadline_ms) {
+		*next_deadline_ms = mgr->min_period_ms;
+	}
+
+	struct wdt *wdt = any_timeouts(mgr,
+			board_get_time_since_boot_ms(), next_deadline_ms);
+
+	if (wdt) {
+		WDT_ERROR("wdt \"%s\" timed out", wdt->name);
+
+		if (wdt->cb) {
+			(*wdt->cb)(wdt, wdt->cb_ctx);
+		}
+		if (mgr->cb) {
+			(*mgr->cb)(wdt, mgr->cb_ctx);
+		}
+
+		return -ETIMEDOUT;
+	}
+
+	esp_task_wdt_reset();
+
+	return 0;
 }
 
 static void *wdt_task(void *e)
@@ -92,36 +151,28 @@ static void *wdt_task(void *e)
 	ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
 	while (1) {
-		if (mgr->periodic_cb) {
-			(*mgr->periodic_cb)(mgr->periodic_cb_ctx);
-		}
-
-		struct wdt *wdt = any_timeouts(mgr,
-				board_get_time_since_boot_ms());
-
-		if (wdt) {
-			WDT_ERROR("wdt \"%s\" timed out", wdt->name);
-
-			if (wdt->cb) {
-				(*wdt->cb)(wdt, wdt->cb_ctx);
-			}
-			if (mgr->cb) {
-				(*mgr->cb)(wdt, mgr->cb_ctx);
-			}
-		} else {
-			esp_task_wdt_reset();
-		}
-
-		sleep_ms(mgr->min_period_ms);
+		uint32_t next_deadline_ms;
+		process_timeouts(mgr, &next_deadline_ms);
+		sleep_ms(next_deadline_ms);
 	}
 
 	esp_task_wdt_delete(NULL);
 	return 0;
 }
 
+int wdt_step(uint32_t *next_deadline_ms)
+{
+	return process_timeouts(&m, next_deadline_ms);
+}
+
 int wdt_feed(struct wdt *self)
 {
-	feed_wdt(self);
+	const uint32_t now = board_get_time_since_boot_ms();
+	if (is_timedout(self, now)) {
+		WDT_ERROR("wdt \"%s\" already timed out", self->name);
+		return -ETIMEDOUT;
+	}
+	feed_wdt(self, now);
 	return 0;
 }
 
@@ -132,8 +183,8 @@ bool wdt_is_enabled(const struct wdt *self)
 
 int wdt_enable(struct wdt *self)
 {
+	feed_wdt(self, board_get_time_since_boot_ms());
 	self->enabled = true;
-	feed_wdt(self);
 	return 0;
 }
 
@@ -211,11 +262,29 @@ void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx)
 	}
 }
 
-int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
+int wdt_start(void)
 {
+	if (!m.threaded) {
+		ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+	}
+	return 0;
+}
+
+void wdt_stop(void)
+{
+	if (!m.threaded) {
+		esp_task_wdt_delete(NULL);
+	}
+}
+
+int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
+{
+	int err = 0;
+
 	m.min_period_ms = (CONFIG_TASK_WDT_TIMEOUT_S * 1000) / 2;
 	m.periodic_cb = cb;
 	m.periodic_cb_ctx = cb_ctx;
+	m.threaded = threaded;
 	list_init(&m.list);
 	pthread_mutex_init(&m.mutex, NULL);
 
@@ -225,24 +294,30 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx)
 		.idle_core_mask = (1 << CONFIG_FREERTOS_NUMBER_OF_CORES) - 1,
 		.trigger_panic = false,
 	};
-	int err = esp_task_wdt_init(&twdt_config);
+	err = esp_task_wdt_init(&twdt_config);
 
 	if (err != ESP_OK) {
 		return -err;
 	}
 #endif
+	if (threaded) {
+		pthread_attr_t attr;
 
-	pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setstacksize(&attr, STACK_SIZE_BYTES);
+		err = pthread_create(&m.thread, &attr, wdt_task, &m);
+		pthread_attr_destroy(&attr);
+	}
 
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr, STACK_SIZE_BYTES);
-
-	return pthread_create(&m.thread, &attr, wdt_task, &m);
+	return err;
 }
 
 void wdt_deinit(void)
 {
-	pthread_exit(&m.thread);
+	if (m.threaded) {
+		pthread_cancel(m.thread);
+		pthread_join(m.thread, NULL);
+	}
 	pthread_mutex_destroy(&m.mutex);
 #if !CONFIG_ESP_TASK_WDT_INIT
 	ESP_ERROR_CHECK(esp_task_wdt_deinit());
