@@ -57,9 +57,20 @@ typedef void (*wdt_periodic_cb_t)(void *ctx);
  * the necessary hardware or software resources required for the watchdog
  * timer to operate.
  *
+ * @param[in] cb A callback function that is periodically invoked by the
+ *               watchdog timer. This can be used to reset the watchdog timer
+ *               or perform periodic tasks. Pass NULL if no callback is needed.
+ * @param[in] cb_ctx A user-defined context that is passed to the callback
+ *                   function. This can be used to provide additional data or
+ *                   state to the callback.
+ * @param[in] threaded A boolean flag indicating whether the watchdog timer
+ *                     should operate in a threaded mode. If true, the watchdog
+ *                     timer runs in a separate thread; otherwise, it operates
+ *                     in the current execution context.
+ *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx);
+int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded);
 
 /**
  * @brief Deinitialize the watchdog timer.
@@ -69,6 +80,45 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx);
  * watchdog timer is no longer needed.
  */
 void wdt_deinit(void);
+
+/**
+ * @brief Start the watchdog timer.
+ *
+ * This function activates the watchdog timer. Once started, the watchdog
+ * timer begins monitoring the system and must be periodically reset to
+ * prevent a system reset.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+int wdt_start(void);
+
+/**
+ * @brief Stop the watchdog timer.
+ *
+ * This function deactivates the watchdog timer. After stopping, the watchdog
+ * timer will no longer monitor the system, and no resets will occur due to
+ * watchdog timer expiration.
+ */
+void wdt_stop(void);
+
+/**
+ * @brief Perform a step operation for the watchdog timer.
+ *
+ * This function processes all registered task watchdogs and calculates
+ * the next deadline for the watchdog timer. The provided variable is updated
+ * with the time remaining (in milliseconds) before the next reset is required.
+ *
+ * @note This function must be called within the specified `next_deadline_ms`
+ *       to ensure proper operation. Delays in calling this function may result
+ *       in missing short-period task watchdogs or, if limits are exceeded,
+ *       the system may reset.
+ *
+ * @param next_deadline_ms Pointer to a variable where the next deadline
+ *                         (in milliseconds) will be stored.
+ *
+ * @return 0 on success, negative error code on failure.
+ */
+int wdt_step(uint32_t *next_deadline_ms);
 
 /**
  * @brief Enable the watchdog timer.
