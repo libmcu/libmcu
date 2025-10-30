@@ -316,6 +316,7 @@ void wdt_deinit(void)
 {
 	if (m.threaded) {
 		pthread_cancel(m.thread);
+		pthread_join(m.thread, NULL);
 	}
 	pthread_mutex_destroy(&m.mutex);
 #if !CONFIG_ESP_TASK_WDT_INIT
