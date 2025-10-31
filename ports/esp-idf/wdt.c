@@ -64,21 +64,15 @@ struct wdt_manager {
 
 static struct wdt_manager m;
 
-static uint32_t get_deadline_ms(const struct wdt *wdt)
-{
-	return wdt->last_feed_ms + wdt->period_ms;
-}
-
 static uint32_t get_time_until_deadline_ms(const struct wdt *wdt, uint32_t now)
 {
-	const uint32_t deadline_ms = get_deadline_ms(wdt);
-	const uint32_t diff = deadline_ms - now;
+	const uint32_t elapsed = now - wdt->last_feed_ms;
 
-	if (diff > wdt->period_ms) {
+	if (elapsed > wdt->period_ms) {
 		return 0;
 	}
 
-	return diff;
+	return wdt->period_ms - elapsed;
 }
 
 static bool is_timedout(struct wdt *wdt, uint32_t now)
