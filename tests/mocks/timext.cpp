@@ -24,7 +24,7 @@ int iso8601_convert_to_string(time_t t, char *buf, size_t bufsize) {
 #if defined(_GNU_SOURCE)
 time_t iso8601_convert_to_time(const char *tstr) {
 	return (time_t)mock().actualCall(__func__)
-		.withParameter("tstr", tstr)
-		.returnIntValueOrDefault(1640995200); // Default: 2022-01-01T00:00:00Z
+		.withStringParameter("tstr", tstr)
+		.returnLongIntValueOrDefault(1640995200); // Default: 2022-01-01T00:00:00Z
 }
 #endif
