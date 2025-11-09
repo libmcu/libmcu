@@ -14,7 +14,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
-struct wdt;
+struct lm_wdt;
 
 /**
  * @brief Callback function type for watchdog timeout.
@@ -22,7 +22,7 @@ struct wdt;
  * @param[in] wdt Pointer to the watchdog instance.
  * @param[in] ctx User-defined context for the callback.
  */
-typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
+typedef void (*lm_wdt_timeout_cb_t)(struct lm_wdt *wdt, void *ctx);
 
 /**
  * @brief Callback function type for iterating over watchdog timers.
@@ -32,10 +32,10 @@ typedef void (*wdt_timeout_cb_t)(struct wdt *wdt, void *ctx);
  * @param[in] wdt Pointer to the current watchdog timer instance.
  * @param[in] ctx User-defined context passed to the callback.
  */
-typedef void (*wdt_foreach_cb_t)(struct wdt *wdt, void *ctx);
+typedef void (*lm_wdt_foreach_cb_t)(struct lm_wdt *wdt, void *ctx);
 
 /**
- * @typedef wdt_periodic_cb_t
+ * @typedef lm_wdt_periodic_cb_t
  * @brief Type definition for the periodic callback function.
  *
  * This type defines a function pointer for a callback function that is
@@ -47,7 +47,7 @@ typedef void (*wdt_foreach_cb_t)(struct wdt *wdt, void *ctx);
  * @param ctx A pointer to user-defined context data that will be passed to
  *            the callback function when it is called.
  */
-typedef void (*wdt_periodic_cb_t)(void *ctx);
+typedef void (*lm_wdt_periodic_cb_t)(void *ctx);
 
 /**
  * @brief Initialize the watchdog timer module.
@@ -70,7 +70,7 @@ typedef void (*wdt_periodic_cb_t)(void *ctx);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded);
+int lm_wdt_init(lm_wdt_periodic_cb_t cb, void *cb_ctx, bool threaded);
 
 /**
  * @brief Deinitialize the watchdog timer.
@@ -79,7 +79,7 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded);
  * that were allocated during initialization. It should be called when the
  * watchdog timer is no longer needed.
  */
-void wdt_deinit(void);
+void lm_wdt_deinit(void);
 
 /**
  * @brief Start the watchdog timer.
@@ -90,7 +90,7 @@ void wdt_deinit(void);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_start(void);
+int lm_wdt_start(void);
 
 /**
  * @brief Stop the watchdog timer.
@@ -99,7 +99,7 @@ int wdt_start(void);
  * timer will no longer monitor the system, and no resets will occur due to
  * watchdog timer expiration.
  */
-void wdt_stop(void);
+void lm_wdt_stop(void);
 
 /**
  * @brief Perform a step operation for the watchdog timer.
@@ -118,7 +118,7 @@ void wdt_stop(void);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_step(uint32_t *next_deadline_ms);
+int lm_wdt_step(uint32_t *next_deadline_ms);
 
 /**
  * @brief Enable the watchdog timer.
@@ -131,7 +131,7 @@ int wdt_step(uint32_t *next_deadline_ms);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_enable(struct wdt *self);
+int lm_wdt_enable(struct lm_wdt *self);
 
 /**
  * @brief Disable the watchdog timer.
@@ -143,7 +143,7 @@ int wdt_enable(struct wdt *self);
  * @param[in] self Pointer to the watchdog timer instance.
  * @return 0 on success, negative error code on failure.
  */
-int wdt_disable(struct wdt *self);
+int lm_wdt_disable(struct lm_wdt *self);
 
 /**
  * @brief Register a callback function for watchdog timeout.
@@ -161,7 +161,7 @@ int wdt_disable(struct wdt *self);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx);
+int lm_wdt_register_timeout_cb(lm_wdt_timeout_cb_t cb, void *cb_ctx);
 
 /**
  * @brief Create a new watchdog timer instance.
@@ -180,15 +180,15 @@ int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx);
  * @return A pointer to the newly created watchdog timer instance,
  *         or NULL on failure.
  */
-struct wdt *wdt_new(const char *name, const uint32_t period_ms,
-		wdt_timeout_cb_t cb, void *cb_ctx);
+struct lm_wdt *lm_wdt_new(const char *name, const uint32_t period_ms,
+		lm_wdt_timeout_cb_t cb, void *cb_ctx);
 
 /**
  * @brief Delete a watchdog timer instance.
  *
  * @param[in] self Pointer to the watchdog timer instance to be deleted.
  */
-void wdt_delete(struct wdt *self);
+void lm_wdt_delete(struct lm_wdt *self);
 
 /**
  * @brief Feed (reset) the watchdog timer.
@@ -197,7 +197,7 @@ void wdt_delete(struct wdt *self);
  *
  * @return 0 on success, negative error code on failure.
  */
-int wdt_feed(struct wdt *self);
+int lm_wdt_feed(struct lm_wdt *self);
 
 /**
  * @brief Get the name of the watchdog timer.
@@ -208,7 +208,7 @@ int wdt_feed(struct wdt *self);
  *
  * @return The name of the watchdog timer.
  */
-const char *wdt_name(const struct wdt *self);
+const char *lm_wdt_name(const struct lm_wdt *self);
 
 /**
  * @brief Iterate over all registered watchdog timers.
@@ -219,7 +219,7 @@ const char *wdt_name(const struct wdt *self);
  * @param[in] cb Callback function to be invoked for each watchdog timer.
  * @param[in] cb_ctx User-defined context to pass to the callback.
  */
-void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx);
+void lm_wdt_foreach(lm_wdt_foreach_cb_t cb, void *cb_ctx);
 
 /**
  * @brief Get the timeout period of the specified watchdog timer.
@@ -228,7 +228,7 @@ void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx);
  *
  * @return Timeout period in milliseconds.
  */
-uint32_t wdt_get_period(const struct wdt *self);
+uint32_t lm_wdt_get_period(const struct lm_wdt *self);
 
 /**
  * @brief Get the time elapsed since the last feed of the watchdog timer.
@@ -237,7 +237,7 @@ uint32_t wdt_get_period(const struct wdt *self);
  *
  * @return Time in milliseconds since the last feed.
  */
-uint32_t wdt_get_time_since_last_feed(const struct wdt *self);
+uint32_t lm_wdt_get_time_since_last_feed(const struct lm_wdt *self);
 
 /**
  * @brief Check if the specified watchdog timer is enabled.
@@ -246,7 +246,7 @@ uint32_t wdt_get_time_since_last_feed(const struct wdt *self);
  *
  * @return true if the watchdog timer is enabled, false otherwise.
  */
-bool wdt_is_enabled(const struct wdt *self);
+bool lm_wdt_is_enabled(const struct lm_wdt *self);
 
 #if defined(__cplusplus)
 }

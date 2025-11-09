@@ -31,14 +31,14 @@
 #define WDT_ERROR(...)
 #endif
 
-struct wdt {
+struct lm_wdt {
 	void *task_handle;
 
 	const char *name;
 	uint32_t period_ms; /* timeout period in milliseconds */
 	uint32_t last_feed_ms; /* last feed time in milliseconds */
 
-	wdt_timeout_cb_t cb;
+	lm_wdt_timeout_cb_t cb;
 	void *cb_ctx;
 
 	struct list link;
@@ -52,10 +52,10 @@ struct wdt_manager {
 
 	struct list list;
 
-	wdt_timeout_cb_t cb;
+	lm_wdt_timeout_cb_t cb;
 	void *cb_ctx;
 
-	wdt_periodic_cb_t periodic_cb;
+	lm_wdt_periodic_cb_t periodic_cb;
 	void *periodic_cb_ctx;
 
 	uint32_t min_period_ms;
@@ -64,7 +64,8 @@ struct wdt_manager {
 
 static struct wdt_manager m;
 
-static uint32_t get_time_until_deadline_ms(const struct wdt *wdt, uint32_t now)
+static uint32_t
+get_time_until_deadline_ms(const struct lm_wdt *wdt, uint32_t now)
 {
 	const uint32_t elapsed = now - wdt->last_feed_ms;
 
@@ -75,17 +76,17 @@ static uint32_t get_time_until_deadline_ms(const struct wdt *wdt, uint32_t now)
 	return wdt->period_ms - elapsed;
 }
 
-static bool is_timedout(struct wdt *wdt, uint32_t now)
+static bool is_timedout(struct lm_wdt *wdt, uint32_t now)
 {
 	return wdt->enabled && get_time_until_deadline_ms(wdt, now) == 0;
 }
 
-static void feed_wdt(struct wdt *self, uint32_t now)
+static void feed_wdt(struct lm_wdt *self, uint32_t now)
 {
 	self->last_feed_ms = now;
 }
 
-static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
+static struct lm_wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 		uint32_t *next_deadline_ms)
 {
 	struct list *p;
@@ -93,7 +94,7 @@ static struct wdt *any_timeouts(struct wdt_manager *mgr, uint32_t now,
 
 	pthread_mutex_lock(&mgr->mutex);
 	list_for_each_safe(p, n, &mgr->list) {
-		struct wdt *wdt = list_entry(p, struct wdt, link);
+		struct lm_wdt *wdt = list_entry(p, struct lm_wdt, link);
 		if (is_timedout(wdt, now)) {
 			pthread_mutex_unlock(&mgr->mutex);
 			return wdt;
@@ -118,7 +119,7 @@ static int process_timeouts(struct wdt_manager *mgr, uint32_t *next_deadline_ms)
 		*next_deadline_ms = mgr->min_period_ms;
 	}
 
-	struct wdt *wdt = any_timeouts(mgr,
+	struct lm_wdt *wdt = any_timeouts(mgr,
 			board_get_time_since_boot_ms(), next_deadline_ms);
 
 	if (wdt) {
@@ -154,12 +155,12 @@ static void *wdt_task(void *e)
 	return 0;
 }
 
-int wdt_step(uint32_t *next_deadline_ms)
+int lm_wdt_step(uint32_t *next_deadline_ms)
 {
 	return process_timeouts(&m, next_deadline_ms);
 }
 
-int wdt_feed(struct wdt *self)
+int lm_wdt_feed(struct lm_wdt *self)
 {
 	const uint32_t now = board_get_time_since_boot_ms();
 	if (is_timedout(self, now)) {
@@ -170,31 +171,31 @@ int wdt_feed(struct wdt *self)
 	return 0;
 }
 
-bool wdt_is_enabled(const struct wdt *self)
+bool lm_wdt_is_enabled(const struct lm_wdt *self)
 {
 	return self->enabled;
 }
 
-int wdt_enable(struct wdt *self)
+int lm_wdt_enable(struct lm_wdt *self)
 {
 	feed_wdt(self, board_get_time_since_boot_ms());
 	self->enabled = true;
 	return 0;
 }
 
-int wdt_disable(struct wdt *self)
+int lm_wdt_disable(struct lm_wdt *self)
 {
 	self->enabled = false;
 	return 0;
 }
 
-struct wdt *wdt_new(const char *name, const uint32_t period_ms,
-		wdt_timeout_cb_t cb, void *cb_ctx)
+struct lm_wdt *lm_wdt_new(const char *name, const uint32_t period_ms,
+		lm_wdt_timeout_cb_t cb, void *cb_ctx)
 {
-	struct wdt *wdt = (struct wdt *)malloc(sizeof(*wdt));
+	struct lm_wdt *wdt = (struct lm_wdt *)malloc(sizeof(*wdt));
 
 	if (wdt) {
-		*wdt = (struct wdt) {
+		*wdt = (struct lm_wdt) {
 			.name = name,
 			.period_ms = period_ms,
 			.cb = cb,
@@ -211,7 +212,7 @@ struct wdt *wdt_new(const char *name, const uint32_t period_ms,
 	return wdt;
 }
 
-void wdt_delete(struct wdt *self)
+void lm_wdt_delete(struct lm_wdt *self)
 {
 	pthread_mutex_lock(&m.mutex);
 	list_del(&self->link, &m.list);
@@ -220,7 +221,7 @@ void wdt_delete(struct wdt *self)
 	free(self);
 }
 
-int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx)
+int lm_wdt_register_timeout_cb(lm_wdt_timeout_cb_t cb, void *cb_ctx)
 {
 	pthread_mutex_lock(&m.mutex);
 	m.cb = cb;
@@ -230,33 +231,33 @@ int wdt_register_timeout_cb(wdt_timeout_cb_t cb, void *cb_ctx)
 	return 0;
 }
 
-uint32_t wdt_get_period(const struct wdt *self)
+uint32_t lm_wdt_get_period(const struct lm_wdt *self)
 {
 	return self->period_ms;
 }
 
-uint32_t wdt_get_time_since_last_feed(const struct wdt *self)
+uint32_t lm_wdt_get_time_since_last_feed(const struct lm_wdt *self)
 {
 	return board_get_time_since_boot_ms() - self->last_feed_ms;
 }
 
-const char *wdt_name(const struct wdt *self)
+const char *lm_wdt_name(const struct lm_wdt *self)
 {
 	return self->name;
 }
 
-void wdt_foreach(wdt_foreach_cb_t cb, void *cb_ctx)
+void lm_wdt_foreach(lm_wdt_foreach_cb_t cb, void *cb_ctx)
 {
 	struct list *p;
 	struct list *n;
 
 	list_for_each_safe(p, n, &m.list) {
-		struct wdt *wdt = list_entry(p, struct wdt, link);
+		struct lm_wdt *wdt = list_entry(p, struct lm_wdt, link);
 		(*cb)(wdt, cb_ctx);
 	}
 }
 
-int wdt_start(void)
+int lm_wdt_start(void)
 {
 	if (!m.threaded) {
 		ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
@@ -264,14 +265,14 @@ int wdt_start(void)
 	return 0;
 }
 
-void wdt_stop(void)
+void lm_wdt_stop(void)
 {
 	if (!m.threaded) {
 		esp_task_wdt_delete(NULL);
 	}
 }
 
-int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
+int lm_wdt_init(lm_wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
 {
 	int err = 0;
 
@@ -306,7 +307,7 @@ int wdt_init(wdt_periodic_cb_t cb, void *cb_ctx, bool threaded)
 	return err;
 }
 
-void wdt_deinit(void)
+void lm_wdt_deinit(void)
 {
 	if (m.threaded) {
 		pthread_cancel(m.thread);
