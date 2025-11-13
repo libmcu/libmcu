@@ -45,7 +45,7 @@ struct subsector {
 };
 
 struct storage {
-	struct flash *flash;
+	struct lm_flash *flash;
 
 	struct subsector meta;
 	struct subsector data;
@@ -84,7 +84,7 @@ static int find_key(struct storage *storage, const char *key, struct meta *meta)
 	for (uintptr_t offset = start; offset < end; offset += entry_size) {
 		struct meta t;
 
-		if (flash_read(storage->flash,
+		if (lm_flash_read(storage->flash,
 				offset, &t.entry, entry_size) < 0) {
 			return -EIO;
 		}
@@ -115,7 +115,7 @@ static int find_meta(struct storage *storage, struct meta *meta)
 	for (uintptr_t offset = start; offset < end; offset += entry_size) {
 		struct meta t;
 
-		if (flash_read(storage->flash,
+		if (lm_flash_read(storage->flash,
 				offset, &t.entry, entry_size) < 0) {
 			return -EIO;
 		}
@@ -145,7 +145,7 @@ static int alloc_entry(struct storage *storage, size_t size, struct meta *meta)
 	bool allocated = false;
 
 	for (uintptr_t offset = start; offset < end; offset += entry_size) {
-		if (flash_read(storage->flash,
+		if (lm_flash_read(storage->flash,
 				offset, &meta->entry, entry_size) < 0) {
 			return -EIO;
 		}
@@ -181,13 +181,14 @@ static int delete_meta(struct storage *storage, struct meta *meta)
 	entry->hash_murmur = 0;
 	entry->hash_dbj2 = 0;
 
-	return flash_write(storage->flash, meta->offset, entry, sizeof(*entry));
+	return lm_flash_write(storage->flash,
+			meta->offset, entry, sizeof(*entry));
 }
 #endif
 
 static int write_meta(struct storage *storage, const struct meta *meta)
 {
-	return flash_write(storage->flash,
+	return lm_flash_write(storage->flash,
 			meta->offset, &meta->entry, sizeof(meta->entry));
 }
 
@@ -201,7 +202,7 @@ static int write_value(struct storage *storage,
 	uintptr_t offset = storage->offset +
 		storage->meta.offset + storage->meta.size +
 		meta->entry.offset;
-	return flash_write(storage->flash, offset, data, meta->entry.len);
+	return lm_flash_write(storage->flash, offset, data, meta->entry.len);
 }
 
 static int move_partition(struct storage *from, struct storage *to)
@@ -211,13 +212,13 @@ static int move_partition(struct storage *from, struct storage *to)
 	uint32_t entry_size = sizeof(struct meta_entry);
 	struct meta meta;
 
-	flash_erase(to->flash, to->offset, to->size);
+	lm_flash_erase(to->flash, to->offset, to->size);
 
 	for (uintptr_t offset = start; offset < end; offset += entry_size) {
 		struct meta new_meta;
 		uint8_t buf[FLASH_LINE_ALIGN_BYTES];
 
-		if (flash_read(from->flash,
+		if (lm_flash_read(from->flash,
 				offset, &meta.entry, entry_size) < 0) {
 			return -EIO;
 		}
@@ -246,12 +247,12 @@ static int move_partition(struct storage *from, struct storage *to)
 				from->meta.size + meta.entry.offset + i;
                         uintptr_t ot = to->offset + to->meta.offset +
 				to->meta.size + new_meta.entry.offset + i;
-                        if (flash_read(from->flash, of, buf, sizeof(buf)) < 0) {
+                        if (lm_flash_read(from->flash,
+						of, buf, sizeof(buf)) < 0 ||
+					lm_flash_write(to->flash,
+						ot, buf, sizeof(buf)) < 0) {
                                 return -EIO;
                         }
-                        if (flash_write(to->flash, ot, buf, sizeof(buf)) < 0) {
-				return -EIO;
-			}
 		}
 	}
 
@@ -338,7 +339,7 @@ static int flash_kvstore_read(struct kvstore *self,
 	uintptr_t offset = self->storage.offset +
 		self->storage.meta.offset + self->storage.meta.size +
 		meta.entry.offset;
-	return flash_read(self->storage.flash, offset, buf, len);
+	return lm_flash_read(self->storage.flash, offset, buf, len);
 }
 
 static int flash_kvstore_erase(struct kvstore *self, const char *key)
@@ -370,7 +371,8 @@ static void flash_kvstore_close(struct kvstore *self)
 	unused(self);
 }
 
-struct kvstore *flash_kvstore_new(struct flash *flash, struct flash *scratch)
+struct kvstore *
+flash_kvstore_new(struct lm_flash *flash, struct lm_flash *scratch)
 {
 	/* WARN: single instance */
 	static struct kvstore nvs = {
@@ -384,7 +386,7 @@ struct kvstore *flash_kvstore_new(struct flash *flash, struct flash *scratch)
 	};
 
 	nvs.storage.flash = flash;
-	nvs.storage.size = flash_size(flash);
+	nvs.storage.size = lm_flash_size(flash);
 	nvs.storage.offset = 0;
 
 	/* meta takes about 6% of the given space */
@@ -396,7 +398,7 @@ struct kvstore *flash_kvstore_new(struct flash *flash, struct flash *scratch)
 	nvs.scratch.flash = scratch;
 	nvs.scratch.offset = 0;
 	if (scratch) {
-		nvs.scratch.size = flash_size(scratch);
+		nvs.scratch.size = lm_flash_size(scratch);
 
 		nvs.scratch.meta.size = nvs.scratch.size >> 4;
 		nvs.scratch.data.size =

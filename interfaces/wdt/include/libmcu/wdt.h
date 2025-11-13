@@ -114,7 +114,8 @@ void lm_wdt_stop(void);
  *       the system may reset.
  *
  * @param[out] next_deadline_ms Pointer to a variable where the next deadline
- *                         (in milliseconds) will be stored.
+ *                         (in milliseconds) will be stored. Null can be passed
+ *                         if the next deadline is not needed.
  *
  * @return 0 on success, negative error code on failure.
  */
