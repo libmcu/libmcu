@@ -14,7 +14,8 @@ extern "C" {
 #include "libmcu/kvstore.h"
 #include "libmcu/flash.h"
 
-struct kvstore *flash_kvstore_new(struct flash *flash, struct flash *scratch);
+struct kvstore *
+flash_kvstore_new(struct lm_flash *flash, struct lm_flash *scratch);
 
 #if defined(__cplusplus)
 }

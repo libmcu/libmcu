@@ -15,62 +15,62 @@
 #define META_SIZE		(1024 >> 4)
 #define META_ENTRY_SIZE		16
 
-struct flash {
-	struct flash_api api;
+struct lm_flash {
+	struct lm_flash_api api;
 };
 
 static uint8_t spy_flash[STORAGE_SIZE];
 static uint8_t spy_flash_scratch[STORAGE_SIZE];
 
-static size_t spy_size(struct flash *self) {
+static size_t spy_size(struct lm_flash *self) {
 	return sizeof(spy_flash);
 }
-static int spy_erase(struct flash *self, uintptr_t offset, size_t size) {
+static int spy_erase(struct lm_flash *self, uintptr_t offset, size_t size) {
 	memset(&spy_flash[offset], 0xff, size);
 	return 0;
 }
-static int spy_write(struct flash *self,
+static int spy_write(struct lm_flash *self,
 		uintptr_t offset, const void *data, size_t len) {
 	memcpy(&spy_flash[offset], data, len);
 	return 0;
 }
-static int spy_read(struct flash *self,
+static int spy_read(struct lm_flash *self,
 		uintptr_t offset, void *buf, size_t len) {
 	memcpy(buf, &spy_flash[offset], len);
 	return (int)len;
 }
 
-static size_t spy_scratch_size(struct flash *self) {
+static size_t spy_scratch_size(struct lm_flash *self) {
 	return sizeof(spy_flash_scratch);
 }
-static int spy_scratch_erase(struct flash *self, uintptr_t offset, size_t size) {
+static int spy_scratch_erase(struct lm_flash *self, uintptr_t offset, size_t size) {
 	memset(&spy_flash_scratch[offset], 0xff, size);
 	return 0;
 }
-static int spy_scratch_write(struct flash *self,
+static int spy_scratch_write(struct lm_flash *self,
 		uintptr_t offset, const void *data, size_t len) {
 	memcpy(&spy_flash_scratch[offset], data, len);
 	return 0;
 }
-static int spy_scratch_read(struct flash *self,
+static int spy_scratch_read(struct lm_flash *self,
 		uintptr_t offset, void *buf, size_t len) {
 	memcpy(buf, &spy_flash_scratch[offset], len);
 	return (int)len;
 }
 
-static size_t fake_size(struct flash *self) {
+static size_t fake_size(struct lm_flash *self) {
 	return (size_t)mock().actualCall(__func__)
 		.withParameter("self", self)
 		.returnUnsignedIntValueOrDefault(0);
 }
-static int fake_erase(struct flash *self, uintptr_t offset, size_t size) {
+static int fake_erase(struct lm_flash *self, uintptr_t offset, size_t size) {
 	return mock().actualCall(__func__)
 		.withParameter("self", self)
 		.withParameter("offset", offset)
 		.withParameter("size", size)
 		.returnIntValueOrDefault(0);
 }
-static int fake_write(struct flash *self,
+static int fake_write(struct lm_flash *self,
 		uintptr_t offset, const void *data, size_t len) {
 	ByteArray byteArray = {
 		data, len,
@@ -81,7 +81,7 @@ static int fake_write(struct flash *self,
 		.withParameterOfType("ByteArray", "byteArray", &byteArray)
 		.returnIntValueOrDefault(0);
 }
-static int fake_read(struct flash *self,
+static int fake_read(struct lm_flash *self,
 		uintptr_t offset, void *buf, size_t len) {
 	return mock().actualCall(__func__)
 		.withParameter("self", self)
@@ -95,7 +95,7 @@ TEST_GROUP(FlashKVStore) {
 	ByteArrayComparator comparator;
 
 	struct kvstore *kvstore;
-	struct flash flash;
+	struct lm_flash flash;
 
 	void setup(void) {
 		mock().installComparator("ByteArray", comparator);
@@ -407,7 +407,7 @@ TEST(FlashKVStore, write_ShouldWriteInAlignment) {
 }
 
 TEST(FlashKVStore, write_ShouldReturnNoSpace_WhenNoSpaceLeft) {
-	struct flash f = {
+	struct lm_flash f = {
 		.api = {
 			.erase = spy_erase,
 			.write = spy_write,
@@ -415,7 +415,7 @@ TEST(FlashKVStore, write_ShouldReturnNoSpace_WhenNoSpaceLeft) {
 			.size = spy_size,
 		},
 	};
-	struct flash s = {
+	struct lm_flash s = {
 		.api = {
 			.erase = spy_scratch_erase,
 			.write = spy_scratch_write,
@@ -439,7 +439,7 @@ TEST(FlashKVStore, write_ShouldReturnNoSpace_WhenNoSpaceLeft) {
 }
 
 TEST(FlashKVStore, write_ShouldReclaim_WhenNoSpaceDueToFragmentation) {
-	struct flash f = {
+	struct lm_flash f = {
 		.api = {
 			.erase = spy_erase,
 			.write = spy_write,
@@ -447,7 +447,7 @@ TEST(FlashKVStore, write_ShouldReclaim_WhenNoSpaceDueToFragmentation) {
 			.size = spy_size,
 		},
 	};
-	struct flash s = {
+	struct lm_flash s = {
 		.api = {
 			.erase = spy_scratch_erase,
 			.write = spy_scratch_write,
