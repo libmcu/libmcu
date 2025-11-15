@@ -232,3 +232,116 @@ TEST(metrics, test) {
 	// 2. timer_create(report_periodic, 1hour)
 	report_periodic();
 }
+
+TEST(metrics, init_ShouldPreserveMetrics_WhenForceIsFalseAndMetricsValid) {
+	// Initialize and set up valid metrics
+	metrics_init(true);
+	metrics_set(ReportInterval, 12345);
+	metrics_set(HeapHighWaterMark, 67890);
+
+	// Call init with force=false - should preserve existing valid metrics
+	metrics_init(false);
+
+	// Verify metrics were preserved (validation passed, no reinitialization)
+	LONGS_EQUAL(12345, metrics_get(ReportInterval));
+	LONGS_EQUAL(67890, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(true, metrics_is_set(HeapHighWaterMark));
+}
+
+TEST(metrics, init_ShouldResetMetrics_WhenForceIsTrue) {
+	// Initialize and set some metrics
+	metrics_init(true);
+	metrics_set(ReportInterval, 12345);
+	metrics_set(HeapHighWaterMark, 67890);
+
+	// Verify metrics are set
+	LONGS_EQUAL(12345, metrics_get(ReportInterval));
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+
+	// Call init with force=true - should reset all metrics
+	metrics_init(true);
+
+	// Verify all metrics were reset
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(false, metrics_is_set(HeapHighWaterMark));
+}
+
+TEST(metrics, init_ShouldInitializeAllMetricsToZero_WhenForceIsTrue) {
+	// Force initialization
+	metrics_init(true);
+
+	// Iterate and verify all metrics are initialized to 0 and not set
+	static int count = 0;
+	count = 0;
+
+	auto verify_unset = [](metric_key_t keyid, int32_t value, void *ctx) {
+		int *counter = (int *)ctx;
+		(*counter)++;
+		LONGS_EQUAL(0, value);
+	};
+
+	metrics_iterate(verify_unset, &count);
+
+	// No metrics should be set initially, so count should be 0
+	LONGS_EQUAL(0, count);
+
+	// Verify metrics count is correct
+	LONGS_EQUAL(7, metrics_count());
+}
+
+TEST(metrics, set_max_min_ShouldSetBothMaxAndMin_WhenNotSet) {
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 100);
+	LONGS_EQUAL(100, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(100, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_max_min_ShouldUpdateMax_WhenLargerValueGiven) {
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 100);
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 150);
+
+	LONGS_EQUAL(150, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(100, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_max_min_ShouldUpdateMin_WhenSmallerValueGiven) {
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 100);
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 50);
+
+	LONGS_EQUAL(100, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(50, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_max_min_ShouldNotUpdate_WhenMiddleValueGiven) {
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 100);
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 200);
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 150);
+
+	// Max should remain 200, min should remain 100
+	LONGS_EQUAL(200, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(100, metrics_get(ReportInterval));
+}
+
+TEST(metrics, set_max_min_ShouldHandleSequenceCorrectly) {
+	// Set initial value
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 100);
+	LONGS_EQUAL(100, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(100, metrics_get(ReportInterval));
+
+	// Update with larger value - max updates
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 200);
+	LONGS_EQUAL(200, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(100, metrics_get(ReportInterval));
+
+	// Update with smaller value - min updates
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 50);
+	LONGS_EQUAL(200, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(50, metrics_get(ReportInterval));
+
+	// Update with middle value - no change
+	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 150);
+	LONGS_EQUAL(200, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(50, metrics_get(ReportInterval));
+}

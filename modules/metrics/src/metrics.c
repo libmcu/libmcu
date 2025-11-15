@@ -65,6 +65,23 @@ static bool is_metric_set(const struct metrics *p)
 	return p->is_set;
 }
 
+static bool validate_metrics(void)
+{
+	struct metrics *p = get_item_by_index(METRICS_KEY_MAGIC);
+
+	if (p->key != MAGIC_KEY || p->value != MAGIC_VALUE) {
+		return false;
+	}
+
+	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
+		if (get_item_by_index(i)->key != i) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static void set_metric_value(const metric_key_t key, const metric_value_t value)
 {
 	get_obj_from_key(key)->value = value;
@@ -273,10 +290,10 @@ const char *metrics_stringify_key(const metric_key_t key)
 
 void metrics_init(const bool force)
 {
-	struct metrics *p = get_item_by_index(METRICS_KEY_MAGIC);
-
-	if (force || p->key != MAGIC_KEY || p->value != MAGIC_VALUE) {
+	if (force || !validate_metrics()) {
 		initialize_metrics();
+
+		struct metrics *p = get_item_by_index(METRICS_KEY_MAGIC);
 		p->key = MAGIC_KEY;
 		p->value = MAGIC_VALUE;
 	}
