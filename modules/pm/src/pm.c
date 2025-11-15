@@ -21,7 +21,7 @@ struct pm_item {
 };
 
 static struct pm_item slots[PM_CALLBACK_MAXLEN];
-static pthread_mutex_t slot_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t slot_lock;
 
 static int count_empty_slots(void)
 {
@@ -206,7 +206,6 @@ int pm_enter(pm_mode_t mode, uint32_t duration_ms)
 
 void pm_init(void)
 {
-	pthread_mutex_lock(&slot_lock);
 	memset(slots, 0, sizeof(slots));
 	pthread_mutex_init(&slot_lock, NULL);
 }
