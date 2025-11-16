@@ -50,6 +50,9 @@ const char *board_get_reboot_reason_string(board_reboot_reason_t reason)
 		"Deep Sleep",
 		"Brownout",
 		"SDIO",
+		"Debugger",
+		"Security",
+		"Temperature",
 	};
 
 	return reasons[reason];
