@@ -226,6 +226,11 @@ static int initialize_scheduler(struct actor_ctx *ctx,
 
 		struct sched_param param;
 		pthread_attr_init(&core->thread_attr);
+#if defined(__ZEPHYR__)
+		pthread_attr_setschedpolicy(&core->thread_attr, SCHED_RR);
+		pthread_attr_setinheritsched(&core->thread_attr,
+				PTHREAD_EXPLICIT_SCHED);
+#endif
 		pthread_attr_getschedparam(&core->thread_attr, &param);
 		param.sched_priority = core->priority;
 		pthread_attr_setschedparam(&core->thread_attr, &param);

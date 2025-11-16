@@ -26,6 +26,8 @@ typedef enum {
 	BOARD_REBOOT_BROWNOUT,
 	BOARD_REBOOT_SDIO,
 	BOARD_REBOOT_DEBUGGER,
+	BOARD_REBOOT_SECURITY,
+	BOARD_REBOOT_TEMPERATURE,
 } board_reboot_reason_t;
 
 typedef void (*board_idle_hook_t)(void);
