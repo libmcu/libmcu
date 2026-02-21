@@ -223,8 +223,11 @@ void fault_process(struct core_registers *regs)
 	}
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsuggest-attribute=const"
 LIBMCU_WEAK
 int fault_save(const struct core_registers LIBMCU_UNUSED *regs)
 {
 	return 0;
 }
+#pragma GCC diagnostic pop
