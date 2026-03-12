@@ -18,7 +18,8 @@ def get_git_tag():
         tag = subprocess.check_output(["git", "describe", "--tags"]).strip().decode('utf-8')
         if tag.startswith('v'):
             tag = tag[1:]
-        version_parts = tag.split('.')
+        version_core = tag.split('-', 1)[0]
+        version_parts = version_core.split('.')
         if len(version_parts) != 3:
             raise ValueError("Invalid tag format")
         version_major = int(version_parts[0])
