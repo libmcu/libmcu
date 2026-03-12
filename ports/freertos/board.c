@@ -16,6 +16,8 @@ void *board_get_current_thread(void)
 	return xTaskGetCurrentTaskHandle();
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
 LIBMCU_NO_INSTRUMENT
 uint32_t board_get_time_since_boot_ms(void)
 {
@@ -42,6 +44,7 @@ uint32_t board_get_time_since_boot_ms(void)
 
 	return (uint32_t)((elapsed_ticks * 1000) / configTICK_RATE_HZ);
 }
+#pragma GCC diagnostic pop
 
 LIBMCU_NO_INSTRUMENT
 uint32_t board_get_current_stack_watermark(void)
