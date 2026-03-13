@@ -17,6 +17,29 @@
 #include "mbedtls/x509_crt.h"
 #include "mbedtls/version.h"
 
+#if defined(__ZEPHYR__)
+#include <zephyr/random/random.h>
+#endif
+
+static int pki_entropy_poll(void *ctx, unsigned char *buf, size_t len)
+{
+#if defined(__ZEPHYR__)
+	(void)ctx;
+
+	if (len == 0U) {
+		return 0;
+	}
+
+	if (buf == NULL) {
+		return -1;
+	}
+
+	return sys_csrand_get(buf, len);
+#else
+	return mbedtls_entropy_func(ctx, buf, len);
+#endif
+}
+
 static int generate_ec_prikey(uint8_t *key_buf, size_t key_bufsize)
 {
 	mbedtls_pk_context pk;
@@ -29,9 +52,15 @@ static int generate_ec_prikey(uint8_t *key_buf, size_t key_bufsize)
 	mbedtls_hmac_drbg_init(&hmac_drbg);
 	mbedtls_pk_init(&pk);
 
+	unsigned char entropy_probe[8];
+	rc = pki_entropy_poll(&entropy, entropy_probe, sizeof(entropy_probe));
+	if (rc != 0) {
+		goto out_free;
+	}
+
 	if ((rc = mbedtls_hmac_drbg_seed(&hmac_drbg,
 			mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
-			mbedtls_entropy_func, &entropy,
+			pki_entropy_poll, &entropy,
 			(const unsigned char *)pers, strlen(pers))) != 0) {
 		goto out_free;
 	}
@@ -173,7 +202,7 @@ int pki_generate_csr(uint8_t *csr_buf, size_t csr_bufsize,
 
 	if ((rc = mbedtls_hmac_drbg_seed(&hmac_drbg,
 			mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
-			mbedtls_entropy_func, &entropy,
+			pki_entropy_poll, &entropy,
 			(const unsigned char *)pers, strlen(pers))) != 0) {
 		goto out_free;
 	}
@@ -231,6 +260,43 @@ int pki_verify_cert(const uint8_t *cacert, size_t cacert_len,
 
 	if ((err = mbedtls_x509_crt_verify(&x509_device, &x509_ca, NULL, NULL,
 			&flags, NULL, NULL))) {
+		goto out_free;
+	}
+
+out_free:
+	mbedtls_x509_crt_free(&x509_device);
+	mbedtls_x509_crt_free(&x509_ca);
+
+	return err;
+}
+
+int pki_verify_cert_chain(const uint8_t *cacert, size_t cacert_len,
+		const uint8_t *intcacert, size_t intcacert_len,
+		const uint8_t *cert, size_t cert_len)
+{
+	mbedtls_x509_crt x509_ca;
+	mbedtls_x509_crt x509_device;
+	uint32_t flags;
+	int err;
+
+	mbedtls_x509_crt_init(&x509_ca);
+	mbedtls_x509_crt_init(&x509_device);
+
+	if ((err = mbedtls_x509_crt_parse(&x509_ca, cacert, cacert_len + 1))) {
+		goto out_free;
+	}
+
+	if ((err = mbedtls_x509_crt_parse(&x509_device, cert, cert_len + 1))) {
+		goto out_free;
+	}
+
+	if (intcacert && intcacert_len > 0 && (err = mbedtls_x509_crt_parse(
+				&x509_ca, intcacert, intcacert_len + 1))) {
+		goto out_free;
+	}
+
+	if ((err = mbedtls_x509_crt_verify(&x509_device, &x509_ca, NULL,
+			NULL, &flags, NULL, NULL))) {
 		goto out_free;
 	}
 
