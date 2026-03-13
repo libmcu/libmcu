@@ -187,19 +187,41 @@ cleanup:
 int pki_verify_cert(const uint8_t *cacert, size_t cacert_len,
 		const uint8_t *cert, size_t cert_len)
 {
+	return pki_verify_cert_chain(cacert, cacert_len, NULL, 0,
+			cert, cert_len);
+}
+
+int pki_verify_cert_chain(const uint8_t *cacert, size_t cacert_len,
+		const uint8_t *intcacert, size_t intcacert_len,
+		const uint8_t *cert, size_t cert_len)
+{
 	BIO *bio_ca = BIO_new_mem_buf(cacert, (int)cacert_len);
+	BIO *bio_int_ca = intcacert && intcacert_len > 0?
+		BIO_new_mem_buf(intcacert, (int)intcacert_len) : NULL;
 	BIO *bio_cert = BIO_new_mem_buf(cert, (int)cert_len);
 	X509 *ca = PEM_read_bio_X509(bio_ca, NULL, NULL, NULL);
+	X509 *int_ca = bio_int_ca? PEM_read_bio_X509(bio_int_ca, NULL, NULL,
+			NULL) : NULL;
 	X509 *crt = PEM_read_bio_X509(bio_cert, NULL, NULL, NULL);
 	X509_STORE *store = X509_STORE_new();
 	X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+	STACK_OF(X509) *chain = NULL;
 	int err = 0;
 
 	if (!ca || !crt || !store || !ctx) {
 		goto cleanup;
 	}
+
+	if (int_ca) {
+		chain = sk_X509_new_null();
+		if (!chain || !sk_X509_push(chain, int_ca)) {
+			goto cleanup;
+		}
+		int_ca = NULL;
+	}
+
 	if (!X509_STORE_add_cert(store, ca) ||
-			!X509_STORE_CTX_init(ctx, store, crt, NULL)) {
+			!X509_STORE_CTX_init(ctx, store, crt, chain)) {
 		goto cleanup;
 	}
 
@@ -213,8 +235,11 @@ cleanup:
 	}
 	X509_STORE_CTX_free(ctx);
 	X509_STORE_free(store);
+	sk_X509_pop_free(chain, X509_free);
+	X509_free(int_ca);
 	X509_free(ca);
 	X509_free(crt);
+	BIO_free(bio_int_ca);
 	BIO_free(bio_ca);
 	BIO_free(bio_cert);
 

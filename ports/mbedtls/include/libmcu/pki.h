@@ -93,6 +93,9 @@ int pki_generate_csr(uint8_t *csr_buf, size_t csr_bufsize,
  */
 int pki_verify_cert(const uint8_t *cacert, size_t cacert_len,
                     const uint8_t *cert, size_t cert_len);
+int pki_verify_cert_chain(const uint8_t *cacert, size_t cacert_len,
+			 const uint8_t *intcacert, size_t intcacert_len,
+			 const uint8_t *cert, size_t cert_len);
 
 #if defined(__cplusplus)
 }
