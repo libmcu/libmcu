@@ -6,9 +6,10 @@
 
 #include <errno.h>
 
+#include "libmcu/board.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
-#include "esp_system.h"
 
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
@@ -17,7 +18,7 @@
 static void reset_timer_cb(TimerHandle_t timer)
 {
 	(void)timer;
-	esp_restart();
+	board_reboot();
 }
 
 /* -------------------------------------------------------------------------

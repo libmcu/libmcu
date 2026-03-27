@@ -75,7 +75,9 @@ static bool build_virtual_image(int slot, struct virtual_img *out)
 
 	memset(out, 0, sizeof(*out));
 
-	int major = 0, minor = 0, patch = 0;
+	int major = 0;
+	int minor = 0;
+	int patch = 0;
 	(void)sscanf(desc.version, "%d.%d.%d", &major, &minor, &patch);
 
 	out->hdr.ih_magic         = IMAGE_MAGIC;

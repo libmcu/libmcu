@@ -88,7 +88,7 @@ static void *streamer_alloc_rsp(const void *src_buf, void *arg)
 static void streamer_trim_front(void *buf, size_t len, void *arg)
 {
 	(void)arg;
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return;
 	}
@@ -103,7 +103,7 @@ static void streamer_trim_front(void *buf, size_t len, void *arg)
 static void streamer_reset_buf(void *buf, void *arg)
 {
 	(void)arg;
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (b) {
 		b->len = 0;
 	}
@@ -117,7 +117,7 @@ static int streamer_write_at(struct cbor_encoder_writer *writer,
 
 	struct mgmt_buf *b = s_rsp_buf;
 	if (!b || offset + len > s_pool.buf_size) {
-		return CborErrorOutOfMemory;
+		return (int)CborErrorOutOfMemory;
 	}
 
 	memcpy(b->data + offset, data, len);
@@ -134,7 +134,7 @@ static int streamer_init_reader(struct cbor_decoder_reader *reader,
 	(void)reader;
 	(void)arg;
 
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return MGMT_ERR_EINVAL;
 	}
@@ -149,7 +149,7 @@ static int streamer_init_writer(struct cbor_encoder_writer *writer,
 	(void)writer;
 	(void)arg;
 
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return MGMT_ERR_EINVAL;
 	}
@@ -166,7 +166,7 @@ static void streamer_free_buf(void *buf, void *arg)
 {
 	(void)arg;
 
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (b) {
 		if (s_rsp_buf == b) {
 			s_rsp_buf = NULL;
@@ -193,7 +193,7 @@ static int smp_tx_rsp(struct smp_streamer *ss, void *buf, void *arg)
 {
 	(void)arg;
 
-	struct mgmt_buf *b = buf;
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return MGMT_ERR_EINVAL;
 	}
@@ -234,10 +234,6 @@ static void on_packet_received(const void *data, size_t len, void *ctx)
 
 	smp_process_request_packet(&s_streamer, req);
 }
-
-/* ---------------------------------------------------------------------------
- * Public API
- * ------------------------------------------------------------------------ */
 
 int mgmt_init(const struct mgmt_config *cfg)
 {
