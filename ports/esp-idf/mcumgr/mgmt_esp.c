@@ -10,7 +10,7 @@
  *
  * Responsibilities:
  *   - Validate the mgmt_config (buffer pool).
- *   - Set up the SMP streamer (buffer pool + CBOR reader/writer callbacks).
+ *   - Set up the SMP streamer (buffer pool + raw buffer callbacks).
  *   - Register management groups (image, OS).
  *   - Start the transport.
  *
@@ -25,10 +25,8 @@
 #include <errno.h>
 #include <stdbool.h>
 
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_buf_reader.h"
-#include "tinycbor/cbor_buf_writer.h"
 #include "mgmt/mgmt.h"
+#include "mgmt/endian.h"
 #include "smp/smp.h"
 #include "img_mgmt/img_mgmt.h"
 #include "os_mgmt/os_mgmt.h"
@@ -73,10 +71,8 @@ static void pool_free(struct mgmt_buf *buf)
  * SMP streamer state
  * ------------------------------------------------------------------------ */
 
-static struct cbor_buf_reader  s_cbor_reader;
-static struct cbor_buf_writer  s_cbor_writer;
-static struct mgmt_buf        *s_rsp_buf;
-static struct smp_streamer     s_streamer;
+static struct mgmt_buf *s_rsp_buf;
+static struct smp_streamer s_streamer;
 
 static void *streamer_alloc_rsp(const void *src_buf, void *arg)
 {
@@ -109,44 +105,27 @@ static void streamer_reset_buf(void *buf, void *arg)
 	}
 }
 
-static int streamer_write_at(struct cbor_encoder_writer *writer,
+static int streamer_write_at(void *tx_buf,
 		size_t offset, const void *data, size_t len, void *arg)
 {
-	(void)writer;
 	(void)arg;
 
 	struct mgmt_buf *b = s_rsp_buf;
 	if (!b || offset + len > s_pool.buf_size) {
-		return (int)CborErrorOutOfMemory;
+		return MGMT_ERR_ENOMEM;
 	}
 
-	memcpy(b->data + offset, data, len);
+	memcpy((uint8_t *)tx_buf + offset, data, len);
 	if (offset + len > b->len) {
 		b->len = offset + len;
 	}
 
-	return CborNoError;
-}
-
-static int streamer_init_reader(struct cbor_decoder_reader *reader,
-		void *buf, void *arg)
-{
-	(void)reader;
-	(void)arg;
-
-	struct mgmt_buf *b = (struct mgmt_buf *)buf;
-	if (!b) {
-		return MGMT_ERR_EINVAL;
-	}
-
-	cbor_buf_reader_init(&s_cbor_reader, b->data, b->len);
 	return 0;
 }
 
-static int streamer_init_writer(struct cbor_encoder_writer *writer,
-		void *buf, void *arg)
+static int streamer_init_reader(void *buf, void *arg,
+		const void **out_rx_buf, size_t *out_rx_len)
 {
-	(void)writer;
 	(void)arg;
 
 	struct mgmt_buf *b = (struct mgmt_buf *)buf;
@@ -154,11 +133,26 @@ static int streamer_init_writer(struct cbor_encoder_writer *writer,
 		return MGMT_ERR_EINVAL;
 	}
 
-	cbor_buf_writer_init(&s_cbor_writer, b->data, s_pool.buf_size);
-	s_cbor_writer.ptr               = b->data + MGMT_HDR_SIZE;
-	s_cbor_writer.enc.bytes_written = MGMT_HDR_SIZE;
+	*out_rx_buf = b->data;
+	*out_rx_len = b->len;
+	return 0;
+}
+
+static int streamer_init_writer(void *buf, void *arg,
+		void **out_tx_buf, size_t *out_tx_size)
+{
+	(void)arg;
+
+	struct mgmt_buf *b = (struct mgmt_buf *)buf;
+	if (!b) {
+		return MGMT_ERR_EINVAL;
+	}
+
 	s_rsp_buf = b;
-	b->len   = MGMT_HDR_SIZE;
+	b->len = 0;
+
+	*out_tx_buf  = b->data;
+	*out_tx_size = s_pool.buf_size;
 	return 0;
 }
 
@@ -198,11 +192,19 @@ static int smp_tx_rsp(struct smp_streamer *ss, void *buf, void *arg)
 		return MGMT_ERR_EINVAL;
 	}
 
-	b->len = (size_t)cbor_buf_writer_buffer_size(&s_cbor_writer, b->data);
+	/*
+	 * The CBOR encoder writes directly to b->data + MGMT_HDR_SIZE via its
+	 * internal buf_writer, bypassing write_at.  b->len therefore only
+	 * reflects the 8-byte header written through write_at.  Compute the
+	 * true total length from the SMP header's nh_len field (network order).
+	 */
+	struct mgmt_hdr hdr;
+	memcpy(&hdr, b->data, sizeof hdr);
+	size_t total_len = MGMT_HDR_SIZE + ntohs(hdr.nh_len);
 
 	int rc = 0;
-	if (b->len > 0) {
-		rc = esp_smp_transport_send(b->data, b->len);
+	if (total_len > MGMT_HDR_SIZE && total_len <= s_pool.buf_size) {
+		rc = esp_smp_transport_send(b->data, total_len);
 		if (rc != 0) {
 			rc = MGMT_ERR_EUNKNOWN;
 		}
@@ -255,8 +257,6 @@ int mgmt_init(const struct mgmt_config *cfg)
 	/* Wire up the SMP streamer. */
 	s_streamer.mgmt_stmr.cfg    = &s_streamer_cfg;
 	s_streamer.mgmt_stmr.cb_arg = NULL;
-	s_streamer.mgmt_stmr.reader = &s_cbor_reader.r;
-	s_streamer.mgmt_stmr.writer = &s_cbor_writer.enc;
 	s_streamer.tx_rsp_cb        = smp_tx_rsp;
 
 	img_mgmt_register_group();
