@@ -181,6 +181,10 @@ int img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 	esp_err_t err = esp_ota_write_with_offset(s_ota.handle, data,
 			num_bytes, offset);
 	if (err != ESP_OK) {
+		if (s_ota.handle) {
+			esp_ota_abort(s_ota.handle);
+			s_ota.handle = 0;
+		}
 		return MGMT_ERR_EUNKNOWN;
 	}
 

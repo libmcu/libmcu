@@ -27,11 +27,16 @@ static void reset_timer_cb(TimerHandle_t timer)
 
 int os_mgmt_impl_reset(unsigned int delay_ms)
 {
-	TickType_t ticks = pdMS_TO_TICKS(delay_ms ? delay_ms : 1U);
-	TimerHandle_t timer = xTimerCreate("mgmt_reset", ticks,
-			pdFALSE, NULL, reset_timer_cb);
+	if (!delay_ms) {
+		board_reboot();
+		return 0;
+	}
+
+	TimerHandle_t timer = xTimerCreate("mgmt_reset",
+			pdMS_TO_TICKS(delay_ms), pdFALSE, NULL, reset_timer_cb);
 	if (!timer) {
-		return MGMT_ERR_ENOMEM;
+		board_reboot();
+		return 0;
 	}
 
 	xTimerStart(timer, 0);
