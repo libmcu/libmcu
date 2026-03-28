@@ -20,8 +20,9 @@
 #define TAG "mgmt_img_esp"
 
 /* Module-level OTA state — only one upload can be active at a time. */
-static esp_ota_handle_t        s_ota_handle;
-static bool                    s_upload_in_progress;
+static struct {
+	esp_ota_handle_t handle;
+} s_ota;
 
 static const esp_partition_t *slot_to_partition(int slot)
 {
@@ -116,9 +117,9 @@ int img_mgmt_impl_write_pending(int slot, bool permanent)
 {
 	(void)permanent;
 
-	if (s_upload_in_progress) {
-		esp_err_t err = esp_ota_end(s_ota_handle);
-		s_upload_in_progress = false;
+	if (s_ota.handle) {
+		esp_err_t err = esp_ota_end(s_ota.handle);
+		s_ota.handle = 0;
 		if (err != ESP_OK) {
 			ESP_LOGE(TAG, "esp_ota_end failed: %s",
 					esp_err_to_name(err));
@@ -164,22 +165,21 @@ int img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
 int img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 		unsigned int num_bytes, bool last)
 {
-	if (!s_upload_in_progress) {
+	if (!s_ota.handle) {
 		const esp_partition_t *part =
 				esp_ota_get_next_update_partition(NULL);
 		if (!part) {
 			return MGMT_ERR_EUNKNOWN;
 		}
-		esp_err_t err = esp_ota_begin(part,
-				OTA_WITH_SEQUENTIAL_WRITES, &s_ota_handle);
+		esp_err_t err = esp_ota_begin(part, OTA_SIZE_UNKNOWN,
+				&s_ota.handle);
 		if (err != ESP_OK) {
 			return MGMT_ERR_EUNKNOWN;
 		}
-		s_upload_in_progress = true;
 	}
 
-	(void)offset;
-	esp_err_t err = esp_ota_write(s_ota_handle, data, num_bytes);
+	esp_err_t err = esp_ota_write_with_offset(s_ota.handle, data,
+			num_bytes, offset);
 	if (err != ESP_OK) {
 		return MGMT_ERR_EUNKNOWN;
 	}

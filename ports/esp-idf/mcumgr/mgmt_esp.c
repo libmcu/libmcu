@@ -35,50 +35,53 @@
  * Buffer pool
  * ------------------------------------------------------------------------ */
 
+#define MGMT_BUF_COUNT_MAX  4U
+
 struct mgmt_buf {
 	uint8_t *data;
 	size_t   len;
 	bool     in_use;
 };
 
-#define MGMT_BUF_COUNT_MAX  4U
+struct mgmt_ctx {
+	struct {
+		struct mgmt_buf bufs[MGMT_BUF_COUNT_MAX];
+		size_t          count;
+		size_t          buf_size;
+	} pool;
+	struct mgmt_buf    *rsp_buf;
+	struct smp_streamer streamer;
+};
 
-static struct {
-	struct mgmt_buf   bufs[MGMT_BUF_COUNT_MAX];
-	size_t            count;
-	size_t            buf_size;
-} s_pool;
+static struct mgmt_ctx s_ctx;
 
-static struct mgmt_buf *pool_alloc(void)
+static struct mgmt_buf *pool_alloc(struct mgmt_ctx *ctx)
 {
-	for (size_t i = 0; i < s_pool.count; i++) {
-		if (!s_pool.bufs[i].in_use) {
-			s_pool.bufs[i].in_use = true;
-			return &s_pool.bufs[i];
+	for (size_t i = 0; i < ctx->pool.count; i++) {
+		if (!ctx->pool.bufs[i].in_use) {
+			ctx->pool.bufs[i].in_use = true;
+			return &ctx->pool.bufs[i];
 		}
 	}
 	return NULL;
 }
 
-static void pool_free(struct mgmt_buf *buf)
+static void pool_free(struct mgmt_ctx *ctx, struct mgmt_buf *buf)
 {
+	(void)ctx;
 	if (buf) {
 		buf->in_use = false;
 	}
 }
 
 /* ---------------------------------------------------------------------------
- * SMP streamer state
+ * SMP streamer callbacks
  * ------------------------------------------------------------------------ */
-
-static struct mgmt_buf *s_rsp_buf;
-static struct smp_streamer s_streamer;
 
 static void *streamer_alloc_rsp(const void *src_buf, void *arg)
 {
 	(void)src_buf;
-	(void)arg;
-	return pool_alloc();
+	return pool_alloc((struct mgmt_ctx *)arg);
 }
 
 static void streamer_trim_front(void *buf, size_t len, void *arg)
@@ -108,10 +111,9 @@ static void streamer_reset_buf(void *buf, void *arg)
 static int streamer_write_at(void *tx_buf,
 		size_t offset, const void *data, size_t len, void *arg)
 {
-	(void)arg;
-
-	struct mgmt_buf *b = s_rsp_buf;
-	if (!b || offset + len > s_pool.buf_size) {
+	struct mgmt_ctx *ctx = (struct mgmt_ctx *)arg;
+	struct mgmt_buf *b = ctx->rsp_buf;
+	if (!b || offset + len > ctx->pool.buf_size) {
 		return MGMT_ERR_ENOMEM;
 	}
 
@@ -141,31 +143,29 @@ static int streamer_init_reader(void *buf, void *arg,
 static int streamer_init_writer(void *buf, void *arg,
 		void **out_tx_buf, size_t *out_tx_size)
 {
-	(void)arg;
-
+	struct mgmt_ctx *ctx = (struct mgmt_ctx *)arg;
 	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return MGMT_ERR_EINVAL;
 	}
 
-	s_rsp_buf = b;
+	ctx->rsp_buf = b;
 	b->len = 0;
 
 	*out_tx_buf  = b->data;
-	*out_tx_size = s_pool.buf_size;
+	*out_tx_size = ctx->pool.buf_size;
 	return 0;
 }
 
 static void streamer_free_buf(void *buf, void *arg)
 {
-	(void)arg;
-
+	struct mgmt_ctx *ctx = (struct mgmt_ctx *)arg;
 	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (b) {
-		if (s_rsp_buf == b) {
-			s_rsp_buf = NULL;
+		if (ctx->rsp_buf == b) {
+			ctx->rsp_buf = NULL;
 		}
-		pool_free(b);
+		pool_free(ctx, b);
 	}
 }
 
@@ -185,8 +185,7 @@ static const struct mgmt_streamer_cfg s_streamer_cfg = {
 
 static int smp_tx_rsp(struct smp_streamer *ss, void *buf, void *arg)
 {
-	(void)arg;
-
+	struct mgmt_ctx *ctx = (struct mgmt_ctx *)arg;
 	struct mgmt_buf *b = (struct mgmt_buf *)buf;
 	if (!b) {
 		return MGMT_ERR_EINVAL;
@@ -199,11 +198,11 @@ static int smp_tx_rsp(struct smp_streamer *ss, void *buf, void *arg)
 	 * true total length from the SMP header's nh_len field (network order).
 	 */
 	struct mgmt_hdr hdr;
-	memcpy(&hdr, b->data, sizeof hdr);
+	memcpy(&hdr, b->data, sizeof(hdr));
 	size_t total_len = MGMT_HDR_SIZE + ntohs(hdr.nh_len);
 
 	int rc = 0;
-	if (total_len > MGMT_HDR_SIZE && total_len <= s_pool.buf_size) {
+	if (total_len > MGMT_HDR_SIZE && total_len <= ctx->pool.buf_size) {
 		rc = esp_smp_transport_send(b->data, total_len);
 		if (rc != 0) {
 			rc = MGMT_ERR_EUNKNOWN;
@@ -218,15 +217,15 @@ static int smp_tx_rsp(struct smp_streamer *ss, void *buf, void *arg)
  * RX callback — called by the transport for each decoded SMP packet.
  * ------------------------------------------------------------------------ */
 
-static void on_packet_received(const void *data, size_t len, void *ctx)
+static void on_packet_received(const void *data, size_t len, void *user_ctx)
 {
-	(void)ctx;
+	struct mgmt_ctx *ctx = (struct mgmt_ctx *)user_ctx;
 
-	if (!data || len == 0 || len > s_pool.buf_size) {
+	if (!data || len == 0 || len > ctx->pool.buf_size) {
 		return;
 	}
 
-	struct mgmt_buf *req = pool_alloc();
+	struct mgmt_buf *req = pool_alloc(ctx);
 	if (!req) {
 		return;
 	}
@@ -234,7 +233,7 @@ static void on_packet_received(const void *data, size_t len, void *ctx)
 	memcpy(req->data, data, len);
 	req->len = len;
 
-	smp_process_request_packet(&s_streamer, req);
+	smp_process_request_packet(&ctx->streamer, req);
 }
 
 int mgmt_init(const struct mgmt_config *cfg)
@@ -246,23 +245,23 @@ int mgmt_init(const struct mgmt_config *cfg)
 	}
 
 	/* Slice the caller-provided pool into individual buffers. */
-	s_pool.count    = cfg->buf_count;
-	s_pool.buf_size = cfg->buf_size;
+	s_ctx.pool.count    = cfg->buf_count;
+	s_ctx.pool.buf_size = cfg->buf_size;
 	for (size_t i = 0; i < cfg->buf_count; i++) {
-		s_pool.bufs[i].data   = &((uint8_t *)cfg->buf_pool)[i * cfg->buf_size];
-		s_pool.bufs[i].len    = 0;
-		s_pool.bufs[i].in_use = false;
+		s_ctx.pool.bufs[i].data   = &((uint8_t *)cfg->buf_pool)[i * cfg->buf_size];
+		s_ctx.pool.bufs[i].len    = 0;
+		s_ctx.pool.bufs[i].in_use = false;
 	}
 
 	/* Wire up the SMP streamer. */
-	s_streamer.mgmt_stmr.cfg    = &s_streamer_cfg;
-	s_streamer.mgmt_stmr.cb_arg = NULL;
-	s_streamer.tx_rsp_cb        = smp_tx_rsp;
+	s_ctx.streamer.mgmt_stmr.cfg    = &s_streamer_cfg;
+	s_ctx.streamer.mgmt_stmr.cb_arg = &s_ctx;
+	s_ctx.streamer.tx_rsp_cb        = smp_tx_rsp;
 
 	img_mgmt_register_group();
 	os_mgmt_register_group();
 
-	return esp_smp_transport_init(on_packet_received, NULL);
+	return esp_smp_transport_init(on_packet_received, &s_ctx);
 }
 
 void mgmt_deinit(void)
