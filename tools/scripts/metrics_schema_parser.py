@@ -58,7 +58,7 @@ def _parse_int(s: str) -> int:
 def parse_def(path: str) -> list[MetricSchema]:
     schemas: list[MetricSchema] = []
     pattern = re.compile(
-        r'^\s*(METRICS_DEFINE(?:_\w+)?)\s*\(\s*(\w+)(?:\s*,\s*([^)]*))?\s*\)'
+        r'^\s*(METRICS_DEFINE(?:_\w+)?)\s*\(\s*(\w+)(?:\s*,([^)]*))?\)'
     )
 
     with open(path, encoding="utf-8") as f:

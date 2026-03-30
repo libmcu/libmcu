@@ -34,10 +34,10 @@ typedef enum {
 } metric_unit_t;
 
 struct metric_schema {
-	metric_class_t type;
-	metric_unit_t  unit;
-	int32_t        range_min;
-	int32_t        range_max;
+	uint8_t type; /* metric_class_t */
+	uint8_t unit; /* metric_unit_t  */
+	int32_t range_min;
+	int32_t range_max;
 } LIBMCU_PACKED;
 
 #if defined(__cplusplus)
