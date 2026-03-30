@@ -17,6 +17,16 @@ static struct {
 	int32_t value;
 } saved_metrics[SAVED_METRICS_LEN];
 
+static int callback_call_count;
+
+static void count_callback(metric_key_t keyid, int32_t value, void *ctx)
+{
+	(void)keyid;
+	(void)value;
+	(void)ctx;
+	callback_call_count++;
+}
+
 static void clear_saved_metrics(void)
 {
 	for (int i = 0; i < SAVED_METRICS_LEN; i++) {
@@ -67,6 +77,7 @@ static void report_periodic(void)
 TEST_GROUP(metrics) {
 	void setup(void) {
 		clear_saved_metrics();
+		callback_call_count = 0;
 		metrics_init(true);
 	}
 	void teardown() {
@@ -344,4 +355,251 @@ TEST(metrics, set_max_min_ShouldHandleSequenceCorrectly) {
 	metrics_set_max_min(HeapHighWaterMark, ReportInterval, 150);
 	LONGS_EQUAL(200, metrics_get(HeapHighWaterMark));
 	LONGS_EQUAL(50, metrics_get(ReportInterval));
+}
+
+/* iterate: 콜백 호출 횟수 검증 */
+
+TEST(metrics, iterate_ShouldNotCallCallback_WhenNoMetricsAreSet) {
+	/* setup에서 metrics_init(true) → 모든 메트릭 is_set=false */
+	metrics_iterate(count_callback, NULL);
+	LONGS_EQUAL(0, callback_call_count);
+}
+
+TEST(metrics, iterate_ShouldCallCallbackExactlyNTimes_WhenNMetricsAreSet) {
+	metrics_set(ReportInterval, 1);
+	metrics_set(WallTime, 2);
+	metrics_set(BatteryPct, 50);
+
+	metrics_iterate(count_callback, NULL);
+
+	LONGS_EQUAL(3, callback_call_count);
+}
+
+TEST(metrics, iterate_ShouldNotCallCallback_AfterReset) {
+	metrics_set(ReportInterval, 1);
+	metrics_reset();
+
+	metrics_iterate(count_callback, NULL);
+
+	LONGS_EQUAL(0, callback_call_count);
+}
+
+/* collect: 버퍼 크기 경계 */
+
+TEST(metrics, collect_ShouldReturnZero_WhenBufferIsSmallerThanOneEntry) {
+	/* 기본 인코더: 1 entry = 4B key + 4B value = 8B */
+	metrics_set(ReportInterval, 100);
+
+	uint8_t buf[7]; /* 8B 미만 → encode_each가 0 반환 */
+	size_t size = metrics_collect(buf, sizeof(buf));
+
+	LONGS_EQUAL(0, size);
+}
+
+TEST(metrics, collect_ShouldEncodeEntry_WhenBufferIsExactlyOneEntrySize) {
+	metrics_set(ReportInterval, 0);
+
+	uint8_t buf[8];
+	size_t size = metrics_collect(buf, sizeof(buf));
+
+	LONGS_EQUAL(8, size);
+}
+
+/* collect: NULL buf dry-run (V1) */
+
+TEST(metrics, collect_ShouldReturnNeededSize_WhenBufIsNull) {
+	metrics_set(ReportInterval, 1);
+	metrics_set(WallTime, 2);
+
+	size_t needed = metrics_collect(NULL, 0);
+	uint8_t buf[64];
+	size_t written = metrics_collect(buf, sizeof(buf));
+
+	LONGS_EQUAL(needed, written);
+}
+
+/* collect: 잘못된 key는 무시 (V2) */
+
+TEST(metrics, set_ShouldDoNothing_WhenInvalidKeyGiven) {
+	const metric_key_t invalid = (metric_key_t)metrics_count();
+	metrics_set(invalid, 999);
+	/* assert가 발동되지 않고 크래시 없이 반환되어야 한다 */
+	LONGS_EQUAL(false, metrics_is_set(invalid));
+}
+
+/* count: 총 선언 수 반환 — set 여부와 무관 */
+
+TEST(metrics, count_ShouldReturnTotalDeclaredCount_RegardlessOfSetState) {
+	size_t total = metrics_count();
+
+	metrics_set(ReportInterval, 1);
+	LONGS_EQUAL(total, metrics_count());
+
+	metrics_reset();
+	LONGS_EQUAL(total, metrics_count());
+}
+
+/* increase_by: 음수로 감소 가능 */
+
+TEST(metrics, increase_by_ShouldDecreaseValue_WhenNegativeAmountGiven) {
+	metrics_set(ReportInterval, 100);
+	metrics_increase_by(ReportInterval, -30);
+	LONGS_EQUAL(70, metrics_get(ReportInterval));
+}
+
+TEST_GROUP(metrics_types) {
+	void setup() {
+		callback_call_count = 0;
+		metrics_init(true);
+	}
+	void teardown() {
+	}
+};
+
+/* stringify */
+
+TEST(metrics_types, stringify_ShouldReturnKeyName_ForCounter) {
+	STRCMP_EQUAL("UnexpectedRebootCount",
+		metrics_stringify_key(UnexpectedRebootCount));
+}
+
+TEST(metrics_types, stringify_ShouldReturnKeyName_ForGauge) {
+	STRCMP_EQUAL("WallTime", metrics_stringify_key(WallTime));
+}
+
+TEST(metrics_types, stringify_ShouldReturnKeyName_ForPercentage) {
+	STRCMP_EQUAL("BatteryPct", metrics_stringify_key(BatteryPct));
+}
+
+TEST(metrics_types, stringify_ShouldReturnKeyName_ForTimer) {
+	STRCMP_EQUAL("ServerConnectedTime",
+		metrics_stringify_key(ServerConnectedTime));
+}
+
+TEST(metrics_types, stringify_ShouldReturnKeyName_ForBytes) {
+	STRCMP_EQUAL("HeapHighWaterMark",
+		metrics_stringify_key(HeapHighWaterMark));
+}
+
+/* counter */
+
+TEST(metrics_types, counter_ShouldAccumulateViaIncrease) {
+	metrics_increase(UnexpectedRebootCount);
+	metrics_increase(UnexpectedRebootCount);
+	metrics_increase(UnexpectedRebootCount);
+	LONGS_EQUAL(3, metrics_get(UnexpectedRebootCount));
+}
+
+/* gauge */
+
+TEST(metrics_types, gauge_ShouldSetAndGetArbitraryValue) {
+	metrics_set(WallTime, 1700000000);
+	LONGS_EQUAL(1700000000, metrics_get(WallTime));
+}
+
+TEST(metrics_types, gauge_ShouldTrackMinMax_ViaSetMaxMin) {
+	metrics_set_max_min(HeapHighWaterMark, StackHighWaterMark, 500);
+	metrics_set_max_min(HeapHighWaterMark, StackHighWaterMark, 900);
+	metrics_set_max_min(HeapHighWaterMark, StackHighWaterMark, 200);
+	LONGS_EQUAL(900, metrics_get(HeapHighWaterMark));
+	LONGS_EQUAL(200, metrics_get(StackHighWaterMark));
+}
+
+/* percentage */
+
+TEST(metrics_types, percentage_ShouldSetValueInRange) {
+	metrics_set(BatteryPct, 0);
+	LONGS_EQUAL(0, metrics_get(BatteryPct));
+
+	metrics_set(BatteryPct, 50);
+	LONGS_EQUAL(50, metrics_get(BatteryPct));
+
+	metrics_set(BatteryPct, 100);
+	LONGS_EQUAL(100, metrics_get(BatteryPct));
+}
+
+/* timer */
+
+TEST(metrics_types, timer_ShouldAccumulateElapsed_ViaIncreaseBy) {
+	metrics_increase_by(ServerConnectedTime, 60);
+	metrics_increase_by(ServerConnectedTime, 120);
+	LONGS_EQUAL(180, metrics_get(ServerConnectedTime));
+}
+
+/* bytes */
+
+TEST(metrics_types, bytes_ShouldTrackLowWatermark_ViaSetIfMin) {
+	metrics_set_if_min(StackHighWaterMark, 4096);
+	metrics_set_if_min(StackHighWaterMark, 2048);
+	metrics_set_if_min(StackHighWaterMark, 3072);
+	LONGS_EQUAL(2048, metrics_get(StackHighWaterMark));
+}
+
+TEST(metrics_types, bytes_ShouldTrackHighWatermark_ViaSetIfMax) {
+	metrics_set_if_max(HeapHighWaterMark, 1024);
+	metrics_set_if_max(HeapHighWaterMark, 8192);
+	metrics_set_if_max(HeapHighWaterMark, 4096);
+	LONGS_EQUAL(8192, metrics_get(HeapHighWaterMark));
+}
+
+/* count */
+
+TEST(metrics_types, count_ShouldIncludeAllTypedMetrics) {
+	LONGS_EQUAL(7, metrics_count());
+}
+
+/* metrics_set_pct */
+
+TEST(metrics_types, pct_ShouldComputeCorrectPercentage) {
+	metrics_set_pct(BatteryPct, 3, 4);
+	LONGS_EQUAL(75, metrics_get(BatteryPct));
+}
+
+TEST(metrics_types, pct_ShouldAvoidOverflow_WhenLargeNumeratorGiven) {
+	/* num * 100 이 int32_t 범위를 초과하는 경우 */
+	metrics_set_pct(BatteryPct, 1000000, 2000000);
+	LONGS_EQUAL(50, metrics_get(BatteryPct));
+}
+
+TEST(metrics_types, pct_ShouldDoNothing_WhenDenomIsZero) {
+	metrics_set_pct(BatteryPct, 1, 0);
+	LONGS_EQUAL(false, metrics_is_set(BatteryPct));
+}
+
+/* OBS 설계 결정: 타입 제약은 런타임에 강제되지 않는다.
+ * 서버가 스키마를 기준으로 유효성을 검사한다. */
+
+TEST(metrics_types, percentage_ShouldAcceptOutOfRangeValue_BecauseRuntimeEnforcementIsServerSide) {
+	metrics_set(BatteryPct, 150); /* 선언 범위 0–100 초과 */
+	LONGS_EQUAL(150, metrics_get(BatteryPct));
+}
+
+TEST(metrics_types, gauge_ShouldAcceptValueOutsideRange_BecauseRuntimeEnforcementIsServerSide) {
+	metrics_set(WallTime, -1); /* 선언 범위 GAUGE(0, INT32_MAX) 미만 */
+	LONGS_EQUAL(-1, metrics_get(WallTime));
+}
+
+TEST(metrics_types, counter_ShouldAllowDecrement_ViaIncreaseByNegative) {
+	/* COUNTER는 단조 증가를 의도하나 런타임 강제 없음 */
+	metrics_set(UnexpectedRebootCount, 10);
+	metrics_increase_by(UnexpectedRebootCount, -3);
+	LONGS_EQUAL(7, metrics_get(UnexpectedRebootCount));
+}
+
+TEST(metrics_types, counter_ShouldAllowArbitrarySetValue_BecauseRuntimeEnforcementIsServerSide) {
+	/* metrics_set()은 타입 의미론을 강제하지 않는다 */
+	metrics_set(UnexpectedRebootCount, 100);
+	metrics_set(UnexpectedRebootCount, 50); /* 감소 */
+	LONGS_EQUAL(50, metrics_get(UnexpectedRebootCount));
+}
+
+/* iterate: typed 메트릭만 set 시 콜백 정확히 N회 */
+
+TEST(metrics_types, iterate_ShouldCallCallbackForEachTypedMetricSet) {
+	metrics_set(UnexpectedRebootCount, 1);
+	metrics_set(BatteryPct, 80);
+
+	metrics_iterate(count_callback, NULL);
+
+	LONGS_EQUAL(2, callback_call_count);
 }

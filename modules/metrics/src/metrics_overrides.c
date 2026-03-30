@@ -34,6 +34,10 @@ LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 	const uint32_t kval = (const uint32_t)key;
 	const size_t len = sizeof(kval) + sizeof(value);
 
+	if (buf == NULL) { /* dry-run: only returns required size */
+		return len;
+	}
+
 	if (bufsize < len) {
 		return 0;
 	}

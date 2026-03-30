@@ -22,9 +22,19 @@ extern "C" {
 #define METRICS_VALUE(x)		((metric_value_t)(x))
 
 enum {
-#define METRICS_DEFINE(key)		key,
+#define METRICS_DEFINE(key)			key,
+#define METRICS_DEFINE_COUNTER(key)		key,
+#define METRICS_DEFINE_GAUGE(key, mn, mx)	key,
+#define METRICS_DEFINE_PERCENTAGE(key)		key,
+#define METRICS_DEFINE_TIMER(key, u)		key,
+#define METRICS_DEFINE_BYTES(key)		key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
+#undef METRICS_DEFINE_COUNTER
+#undef METRICS_DEFINE_GAUGE
+#undef METRICS_DEFINE_PERCENTAGE
+#undef METRICS_DEFINE_TIMER
+#undef METRICS_DEFINE_BYTES
 };
 
 typedef uint16_t metric_key_t;
@@ -108,6 +118,18 @@ void metrics_increase(const metric_key_t key);
  * @param[in] n The amount to increase the value of the specified metric key by.
  */
 void metrics_increase_by(const metric_key_t key, const metric_value_t n);
+
+/**
+ * @brief Sets a metric to the percentage of num over denom.
+ *
+ * Computes (num * 100 / denom) using 64-bit intermediate arithmetic to avoid
+ * overflow, then stores the result. Does nothing if denom is zero.
+ *
+ * @param[in] key   The metric key to set (intended for METRICS_DEFINE_PERCENTAGE).
+ * @param[in] num   Numerator.
+ * @param[in] denom Denominator. Must not be zero.
+ */
+void metrics_set_pct(metric_key_t key, metric_value_t num, metric_value_t denom);
 
 /**
  * @brief Resets all metrics to their default values.

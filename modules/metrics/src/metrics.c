@@ -10,9 +10,19 @@
 #include "libmcu/assert.h"
 
 enum {
-#define METRICS_DEFINE(key)		METRICS_##key,
+#define METRICS_DEFINE(key)			METRICS_##key,
+#define METRICS_DEFINE_COUNTER(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_GAUGE(key, mn, mx)	METRICS_DEFINE(key)
+#define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
+#undef METRICS_DEFINE_COUNTER
+#undef METRICS_DEFINE_GAUGE
+#undef METRICS_DEFINE_PERCENTAGE
+#undef METRICS_DEFINE_TIMER
+#undef METRICS_DEFINE_BYTES
 	METRICS_KEY_MAX,
 };
 static_assert(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8),
@@ -32,32 +42,36 @@ LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX+1/*magic*/];
 
 #if !defined(METRICS_NO_KEY_STRING)
 static char const *key_strings[] = {
-#define METRICS_DEFINE(keystr) #keystr,
+#define METRICS_DEFINE(key)			#key,
+#define METRICS_DEFINE_COUNTER(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_GAUGE(key, mn, mx)	METRICS_DEFINE(key)
+#define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
+#undef METRICS_DEFINE_COUNTER
+#undef METRICS_DEFINE_GAUGE
+#undef METRICS_DEFINE_PERCENTAGE
+#undef METRICS_DEFINE_TIMER
+#undef METRICS_DEFINE_BYTES
 };
 #endif
+
+static bool is_valid_key(const metric_key_t key)
+{
+	return key < METRICS_KEY_MAX;
+}
 
 static struct metrics *get_item_by_index(const metric_key_t index)
 {
 	return &metrics[index];
 }
 
-static metric_key_t get_index_by_key(const metric_key_t key)
-{
-	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
-		if (get_item_by_index(i)->key == key) {
-			return i;
-		}
-	}
-
-	assert(0);
-	return 0;
-}
-
 static struct metrics *get_obj_from_key(const metric_key_t key)
 {
-	return get_item_by_index(get_index_by_key(key));
+	assert(is_valid_key(key));
+	return get_item_by_index(key);
 }
 
 static bool is_metric_set(const struct metrics *p)
@@ -84,8 +98,9 @@ static bool validate_metrics(void)
 
 static void set_metric_value(const metric_key_t key, const metric_value_t value)
 {
-	get_obj_from_key(key)->value = value;
-	get_obj_from_key(key)->is_set = true;
+	struct metrics *p = get_obj_from_key(key);
+	p->value  = value;
+	p->is_set = true;
 }
 
 static metric_value_t get_metric_value(const metric_key_t key)
@@ -96,28 +111,22 @@ static metric_value_t get_metric_value(const metric_key_t key)
 static void set_metric_value_if_min(const metric_key_t key,
 		const metric_value_t value)
 {
-	const struct metrics *p = get_obj_from_key(key);
+	struct metrics *p = get_obj_from_key(key);
 
-	if (is_metric_set(p)) {
-		if (value < p->value) {
-			set_metric_value(key, value);
-		}
-	} else {
-		set_metric_value(key, value);
+	if (!is_metric_set(p) || value < p->value) {
+		p->value  = value;
+		p->is_set = true;
 	}
 }
 
 static void set_metric_value_if_max(const metric_key_t key,
 		const metric_value_t value)
 {
-	const struct metrics *p = get_obj_from_key(key);
+	struct metrics *p = get_obj_from_key(key);
 
-	if (is_metric_set(p)) {
-		if (value > p->value) {
-			set_metric_value(key, value);
-		}
-	} else {
-		set_metric_value(key, value);
+	if (!is_metric_set(p) || value > p->value) {
+		p->value  = value;
+		p->is_set = true;
 	}
 }
 
@@ -164,8 +173,11 @@ static size_t encode_all(uint8_t *buf, const size_t bufsize)
 	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_item_by_index(i);
 		if (is_metric_set(p)) {
-			written += metrics_encode_each(&buf[written],
-					bufsize - written, p->key, p->value);
+			uint8_t *dst = buf ? &buf[written] : NULL;
+			size_t remaining = (buf && bufsize > written)
+					? bufsize - written : 0;
+			written += metrics_encode_each(dst, remaining,
+					p->key, p->value);
 		}
 	}
 
@@ -179,6 +191,9 @@ static void initialize_metrics(void)
 
 void metrics_set(const metric_key_t key, const metric_value_t val)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value(key, val);
 	metrics_unlock();
@@ -186,6 +201,9 @@ void metrics_set(const metric_key_t key, const metric_value_t val)
 
 void metrics_set_if_min(const metric_key_t key, const metric_value_t val)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value_if_min(key, val);
 	metrics_unlock();
@@ -193,6 +211,9 @@ void metrics_set_if_min(const metric_key_t key, const metric_value_t val)
 
 void metrics_set_if_max(const metric_key_t key, const metric_value_t val)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value_if_max(key, val);
 	metrics_unlock();
@@ -201,6 +222,9 @@ void metrics_set_if_max(const metric_key_t key, const metric_value_t val)
 void metrics_set_max_min(const metric_key_t k_max, const metric_key_t k_min,
 		const metric_value_t val)
 {
+	if (!is_valid_key(k_max) || !is_valid_key(k_min)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value_if_max(k_max, val);
 	set_metric_value_if_min(k_min, val);
@@ -211,6 +235,9 @@ metric_value_t metrics_get(const metric_key_t key)
 {
 	metric_value_t value;
 
+	if (!is_valid_key(key)) {
+		return 0;
+	}
 	metrics_lock();
 	value = get_metric_value(key);
 	metrics_unlock();
@@ -220,6 +247,9 @@ metric_value_t metrics_get(const metric_key_t key)
 
 void metrics_increase(const metric_key_t key)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value(key, get_metric_value(key) + 1);
 	metrics_unlock();
@@ -227,13 +257,30 @@ void metrics_increase(const metric_key_t key)
 
 void metrics_increase_by(const metric_key_t key, const metric_value_t n)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	set_metric_value(key, get_metric_value(key) + n);
 	metrics_unlock();
 }
 
+void metrics_set_pct(const metric_key_t key, const metric_value_t num,
+		const metric_value_t denom)
+{
+	if (!is_valid_key(key) || denom == 0) {
+		return;
+	}
+	metrics_lock();
+	set_metric_value(key, (metric_value_t)((int64_t)num * 100 / denom));
+	metrics_unlock();
+}
+
 bool metrics_is_set(const metric_key_t key)
 {
+	if (!is_valid_key(key)) {
+		return false;
+	}
 	metrics_lock();
 	const bool is_set = is_metric_set(get_obj_from_key(key));
 	metrics_unlock();
@@ -249,6 +296,9 @@ void metrics_reset(void)
 
 void metrics_unset(const metric_key_t key)
 {
+	if (!is_valid_key(key)) {
+		return;
+	}
 	metrics_lock();
 	struct metrics *p = get_obj_from_key(key);
 	if (is_metric_set(p)) {
@@ -284,6 +334,9 @@ size_t metrics_count(void)
 #if !defined(METRICS_NO_KEY_STRING)
 const char *metrics_stringify_key(const metric_key_t key)
 {
+	if (!is_valid_key(key)) {
+		return "";
+	}
 	return key_strings[key];
 }
 #endif
