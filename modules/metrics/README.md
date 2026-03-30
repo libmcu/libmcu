@@ -8,6 +8,17 @@
 3. Set metric values with APIs. e.g. `metrics_set(BatteryPCT, val)`
 4. Set a timer to aggregate and send/save metrics periodically
 
+### Metric Types
+
+| Macro | Description |
+| ----- | ----------- |
+| `METRICS_DEFINE(key)` | Untyped (backward-compatible) |
+| `METRICS_DEFINE_COUNTER(key)` | Monotonically increasing integer |
+| `METRICS_DEFINE_GAUGE(key, min, max)` | Arbitrary value with range hint |
+| `METRICS_DEFINE_PERCENTAGE(key)` | Ratio in [0, 100] |
+| `METRICS_DEFINE_TIMER(key, unit)` | Elapsed time; `unit`: `ms`/`MS`, `us`/`US`, `s`/`S` |
+| `METRICS_DEFINE_BYTES(key)` | Byte-count value |
+
 [^1]: The default file name is `metrics.def`. You don't need to specify the file
 location with `METRICS_USER_DEFINES` when you use the default file name and the
 file is in the include path.

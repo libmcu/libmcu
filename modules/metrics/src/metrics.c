@@ -40,6 +40,39 @@ struct metrics {
 
 LIBMCU_NOINIT static struct metrics metrics[METRICS_KEY_MAX+1/*magic*/];
 
+#if defined(METRICS_SCHEMA_IBS)
+static const struct metric_schema schema_table[] = {
+#define METRICS_DEFINE(key) \
+	{ METRIC_CLASS_UNTYPED, METRIC_UNIT_NONE, INT32_MIN, INT32_MAX },
+#define METRICS_DEFINE_COUNTER(key) \
+	{ METRIC_CLASS_COUNTER, METRIC_UNIT_NONE, 0, INT32_MAX },
+#define METRICS_DEFINE_GAUGE(key, mn, mx) \
+	{ METRIC_CLASS_GAUGE, METRIC_UNIT_NONE, (mn), (mx) },
+#define METRICS_DEFINE_PERCENTAGE(key) \
+	{ METRIC_CLASS_PERCENTAGE, METRIC_UNIT_NONE, 0, 100 },
+#define METRICS_DEFINE_TIMER(key, u) \
+	{ METRIC_CLASS_TIMER, METRIC_UNIT_##u, 0, INT32_MAX },
+#define METRICS_DEFINE_BYTES(key) \
+	{ METRIC_CLASS_BYTES, METRIC_UNIT_NONE, 0, INT32_MAX },
+#include METRICS_USER_DEFINES
+#undef METRICS_DEFINE
+#undef METRICS_DEFINE_COUNTER
+#undef METRICS_DEFINE_GAUGE
+#undef METRICS_DEFINE_PERCENTAGE
+#undef METRICS_DEFINE_TIMER
+#undef METRICS_DEFINE_BYTES
+};
+
+static void assert_value_in_schema_range(const metric_key_t key,
+		const metric_value_t value)
+{
+	const struct metric_schema *s = &schema_table[key];
+	assert(value >= s->range_min && value <= s->range_max);
+}
+#else
+#define assert_value_in_schema_range(key, value)  ((void)0)
+#endif /* METRICS_SCHEMA_IBS */
+
 #if !defined(METRICS_NO_KEY_STRING)
 static char const *key_strings[] = {
 #define METRICS_DEFINE(key)			#key,
@@ -98,6 +131,7 @@ static bool validate_metrics(void)
 
 static void set_metric_value(const metric_key_t key, const metric_value_t value)
 {
+	assert_value_in_schema_range(key, value);
 	struct metrics *p = get_obj_from_key(key);
 	p->value  = value;
 	p->is_set = true;
@@ -111,22 +145,20 @@ static metric_value_t get_metric_value(const metric_key_t key)
 static void set_metric_value_if_min(const metric_key_t key,
 		const metric_value_t value)
 {
-	struct metrics *p = get_obj_from_key(key);
+	const struct metrics *p = get_obj_from_key(key);
 
 	if (!is_metric_set(p) || value < p->value) {
-		p->value  = value;
-		p->is_set = true;
+		set_metric_value(key, value);
 	}
 }
 
 static void set_metric_value_if_max(const metric_key_t key,
 		const metric_value_t value)
 {
-	struct metrics *p = get_obj_from_key(key);
+	const struct metrics *p = get_obj_from_key(key);
 
 	if (!is_metric_set(p) || value > p->value) {
-		p->value  = value;
-		p->is_set = true;
+		set_metric_value(key, value);
 	}
 }
 
@@ -176,8 +208,13 @@ static size_t encode_all(uint8_t *buf, const size_t bufsize)
 			uint8_t *dst = buf ? &buf[written] : NULL;
 			size_t remaining = (buf && bufsize > written)
 					? bufsize - written : 0;
+#if defined(METRICS_SCHEMA_IBS)
+			written += metrics_encode_each(dst, remaining,
+					p->key, p->value, &schema_table[i]);
+#else
 			written += metrics_encode_each(dst, remaining,
 					p->key, p->value);
+#endif
 		}
 	}
 

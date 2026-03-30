@@ -15,6 +15,10 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 
+#if defined(METRICS_SCHEMA_IBS)
+#include "libmcu/metrics_schema.h"
+#endif
+
 #if !defined(METRICS_USER_DEFINES)
 #define METRICS_USER_DEFINES		"metrics.def"
 #endif
