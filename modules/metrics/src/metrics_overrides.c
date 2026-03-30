@@ -44,8 +44,8 @@ LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 		const struct metric_schema *schema)
 {
 	const uint32_t kval = (uint32_t)key;
-	const uint8_t  tval = (uint8_t)schema->type;
-	const uint8_t  uval = (uint8_t)schema->unit;
+	const uint8_t  tval = schema->type;
+	const uint8_t  uval = schema->unit;
 	const size_t len = sizeof(kval) + sizeof(tval) + sizeof(uval)
 			+ sizeof(schema->range_min) + sizeof(schema->range_max)
 			+ sizeof(value);

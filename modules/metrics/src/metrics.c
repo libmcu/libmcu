@@ -145,7 +145,7 @@ static metric_value_t get_metric_value(const metric_key_t key)
 static void set_metric_value_if_min(const metric_key_t key,
 		const metric_value_t value)
 {
-	struct metrics *p = get_obj_from_key(key);
+	const struct metrics *p = get_obj_from_key(key);
 
 	if (!is_metric_set(p) || value < p->value) {
 		set_metric_value(key, value);
@@ -155,7 +155,7 @@ static void set_metric_value_if_min(const metric_key_t key,
 static void set_metric_value_if_max(const metric_key_t key,
 		const metric_value_t value)
 {
-	struct metrics *p = get_obj_from_key(key);
+	const struct metrics *p = get_obj_from_key(key);
 
 	if (!is_metric_set(p) || value > p->value) {
 		set_metric_value(key, value);
