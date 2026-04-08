@@ -18,6 +18,16 @@ void metrics_lock(void);
 void metrics_unlock(void);
 
 /**
+ * @brief Returns the device serial number string for encoder metadata.
+ *
+ * Override this function when an encoder needs device identification in the
+ * encoded payload. Returning an empty string is allowed.
+ *
+ * @return null-terminated serial number string, or an empty string.
+ */
+const char *metrics_get_serial_number_string(void);
+
+/**
  * @brief It creates an encoding header.
  *
  * This function is called internally in `metrics_collect()`.

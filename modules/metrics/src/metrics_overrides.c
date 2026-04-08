@@ -18,6 +18,11 @@ LIBMCU_WEAK void metrics_unlock(void)
 	/* platform specific implementation */
 }
 
+LIBMCU_WEAK const char *metrics_get_serial_number_string(void)
+{
+	return "";
+}
+
 #if defined(METRICS_SCHEMA_IBS)
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
 		uint32_t nr_total, uint32_t nr_updated)

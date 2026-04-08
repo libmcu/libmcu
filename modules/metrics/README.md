@@ -31,6 +31,9 @@ You can implement your own encoder using `metrics_encode_header()` and
 `metrics_encode_each()`. No encoder by default, meaning just a simple byte
 stream.
 
+To get the exact encoded payload size before allocation, call
+`metrics_collect(NULL, 0)`.
+
 ### Syncronization
 
 Implement `metrics_lock()` and `metrics_unlock()` in case of multi threaded
