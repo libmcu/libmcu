@@ -233,6 +233,36 @@ TEST(metrics_schema, bytes_schema)
 }
 
 /*
+ * BINARY: class == METRIC_CLASS_BINARY, unit == NONE, range [0, 1].
+ */
+TEST(metrics_schema, binary_schema_has_fixed_0_to_1_range)
+{
+	metrics_set(EmergencyActive, 1);
+	metrics_collect(buf, sizeof(buf));
+
+	LONGS_EQUAL(METRIC_CLASS_BINARY, entry_class(buf, 0));
+	LONGS_EQUAL(METRIC_UNIT_NONE,    entry_unit(buf, 0));
+	LONGS_EQUAL(0,                   entry_range_min(buf, 0));
+	LONGS_EQUAL(1,                   entry_range_max(buf, 0));
+	LONGS_EQUAL(1,                   entry_value(buf, 0));
+}
+
+/*
+ * STATE: class == METRIC_CLASS_STATE, unit == NONE, range is full int32_t.
+ */
+TEST(metrics_schema, state_schema_has_full_int32_range)
+{
+	metrics_set(RunnerState, 3);
+	metrics_collect(buf, sizeof(buf));
+
+	LONGS_EQUAL(METRIC_CLASS_STATE, entry_class(buf, 0));
+	LONGS_EQUAL(METRIC_UNIT_NONE,   entry_unit(buf, 0));
+	LONGS_EQUAL(INT32_MIN,          entry_range_min(buf, 0));
+	LONGS_EQUAL(INT32_MAX,          entry_range_max(buf, 0));
+	LONGS_EQUAL(3,                  entry_value(buf, 0));
+}
+
+/*
  * UNTYPED: class == METRIC_CLASS_UNTYPED, range는 int32_t 전체 [INT32_MIN, INT32_MAX].
  */
 TEST(metrics_schema, untyped_schema_has_full_int32_range)

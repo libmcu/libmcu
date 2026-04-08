@@ -21,6 +21,8 @@ typedef enum {
 	METRIC_CLASS_PERCENTAGE = 3,
 	METRIC_CLASS_TIMER      = 4,
 	METRIC_CLASS_BYTES      = 5,
+	METRIC_CLASS_BINARY     = 6,
+	METRIC_CLASS_STATE      = 7,
 } metric_class_t;
 
 typedef enum {

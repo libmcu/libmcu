@@ -32,6 +32,8 @@ enum {
 #define METRICS_DEFINE_PERCENTAGE(key)		key,
 #define METRICS_DEFINE_TIMER(key, u)		key,
 #define METRICS_DEFINE_BYTES(key)		key,
+#define METRICS_DEFINE_BINARY(key)		key,
+#define METRICS_DEFINE_STATE(key)		key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -39,6 +41,8 @@ enum {
 #undef METRICS_DEFINE_PERCENTAGE
 #undef METRICS_DEFINE_TIMER
 #undef METRICS_DEFINE_BYTES
+#undef METRICS_DEFINE_BINARY
+#undef METRICS_DEFINE_STATE
 };
 
 typedef uint16_t metric_key_t;
