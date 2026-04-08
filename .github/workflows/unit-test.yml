@@ -15,6 +15,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
+      - name: Fetch CBOR dependency
+        run: |
+          if [ ! -d ../cbor ]; then
+            git clone --depth 1 https://github.com/libmcu/cbor.git ../cbor
+          fi
       - name: Install test framework
         run: make -C tests install
       - name: Test

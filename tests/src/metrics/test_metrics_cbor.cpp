@@ -25,6 +25,16 @@ void metrics_unlock(void)
 }
 }
 
+static uint8_t libmcu_version_cbor_msb(void)
+{
+	return (uint8_t)((LIBMCU_VERSION >> 8) & 0xffU);
+}
+
+static uint8_t libmcu_version_cbor_lsb(void)
+{
+	return (uint8_t)(LIBMCU_VERSION & 0xffU);
+}
+
 TEST_GROUP(metrics_cbor)
 {
 	void setup(void)
@@ -39,12 +49,12 @@ TEST_GROUP(metrics_cbor)
 
 TEST(metrics_cbor, collect_ShouldEncodeMetadataOnly_WhenNoMetricSet)
 {
-	static const uint8_t expected[] = {
+	const uint8_t expected[] = {
 		0xA1,
 		0x20,
 		0x82,
 		0x64, 'S', 'N', '0', '1',
-		0x19, 0x03, 0x00,
+		0x19, libmcu_version_cbor_msb(), libmcu_version_cbor_lsb(),
 	};
 	uint8_t buf[32] = { 0, };
 
@@ -56,12 +66,12 @@ TEST(metrics_cbor, collect_ShouldEncodeMetadataOnly_WhenNoMetricSet)
 
 TEST(metrics_cbor, collect_ShouldEncodeMetadataAndMetric_WhenMetricIsSet)
 {
-	static const uint8_t expected[] = {
+	const uint8_t expected[] = {
 		0xA2,
 		0x20,
 		0x82,
 		0x64, 'S', 'N', '0', '1',
-		0x19, 0x03, 0x00,
+		0x19, libmcu_version_cbor_msb(), libmcu_version_cbor_lsb(),
 		0x00,
 		0x1A, 0x12, 0x34, 0x56, 0x78,
 	};
@@ -90,7 +100,9 @@ TEST(metrics_cbor, collect_ShouldReturnExactSize_WhenBufIsNull)
 
 TEST(metrics_cbor, count_ShouldExcludeMetadata)
 {
-	LONGS_EQUAL(7, metrics_count());
+	const size_t nr_metrics = 9U;
+
+	LONGS_EQUAL(nr_metrics, metrics_count());
 	metrics_set(ReportInterval, 1);
-	LONGS_EQUAL(7, metrics_count());
+	LONGS_EQUAL(nr_metrics, metrics_count());
 }
