@@ -16,6 +16,8 @@ enum {
 #define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_BINARY(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_STATE(key)		METRICS_DEFINE(key)
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -23,6 +25,8 @@ enum {
 #undef METRICS_DEFINE_PERCENTAGE
 #undef METRICS_DEFINE_TIMER
 #undef METRICS_DEFINE_BYTES
+#undef METRICS_DEFINE_BINARY
+#undef METRICS_DEFINE_STATE
 	METRICS_KEY_MAX,
 };
 static_assert(METRICS_KEY_MAX < (1U << sizeof(metric_key_t) * 8),
@@ -54,6 +58,10 @@ static const struct metric_schema schema_table[] = {
 	{ METRIC_CLASS_TIMER, METRIC_UNIT_##u, 0, INT32_MAX },
 #define METRICS_DEFINE_BYTES(key) \
 	{ METRIC_CLASS_BYTES, METRIC_UNIT_NONE, 0, INT32_MAX },
+#define METRICS_DEFINE_BINARY(key) \
+	{ METRIC_CLASS_BINARY, METRIC_UNIT_NONE, 0, 1 },
+#define METRICS_DEFINE_STATE(key) \
+	{ METRIC_CLASS_STATE, METRIC_UNIT_NONE, INT32_MIN, INT32_MAX },
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -61,6 +69,8 @@ static const struct metric_schema schema_table[] = {
 #undef METRICS_DEFINE_PERCENTAGE
 #undef METRICS_DEFINE_TIMER
 #undef METRICS_DEFINE_BYTES
+#undef METRICS_DEFINE_BINARY
+#undef METRICS_DEFINE_STATE
 };
 
 static void assert_value_in_schema_range(const metric_key_t key,
@@ -81,6 +91,8 @@ static char const *key_strings[] = {
 #define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_BINARY(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_STATE(key)		METRICS_DEFINE(key)
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -88,6 +100,8 @@ static char const *key_strings[] = {
 #undef METRICS_DEFINE_PERCENTAGE
 #undef METRICS_DEFINE_TIMER
 #undef METRICS_DEFINE_BYTES
+#undef METRICS_DEFINE_BINARY
+#undef METRICS_DEFINE_STATE
 };
 #endif
 

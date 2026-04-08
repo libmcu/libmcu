@@ -18,6 +18,8 @@
 | `METRICS_DEFINE_PERCENTAGE(key)` | Ratio in [0, 100] |
 | `METRICS_DEFINE_TIMER(key, unit)` | Elapsed time; `unit`: `ms`/`MS`, `us`/`US`, `s`/`S` |
 | `METRICS_DEFINE_BYTES(key)` | Byte-count value |
+| `METRICS_DEFINE_BINARY(key)` | Binary value in [0, 1]; `unset` remains “no sample” |
+| `METRICS_DEFINE_STATE(key)` | Categorical / enum-like state value |
 
 [^1]: The default file name is `metrics.def`. You don't need to specify the file
 location with `METRICS_USER_DEFINES` when you use the default file name and the

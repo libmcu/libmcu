@@ -168,7 +168,7 @@ TEST(metrics, is_set_ShouldReturnFalse_WhenReportIntervalIsNotSet) {
 }
 
 TEST(metrics, count_ShouldReturnNumberOfMetrics) {
-	LONGS_EQUAL(7, metrics_count());
+	LONGS_EQUAL(9, metrics_count());
 }
 
 TEST(metrics, set_if_min_ShouldSetMinValue_WhenNotSet) {
@@ -300,7 +300,7 @@ TEST(metrics, init_ShouldInitializeAllMetricsToZero_WhenForceIsTrue) {
 	LONGS_EQUAL(0, count);
 
 	// Verify metrics count is correct
-	LONGS_EQUAL(7, metrics_count());
+	LONGS_EQUAL(9, metrics_count());
 }
 
 TEST(metrics, set_max_min_ShouldSetBothMaxAndMin_WhenNotSet) {
@@ -545,7 +545,7 @@ TEST(metrics_types, bytes_ShouldTrackHighWatermark_ViaSetIfMax) {
 /* count */
 
 TEST(metrics_types, count_ShouldIncludeAllTypedMetrics) {
-	LONGS_EQUAL(7, metrics_count());
+	LONGS_EQUAL(9, metrics_count());
 }
 
 /* metrics_set_pct */

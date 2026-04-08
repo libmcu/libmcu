@@ -43,6 +43,8 @@ MACRO_DEFS = {
     "METRICS_DEFINE_PERCENTAGE": ("percentage", 0,         100,       False, False),
     "METRICS_DEFINE_TIMER":      ("timer",      0,         INT32_MAX, False, True),
     "METRICS_DEFINE_BYTES":      ("bytes",      0,         INT32_MAX, False, False),
+    "METRICS_DEFINE_BINARY":     ("binary",     0,         1,         False, False),
+    "METRICS_DEFINE_STATE":      ("state",      INT32_MIN, INT32_MAX, False, False),
 }
 
 
