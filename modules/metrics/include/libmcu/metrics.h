@@ -178,8 +178,12 @@ void metrics_iterate(void (*callback_each)(const metric_key_t key,
  * @brief Collects all metrics into the provided buffer.
  *
  * This function collects all current metrics and stores them in the
- * provided buffer. The buffer should be large enough to hold all the
- * metrics data.
+ * provided buffer. The buffer should be large enough to hold all encoded
+ * metric data and any encoder-specific metadata.
+ *
+ * Passing `NULL` as @p buf with `0` as @p bufsize performs a dry-run and
+ * returns the exact number of bytes required for the current payload. This is
+ * the recommended way to size the buffer before an actual collect call.
  *
  * @param[out] buf Pointer to the buffer where metrics data will be stored.
  * @param[in] bufsize Size of the buffer in bytes.
@@ -191,7 +195,12 @@ size_t metrics_collect(void *buf, const size_t bufsize);
 /**
  * @brief Retrieves the count of all metrics.
  *
- * This function returns the total number of metrics currently being tracked.
+ * This function returns the number of declared user metrics currently being
+ * tracked.
+ *
+ * @warning This count excludes any encoder-specific metadata. Do not derive an
+ *          output buffer size from this value. Use `metrics_collect(NULL, 0)`
+ *          when an exact encoded payload size is needed.
  *
  * @return size_t The count of all metrics.
  */
