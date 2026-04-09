@@ -39,6 +39,17 @@ const char *metrics_get_serial_number_string(void);
 uint64_t metrics_get_unix_timestamp(void);
 
 /**
+ * @brief Returns the version string for encoder metadata.
+ *
+ * Override this function to embed a human-readable firmware or payload
+ * producer version in the encoded payload. Returning an empty string is
+ * allowed.
+ *
+ * @return null-terminated version string, or an empty string.
+ */
+const char *metrics_get_version_string(void);
+
+/**
  * @brief It creates an encoding header.
  *
  * This function is called internally in `metrics_collect()`.
