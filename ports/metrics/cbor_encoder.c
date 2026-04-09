@@ -21,11 +21,12 @@ enum {
 };
 
 /* The metadata payload is a fixed-order, append-only array encoded as:
- *   -1: [sn, ver]
+ *   -1: [sn, ver, ts]
  * Do not reorder existing fields. Future metadata may only be appended. */
 enum metrics_cbor_metadata_index {
 	METRICS_CBOR_METADATA_SN = 0,
 	METRICS_CBOR_METADATA_VER,
+	METRICS_CBOR_METADATA_TS,
 	METRICS_CBOR_METADATA_COUNT,
 };
 
@@ -33,7 +34,9 @@ static_assert(METRICS_CBOR_METADATA_SN == 0,
 		"CBOR metadata array order must start with SN");
 static_assert(METRICS_CBOR_METADATA_VER == 1,
 		"CBOR metadata array order must keep version second");
-static_assert(METRICS_CBOR_METADATA_COUNT == 2,
+static_assert(METRICS_CBOR_METADATA_TS == 2,
+		"CBOR metadata array order must keep timestamp third");
+static_assert(METRICS_CBOR_METADATA_COUNT == 3,
 		"CBOR metadata array is append-only; update decoder docs if extended");
 
 static size_t cbor_encoded_uint_size(uint64_t value)
@@ -96,7 +99,8 @@ static size_t cbor_encoded_metadata_size(void)
 	return cbor_encoded_int_size(METRICS_CBOR_METADATA_KEY)
 		+ cbor_encoded_uint_size(METRICS_CBOR_METADATA_COUNT)
 		+ cbor_encoded_text_size(sn)
-		+ cbor_encoded_uint_size(LIBMCU_VERSION);
+		+ cbor_encoded_uint_size(LIBMCU_VERSION)
+		+ cbor_encoded_uint_size(metrics_get_unix_timestamp());
 }
 
 static void cbor_encode_metadata(cbor_writer_t *w)
@@ -111,6 +115,7 @@ static void cbor_encode_metadata(cbor_writer_t *w)
 	cbor_encode_array(w, METRICS_CBOR_METADATA_COUNT);
 	cbor_encode_text_string(w, sn, strlen(sn));
 	cbor_encode_unsigned_integer(w, LIBMCU_VERSION);
+	cbor_encode_unsigned_integer(w, metrics_get_unix_timestamp());
 }
 
 size_t metrics_encode_header(void *buf, size_t bufsize,

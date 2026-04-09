@@ -23,6 +23,11 @@ LIBMCU_WEAK const char *metrics_get_serial_number_string(void)
 	return "";
 }
 
+LIBMCU_WEAK uint64_t metrics_get_unix_timestamp(void)
+{
+	return 0;
+}
+
 #if defined(METRICS_SCHEMA_IBS)
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
 		uint32_t nr_total, uint32_t nr_updated)
