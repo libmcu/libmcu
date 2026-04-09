@@ -9,7 +9,6 @@
 extern "C" {
 #include "libmcu/metrics.h"
 #include "libmcu/metrics_overrides.h"
-#include "libmcu/version.h"
 
 const char *metrics_get_serial_number_string(void)
 {
@@ -21,6 +20,11 @@ uint64_t metrics_get_unix_timestamp(void)
 	return 1234567890ULL;
 }
 
+const char *metrics_get_version_string(void)
+{
+	return "v1.0.0";
+}
+
 void metrics_lock(void)
 {
 }
@@ -28,16 +32,6 @@ void metrics_lock(void)
 void metrics_unlock(void)
 {
 }
-}
-
-static uint8_t libmcu_version_cbor_msb(void)
-{
-	return (uint8_t)((LIBMCU_VERSION >> 8) & 0xffU);
-}
-
-static uint8_t libmcu_version_cbor_lsb(void)
-{
-	return (uint8_t)(LIBMCU_VERSION & 0xffU);
 }
 
 TEST_GROUP(metrics_cbor)
@@ -59,8 +53,8 @@ TEST(metrics_cbor, collect_ShouldEncodeMetadataOnly_WhenNoMetricSet)
 		0x20,
 		0x83,
 		0x64, 'S', 'N', '0', '1',
-		0x19, libmcu_version_cbor_msb(), libmcu_version_cbor_lsb(),
 		0x1A, 0x49, 0x96, 0x02, 0xD2, /* ts = 1234567890 */
+		0x66, 'v', '1', '.', '0', '.', '0',
 	};
 	uint8_t buf[32] = { 0, };
 
@@ -77,8 +71,8 @@ TEST(metrics_cbor, collect_ShouldEncodeMetadataAndMetric_WhenMetricIsSet)
 		0x20,
 		0x83,
 		0x64, 'S', 'N', '0', '1',
-		0x19, libmcu_version_cbor_msb(), libmcu_version_cbor_lsb(),
 		0x1A, 0x49, 0x96, 0x02, 0xD2, /* ts = 1234567890 */
+		0x66, 'v', '1', '.', '0', '.', '0',
 		0x00,
 		0x1A, 0x12, 0x34, 0x56, 0x78,
 	};
