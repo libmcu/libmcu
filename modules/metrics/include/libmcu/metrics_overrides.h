@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include "libmcu/metrics.h"
 
 void metrics_lock_init(void);
@@ -26,6 +27,16 @@ void metrics_unlock(void);
  * @return null-terminated serial number string, or an empty string.
  */
 const char *metrics_get_serial_number_string(void);
+
+/**
+ * @brief Returns the current Unix timestamp for encoder metadata.
+ *
+ * Override this function to provide a real wall-clock time. Returning 0 is
+ * allowed when no RTC is available.
+ *
+ * @return seconds since Unix epoch (UTC), or 0 if unavailable.
+ */
+uint64_t metrics_get_unix_timestamp(void);
 
 /**
  * @brief It creates an encoding header.
