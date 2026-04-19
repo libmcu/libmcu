@@ -1,8 +1,6 @@
 # libmcu
 ![Build Status](https://github.com/onkwon/libmcu/workflows/build/badge.svg)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=security_rating)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=libmcu_libmcu&metric=coverage)](https://sonarcloud.io/dashboard?id=libmcu_libmcu)
 [![codecov](https://codecov.io/gh/onkwon/libmcu/branch/master/graph/badge.svg?token=KBLNIEKUF4)](https://codecov.io/gh/onkwon/libmcu)
 
 A toolkit for firmware development.
@@ -115,9 +113,10 @@ cd components
 git submodule add https://github.com/libmcu/libmcu.git libmcu
 ```
 
-No wrapper `CMakeLists.txt` is needed. The root `CMakeLists.txt` auto-detects
-the ESP-IDF build environment via `ESP_PLATFORM` and calls
-`idf_component_register()` accordingly.
+The root `CMakeLists.txt` supports both plain CMake and ESP-IDF component
+contexts. ESP-IDF detection uses `COMMAND idf_component_register`, so builds
+that define `ESP_PLATFORM` without entering a real component context still fall
+back to the freestanding CMake path.
 
 By default, all modules are enabled. To select only specific modules, set
 `LIBMCU_MODULES` in your project's top-level `CMakeLists.txt` before
