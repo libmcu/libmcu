@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 if(CONFIG_LIBMCU)
+  set(LIBMCU_METRICS_USER_INCS)
+
   set(LIBMCU_MODULES common)
 
   foreach(mod
@@ -18,7 +20,18 @@ if(CONFIG_LIBMCU)
   zephyr_library()
   zephyr_library_sources(${LIBMCU_MODULES_SRCS})
   zephyr_include_directories(${LIBMCU_MODULES_INCS} ${LIBMCU_INTERFACES_INCS})
-  zephyr_library_include_directories(${METRICS_USER_DIR})
+
+  if(EXISTS ${APPLICATION_SOURCE_DIR}/include)
+    list(APPEND LIBMCU_METRICS_USER_INCS ${APPLICATION_SOURCE_DIR}/include)
+  endif()
+
+  if(METRICS_USER_DIR)
+    list(APPEND LIBMCU_METRICS_USER_INCS ${METRICS_USER_DIR})
+  endif()
+
+  if(LIBMCU_METRICS_USER_INCS)
+    zephyr_library_include_directories(${LIBMCU_METRICS_USER_INCS})
+  endif()
 
   if(CONFIG_LIBMCU_METRICS_USER_DEFINES AND NOT CONFIG_LIBMCU_METRICS_USER_DEFINES STREQUAL "")
     zephyr_library_compile_definitions(

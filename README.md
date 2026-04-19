@@ -120,11 +120,14 @@ the ESP-IDF build environment via `ESP_PLATFORM` and calls
 `idf_component_register()` accordingly.
 
 By default, all modules are enabled. To select only specific modules, set
-`LIBMCU_MODULES` before the component is registered:
+`LIBMCU_MODULES` in your project's top-level `CMakeLists.txt` before
+`project()` so it is visible when ESP-IDF processes components:
 
 ```cmake
-# In your project's top-level CMakeLists.txt, before idf_build_process()
+cmake_minimum_required(VERSION 3.16)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 set(LIBMCU_MODULES actor logging metrics CACHE STRING "" FORCE)
+project(my_project)
 ```
 
 ### CMake
