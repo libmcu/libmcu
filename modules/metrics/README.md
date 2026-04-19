@@ -25,6 +25,8 @@
 location with `METRICS_USER_DEFINES` when you use the default file name and the
 file is in the include path.
 
+When using the Zephyr west module, `app/include/metrics.def` is automatically searched; for ESP-IDF components, `main/include/metrics.def` is searched by default. If you use a different location, you need to set `METRICS_USER_DEFINES` or `METRICS_USER_DIR`.
+
 ### Encoding
 
 You can implement your own encoder using `metrics_encode_header()` and

@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MIT
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig

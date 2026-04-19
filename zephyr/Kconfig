@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: MIT
+
+menuconfig LIBMCU
+	bool "libmcu firmware development toolkit"
+	help
+	  A portable firmware toolkit from libmcu.
+	  C99, no linker script tweaks required.
+
+if LIBMCU
+
+config LIBMCU_ACTOR
+	bool "Actor model"
+	default y
+
+config LIBMCU_AO
+	bool "Active object"
+	default y
+
+config LIBMCU_APPTIMER
+	bool "Application timer"
+	default y
+
+config LIBMCU_BITMAP
+	bool "Bitmap"
+	default y
+
+config LIBMCU_BUTTON
+	bool "Button"
+	default y
+
+config LIBMCU_BUZZER
+	bool "Buzzer"
+	default y
+
+config LIBMCU_CLEANUP
+	bool "Cleanup handler"
+	default y
+
+config LIBMCU_CLI
+	bool "Command line interface"
+	default y
+
+config LIBMCU_DFU
+	bool "Device firmware update"
+	default y
+
+config LIBMCU_FSM
+	bool "Finite state machine"
+	default y
+
+config LIBMCU_JOBQUEUE
+	bool "Job queue"
+	default y
+
+config LIBMCU_LOGGING
+	bool "Logging"
+	default y
+
+config LIBMCU_METRICS
+	bool "Metrics"
+	default y
+
+config LIBMCU_METRICS_USER_DEFINES
+	string "User metrics definition file path"
+	depends on LIBMCU_METRICS
+	help
+	  Path to the user-supplied metrics definition file (e.g. "src/metrics.def").
+	  When left empty, the compiler searches for "metrics.def" in the project
+	  include paths. Equivalent to setting -DMETRICS_USER_DEFINES on other
+	  build systems.
+
+config LIBMCU_PM
+	bool "Power management"
+	default y
+
+config LIBMCU_PUBSUB
+	bool "Publish-subscribe"
+	default y
+
+config LIBMCU_RATELIM
+	bool "Rate limiter"
+	default y
+
+config LIBMCU_RETRY
+	bool "Retry with exponential backoff"
+	default y
+
+config LIBMCU_RUNNER
+	bool "Runner"
+	default y
+
+endif # LIBMCU

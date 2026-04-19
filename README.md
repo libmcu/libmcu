@@ -79,41 +79,58 @@ and to maintain a consistent global namespace.
 * [WiFi](interfaces/wifi)
 
 ## Integration Guide
-The library can be integrated into your project as a [git
-submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules), using [CMake
-FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html), or
-[downloading](https://github.com/libmcu/libmcu/archive/refs/heads/main.zip)
-manually.
 
-### git submodule
-#### Include `libmcu` into your project
+Choose the integration method that matches your platform and build system.
+
+### Zephyr
+
+Add as a [west module](https://docs.zephyrproject.org/latest/develop/modules.html)
+in your manifest:
+
+```yaml
+# west.yml
+manifest:
+  projects:
+    - name: libmcu
+      url: https://github.com/libmcu/libmcu.git
+      revision: main
+      path: modules/lib/libmcu
+```
+
+Enable in `prj.conf`:
+
+```conf
+CONFIG_LIBMCU=y
+```
+
+All modules are enabled by default. Individual modules can be toggled via
+`west build -t menuconfig` under the **libmcu** menu.
+
+### ESP-IDF
+
+Clone or add as a git submodule under your project's `components/` directory:
 
 ```bash
-$ cd ${YOUR_PROJECT_DIR}
-$ git submodule add https://github.com/libmcu/libmcu.git ${THIRD_PARTY_DIR}/libmcu
+cd components
+git submodule add https://github.com/libmcu/libmcu.git libmcu
 ```
 
-#### Add `libmcu` into your build system
-##### Make
+No wrapper `CMakeLists.txt` is needed. The root `CMakeLists.txt` auto-detects
+the ESP-IDF build environment via `ESP_PLATFORM` and calls
+`idf_component_register()` accordingly.
 
-```make
-LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
-# The commented lines below are optional. All modules and interfaces included
-# by default if not specified.
-#LIBMCU_MODULES := actor metrics
-include $(LIBMCU_ROOT)/project/modules.mk
+By default, all modules are enabled. To select only specific modules, set
+`LIBMCU_MODULES` in your project's top-level `CMakeLists.txt` before
+`project()` so it is visible when ESP-IDF processes components:
 
-<SRC_FILES> += $(LIBMCU_MODULES_SRCS)
-<INC_PATHS> += $(LIBMCU_MODULES_INCS)
-
-#LIBMCU_INTERFACES := gpio pwm
-include $(LIBMCU_ROOT)/project/interfaces.mk
-
-<SRC_FILES> += $(LIBMCU_INTERFACES_SRCS)
-<INC_PATHS> += $(LIBMCU_INTERFACES_INCS)
+```cmake
+cmake_minimum_required(VERSION 3.16)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+set(LIBMCU_MODULES actor logging metrics CACHE STRING "" FORCE)
+project(my_project)
 ```
 
-##### CMake
+### CMake
 
 ```cmake
 add_subdirectory(<THIRD_PARTY_DIR>/libmcu)
@@ -133,7 +150,7 @@ include(${LIBMCU_ROOT}/project/interfaces.cmake)
 # Add ${LIBMCU_MODULES_INCS} to your target includes
 ```
 
-### CMake FetchContent
+or via [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html):
 
 ```cmake
 include(FetchContent)
@@ -142,6 +159,25 @@ FetchContent_Declare(libmcu
 		     GIT_TAG main
 )
 FetchContent_MakeAvailable(libmcu)
+```
+
+### Make
+
+```make
+LIBMCU_ROOT ?= <THIRD_PARTY_DIR>/libmcu
+# The commented lines below are optional. All modules and interfaces included
+# by default if not specified.
+#LIBMCU_MODULES := actor metrics
+include $(LIBMCU_ROOT)/project/modules.mk
+
+<SRC_FILES> += $(LIBMCU_MODULES_SRCS)
+<INC_PATHS> += $(LIBMCU_MODULES_INCS)
+
+#LIBMCU_INTERFACES := gpio pwm
+include $(LIBMCU_ROOT)/project/interfaces.mk
+
+<SRC_FILES> += $(LIBMCU_INTERFACES_SRCS)
+<INC_PATHS> += $(LIBMCU_INTERFACES_INCS)
 ```
 
 ## License
