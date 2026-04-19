@@ -1,4 +1,60 @@
 # Changelog
+## v0.3.0 - March 30, 2026
+- mcumgr: add management interface and ESP-IDF port
+- pki: add certificate chain verification support
+- metrics: add typed metric macros
+- metrics: add schema support and in-band encoding
+- metrics: add validation on initialization
+- metrics: add `metrics_unset()`
+- ringbuf: add dynamic buffer resizing
+- ringbuf: add `ringbuf_available()`
+- wdt: add utility functions
+- wdt: add threaded mode and overflow fix
+- dfu: add self-test and pending verification support
+- dfu: improve image validation and tag version parsing
+- board: add switch-to-factory API
+- board: add reboot reasons for diagnostics
+- wifi: add IP information to wifi interface
+- logging: improve tag handling
+- base64: add buffer size checks
+- cli: add DEL key support and improve buffer handling
+- Apple: add semaphore implementation
+- OpenSSL: add PKI utility functions for key and certificate management
+- ESP-IDF: map NVS errors to errno
+### **Breaking Changes**
+- interfaces: apply prefix to all public interface symbols
+- logging: rename `__FILENAME__` to `FILENAME_TAG`
+- wdt: add `lm_` prefix to avoid symbol conflicts
+- flash: add `lm_` prefix to avoid symbol conflicts
+
+## v0.2.6 - March 9, 2025
+- crc32: add CRC-32 computation and table generation
+- ble: add BLE interface
+- fsm: add FSM module
+- runner: add runner module and bypass option
+- dfu: add DFU module
+- xmodem: add XMODEM protocol implementation
+- buzzer: add buzzer module with melody support
+- cleanup: add priority-based cleanup module
+- ratelim: add rate limiting module
+- msgq: add message queue module
+- metricfs: add metric storage module
+- board: add CPU load API and idle hook
+- board: add `board_name()` and `board_get_time_since_boot_us()`
+- cli: add pause functionality and environment pointer
+- wdt: add watchdog timer interface and hooks
+- metrics: add `is_set`, min/max helpers, and ISO8601-related test support
+- strext: add `strupper()`, `strlower()`, and `strchunk()`
+- timext: add ISO 8601 conversion helpers
+- ports: add PKI interface for mbedtls v3
+- ci: add version consistency workflow
+### **Breaking Changes**
+- i2c: separate bus and device APIs
+- pwm: add channel and pin parameters to interface APIs
+- spi: refactor for multi-device support and add pin parameter
+- timer: rename `timer` module to `apptmr`
+- fsm: rename `fsm_state()` to `fsm_get_state()`
+
 ## v0.2.5 - January 10, 2024
 ### **Breaking Changes**
 - interfaces: replace port interface with vtable
