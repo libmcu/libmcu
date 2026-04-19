@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 include(${CMAKE_CURRENT_LIST_DIR}/project/modules.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/project/interfaces.cmake)
 
-if(ESP_PLATFORM)
+if(COMMAND idf_component_register)
 	set(LIBMCU_PUBLIC_INCS)
 
 	if(EXISTS "${PROJECT_DIR}/main/include")
