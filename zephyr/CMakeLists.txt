@@ -18,4 +18,11 @@ if(CONFIG_LIBMCU)
   zephyr_library()
   zephyr_library_sources(${LIBMCU_MODULES_SRCS})
   zephyr_include_directories(${LIBMCU_MODULES_INCS} ${LIBMCU_INTERFACES_INCS})
+  zephyr_library_include_directories(${METRICS_USER_DIR})
+
+  if(CONFIG_LIBMCU_METRICS_USER_DEFINES AND NOT CONFIG_LIBMCU_METRICS_USER_DEFINES STREQUAL "")
+    zephyr_library_compile_definitions(
+      METRICS_USER_DEFINES="${CONFIG_LIBMCU_METRICS_USER_DEFINES}"
+    )
+  endif()
 endif()

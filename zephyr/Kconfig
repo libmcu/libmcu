@@ -60,6 +60,15 @@ config LIBMCU_METRICS
 	bool "Metrics"
 	default y
 
+config LIBMCU_METRICS_USER_DEFINES
+	string "User metrics definition file path"
+	depends on LIBMCU_METRICS
+	help
+	  Path to the user-supplied metrics definition file (e.g. "src/metrics.def").
+	  When left empty, the compiler searches for "metrics.def" in the project
+	  include paths. Equivalent to setting -DMETRICS_USER_DEFINES on other
+	  build systems.
+
 config LIBMCU_PM
 	bool "Power management"
 	default y
