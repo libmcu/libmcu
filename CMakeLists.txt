@@ -8,6 +8,8 @@ if(ESP_PLATFORM)
 		SRCS ${LIBMCU_MODULES_SRCS}
 		INCLUDE_DIRS ${LIBMCU_MODULES_INCS} ${LIBMCU_INTERFACES_INCS}
 	)
+
+	target_compile_features(${COMPONENT_LIB} PRIVATE c_std_99)
 else()
 	project(libmcu LANGUAGES C CXX)
 
