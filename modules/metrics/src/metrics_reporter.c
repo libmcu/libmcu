@@ -105,7 +105,7 @@ int metrics_report_periodic(void *buf, size_t bufsize,
 
 	int err = report_once(buf, bufsize, mfs, ctx);
 
-	if (err == 0 || err == -EAGAIN) {
+	if ((err == 0 || err == -EAGAIN) && now != 0) {
 		last_report_time = now;
 		periodic_initialized = true;
 	}
