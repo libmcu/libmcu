@@ -898,6 +898,8 @@ TEST(MetricsReporterPeriodic, ShouldReport_WhenIntervalElapsed) {
 
 	mock().expectOneCall("get_timestamp")
 		.andReturnValue(1000UL + 3600UL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(0);
