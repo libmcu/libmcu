@@ -7,6 +7,7 @@
 #include "libmcu/metrics_overrides.h"
 #include "libmcu/compiler.h"
 #include <string.h>
+#include <errno.h>
 
 LIBMCU_WEAK void metrics_lock(void)
 {
@@ -16,6 +17,20 @@ LIBMCU_WEAK void metrics_lock(void)
 LIBMCU_WEAK void metrics_unlock(void)
 {
 	/* platform specific implementation */
+}
+
+LIBMCU_WEAK int metrics_report_transmit(const void *data, size_t datasize,
+		void *ctx)
+{
+	unused(data);
+	unused(datasize);
+	unused(ctx);
+	return -ENOSYS;
+}
+
+LIBMCU_WEAK void metrics_report_prepare(void *ctx)
+{
+	unused(ctx);
 }
 
 LIBMCU_WEAK const char *metrics_get_serial_number_string(void)

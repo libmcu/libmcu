@@ -8,24 +8,9 @@
 #include "libmcu/metrics.h"
 #include "libmcu/metrics_overrides.h"
 #include "libmcu/metricfs.h"
-#include "libmcu/compiler.h"
 
 #include <errno.h>
 #include <stdbool.h>
-
-LIBMCU_WEAK int metrics_report_transmit(const void *data, size_t datasize,
-		void *ctx)
-{
-	unused(data);
-	unused(datasize);
-	unused(ctx);
-	return -ENOSYS;
-}
-
-LIBMCU_WEAK void metrics_report_prepare(void *ctx)
-{
-	unused(ctx);
-}
 
 int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 {
@@ -54,7 +39,10 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 
 	if (err == 0) {
 		if (from_store) {
-			metricfs_del_first(mfs, NULL);
+			err = metricfs_del_first(mfs, NULL);
+			if (err != 0) {
+				return err;
+			}
 		} else {
 			metrics_reset();
 		}

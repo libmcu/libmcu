@@ -446,7 +446,7 @@ TEST(MetricsReporter, ShouldNotResetCurrentMetrics_WhenStoredTransmitFails) {
  * Scenario: metricfs_del_first fails after successful transmit
  * ========================================================================= */
 
-TEST(MetricsReporter, ShouldReturnEAGAIN_WhenDelFirstFailsAfterStoredTransmit) {
+TEST(MetricsReporter, ShouldReturnDelError_WhenDelFirstFailsAfterStoredTransmit) {
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(1);
@@ -463,9 +463,8 @@ TEST(MetricsReporter, ShouldReturnEAGAIN_WhenDelFirstFailsAfterStoredTransmit) {
 	mock().expectOneCall("mfs_del_first")
 		.withParameter("fs", mfs)
 		.andReturnValue(-EIO);
-	mock().expectOneCall("mfs_count")
-		.withParameter("fs", mfs).andReturnValue(1);
-	LONGS_EQUAL(-EAGAIN, metrics_report(buf, sizeof(buf), mfs, NULL));
+	/* del_first 실패 시 즉시 에러 반환 — count 체크까지 가지 않음 */
+	LONGS_EQUAL(-EIO, metrics_report(buf, sizeof(buf), mfs, NULL));
 }
 
 /* =========================================================================
