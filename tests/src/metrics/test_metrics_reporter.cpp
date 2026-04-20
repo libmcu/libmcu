@@ -135,6 +135,18 @@ TEST(MetricsReporter, ShouldReturnZero_WhenTransmitSucceeds_NoStore) {
 	LONGS_EQUAL(0, metrics_report(buf, sizeof(buf), mfs, NULL));
 }
 
+/* =========================================================================
+ * Input validation
+ * ========================================================================= */
+
+TEST(MetricsReporter, ShouldReturnEINVAL_WhenBufIsNull) {
+	LONGS_EQUAL(-EINVAL, metrics_report(NULL, sizeof(buf), mfs, NULL));
+}
+
+TEST(MetricsReporter, ShouldReturnEINVAL_WhenBufsizeIsZero) {
+	LONGS_EQUAL(-EINVAL, metrics_report(buf, 0, mfs, NULL));
+}
+
 TEST(MetricsReporter, ShouldCallPrepareBeforeCollect) {
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")
@@ -143,6 +155,8 @@ TEST(MetricsReporter, ShouldCallPrepareBeforeCollect) {
 		.withParameter("buf", buf)
 		.withParameter("bufsize", (int)sizeof(buf))
 		.andReturnValue(0);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
 	LONGS_EQUAL(0, metrics_report(buf, sizeof(buf), mfs, NULL));
 }
 
@@ -154,7 +168,27 @@ TEST(MetricsReporter, ShouldReturnZero_WhenNothingToCollectAndStoreEmpty) {
 		.withParameter("buf", buf)
 		.withParameter("bufsize", (int)sizeof(buf))
 		.andReturnValue(0);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
 	LONGS_EQUAL(0, metrics_report(buf, sizeof(buf), mfs, NULL));
+}
+
+TEST(MetricsReporter, ShouldReturnEAGAIN_WhenCollectReturnsZeroButStoreHasEntries) {
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	mock().expectOneCall("mfs_peek_first")
+		.withParameter("fs", mfs)
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue(-EIO);
+	mock().expectOneCall("collect")
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue(0);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	LONGS_EQUAL(-EAGAIN, metrics_report(buf, sizeof(buf), mfs, NULL));
 }
 
 TEST(MetricsReporter, ShouldResetMetrics_WhenTransmitSucceeds_FreshCollect) {
@@ -322,8 +356,8 @@ TEST(MetricsReporter, ShouldPersistAndReset_WhenTransmitFailsWithMfs) {
  * ========================================================================= */
 
 TEST(MetricsReporter, ShouldNotReset_WhenBothTransmitAndPersistFail) {
-	/* transmit 실패 + metricfs_write 실패 = 데이터가 어디에도 없음.
-	 * reset하면 데이터 완전 유실. reset하지 않아야 다음 사이클에 재시도 가능. */
+	/* transmit fail + metricfs_write fail = data exists nowhere.
+	 * Resetting would lose data entirely; skip reset so next cycle can retry. */
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(0);
@@ -420,7 +454,7 @@ TEST(MetricsReporter, ShouldFallbackToCollect_WhenPeekFirstReturnsZero) {
 }
 
 /* =========================================================================
- * Scenario: store에 있는 과거 메트릭 전송 중 현재 메모리 메트릭 리셋 여부
+ * Scenario: whether in-memory metrics are reset while sending stored entries
  * ========================================================================= */
 
 TEST(MetricsReporter, ShouldNotResetCurrentMetrics_WhenStoredTransmitFails) {
@@ -463,7 +497,7 @@ TEST(MetricsReporter, ShouldReturnDelError_WhenDelFirstFailsAfterStoredTransmit)
 	mock().expectOneCall("mfs_del_first")
 		.withParameter("fs", mfs)
 		.andReturnValue(-EIO);
-	/* del_first 실패 시 즉시 에러 반환 — count 체크까지 가지 않음 */
+	/* del_first failure returns error immediately — no count check */
 	LONGS_EQUAL(-EIO, metrics_report(buf, sizeof(buf), mfs, NULL));
 }
 

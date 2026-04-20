@@ -27,7 +27,8 @@ struct metricfs;
  * 4. Calls metrics_report_transmit() with the payload.
  * 5. On success: resets in-memory metrics or deletes the metricfs entry.
  * 6. On failure with @p mfs non-NULL: persists the payload to metricfs and
- *    resets in-memory metrics (data is preserved in the store).
+ *    resets in-memory metrics.  If persistence also fails, in-memory metrics
+ *    are kept so the next cycle can retry.
  * 7. On failure with @p mfs NULL: does not reset (allows retry on next call).
  *
  * Timing, scheduling, and retry strategy are the caller's responsibility.

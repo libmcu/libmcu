@@ -12,15 +12,24 @@
 #include <errno.h>
 #include <stdbool.h>
 
+static inline bool has_backlog(const struct metricfs *fs)
+{
+	return fs && metricfs_count(fs) > 0;
+}
+
 int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 {
 	size_t len = 0;
 	bool from_store = false;
 	int err;
 
+	if (buf == NULL || bufsize == 0) {
+		return -EINVAL;
+	}
+
 	metrics_report_prepare(ctx);
 
-	if (mfs && metricfs_count(mfs) > 0) {
+	if (has_backlog(mfs)) {
 		err = metricfs_peek_first(mfs, buf, bufsize, NULL);
 		if (err > 0) {
 			len = (size_t)err;
@@ -31,7 +40,7 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 	if (!from_store) {
 		len = metrics_collect(buf, bufsize);
 		if (len == 0) {
-			return 0;
+			return has_backlog(mfs) ? -EAGAIN : 0;
 		}
 	}
 
@@ -52,7 +61,7 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 		}
 	}
 
-	if (mfs && metricfs_count(mfs) > 0) {
+	if (has_backlog(mfs)) {
 		return -EAGAIN;
 	}
 
