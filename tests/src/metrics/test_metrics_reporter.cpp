@@ -734,7 +734,7 @@ TEST(MetricsReporterPeriodic, ShouldNotAdvanceLastReportTime_WhenDrainingBacklog
 		.withParameter("fs", mfs).andReturnValue(1);
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")
-		.withParameter("fs", mfs).andReturnValue(1);
+		.withParameter("fs", mfs).andReturnValue(2);
 	mock().expectOneCall("mfs_peek_first")
 		.withParameter("fs", mfs)
 		.withParameter("buf", buf)
@@ -887,7 +887,7 @@ TEST(MetricsReporterPeriodic, ShouldSnapshotAfterFrequentDrainCalls_WhenInterval
 			mfs, NULL));
 }
 
-TEST(MetricsReporterPeriodic, ShouldReturnSnapshotError_WhenBufferTooSmall) {
+TEST(MetricsReporterPeriodic, ShouldContinueDrain_WhenSnapshotFailsDueToBufferTooSmall) {
 	/* Cycle 1 at t=1000: normal success */
 	mock().expectOneCall("get_timestamp").andReturnValue(1000UL);
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
@@ -909,18 +909,37 @@ TEST(MetricsReporterPeriodic, ShouldReturnSnapshotError_WhenBufferTooSmall) {
 	mock().checkExpectations();
 	mock().clear();
 
-	/* Cycle 2 at t=4600: interval elapsed, backlog exists,
-	 * but collect returns more than bufsize → -ENOBUFS */
+	/* Cycle 2 at t=4600: interval elapsed, backlog exists.
+	 * Snapshot collect overflows buffer → snapshot fails (best-effort).
+	 * Drain must continue regardless to avoid deadlock. */
 	mock().expectOneCall("get_timestamp").andReturnValue(4600UL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(1);
+	/* snapshot: prepare + collect (overflows) → snapshot skipped */
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("collect")
 		.withParameter("buf", buf)
 		.withParameter("bufsize", (int)sizeof(buf))
 		.andReturnValue((int)sizeof(buf) + 1);
-	LONGS_EQUAL(-ENOBUFS, metrics_report_periodic(buf, sizeof(buf),
-			mfs, NULL));
+	/* report_once proceeds: drain backlog */
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	mock().expectOneCall("mfs_peek_first")
+		.withParameter("fs", mfs)
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue((int)FAKE_PAYLOAD_LEN);
+	mock().expectOneCall("transmit")
+		.withParameter("data", buf)
+		.withParameter("datasize", (int)FAKE_PAYLOAD_LEN)
+		.withParameter("ctx", (void *)NULL)
+		.andReturnValue(0);
+	mock().expectOneCall("mfs_del_first")
+		.withParameter("fs", mfs).andReturnValue(0);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	LONGS_EQUAL(0, metrics_report_periodic(buf, sizeof(buf), mfs, NULL));
 }
 
 TEST(MetricsReporterPeriodic, ShouldNotSnapshot_WhenIntervalElapsedButNoBacklog) {
@@ -1131,10 +1150,8 @@ TEST(MetricsReporterPeriodic, ShouldRetrySnapshot_WhenPreviousSnapshotWriteFaile
 
 	/* Cycle 2 at t=4600: interval elapsed (4600-1000=3600), backlog exists.
 	 * Snapshot: metricfs_write fails (-ENOSPC).
-	 * Without this fix, the snapshot error would be swallowed and
-	 * last_report_time would advance to 4600 anyway.
-	 * This test verifies that -ENOSPC is propagated so last_report_time
-	 * stays at 1000. */
+	 * Best-effort: snapshot failure is ignored, drain continues.
+	 * last_report_time stays at 1000 (snap_err != 0). */
 	mock().expectOneCall("get_timestamp").andReturnValue(4600UL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(1);
@@ -1148,8 +1165,24 @@ TEST(MetricsReporterPeriodic, ShouldRetrySnapshot_WhenPreviousSnapshotWriteFaile
 		.withParameter("data", buf)
 		.withParameter("datasize", (int)FAKE_PAYLOAD_LEN)
 		.andReturnValue(-ENOSPC);
-	/* snapshot failed → expect error propagation, no drain attempt */
-	LONGS_EQUAL(-ENOSPC, metrics_report_periodic(buf, sizeof(buf),
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	mock().expectOneCall("mfs_peek_first")
+		.withParameter("fs", mfs)
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue((int)FAKE_PAYLOAD_LEN);
+	mock().expectOneCall("transmit")
+		.withParameter("data", buf)
+		.withParameter("datasize", (int)FAKE_PAYLOAD_LEN)
+		.withParameter("ctx", (void *)NULL)
+		.andReturnValue(0);
+	mock().expectOneCall("mfs_del_first")
+		.withParameter("fs", mfs).andReturnValue(0);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	LONGS_EQUAL(-EAGAIN, metrics_report_periodic(buf, sizeof(buf),
 			mfs, NULL));
 	mock().checkExpectations();
 	mock().clear();

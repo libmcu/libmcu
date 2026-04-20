@@ -21,6 +21,8 @@ static inline bool has_backlog(const struct metricfs *fs)
 	return fs && metricfs_count(fs) > 0;
 }
 
+/* NOTE: The caller is responsible for providing a buffer large enough for the
+ * encoded metrics. Use metrics_collect(NULL, 0) to obtain the required size. */
 static int snapshot_current_metrics(void *buf, size_t bufsize,
 		struct metricfs *mfs, void *ctx)
 {
@@ -134,9 +136,6 @@ int metrics_report_periodic(void *buf, size_t bufsize,
 
 	if (interval_elapsed && has_backlog(mfs)) {
 		int snap_err = snapshot_current_metrics(buf, bufsize, mfs, ctx);
-		if (snap_err < 0) {
-			return snap_err;
-		}
 		if (snap_err == 0 && now != 0) {
 			last_report_time = now;
 		}
