@@ -48,7 +48,7 @@ following hooks to integrate with your transport and application logic:
 
 | Hook | Role | Default |
 | ---- | ---- | ------- |
-| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load) | no-op |
+| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load). Must be idempotent — may be called more than once per reporting cycle (e.g. during snapshot and drain) | no-op |
 | `metrics_report_transmit(data, size, ctx)` | Send the encoded payload over the desired transport (HTTP, MQTT, UART, …) | returns `-ENOSYS` |
 
 Pass a `metricfs` instance to enable persistent storage: on transmit failure
@@ -82,6 +82,11 @@ calls within the interval return `-EALREADY` immediately with no I/O. When a
 backlog exists (e.g. after a transmit failure), the interval check is bypassed
 and every call attempts to drain the stored data until the backlog is cleared.
 
+When the reporting interval elapses while a backlog is still being drained,
+the current in-memory metrics are automatically snapshotted to `metricfs` and
+reset before continuing the drain. This prevents metric loss when backlog
+processing spans multiple reporting intervals.
+
 ```c
 /* Override the default 60-minute interval at compile time if needed:
  *   -DMETRICS_REPORT_INTERVAL_SEC=300   (5 minutes) */
@@ -90,7 +95,7 @@ while (1) {
 	int err;
 	do {
 		err = metrics_report_periodic(buf, sizeof(buf), mfs, NULL);
-	} while (err != -EALREADY);
+	} while (err == -EAGAIN); /* keep trying until backlog is cleared */
 	sleep(10);
 }
 ```

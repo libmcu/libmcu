@@ -21,6 +21,28 @@ static inline bool has_backlog(const struct metricfs *fs)
 	return fs && metricfs_count(fs) > 0;
 }
 
+/* NOTE: The caller is responsible for providing a buffer large enough for the
+ * encoded metrics. Use metrics_collect(NULL, 0) to obtain the required size. */
+static int snapshot_current_metrics(void *buf, size_t bufsize,
+		struct metricfs *mfs, void *ctx)
+{
+	size_t len;
+
+	metrics_report_prepare(ctx);
+
+	len = metrics_collect(buf, bufsize);
+	if (len == 0 || len > bufsize) {
+		return (len > bufsize) ? -ENOBUFS : 0;
+	}
+
+	int err = metricfs_write(mfs, buf, len, NULL);
+	if (err == 0) {
+		metrics_reset();
+	}
+
+	return err;
+}
+
 static int report_once(void *buf, size_t bufsize,
 		struct metricfs *mfs, void *ctx)
 {
@@ -94,20 +116,42 @@ void metrics_report_periodic_reset(void)
 int metrics_report_periodic(void *buf, size_t bufsize,
 		struct metricfs *mfs, void *ctx)
 {
+	if (buf == NULL || bufsize == 0) {
+		return -EINVAL;
+	}
+
 	uint64_t now = metrics_get_unix_timestamp();
+	bool interval_elapsed = false;
 
 	if (periodic_initialized && now != 0) {
-		if (now - last_report_time < METRICS_REPORT_INTERVAL_SEC
-				&& !has_backlog(mfs)) {
+		if (now < last_report_time) {
+			last_report_time = now;
+		}
+		interval_elapsed =
+			now - last_report_time >= METRICS_REPORT_INTERVAL_SEC;
+		if (!interval_elapsed && !has_backlog(mfs)) {
 			return -EALREADY;
+		}
+	}
+
+	if (interval_elapsed && has_backlog(mfs)) {
+		int snap_err = snapshot_current_metrics(buf, bufsize, mfs, ctx);
+		if (snap_err == 0 && now != 0) {
+			last_report_time = now;
 		}
 	}
 
 	int err = report_once(buf, bufsize, mfs, ctx);
 
-	if ((err == 0 || err == -EAGAIN) && now != 0) {
-		last_report_time = now;
-		periodic_initialized = true;
+	if (now != 0) {
+		if (!periodic_initialized) {
+			if (err == 0 || (err == -EAGAIN && mfs)) {
+				last_report_time = now;
+				periodic_initialized = true;
+			}
+		} else if (err == 0) {
+			last_report_time = now;
+		}
 	}
 
 	return err;
