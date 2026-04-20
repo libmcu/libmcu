@@ -21,6 +21,25 @@ static inline bool has_backlog(const struct metricfs *fs)
 	return fs && metricfs_count(fs) > 0;
 }
 
+static int snapshot_current_metrics(void *buf, size_t bufsize,
+		struct metricfs *mfs, void *ctx)
+{
+	size_t len;
+
+	metrics_report_prepare(ctx);
+
+	len = metrics_collect(buf, bufsize);
+	if (len == 0 || len > bufsize) {
+		return (len > bufsize) ? -ENOBUFS : 0;
+	}
+
+	if (metricfs_write(mfs, buf, len, NULL) == 0) {
+		metrics_reset();
+	}
+
+	return 0;
+}
+
 static int report_once(void *buf, size_t bufsize,
 		struct metricfs *mfs, void *ctx)
 {
@@ -95,12 +114,18 @@ int metrics_report_periodic(void *buf, size_t bufsize,
 		struct metricfs *mfs, void *ctx)
 {
 	uint64_t now = metrics_get_unix_timestamp();
+	bool interval_elapsed = false;
 
 	if (periodic_initialized && now != 0) {
-		if (now - last_report_time < METRICS_REPORT_INTERVAL_SEC
-				&& !has_backlog(mfs)) {
+		interval_elapsed =
+			now - last_report_time >= METRICS_REPORT_INTERVAL_SEC;
+		if (!interval_elapsed && !has_backlog(mfs)) {
 			return -EALREADY;
 		}
+	}
+
+	if (interval_elapsed && has_backlog(mfs)) {
+		snapshot_current_metrics(buf, bufsize, mfs, ctx);
 	}
 
 	int err = report_once(buf, bufsize, mfs, ctx);
