@@ -48,7 +48,7 @@ following hooks to integrate with your transport and application logic:
 
 | Hook | Role | Default |
 | ---- | ---- | ------- |
-| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load) | no-op |
+| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load). Must be idempotent — may be called more than once per reporting cycle (e.g. during snapshot and drain) | no-op |
 | `metrics_report_transmit(data, size, ctx)` | Send the encoded payload over the desired transport (HTTP, MQTT, UART, …) | returns `-ENOSYS` |
 
 Pass a `metricfs` instance to enable persistent storage: on transmit failure

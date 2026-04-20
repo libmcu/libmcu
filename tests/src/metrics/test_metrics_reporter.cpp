@@ -1100,7 +1100,7 @@ TEST(MetricsReporterPeriodic, ShouldReport_WhenIntervalElapsed) {
 	LONGS_EQUAL(0, metrics_report_periodic(buf, sizeof(buf), mfs, NULL));
 }
 
-/* ---- Vulnerability #1: snapshot write failure must not advance last_report_time ---- */
+/* ---- Scenario: snapshot write failure must not advance last_report_time ---- */
 TEST(MetricsReporterPeriodic, ShouldRetrySnapshot_WhenPreviousSnapshotWriteFailed) {
 	/* Cycle 1 at t=1000: normal success, last_report_time = 1000 */
 	mock().expectOneCall("get_timestamp").andReturnValue(1000UL);
@@ -1131,9 +1131,10 @@ TEST(MetricsReporterPeriodic, ShouldRetrySnapshot_WhenPreviousSnapshotWriteFaile
 
 	/* Cycle 2 at t=4600: interval elapsed (4600-1000=3600), backlog exists.
 	 * Snapshot: metricfs_write fails (-ENOSPC).
-	 * BUG: current code returns 0 from snapshot and advances
-	 * last_report_time to 4600 anyway.
-	 * FIX: should propagate -ENOSPC so last_report_time stays at 1000. */
+	 * Without this fix, the snapshot error would be swallowed and
+	 * last_report_time would advance to 4600 anyway.
+	 * This test verifies that -ENOSPC is propagated so last_report_time
+	 * stays at 1000. */
 	mock().expectOneCall("get_timestamp").andReturnValue(4600UL);
 	mock().expectOneCall("mfs_count")
 		.withParameter("fs", mfs).andReturnValue(1);
@@ -1194,7 +1195,7 @@ TEST(MetricsReporterPeriodic, ShouldRetrySnapshot_WhenPreviousSnapshotWriteFaile
 			mfs, NULL));
 }
 
-/* ---- Vulnerability #3: first-call failure with mfs==NULL suppresses retries ---- */
+/* ---- Scenario: first-call failure with mfs==NULL suppresses retries ---- */
 TEST(MetricsReporterPeriodic, ShouldNotSuppressRetry_WhenFirstCallFailsWithoutMfs) {
 	/* Cycle 1 at t=1000: transmit fails, mfs==NULL → no persistence.
 	 * BUG: last_report_time=1000 and periodic_initialized=true set
@@ -1234,7 +1235,7 @@ TEST(MetricsReporterPeriodic, ShouldNotSuppressRetry_WhenFirstCallFailsWithoutMf
 	LONGS_EQUAL(0, metrics_report_periodic(buf, sizeof(buf), NULL, NULL));
 }
 
-/* ---- Vulnerability #4: clock rollback causes spurious snapshot ---- */
+/* ---- Scenario: clock rollback causes spurious snapshot ---- */
 TEST(MetricsReporterPeriodic, ShouldNotSnapshotSpuriously_WhenClockRollsBack) {
 	/* Cycle 1 at t=10000: normal success */
 	mock().expectOneCall("get_timestamp").andReturnValue(10000UL);
