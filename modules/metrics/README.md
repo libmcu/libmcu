@@ -74,7 +74,7 @@ Return values:
 | ----- | ------- |
 | `0` | Report transmitted successfully |
 | `-EALREADY` | Interval not yet elapsed and no backlog — skipped |
-| `-EAGAIN` | Transmitted but unsent data still remains in store |
+| `-EAGAIN` | Unsent data remains in store |
 | other `< 0` | Error (e.g. `-EINVAL`, `-ENOBUFS`) |
 
 The function is designed for repeated calls in a loop. When no backlog exists,
@@ -104,10 +104,10 @@ environment.  This applies to all reporting APIs including
 ```c
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-void metircs_lock(void) {
+void metrics_lock(void) {
 	pthread_mutex_lock(&lock);
 }
-void metircs_unlock(void) {
+void metrics_unlock(void) {
 	pthread_mutex_unlock(&lock);
 }
 ```
