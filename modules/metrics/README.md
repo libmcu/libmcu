@@ -98,7 +98,8 @@ while (1) {
 ### Synchronisation
 
 Implement `metrics_lock()` and `metrics_unlock()` in case of multi threaded
-environment.
+environment.  This applies to all reporting APIs including
+`metrics_report_periodic()`.
 
 ```c
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;

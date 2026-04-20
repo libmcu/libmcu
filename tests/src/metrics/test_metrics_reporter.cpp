@@ -699,6 +699,47 @@ TEST(MetricsReporterPeriodic, ShouldSkip_WhenIntervalNotElapsed) {
 	LONGS_EQUAL(-EALREADY, metrics_report_periodic(buf, sizeof(buf), mfs, NULL));
 }
 
+TEST(MetricsReporterPeriodic, ShouldAlwaysReport_WhenTimestampReturnsZero) {
+	mock().expectOneCall("get_timestamp").andReturnValue(0UL);
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	mock().expectOneCall("collect")
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue((int)FAKE_PAYLOAD_LEN);
+	mock().expectOneCall("transmit")
+		.withParameter("data", buf)
+		.withParameter("datasize", (int)FAKE_PAYLOAD_LEN)
+		.withParameter("ctx", (void *)NULL)
+		.andReturnValue(0);
+	mock().expectOneCall("reset");
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	LONGS_EQUAL(0, metrics_report_periodic(buf, sizeof(buf), mfs, NULL));
+	mock().checkExpectations();
+	mock().clear();
+
+	mock().expectOneCall("get_timestamp").andReturnValue(0UL);
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	mock().expectOneCall("collect")
+		.withParameter("buf", buf)
+		.withParameter("bufsize", (int)sizeof(buf))
+		.andReturnValue((int)FAKE_PAYLOAD_LEN);
+	mock().expectOneCall("transmit")
+		.withParameter("data", buf)
+		.withParameter("datasize", (int)FAKE_PAYLOAD_LEN)
+		.withParameter("ctx", (void *)NULL)
+		.andReturnValue(0);
+	mock().expectOneCall("reset");
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	LONGS_EQUAL(0, metrics_report_periodic(buf, sizeof(buf), mfs, NULL));
+}
+
+
 TEST(MetricsReporterPeriodic, ShouldReport_WhenIntervalElapsed) {
 	mock().expectOneCall("get_timestamp").andReturnValue(1000UL);
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);

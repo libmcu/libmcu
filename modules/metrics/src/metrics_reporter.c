@@ -96,7 +96,7 @@ int metrics_report_periodic(void *buf, size_t bufsize,
 {
 	uint64_t now = metrics_get_unix_timestamp();
 
-	if (periodic_initialized) {
+	if (periodic_initialized && now != 0) {
 		if (now - last_report_time < METRICS_REPORT_INTERVAL_SEC
 				&& !has_backlog(mfs)) {
 			return -EALREADY;
