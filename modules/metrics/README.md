@@ -18,7 +18,7 @@
 | `METRICS_DEFINE_PERCENTAGE(key)` | Ratio in [0, 100] |
 | `METRICS_DEFINE_TIMER(key, unit)` | Elapsed time; `unit`: `ms`/`MS`, `us`/`US`, `s`/`S` |
 | `METRICS_DEFINE_BYTES(key)` | Byte-count value |
-| `METRICS_DEFINE_BINARY(key)` | Binary value in [0, 1]; `unset` remains “no sample” |
+| `METRICS_DEFINE_BINARY(key)` | Binary value in [0, 1]; `unset` remains "no sample" |
 | `METRICS_DEFINE_STATE(key)` | Categorical / enum-like state value |
 
 [^1]: The default file name is `metrics.def`. You don't need to specify the file
@@ -33,10 +33,69 @@ You can implement your own encoder using `metrics_encode_header()` and
 `metrics_encode_each()`. No encoder by default, meaning just a simple byte
 stream.
 
+A ready-made [CBOR encoder](../../ports/metrics/cbor_encoder.c) is available
+under `ports/metrics/`. It encodes metrics as a CBOR map with device metadata
+(serial number, timestamp, version). Link the file and the
+[libcbor](https://github.com/libmcu/libcbor) dependency to use it.
+
 To get the exact encoded payload size before allocation, call
 `metrics_collect(NULL, 0)`.
 
-### Syncronization
+### Reporting
+
+`metrics_report()` drives a single collect-transmit cycle. Override the
+following hooks to integrate with your transport and application logic:
+
+| Hook | Role | Default |
+| ---- | ---- | ------- |
+| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load) | no-op |
+| `metrics_report_transmit(data, size, ctx)` | Send the encoded payload over the desired transport (HTTP, MQTT, UART, …) | returns `-ENOSYS` |
+
+Pass a `metricfs` instance to enable persistent storage: on transmit failure
+the payload is saved to `metricfs` and retransmitted on the next cycle. Pass
+`NULL` to disable persistence.
+
+```c
+uint8_t buf[256];
+struct metricfs *mfs = /* initialised metricfs instance, or NULL */;
+
+int err = metrics_report(buf, sizeof(buf), mfs, NULL);
+/* 0 = ok, -EAGAIN = unsent data remains in store, <0 = error */
+```
+
+For periodic reporting, use the convenience wrapper
+`metrics_report_periodic()`.  It calls `metrics_report()` only when the
+configured interval has elapsed (default 60 minutes).  If unsent data remains
+in `metricfs`, the interval is bypassed so the backlog drains immediately.
+
+Return values:
+
+| Value | Meaning |
+| ----- | ------- |
+| `0` | Report transmitted successfully |
+| `-EALREADY` | Interval not yet elapsed and no backlog — skipped |
+| `-EAGAIN` | Transmitted but unsent data still remains in store |
+| other `< 0` | Error (e.g. `-EINVAL`, `-ENOBUFS`) |
+
+The function is designed for repeated calls in a loop. When no backlog exists,
+calls within the interval return `-EALREADY` immediately with no I/O. When a
+backlog exists (e.g. after a transmit failure), the interval check is bypassed
+and every call attempts to drain the stored data until the backlog is cleared.
+
+```c
+/* Override the default 60-minute interval at compile time if needed:
+ *   -DMETRICS_REPORT_INTERVAL_SEC=300   (5 minutes) */
+
+while (1) {
+	int err;
+	do {
+		err = metrics_report_periodic(buf, sizeof(buf), mfs, NULL);
+	} while (err != -EALREADY);
+	sleep(10);
+}
+```
+
+### Synchronisation
 
 Implement `metrics_lock()` and `metrics_unlock()` in case of multi threaded
 environment.
