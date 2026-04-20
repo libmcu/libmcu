@@ -46,6 +46,39 @@ struct metricfs;
  */
 int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx);
 
+/**
+ * @brief Convenience wrapper that rate-limits metrics_report() calls.
+ *
+ * Calls metrics_report() only when at least @c METRICS_REPORT_INTERVAL_SEC
+ * seconds (default 3600) have elapsed since the last successful report, or
+ * when unsent data remains in @p mfs.  On the very first call the report
+ * always runs.
+ *
+ * Time is obtained via metrics_get_unix_timestamp().  If the timestamp
+ * returns 0 (no RTC available), rate limiting is bypassed and every call
+ * runs a full report cycle.
+ *
+ * @param[in] buf     Encoding buffer (caller-owned).
+ * @param[in] bufsize Size of the buffer in bytes.
+ * @param[in] mfs     metricfs instance, or NULL.
+ * @param[in] ctx     User context forwarded to hooks.
+ *
+ * @return 0 on success.
+ * @return -EALREADY when skipped because the report interval has not elapsed.
+ * @return -EAGAIN when unsent data remains.
+ * @return negative errno on error.
+ */
+int metrics_report_periodic(void *buf, size_t bufsize,
+		struct metricfs *mfs, void *ctx);
+
+/**
+ * @brief Resets the internal periodic timer state.
+ *
+ * Intended for testing.  After this call the next metrics_report_periodic()
+ * invocation will run unconditionally.
+ */
+void metrics_report_periodic_reset(void);
+
 #if defined(__cplusplus)
 }
 #endif
