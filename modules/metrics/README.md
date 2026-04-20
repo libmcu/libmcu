@@ -83,7 +83,7 @@ backlog exists (e.g. after a transmit failure), the interval check is bypassed
 and every call attempts to drain the stored data until the backlog is cleared.
 
 When the reporting interval elapses while a backlog is still being drained,
-the current in-memory metrics are automatically snapshot to `metricfs` and
+the current in-memory metrics are automatically snapshotted to `metricfs` and
 reset before continuing the drain. This prevents metric loss when backlog
 processing spans multiple reporting intervals.
 
