@@ -63,6 +63,30 @@ const char *metrics_get_version_string(void);
 size_t metrics_encode_header(void *buf, size_t bufsize,
 		uint32_t nr_total, uint32_t nr_updated);
 
+/**
+ * @brief Transmits encoded metric data.
+ *
+ * Override this function to implement the actual transport (HTTP, MQTT, UART,
+ * etc.). The default implementation returns -ENOSYS.
+ *
+ * @param[in] data     Encoded metric payload.
+ * @param[in] datasize Payload size in bytes.
+ * @param[in] ctx      User context passed from metrics_report().
+ *
+ * @return 0 on success, negative errno on failure.
+ */
+int metrics_report_transmit(const void *data, size_t datasize, void *ctx);
+
+/**
+ * @brief Called before metrics_collect() inside metrics_report().
+ *
+ * Override this function to refresh metric values (e.g. uptime, CPU load)
+ * right before collection. The default implementation is a no-op.
+ *
+ * @param[in] ctx User context passed from metrics_report().
+ */
+void metrics_report_prepare(void *ctx);
+
 #if defined(METRICS_SCHEMA_IBS)
 size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value,
