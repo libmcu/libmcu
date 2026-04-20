@@ -147,6 +147,39 @@ TEST(MetricsReporter, ShouldReturnEINVAL_WhenBufsizeIsZero) {
 	LONGS_EQUAL(-EINVAL, metrics_report(buf, 0, mfs, NULL));
 }
 
+/* =========================================================================
+ * Buffer overflow guard
+ * ========================================================================= */
+
+TEST(MetricsReporter, ShouldReturnENOBUFS_WhenCollectExceedsBufsize) {
+	uint8_t small_buf[1] = { 0 };
+
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(0);
+	mock().expectOneCall("collect")
+		.withParameter("buf", small_buf)
+		.withParameter("bufsize", (int)sizeof(small_buf))
+		.andReturnValue((int)sizeof(small_buf) + 1);
+	LONGS_EQUAL(-ENOBUFS, metrics_report(small_buf, sizeof(small_buf),
+			mfs, NULL));
+}
+
+TEST(MetricsReporter, ShouldReturnENOBUFS_WhenPeekFirstExceedsBufsize) {
+	uint8_t small_buf[1] = { 0 };
+
+	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
+	mock().expectOneCall("mfs_count")
+		.withParameter("fs", mfs).andReturnValue(1);
+	mock().expectOneCall("mfs_peek_first")
+		.withParameter("fs", mfs)
+		.withParameter("buf", small_buf)
+		.withParameter("bufsize", (int)sizeof(small_buf))
+		.andReturnValue((int)sizeof(small_buf) + 1);
+	LONGS_EQUAL(-ENOBUFS, metrics_report(small_buf, sizeof(small_buf),
+			mfs, NULL));
+}
+
 TEST(MetricsReporter, ShouldCallPrepareBeforeCollect) {
 	mock().expectOneCall("prepare").withParameter("ctx", (void *)NULL);
 	mock().expectOneCall("mfs_count")

@@ -31,7 +31,9 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 
 	if (has_backlog(mfs)) {
 		err = metricfs_peek_first(mfs, buf, bufsize, NULL);
-		if (err > 0) {
+		if (err > (int)bufsize) {
+			return -ENOBUFS;
+		} else if (err > 0) {
 			len = (size_t)err;
 			from_store = true;
 		}
@@ -39,7 +41,9 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 
 	if (!from_store) {
 		len = metrics_collect(buf, bufsize);
-		if (len == 0) {
+		if (len > bufsize) {
+			return -ENOBUFS;
+		} else if (len == 0) {
 			return has_backlog(mfs) ? -EAGAIN : 0;
 		}
 	}
