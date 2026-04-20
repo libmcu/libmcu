@@ -58,11 +58,10 @@ int metrics_report(void *buf, size_t bufsize, struct metricfs *mfs, void *ctx)
 		} else {
 			metrics_reset();
 		}
-	} else if (!from_store) {
-		if (mfs) {
-			metricfs_write(mfs, buf, len, NULL);
+	} else if (!from_store && mfs) {
+		if (metricfs_write(mfs, buf, len, NULL) == 0) {
+			metrics_reset();
 		}
-		metrics_reset();
 	}
 
 	if (mfs && metricfs_count(mfs) > 0) {
