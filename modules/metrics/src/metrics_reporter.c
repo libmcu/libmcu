@@ -86,6 +86,8 @@ static int report_once(void *buf, size_t bufsize,
 		} else {
 			metrics_reset();
 		}
+	} else if (err == -EINPROGRESS) {
+		return err;
 	} else if (!from_store && mfs) {
 		if (metricfs_write(mfs, buf, len, NULL) == 0) {
 			metrics_reset();
