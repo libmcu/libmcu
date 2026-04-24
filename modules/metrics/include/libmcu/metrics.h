@@ -211,6 +211,13 @@ size_t metrics_collect(void *buf, const size_t bufsize);
 size_t metrics_count(void);
 
 /**
+ * @brief Retrieves the count of metrics that have been set.
+ *
+ * @return size_t The number of metrics whose value has been set at least once.
+ */
+size_t metrics_count_set(void);
+
+/**
  * @brief Initializes the metrics module.
  *
  * This function initializes the metrics module, setting up any necessary
