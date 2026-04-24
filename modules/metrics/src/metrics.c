@@ -382,6 +382,14 @@ size_t metrics_count(void)
 	return METRICS_KEY_MAX;
 }
 
+size_t metrics_count_set(void)
+{
+	metrics_lock();
+	const uint32_t n = count_metrics_updated();
+	metrics_unlock();
+	return n;
+}
+
 #if !defined(METRICS_NO_KEY_STRING)
 const char *metrics_stringify_key(const metric_key_t key)
 {
