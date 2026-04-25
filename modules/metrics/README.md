@@ -5,8 +5,9 @@
 1. Define your metrics with the `METRICS_DEFINE` macro in a file. e.g. [metrics.def](metrics.def)
 2. Let the compiler know where your file is located using `METRICS_USER_DEFINES`
    macro[^1]. e.g. [`-DMETRICS_USER_DEFINES=\"src/my_metrics.def\"`](https://github.com/onkwon/libmcu/blob/master/project/runner.mk#L10)
-3. Set metric values with APIs. e.g. `metrics_set(BatteryPCT, val)`
-4. Set a timer to aggregate and send/save metrics periodically
+3. Call `metrics_init()` once at startup
+4. Update metric values with the set APIs throughout your code
+5. Periodically call `metrics_collect()` to encode and transmit the current snapshot, then `metrics_reset()` to clear for the next interval
 
 ### Metric Types
 
@@ -36,75 +37,52 @@ stream.
 A ready-made [CBOR encoder](../../ports/metrics/cbor_encoder.c) is available
 under `ports/metrics/`. It encodes metrics as a CBOR map with device metadata
 (serial number, timestamp, version). Link the file and the
-[libcbor](https://github.com/libmcu/libcbor) dependency to use it.
+[libcbor](https://github.com/libmcu/cbor) dependency to use it.
 
 To get the exact encoded payload size before allocation, call
 `metrics_collect(NULL, 0)`.
 
-### Reporting
+### Usage
 
-`metrics_report()` drives a single collect-transmit cycle. Override the
-following hooks to integrate with your transport and application logic:
+#### Initialization
 
-| Hook | Role | Default |
-| ---- | ---- | ------- |
-| `metrics_report_prepare(ctx)` | Refresh metric values before collection (e.g. uptime, CPU load). Must be idempotent — may be called more than once per reporting cycle (e.g. during snapshot and drain) | no-op |
-| `metrics_report_transmit(data, size, ctx)` | Send the encoded payload over the desired transport (HTTP, MQTT, UART, …) | returns `-ENOSYS` |
-
-Pass a `metricfs` instance to enable persistent storage: on transmit failure
-the payload is saved to `metricfs` and retransmitted on the next cycle. Pass
-`NULL` to disable persistence.
+Call `metrics_init()` once at startup. Pass `true` to force re-initialization.
 
 ```c
-uint8_t buf[256];
-struct metricfs *mfs = /* initialised metricfs instance, or NULL */;
-
-int err = metrics_report(buf, sizeof(buf), mfs, NULL);
-/* 0 = ok, -EAGAIN = unsent data remains in store, <0 = error */
+metrics_init(false);
 ```
 
-For periodic reporting, use the convenience wrapper
-`metrics_report_periodic()`.  It calls `metrics_report()` only when the
-configured interval has elapsed (default 60 minutes).  If unsent data remains
-in `metricfs`, the interval is bypassed so the backlog drains immediately.
+#### Setting Values
 
-Return values:
-
-| Value | Meaning |
-| ----- | ------- |
-| `0` | Report transmitted successfully |
-| `-EALREADY` | Interval not yet elapsed and no backlog — skipped |
-| `-EAGAIN` | Unsent data remains in store |
-| other `< 0` | Error (e.g. `-EINVAL`, `-ENOBUFS`) |
-
-The function is designed for repeated calls in a loop. When no backlog exists,
-calls within the interval return `-EALREADY` immediately with no I/O. When a
-backlog exists (e.g. after a transmit failure), the interval check is bypassed
-and every call attempts to drain the stored data until the backlog is cleared.
-
-When the reporting interval elapses while a backlog is still being drained,
-the current in-memory metrics are automatically snapshotted to `metricfs` and
-reset before continuing the drain. This prevents metric loss when backlog
-processing spans multiple reporting intervals.
+Use `metrics_set()` to record a value. Use `metrics_increase()` /
+`metrics_increase_by()` for counters. Min/max helpers keep extreme values
+across updates.
 
 ```c
-/* Override the default 60-minute interval at compile time if needed:
- *   -DMETRICS_REPORT_INTERVAL_SEC=300   (5 minutes) */
+metrics_set(BatteryPCT, 87);
+metrics_increase(TxPackets);
+metrics_increase_by(RxBytes, len);
+metrics_set_if_max(PeakRSSI, rssi);
+metrics_set_pct(CpuUsagePCT, busy_ticks, total_ticks);
+```
 
-while (1) {
-	int err;
-	do {
-		err = metrics_report_periodic(buf, sizeof(buf), mfs, NULL);
-	} while (err == -EAGAIN); /* keep trying until backlog is cleared */
-	sleep(10);
-}
+#### Collecting
+
+`metrics_collect()` encodes all current values into a caller-supplied buffer.
+Call with `NULL` / `0` first to determine the exact size needed.
+
+```c
+size_t len = metrics_collect(NULL, 0); /* dry run to get size */
+uint8_t buf[len];
+metrics_collect(buf, len);
+/* transmit buf over your transport of choice */
+metrics_reset(); /* clear values for the next interval */
 ```
 
 ### Synchronisation
 
-Implement `metrics_lock()` and `metrics_unlock()` in case of multi threaded
-environment.  This applies to all reporting APIs including
-`metrics_report_periodic()`.
+Implement `metrics_lock()` and `metrics_unlock()` in a multi-threaded
+environment.
 
 ```c
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
