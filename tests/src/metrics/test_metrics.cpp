@@ -70,7 +70,7 @@ static void report_periodic(void)
 	metrics_iterate(print_metric_each, 0);
 
 	uint8_t buf[128];
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 	metrics_reset();
 }
 
@@ -139,7 +139,7 @@ TEST(metrics, reset_ShouldResetAllMetrics) {
 TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenZeroedValueGiven) {
 	uint8_t expected_encoded_data[128] = { 0, };
 	uint8_t buf[128];
-	size_t size = metrics_collect(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf), NULL);
 	LONGS_EQUAL(0, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
 }
@@ -148,7 +148,7 @@ TEST(metrics, collect_ShouldReturnSizeOfAllEncodedMetrics_WhenReportIntervalValu
 	uint8_t expected_encoded_data[128] = { 0, 0, 0, 0, 0x78, 0x56, 0x34, 0x12, };
 	uint8_t buf[128];
 	metrics_set(ReportInterval, 0x12345678);
-	size_t size = metrics_collect(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf), NULL);
 	LONGS_EQUAL(8, size);
 	MEMCMP_EQUAL(expected_encoded_data, buf, size);
 }
@@ -391,7 +391,7 @@ TEST(metrics, collect_ShouldReturnZero_WhenBufferIsSmallerThanOneEntry) {
 	metrics_set(ReportInterval, 100);
 
 	uint8_t buf[7]; /* 8B 미만 → encode_each가 0 반환 */
-	size_t size = metrics_collect(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(0, size);
 }
@@ -400,7 +400,7 @@ TEST(metrics, collect_ShouldEncodeEntry_WhenBufferIsExactlyOneEntrySize) {
 	metrics_set(ReportInterval, 0);
 
 	uint8_t buf[8];
-	size_t size = metrics_collect(buf, sizeof(buf));
+	size_t size = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(8, size);
 }
@@ -411,9 +411,9 @@ TEST(metrics, collect_ShouldReturnNeededSize_WhenBufIsNull) {
 	metrics_set(ReportInterval, 1);
 	metrics_set(WallTime, 2);
 
-	size_t needed = metrics_collect(NULL, 0);
+	size_t needed = metrics_collect(NULL, 0, NULL);
 	uint8_t buf[64];
-	size_t written = metrics_collect(buf, sizeof(buf));
+	size_t written = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(needed, written);
 }

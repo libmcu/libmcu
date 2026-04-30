@@ -36,8 +36,9 @@ LIBMCU_WEAK const char *metrics_get_version_string(void)
 
 #if defined(METRICS_SCHEMA_IBS)
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated)
+		uint32_t nr_total, uint32_t nr_updated, void *ctx)
 {
+	unused(ctx);
 	const uint16_t n = (uint16_t)nr_updated;
 	const size_t len = sizeof(n);
 
@@ -57,8 +58,9 @@ LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
 
 LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value,
-		const struct metric_schema *schema)
+		const struct metric_schema *schema, void *ctx)
 {
+	unused(ctx);
 	const uint32_t kval = (uint32_t)key;
 	const uint8_t  tval = schema->type;
 	const uint8_t  uval = schema->unit;
@@ -91,18 +93,20 @@ LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
 }
 #else /* METRICS_SCHEMA_IBS */
 LIBMCU_WEAK size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated)
+		uint32_t nr_total, uint32_t nr_updated, void *ctx)
 {
 	unused(buf);
 	unused(bufsize);
 	unused(nr_total);
 	unused(nr_updated);
+	unused(ctx);
 	return 0;
 }
 
 LIBMCU_WEAK size_t metrics_encode_each(void *buf, size_t bufsize,
-		metric_key_t key, int32_t value)
+		metric_key_t key, int32_t value, void *ctx)
 {
+	unused(ctx);
 	const uint32_t kval = (const uint32_t)key;
 	const size_t len = sizeof(kval) + sizeof(value);
 

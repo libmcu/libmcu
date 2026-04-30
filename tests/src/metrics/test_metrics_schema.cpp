@@ -107,7 +107,7 @@ TEST_GROUP(metrics_schema)
  */
 TEST(metrics_schema, empty_payload_when_no_metrics_set)
 {
-	size_t len = metrics_collect(buf, sizeof(buf));
+	size_t len = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(IBS_HEADER_SIZE, len);
 	LONGS_EQUAL(0, nr_updated(buf));
@@ -121,7 +121,7 @@ TEST(metrics_schema, nr_updated_matches_set_count)
 	metrics_set(BatteryPct, 80);
 	metrics_set(UnexpectedRebootCount, 2);
 	metrics_set(ServerConnectedTime, 60);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(3, nr_updated(buf));
 }
@@ -135,8 +135,8 @@ TEST(metrics_schema, dry_run_size_matches_actual_and_formula)
 	metrics_set(BatteryPct, 50);
 	metrics_set(WallTime, 999);
 
-	size_t dry_run = metrics_collect(NULL, 0);
-	size_t actual  = metrics_collect(buf, sizeof(buf));
+	size_t dry_run = metrics_collect(NULL, 0, NULL);
+	size_t actual  = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(dry_run, actual);
 	LONGS_EQUAL(IBS_HEADER_SIZE + 2 * IBS_ENTRY_SIZE, actual);
@@ -150,7 +150,7 @@ TEST(metrics_schema, only_set_metric_appears_in_payload)
 {
 	metrics_set(BatteryPct, 42);
 
-	size_t len = metrics_collect(buf, sizeof(buf));
+	size_t len = metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(IBS_HEADER_SIZE + 1 * IBS_ENTRY_SIZE, len);
 	LONGS_EQUAL(1, nr_updated(buf));
@@ -164,7 +164,7 @@ TEST(metrics_schema, only_set_metric_appears_in_payload)
 TEST(metrics_schema, counter_schema_and_value)
 {
 	metrics_set(UnexpectedRebootCount, 7);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_COUNTER, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,     entry_unit(buf, 0));
@@ -180,7 +180,7 @@ TEST(metrics_schema, counter_schema_and_value)
 TEST(metrics_schema, gauge_schema_reflects_user_defined_range)
 {
 	metrics_set(WallTime, 1000);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_GAUGE, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,   entry_unit(buf, 0));
@@ -195,7 +195,7 @@ TEST(metrics_schema, gauge_schema_reflects_user_defined_range)
 TEST(metrics_schema, percentage_schema_has_fixed_0_to_100_range)
 {
 	metrics_set(BatteryPct, 75);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_PERCENTAGE, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,        entry_unit(buf, 0));
@@ -211,7 +211,7 @@ TEST(metrics_schema, percentage_schema_has_fixed_0_to_100_range)
 TEST(metrics_schema, timer_schema_has_correct_class_and_unit)
 {
 	metrics_set(ServerConnectedTime, 120);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_TIMER, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_S,      entry_unit(buf, 0));
@@ -224,7 +224,7 @@ TEST(metrics_schema, timer_schema_has_correct_class_and_unit)
 TEST(metrics_schema, bytes_schema)
 {
 	metrics_set(StackHighWaterMark, 512);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_BYTES, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,   entry_unit(buf, 0));
@@ -238,7 +238,7 @@ TEST(metrics_schema, bytes_schema)
 TEST(metrics_schema, binary_schema_has_fixed_0_to_1_range)
 {
 	metrics_set(EmergencyActive, 1);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_BINARY, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,    entry_unit(buf, 0));
@@ -253,7 +253,7 @@ TEST(metrics_schema, binary_schema_has_fixed_0_to_1_range)
 TEST(metrics_schema, state_schema_has_full_int32_range)
 {
 	metrics_set(RunnerState, 3);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_STATE, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,   entry_unit(buf, 0));
@@ -268,7 +268,7 @@ TEST(metrics_schema, state_schema_has_full_int32_range)
 TEST(metrics_schema, untyped_schema_has_full_int32_range)
 {
 	metrics_set(ReportInterval, 30);
-	metrics_collect(buf, sizeof(buf));
+	metrics_collect(buf, sizeof(buf), NULL);
 
 	LONGS_EQUAL(METRIC_CLASS_UNTYPED, entry_class(buf, 0));
 	LONGS_EQUAL(METRIC_UNIT_NONE,     entry_unit(buf, 0));
@@ -284,7 +284,7 @@ TEST(metrics_schema, entry_not_written_when_buffer_too_small)
 {
 	metrics_set(BatteryPct, 50);
 
-	size_t len = metrics_collect(buf, IBS_HEADER_SIZE + IBS_ENTRY_SIZE - 1);
+	size_t len = metrics_collect(buf, IBS_HEADER_SIZE + IBS_ENTRY_SIZE - 1, NULL);
 
 	LONGS_EQUAL(IBS_HEADER_SIZE, len);
 }

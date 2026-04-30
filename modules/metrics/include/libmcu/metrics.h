@@ -168,8 +168,8 @@ bool metrics_is_set(const metric_key_t key);
 /**
  * @brief Traversing all metrics firing callback
  *
- * @param callback_each callback to be fired every metric
- * @param ctx context to be used
+ * @param[in] callback_each callback to be fired every metric
+ * @param[in] ctx context to be used
  *
  * @warn This function does not guarantee synchronization. Any metrics may be
  *       updated while the callback is running.
@@ -191,10 +191,11 @@ void metrics_iterate(void (*callback_each)(const metric_key_t key,
  *
  * @param[out] buf Pointer to the buffer where metrics data will be stored.
  * @param[in] bufsize Size of the buffer in bytes.
+ * @param[in] ctx context to be used
  *
  * @return size_t The number of bytes written to the buffer.
  */
-size_t metrics_collect(void *buf, const size_t bufsize);
+size_t metrics_collect(void *buf, const size_t bufsize, void *ctx);
 
 /**
  * @brief Retrieves the count of all metrics.

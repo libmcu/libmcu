@@ -211,10 +211,10 @@ static uint32_t count_metrics_updated(void)
 	return nr_updated;
 }
 
-static size_t encode_all(uint8_t *buf, const size_t bufsize)
+static size_t encode_all(uint8_t *buf, const size_t bufsize, void *ctx)
 {
 	size_t written = metrics_encode_header(buf, bufsize,
-			METRICS_KEY_MAX, count_metrics_updated());
+			METRICS_KEY_MAX, count_metrics_updated(), ctx);
 
 	for (metric_key_t i = 0; i < METRICS_KEY_MAX; i++) {
 		struct metrics const *p = get_item_by_index(i);
@@ -223,11 +223,11 @@ static size_t encode_all(uint8_t *buf, const size_t bufsize)
 			size_t remaining = (buf && bufsize > written)
 					? bufsize - written : 0;
 #if defined(METRICS_SCHEMA_IBS)
-			written += metrics_encode_each(dst, remaining,
-					p->key, p->value, &schema_table[i]);
+			written += metrics_encode_each(dst, remaining, p->key,
+					p->value, &schema_table[i], ctx);
 #else
 			written += metrics_encode_each(dst, remaining,
-					p->key, p->value);
+					p->key, p->value, ctx);
 #endif
 		}
 	}
@@ -359,12 +359,12 @@ void metrics_unset(const metric_key_t key)
 	metrics_unlock();
 }
 
-size_t metrics_collect(void *buf, const size_t bufsize)
+size_t metrics_collect(void *buf, const size_t bufsize, void *ctx)
 {
 	size_t written;
 
 	metrics_lock();
-	written = encode_all((uint8_t *)buf, bufsize);
+	written = encode_all((uint8_t *)buf, bufsize, ctx);
 	metrics_unlock();
 
 	return written;

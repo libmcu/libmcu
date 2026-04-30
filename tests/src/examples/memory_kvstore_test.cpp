@@ -22,10 +22,10 @@ TEST_GROUP(MemoryKVStore) {
 };
 
 TEST(MemoryKVStore, write_ShouldReturnSizeOfWritten) {
-	int8_t v8;
-	int16_t v16;
-	int32_t v32;
-	int64_t v64;
+	int8_t v8 = 0;
+	int16_t v16 = 0;
+	int32_t v32 = 0;
+	int64_t v64 = 0;
 	char s[80];
 
 	LONGS_EQUAL(sizeof(v8), kvstore_write(storage, "v8", &v8, sizeof(v8)));
