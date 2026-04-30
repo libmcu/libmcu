@@ -58,18 +58,19 @@ const char *metrics_get_version_string(void);
  * @param[in] bufsize buffer size
  * @param[in] nr_total the number of metrics declared in metrics.def
  * @param[in] nr_updated the number of metrics with non-zero value
+ * @param[in] ctx context to be used
  * @return the number of bytes written
  */
 size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated);
+		uint32_t nr_total, uint32_t nr_updated, void *ctx);
 
 #if defined(METRICS_SCHEMA_IBS)
 size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value,
-		const struct metric_schema *schema);
+		const struct metric_schema *schema, void *ctx);
 #else
 size_t metrics_encode_each(void *buf, size_t bufsize,
-		metric_key_t key, int32_t value);
+		metric_key_t key, int32_t value, void *ctx);
 #endif
 
 #if defined(__cplusplus)

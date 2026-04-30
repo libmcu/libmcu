@@ -13,8 +13,6 @@
 
 #include <string.h>
 
-static cbor_writer_t writer;
-
 enum {
 	METRICS_CBOR_METADATA_KEY = -1,
 };
@@ -128,7 +126,7 @@ static void cbor_encode_metadata(cbor_writer_t *w)
 }
 
 size_t metrics_encode_header(void *buf, size_t bufsize,
-		uint32_t nr_total, uint32_t nr_updated)
+		uint32_t nr_total, uint32_t nr_updated, void *ctx)
 {
 	unused(nr_total);
 
@@ -137,78 +135,94 @@ size_t metrics_encode_header(void *buf, size_t bufsize,
 			+ cbor_encoded_metadata_size();
 	}
 
-	cbor_writer_init(&writer, buf, bufsize);
-	cbor_encode_map(&writer, nr_updated + 1U);
-	cbor_encode_metadata(&writer);
+	if (ctx == NULL) {
+		return 0;
+	}
 
-	return cbor_writer_len(&writer);
+	cbor_writer_t *writer = (cbor_writer_t *)ctx;
+	cbor_writer_init(writer, buf, bufsize);
+	cbor_encode_map(writer, nr_updated + 1U);
+	cbor_encode_metadata(writer);
+
+	return cbor_writer_len(writer);
 }
 
 #if defined(METRICS_SCHEMA_IBS)
 size_t metrics_encode_each(void *buf, size_t bufsize,
 		metric_key_t key, int32_t value,
-		const struct metric_schema *schema)
+		const struct metric_schema *schema, void *ctx)
 {
 	unused(buf);
 	unused(bufsize);
+	unused(ctx);
 
 	if (buf == NULL) {
 		return cbor_encoded_uint_size((uint64_t)key)
 			+ cbor_encoded_schema_value_size(schema, value);
 	}
+	if (ctx == NULL) {
+		return 0;
+	}
 
-	size_t len = cbor_writer_len(&writer);
+	cbor_writer_t *writer = (cbor_writer_t *)ctx;
+	size_t len = cbor_writer_len(writer);
 
-	cbor_encode_unsigned_integer(&writer, (uint64_t)key);
+	cbor_encode_unsigned_integer(writer, (uint64_t)key);
 
 	/* value → [class, unit, range_min, range_max, value] */
-	cbor_encode_array(&writer, 5);
+	cbor_encode_array(writer, 5);
 
-	cbor_encode_unsigned_integer(&writer, (uint64_t)schema->type);
-	cbor_encode_unsigned_integer(&writer, (uint64_t)schema->unit);
+	cbor_encode_unsigned_integer(writer, (uint64_t)schema->type);
+	cbor_encode_unsigned_integer(writer, (uint64_t)schema->unit);
 
 	if (schema->range_min >= 0) {
-		cbor_encode_unsigned_integer(&writer, (uint64_t)schema->range_min);
+		cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_min);
 	} else {
-		cbor_encode_negative_integer(&writer, schema->range_min);
+		cbor_encode_negative_integer(writer, schema->range_min);
 	}
 
 	if (schema->range_max >= 0) {
-		cbor_encode_unsigned_integer(&writer, (uint64_t)schema->range_max);
+		cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_max);
 	} else {
-		cbor_encode_negative_integer(&writer, schema->range_max);
+		cbor_encode_negative_integer(writer, schema->range_max);
 	}
 
 	if (value >= 0) {
-		cbor_encode_unsigned_integer(&writer, (uint64_t)value);
+		cbor_encode_unsigned_integer(writer, (uint64_t)value);
 	} else {
-		cbor_encode_negative_integer(&writer, value);
+		cbor_encode_negative_integer(writer, value);
 	}
 
-	return cbor_writer_len(&writer) - len;
+	return cbor_writer_len(writer) - len;
 }
 #else
 size_t metrics_encode_each(void *buf, size_t bufsize,
-		metric_key_t key, int32_t value)
+		metric_key_t key, int32_t value, void *ctx)
 {
 	unused(buf);
 	unused(bufsize);
+	unused(ctx);
 
 	if (buf == NULL) {
 		return cbor_encoded_uint_size((uint64_t)key)
 			+ cbor_encoded_metric_value_size(value);
 	}
 
-	size_t len = cbor_writer_len(&writer);
-
-	cbor_encode_unsigned_integer(&writer, (uint64_t)key);
-
-	if (value >= 0) {
-		cbor_encode_unsigned_integer(&writer, (uint64_t)value);
-	} else {
-		cbor_encode_negative_integer(&writer, value);
+	if (ctx == NULL) {
+		return 0;
 	}
 
-	return cbor_writer_len(&writer) - len;
+	cbor_writer_t *writer = (cbor_writer_t *)ctx;
+	size_t len = cbor_writer_len(writer);
+
+	cbor_encode_unsigned_integer(writer, (uint64_t)key);
+
+	if (value >= 0) {
+		cbor_encode_unsigned_integer(writer, (uint64_t)value);
+	} else {
+		cbor_encode_negative_integer(writer, value);
+	}
+
+	return cbor_writer_len(writer) - len;
 }
 #endif
