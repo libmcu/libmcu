@@ -33,7 +33,7 @@ enum {
 #define METRICS_DEFINE_TIMER(key, u)		key,
 #define METRICS_DEFINE_BYTES(key)		key,
 #define METRICS_DEFINE_BINARY(key)		key,
-#define METRICS_DEFINE_STATE(key)		key,
+#define METRICS_DEFINE_STATE(key, ...)		key,
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
