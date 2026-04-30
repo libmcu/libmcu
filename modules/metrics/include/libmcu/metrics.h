@@ -20,11 +20,12 @@ extern "C" {
 #endif
 
 #if !defined(METRICS_USER_DEFINES)
-#define METRICS_USER_DEFINES		"metrics.def"
+#define METRICS_USER_DEFINES			"metrics.def"
 #endif
 
-#define METRICS_VALUE(x)		((metric_value_t)(x))
+#define METRICS_VALUE(x)			((metric_value_t)(x))
 
+#define METRICS_FIRST_ARG(first, ...)		first
 enum {
 #define METRICS_DEFINE(key)			key,
 #define METRICS_DEFINE_COUNTER(key)		key,
@@ -33,7 +34,8 @@ enum {
 #define METRICS_DEFINE_TIMER(key, u)		key,
 #define METRICS_DEFINE_BYTES(key)		key,
 #define METRICS_DEFINE_BINARY(key)		key,
-#define METRICS_DEFINE_STATE(key)		key,
+#define METRICS_DEFINE_STATE(...)		\
+	METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg),
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -44,6 +46,7 @@ enum {
 #undef METRICS_DEFINE_BINARY
 #undef METRICS_DEFINE_STATE
 };
+#undef METRICS_FIRST_ARG
 
 typedef uint16_t metric_key_t;
 typedef int32_t metric_value_t;

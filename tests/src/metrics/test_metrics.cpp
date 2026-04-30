@@ -158,6 +158,11 @@ TEST(metrics, stringify_key_ShouldReturnString_WhenKeyGiven) {
 	STRCMP_EQUAL("ReportInterval", p);
 }
 
+TEST(metrics, stringify_key_ShouldReturnStrings_ForLabeledStateDefinitions) {
+	STRCMP_EQUAL("NetworkState", metrics_stringify_key(NetworkState));
+	STRCMP_EQUAL("ServiceState", metrics_stringify_key(ServiceState));
+}
+
 TEST(metrics, is_set_ShouldReturnTrue_WhenReportIntervalIsSet) {
 	metrics_set(ReportInterval, 0);
 	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
@@ -168,7 +173,7 @@ TEST(metrics, is_set_ShouldReturnFalse_WhenReportIntervalIsNotSet) {
 }
 
 TEST(metrics, count_ShouldReturnNumberOfMetrics) {
-	LONGS_EQUAL(9, metrics_count());
+	LONGS_EQUAL(11, metrics_count());
 }
 
 TEST(metrics, set_if_min_ShouldSetMinValue_WhenNotSet) {
@@ -300,7 +305,7 @@ TEST(metrics, init_ShouldInitializeAllMetricsToZero_WhenForceIsTrue) {
 	LONGS_EQUAL(0, count);
 
 	// Verify metrics count is correct
-	LONGS_EQUAL(9, metrics_count());
+	LONGS_EQUAL(11, metrics_count());
 }
 
 TEST(metrics, set_max_min_ShouldSetBothMaxAndMin_WhenNotSet) {
@@ -545,7 +550,7 @@ TEST(metrics_types, bytes_ShouldTrackHighWatermark_ViaSetIfMax) {
 /* count */
 
 TEST(metrics_types, count_ShouldIncludeAllTypedMetrics) {
-	LONGS_EQUAL(9, metrics_count());
+	LONGS_EQUAL(11, metrics_count());
 }
 
 /* metrics_set_pct */

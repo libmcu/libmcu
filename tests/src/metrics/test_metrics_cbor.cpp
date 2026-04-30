@@ -105,7 +105,7 @@ TEST(metrics_cbor, collect_ShouldReturnExactSize_WhenBufIsNull)
 
 TEST(metrics_cbor, count_ShouldExcludeMetadata)
 {
-	const size_t nr_metrics = 9U;
+	const size_t nr_metrics = 11U;
 
 	LONGS_EQUAL(nr_metrics, metrics_count());
 	metrics_set(ReportInterval, 1);

@@ -9,15 +9,20 @@
 #include "libmcu/compiler.h"
 #include "libmcu/assert.h"
 
+#define METRICS_FIRST_ARG(first, ...)		first
+#define METRICS_ENUM_KEY_(key)			METRICS_##key
+#define METRICS_ENUM_KEY(key)			METRICS_ENUM_KEY_(key)
+
 enum {
-#define METRICS_DEFINE(key)			METRICS_##key,
+#define METRICS_DEFINE(key)			METRICS_ENUM_KEY(key),
 #define METRICS_DEFINE_COUNTER(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_GAUGE(key, mn, mx)	METRICS_DEFINE(key)
 #define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BINARY(key)		METRICS_DEFINE(key)
-#define METRICS_DEFINE_STATE(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_STATE(...)		\
+	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -60,7 +65,7 @@ static const struct metric_schema schema_table[] = {
 	{ METRIC_CLASS_BYTES, METRIC_UNIT_NONE, 0, INT32_MAX },
 #define METRICS_DEFINE_BINARY(key) \
 	{ METRIC_CLASS_BINARY, METRIC_UNIT_NONE, 0, 1 },
-#define METRICS_DEFINE_STATE(key) \
+#define METRICS_DEFINE_STATE(...) \
 	{ METRIC_CLASS_STATE, METRIC_UNIT_NONE, INT32_MIN, INT32_MAX },
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
@@ -84,15 +89,18 @@ static void assert_value_in_schema_range(const metric_key_t key,
 #endif /* METRICS_SCHEMA_IBS */
 
 #if !defined(METRICS_NO_KEY_STRING)
+#define METRICS_STRING_KEY_(key)		#key
+#define METRICS_STRING_KEY(key)			METRICS_STRING_KEY_(key)
 static char const *key_strings[] = {
-#define METRICS_DEFINE(key)			#key,
+#define METRICS_DEFINE(key)			METRICS_STRING_KEY(key),
 #define METRICS_DEFINE_COUNTER(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_GAUGE(key, mn, mx)	METRICS_DEFINE(key)
 #define METRICS_DEFINE_PERCENTAGE(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_TIMER(key, u)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BYTES(key)		METRICS_DEFINE(key)
 #define METRICS_DEFINE_BINARY(key)		METRICS_DEFINE(key)
-#define METRICS_DEFINE_STATE(key)		METRICS_DEFINE(key)
+#define METRICS_DEFINE_STATE(...)		\
+	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
@@ -103,7 +111,12 @@ static char const *key_strings[] = {
 #undef METRICS_DEFINE_BINARY
 #undef METRICS_DEFINE_STATE
 };
+#undef METRICS_STRING_KEY
+#undef METRICS_STRING_KEY_
 #endif
+#undef METRICS_ENUM_KEY
+#undef METRICS_ENUM_KEY_
+#undef METRICS_FIRST_ARG
 
 static bool is_valid_key(const metric_key_t key)
 {
