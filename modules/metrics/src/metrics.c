@@ -24,6 +24,17 @@ enum {
 #define METRICS_DEFINE_STATE(...)		\
 	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
+/* Metric definition macros are optional entries in METRICS_USER_DEFINES.
+ * Touch them before undef so -Wunused-macros does not report omitted types. */
+#if defined(METRICS_DEFINE) \
+	+ defined(METRICS_DEFINE_COUNTER) \
+	+ defined(METRICS_DEFINE_GAUGE) \
+	+ defined(METRICS_DEFINE_PERCENTAGE) \
+	+ defined(METRICS_DEFINE_TIMER) \
+	+ defined(METRICS_DEFINE_BYTES) \
+	+ defined(METRICS_DEFINE_BINARY) \
+	+ defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -68,6 +79,15 @@ static const struct metric_schema schema_table[] = {
 #define METRICS_DEFINE_STATE(...) \
 	{ METRIC_CLASS_STATE, METRIC_UNIT_NONE, INT32_MIN, INT32_MAX },
 #include METRICS_USER_DEFINES
+#if defined(METRICS_DEFINE) \
+	+ defined(METRICS_DEFINE_COUNTER) \
+	+ defined(METRICS_DEFINE_GAUGE) \
+	+ defined(METRICS_DEFINE_PERCENTAGE) \
+	+ defined(METRICS_DEFINE_TIMER) \
+	+ defined(METRICS_DEFINE_BYTES) \
+	+ defined(METRICS_DEFINE_BINARY) \
+	+ defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -102,6 +122,15 @@ static char const *key_strings[] = {
 #define METRICS_DEFINE_STATE(...)		\
 	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
+#if defined(METRICS_DEFINE) \
+	+ defined(METRICS_DEFINE_COUNTER) \
+	+ defined(METRICS_DEFINE_GAUGE) \
+	+ defined(METRICS_DEFINE_PERCENTAGE) \
+	+ defined(METRICS_DEFINE_TIMER) \
+	+ defined(METRICS_DEFINE_BYTES) \
+	+ defined(METRICS_DEFINE_BINARY) \
+	+ defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -111,8 +140,14 @@ static char const *key_strings[] = {
 #undef METRICS_DEFINE_BINARY
 #undef METRICS_DEFINE_STATE
 };
+#if defined(METRICS_STRING_KEY) + defined(METRICS_STRING_KEY_)
+#endif
 #undef METRICS_STRING_KEY
 #undef METRICS_STRING_KEY_
+#endif
+#if defined(METRICS_ENUM_KEY) \
+	+ defined(METRICS_ENUM_KEY_) \
+	+ defined(METRICS_FIRST_ARG)
 #endif
 #undef METRICS_ENUM_KEY
 #undef METRICS_ENUM_KEY_
