@@ -22,7 +22,7 @@ Initialize a rate limiter with a defined capacity and leak rate:
 #include "libmcu/ratelim.h"
 
 struct ratelim bucket;
-ratelim_init(&bucket, RATELIM_UNIT_SECONCD, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
+ratelim_init(&bucket, RATELIM_UNIT_SECOND, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
 ```
 
 ### Request Handling
@@ -70,6 +70,22 @@ void custom_logger(const char *format, va_list args) {
 // Usage
 ratelim_request_format(&bucket, custom_logger, "System status: %s, Error code: %d\n", "OK", 0);
 ```
+
+## Time Source Override
+`ratelim_get_time_seconds()` supplies the elapsed time used by the bucket leak
+calculation. Generic hosted builds use a POSIX `clock_gettime()` based port
+with `CLOCK_MONOTONIC` by default, while ESP-IDF and Zephyr builds use their
+platform uptime sources.
+
+Override `ratelim_get_time_seconds()` to provide an application-specific time
+source. The returned value is in seconds and must be non-negative and monotonic
+or non-decreasing.
+
+For bare-metal builds without a clock source, select the `stubs` ratelim port.
+Use `-DLIBMCU_RATELIM_PORT=stubs` for generic CMake builds or
+`LIBMCU_RATELIM_PORT=stubs` for Make builds. The stub returns `0`, so buckets do
+not leak unless the application provides a strong `ratelim_get_time_seconds()`
+implementation.
 
 ## Advantages
 - Modularity: Provides flexible APIs for direct request handling or callback-based execution.

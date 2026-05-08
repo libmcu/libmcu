@@ -17,8 +17,15 @@ if(CONFIG_LIBMCU)
   include(${CMAKE_CURRENT_LIST_DIR}/../project/modules.cmake)
   include(${CMAKE_CURRENT_LIST_DIR}/../project/interfaces.cmake)
 
+  set(LIBMCU_PORT_SRCS)
+  list(FIND LIBMCU_MODULES ratelim LIBMCU_RATELIM_INDEX)
+  if(NOT LIBMCU_RATELIM_INDEX EQUAL -1)
+    list(APPEND LIBMCU_PORT_SRCS
+      ${CMAKE_CURRENT_LIST_DIR}/../ports/zephyr/ratelim.c)
+  endif()
+
   zephyr_library()
-  zephyr_library_sources(${LIBMCU_MODULES_SRCS})
+  zephyr_library_sources(${LIBMCU_MODULES_SRCS} ${LIBMCU_PORT_SRCS})
   zephyr_include_directories(${LIBMCU_MODULES_INCS} ${LIBMCU_INTERFACES_INCS})
 
   if(EXISTS "${APPLICATION_SOURCE_DIR}/include")

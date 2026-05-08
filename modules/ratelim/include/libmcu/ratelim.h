@@ -14,7 +14,6 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <time.h>
 
 typedef enum {
 	RATELIM_UNIT_SECOND,
@@ -22,12 +21,14 @@ typedef enum {
 	RATELIM_UNIT_HOUR,
 } ratelim_unit_t;
 
+typedef uint64_t ratelim_time_t;
+
 struct ratelim {
 	uint32_t capacity; /**< maximum requests the bucket can hold */
 	uint32_t current_load; /**< current number of requests in the bucket */
 	uint32_t leak_rate; /**< rate at which the bucket leaks tokens */
 	uint32_t leak_time_buffer; /**< time buffer for leak rate calculation */
-	time_t last_update; /**< last time the bucket was updated */
+	ratelim_time_t last_update; /**< last time the bucket was updated */
 };
 
 typedef void (*ratelim_format_func_t)(const char *, va_list);
@@ -111,6 +112,17 @@ bool ratelim_request_format(struct ratelim *bucket,
  * @return bool True if the bucket is full, false otherwise.
  */
 bool ratelim_full(struct ratelim *bucket);
+
+/**
+ * @brief Get the current time in seconds for rate limiting.
+ *
+ * Override this function to provide a platform-specific time source. The
+ * returned value must be non-negative and monotonic or non-decreasing.
+ * The rate limiter does not leak tokens while this value does not advance.
+ *
+ * @return Current time in seconds.
+ */
+ratelim_time_t ratelim_get_time_seconds(void);
 
 #if defined(__cplusplus)
 }

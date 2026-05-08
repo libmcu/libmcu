@@ -55,6 +55,10 @@ const char *metrics_get_version_string(void);
  * This function is called internally in `metrics_collect()` and
  * `metrics_collect_reset()`.
  *
+ * When @p buf is NULL, encoder hooks must perform sizing only and avoid side
+ * effects. `metrics_collect_reset()` may call encoder and metadata hooks more
+ * than once while processing a single collect-reset operation.
+ *
  * @param[in] buf buffer
  * @param[in] bufsize buffer size
  * @param[in] nr_total the number of metrics declared in metrics.def

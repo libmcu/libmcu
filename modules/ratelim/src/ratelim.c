@@ -13,14 +13,20 @@
 
 static void update_bucket(struct ratelim *bucket)
 {
-	const time_t now = time(NULL);
-	const uint32_t elapsed = (uint32_t)(now - bucket->last_update);
+	const ratelim_time_t now_seconds = ratelim_get_time_seconds();
 
-	if (now == (time_t)-1 || elapsed == 0) {
+	if (now_seconds <= bucket->last_update) {
 		return;
 	}
 
-	bucket->leak_time_buffer += elapsed;
+	const uint32_t elapsed_seconds =
+		(uint32_t)(now_seconds - bucket->last_update);
+
+	if (elapsed_seconds == 0) {
+		return;
+	}
+
+	bucket->leak_time_buffer += elapsed_seconds;
 	const uint32_t leaked =
 		SCALE_FROM(bucket->leak_time_buffer * bucket->leak_rate);
 
@@ -34,7 +40,7 @@ static void update_bucket(struct ratelim *bucket)
 			SCALE_TO(leaked) / bucket->leak_rate;
 	}
 
-	bucket->last_update = now;
+	bucket->last_update = now_seconds;
 }
 
 static bool is_bucket_full(const struct ratelim *bucket)
@@ -125,6 +131,6 @@ void ratelim_init(struct ratelim *bucket, const ratelim_unit_t unit,
 		.current_load = 0,
 		.leak_rate = leak_rate_per_unit,
 		.leak_time_buffer = 0,
-		.last_update = time(NULL),
+		.last_update = ratelim_get_time_seconds(),
 	};
 }
