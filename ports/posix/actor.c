@@ -4,6 +4,12 @@
  * SPDX-License-Identifier: MIT
  */
 
+#if !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE		200809L
+#elif _POSIX_C_SOURCE < 200809L
+#error "_POSIX_C_SOURCE must be at least 200809L for this POSIX port"
+#endif
+
 #include "libmcu/actor_overrides.h"
 #include "libmcu/actor_timer.h"
 
