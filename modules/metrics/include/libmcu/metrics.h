@@ -226,7 +226,7 @@ size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx);
  * tracked.
  *
  * @warning This count excludes any encoder-specific metadata. Do not derive an
- *          output buffer size from this value. Use `metrics_collect(NULL, 0)`
+ *          output buffer size from this value. Use `metrics_collect(NULL, 0, NULL)`
  *          when an exact encoded payload size is needed.
  *
  * @return size_t The count of all metrics.

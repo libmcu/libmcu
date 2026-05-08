@@ -89,6 +89,44 @@ TEST(metrics_cbor, collect_ShouldEncodeMetadataAndMetric_WhenMetricIsSet)
 	MEMCMP_EQUAL(expected, buf, written);
 }
 
+TEST(metrics_cbor, collect_reset_ShouldEncodeMetadataAndMetricAndReset_WhenWriterGiven)
+{
+	const uint8_t expected[] = {
+		0xA2,
+		0x20,
+		0x83,
+		0x64, 'S', 'N', '0', '1',
+		0x1A, 0x49, 0x96, 0x02, 0xD2, /* ts = 1234567890 */
+		0x66, 'v', '1', '.', '0', '.', '0',
+		0x00,
+		0x1A, 0x12, 0x34, 0x56, 0x78,
+	};
+	uint8_t buf[32] = { 0, };
+	cbor_writer_t writer;
+
+	metrics_set(ReportInterval, 0x12345678);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), &writer);
+
+	LONGS_EQUAL(sizeof(expected), written);
+	MEMCMP_EQUAL(expected, buf, written);
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+}
+
+TEST(metrics_cbor, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenWriterIsNull)
+{
+	uint8_t buf[32] = { 0, };
+
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), NULL);
+
+	LONGS_EQUAL(0, written);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(1, metrics_get(ReportInterval));
+}
+
 TEST(metrics_cbor, collect_ShouldReturnExactSize_WhenBufIsNull)
 {
 	uint8_t buf[32] = { 0, };

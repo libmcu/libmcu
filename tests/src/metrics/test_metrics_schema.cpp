@@ -288,3 +288,30 @@ TEST(metrics_schema, entry_not_written_when_buffer_too_small)
 
 	LONGS_EQUAL(IBS_HEADER_SIZE, len);
 }
+
+TEST(metrics_schema, collect_reset_ShouldEncodeSchemaPayloadAndReset_WhenBufferIsLargeEnough)
+{
+	metrics_set(BatteryPct, 55);
+
+	size_t len = metrics_collect_reset(buf, sizeof(buf), NULL);
+
+	LONGS_EQUAL(IBS_HEADER_SIZE + IBS_ENTRY_SIZE, len);
+	LONGS_EQUAL(1, nr_updated(buf));
+	LONGS_EQUAL(BatteryPct, entry_key(buf, 0));
+	LONGS_EQUAL(METRIC_CLASS_PERCENTAGE, entry_class(buf, 0));
+	LONGS_EQUAL(55, entry_value(buf, 0));
+	LONGS_EQUAL(false, metrics_is_set(BatteryPct));
+	LONGS_EQUAL(0, metrics_get(BatteryPct));
+}
+
+TEST(metrics_schema, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenBufferIsTooSmall)
+{
+	metrics_set(BatteryPct, 55);
+
+	size_t len = metrics_collect_reset(buf,
+			IBS_HEADER_SIZE + IBS_ENTRY_SIZE - 1, NULL);
+
+	LONGS_EQUAL(0, len);
+	LONGS_EQUAL(true, metrics_is_set(BatteryPct));
+	LONGS_EQUAL(55, metrics_get(BatteryPct));
+}
