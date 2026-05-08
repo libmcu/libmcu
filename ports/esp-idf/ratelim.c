@@ -5,16 +5,17 @@
  */
 
 #include "libmcu/ratelim.h"
-#include <time.h>
 #include "libmcu/compiler.h"
+
+#include "esp_timer.h"
 
 LIBMCU_WEAK ratelim_time_t ratelim_get_time_seconds(void)
 {
-	const time_t now = time(NULL);
+	const int64_t elapsed_usec = esp_timer_get_time();
 
-	if (now == (time_t)-1) {
+	if (elapsed_usec < 0) {
 		return 0;
 	}
 
-	return (ratelim_time_t)now;
+	return (ratelim_time_t)((uint64_t)elapsed_usec / 1000000U);
 }
