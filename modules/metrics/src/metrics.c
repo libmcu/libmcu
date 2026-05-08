@@ -24,6 +24,24 @@ enum {
 #define METRICS_DEFINE_STATE(...)		\
 	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
+/* Metric definition macros are optional entries in METRICS_USER_DEFINES.
+ * Touch them before undef so -Wunused-macros does not report omitted types. */
+#if defined(METRICS_DEFINE)
+#endif
+#if defined(METRICS_DEFINE_COUNTER)
+#endif
+#if defined(METRICS_DEFINE_GAUGE)
+#endif
+#if defined(METRICS_DEFINE_PERCENTAGE)
+#endif
+#if defined(METRICS_DEFINE_TIMER)
+#endif
+#if defined(METRICS_DEFINE_BYTES)
+#endif
+#if defined(METRICS_DEFINE_BINARY)
+#endif
+#if defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -68,6 +86,22 @@ static const struct metric_schema schema_table[] = {
 #define METRICS_DEFINE_STATE(...) \
 	{ METRIC_CLASS_STATE, METRIC_UNIT_NONE, INT32_MIN, INT32_MAX },
 #include METRICS_USER_DEFINES
+#if defined(METRICS_DEFINE)
+#endif
+#if defined(METRICS_DEFINE_COUNTER)
+#endif
+#if defined(METRICS_DEFINE_GAUGE)
+#endif
+#if defined(METRICS_DEFINE_PERCENTAGE)
+#endif
+#if defined(METRICS_DEFINE_TIMER)
+#endif
+#if defined(METRICS_DEFINE_BYTES)
+#endif
+#if defined(METRICS_DEFINE_BINARY)
+#endif
+#if defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -102,6 +136,22 @@ static char const *key_strings[] = {
 #define METRICS_DEFINE_STATE(...)		\
 	METRICS_DEFINE(METRICS_FIRST_ARG(__VA_ARGS__, keep_at_least_one_arg))
 #include METRICS_USER_DEFINES
+#if defined(METRICS_DEFINE)
+#endif
+#if defined(METRICS_DEFINE_COUNTER)
+#endif
+#if defined(METRICS_DEFINE_GAUGE)
+#endif
+#if defined(METRICS_DEFINE_PERCENTAGE)
+#endif
+#if defined(METRICS_DEFINE_TIMER)
+#endif
+#if defined(METRICS_DEFINE_BYTES)
+#endif
+#if defined(METRICS_DEFINE_BINARY)
+#endif
+#if defined(METRICS_DEFINE_STATE)
+#endif
 #undef METRICS_DEFINE
 #undef METRICS_DEFINE_COUNTER
 #undef METRICS_DEFINE_GAUGE
@@ -114,8 +164,14 @@ static char const *key_strings[] = {
 #undef METRICS_STRING_KEY
 #undef METRICS_STRING_KEY_
 #endif
+#if defined(METRICS_ENUM_KEY)
+#endif
 #undef METRICS_ENUM_KEY
+#if defined(METRICS_ENUM_KEY_)
+#endif
 #undef METRICS_ENUM_KEY_
+#if defined(METRICS_FIRST_ARG)
+#endif
 #undef METRICS_FIRST_ARG
 
 static bool is_valid_key(const metric_key_t key)
