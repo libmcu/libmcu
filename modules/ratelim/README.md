@@ -22,7 +22,7 @@ Initialize a rate limiter with a defined capacity and leak rate:
 #include "libmcu/ratelim.h"
 
 struct ratelim bucket;
-ratelim_init(&bucket, RATELIM_UNIT_SECONCD, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
+ratelim_init(&bucket, RATELIM_UNIT_SECOND, 10, 2); // Capacity: 10, Leak rate: 2 requests/second
 ```
 
 ### Request Handling
@@ -70,6 +70,11 @@ void custom_logger(const char *format, va_list args) {
 // Usage
 ratelim_request_format(&bucket, custom_logger, "System status: %s, Error code: %d\n", "OK", 0);
 ```
+
+## Time Source Override
+Override `ratelim_get_time_seconds()` to provide a platform-specific time source
+when no system time is available, such as on bare-metal platforms. The returned
+value is in seconds and must be non-negative and monotonic or non-decreasing.
 
 ## Advantages
 - Modularity: Provides flexible APIs for direct request handling or callback-based execution.
