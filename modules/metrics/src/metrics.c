@@ -383,6 +383,30 @@ size_t metrics_collect(void *buf, const size_t bufsize, void *ctx)
 	return written;
 }
 
+size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx)
+{
+	size_t required;
+	size_t written = 0;
+
+	if (buf == NULL || bufsize == 0) {
+		return 0;
+	}
+
+	metrics_lock();
+	required = encode_all(NULL, 0, ctx);
+	if (required > 0 && bufsize >= required) {
+		written = encode_all((uint8_t *)buf, bufsize, ctx);
+		if (written == required) {
+			reset_all();
+		} else {
+			written = 0;
+		}
+	}
+	metrics_unlock();
+
+	return written;
+}
+
 void metrics_iterate(void (*callback_each)(const metric_key_t key,
 				const metric_value_t value, void *ctx),
 		void *ctx)

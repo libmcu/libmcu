@@ -52,7 +52,8 @@ const char *metrics_get_version_string(void);
 /**
  * @brief It creates an encoding header.
  *
- * This function is called internally in `metrics_collect()`.
+ * This function is called internally in `metrics_collect()` and
+ * `metrics_collect_reset()`.
  *
  * @param[in] buf buffer
  * @param[in] bufsize buffer size
