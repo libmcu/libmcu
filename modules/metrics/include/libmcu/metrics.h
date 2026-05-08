@@ -211,11 +211,17 @@ size_t metrics_collect(void *buf, const size_t bufsize, void *ctx);
  * If @p bufsize is smaller than the required encoded payload size, this
  * function returns 0 and leaves all metrics unchanged.
  *
+ * If there are no metrics currently set, the required encoded payload size may
+ * be 0. In that case, this function also returns 0.
+ *
  * @param[out] buf Pointer to the buffer where metrics data will be stored.
  * @param[in] bufsize Size of the buffer in bytes.
  * @param[in] ctx context to be used
  *
- * @return size_t The number of bytes written to the buffer, or 0 on failure.
+ * @return size_t The number of bytes written to the buffer. Returns 0 if no
+ *                bytes are produced (for example, because there is nothing to
+ *                collect), or if @p buf is NULL, @p bufsize is 0, or
+ *                @p bufsize is too small for the encoded payload.
  */
 size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx);
 

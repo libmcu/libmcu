@@ -396,7 +396,7 @@ size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx)
 	required = encode_all(NULL, 0, ctx);
 	if (required > 0 && bufsize >= required) {
 		written = encode_all((uint8_t *)buf, bufsize, ctx);
-		if (written == required) {
+		if (written >= required && written <= bufsize) {
 			reset_all();
 		} else {
 			written = 0;

@@ -105,7 +105,7 @@ static size_t cbor_encoded_metadata_size(void)
 		+ cbor_encoded_text_size(ver);
 }
 
-static void cbor_encode_metadata(cbor_writer_t *w)
+static cbor_error_t cbor_encode_metadata(cbor_writer_t *w)
 {
 	const char *sn = metrics_get_serial_number_string();
 	const char *ver = metrics_get_version_string();
@@ -118,11 +118,25 @@ static void cbor_encode_metadata(cbor_writer_t *w)
 		ver = "";
 	}
 
-	cbor_encode_negative_integer(w, METRICS_CBOR_METADATA_KEY);
-	cbor_encode_array(w, METRICS_CBOR_METADATA_COUNT);
-	cbor_encode_text_string(w, sn, strlen(sn));
-	cbor_encode_unsigned_integer(w, metrics_get_unix_timestamp());
-	cbor_encode_text_string(w, ver, strlen(ver));
+	if (cbor_encode_negative_integer(w, METRICS_CBOR_METADATA_KEY)
+			!= CBOR_SUCCESS) {
+		return CBOR_OVERRUN;
+	}
+	if (cbor_encode_array(w, METRICS_CBOR_METADATA_COUNT) != CBOR_SUCCESS) {
+		return CBOR_OVERRUN;
+	}
+	if (cbor_encode_text_string(w, sn, strlen(sn)) != CBOR_SUCCESS) {
+		return CBOR_OVERRUN;
+	}
+	if (cbor_encode_unsigned_integer(w, metrics_get_unix_timestamp())
+			!= CBOR_SUCCESS) {
+		return CBOR_OVERRUN;
+	}
+	if (cbor_encode_text_string(w, ver, strlen(ver)) != CBOR_SUCCESS) {
+		return CBOR_OVERRUN;
+	}
+
+	return CBOR_SUCCESS;
 }
 
 size_t metrics_encode_header(void *buf, size_t bufsize,
@@ -141,8 +155,12 @@ size_t metrics_encode_header(void *buf, size_t bufsize,
 
 	cbor_writer_t *writer = (cbor_writer_t *)ctx;
 	cbor_writer_init(writer, buf, bufsize);
-	cbor_encode_map(writer, nr_updated + 1U);
-	cbor_encode_metadata(writer);
+	if (cbor_encode_map(writer, nr_updated + 1U) != CBOR_SUCCESS) {
+		return 0;
+	}
+	if (cbor_encode_metadata(writer) != CBOR_SUCCESS) {
+		return 0;
+	}
 
 	return cbor_writer_len(writer);
 }
@@ -167,30 +185,58 @@ size_t metrics_encode_each(void *buf, size_t bufsize,
 	cbor_writer_t *writer = (cbor_writer_t *)ctx;
 	size_t len = cbor_writer_len(writer);
 
-	cbor_encode_unsigned_integer(writer, (uint64_t)key);
+	if (cbor_encode_unsigned_integer(writer, (uint64_t)key)
+			!= CBOR_SUCCESS) {
+		return 0;
+	}
 
 	/* value → [class, unit, range_min, range_max, value] */
-	cbor_encode_array(writer, 5);
+	if (cbor_encode_array(writer, 5) != CBOR_SUCCESS) {
+		return 0;
+	}
 
-	cbor_encode_unsigned_integer(writer, (uint64_t)schema->type);
-	cbor_encode_unsigned_integer(writer, (uint64_t)schema->unit);
+	if (cbor_encode_unsigned_integer(writer, (uint64_t)schema->type)
+			!= CBOR_SUCCESS) {
+		return 0;
+	}
+	if (cbor_encode_unsigned_integer(writer, (uint64_t)schema->unit)
+			!= CBOR_SUCCESS) {
+		return 0;
+	}
 
 	if (schema->range_min >= 0) {
-		cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_min);
+		if (cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_min)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	} else {
-		cbor_encode_negative_integer(writer, schema->range_min);
+		if (cbor_encode_negative_integer(writer, schema->range_min)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	}
 
 	if (schema->range_max >= 0) {
-		cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_max);
+		if (cbor_encode_unsigned_integer(writer, (uint64_t)schema->range_max)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	} else {
-		cbor_encode_negative_integer(writer, schema->range_max);
+		if (cbor_encode_negative_integer(writer, schema->range_max)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	}
 
 	if (value >= 0) {
-		cbor_encode_unsigned_integer(writer, (uint64_t)value);
+		if (cbor_encode_unsigned_integer(writer, (uint64_t)value)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	} else {
-		cbor_encode_negative_integer(writer, value);
+		if (cbor_encode_negative_integer(writer, value) != CBOR_SUCCESS) {
+			return 0;
+		}
 	}
 
 	return cbor_writer_len(writer) - len;
@@ -215,12 +261,21 @@ size_t metrics_encode_each(void *buf, size_t bufsize,
 	cbor_writer_t *writer = (cbor_writer_t *)ctx;
 	size_t len = cbor_writer_len(writer);
 
-	cbor_encode_unsigned_integer(writer, (uint64_t)key);
+	if (cbor_encode_unsigned_integer(writer, (uint64_t)key)
+			!= CBOR_SUCCESS) {
+		return 0;
+	}
 
 	if (value >= 0) {
-		cbor_encode_unsigned_integer(writer, (uint64_t)value);
+		if (cbor_encode_unsigned_integer(writer, (uint64_t)value)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	} else {
-		cbor_encode_negative_integer(writer, value);
+		if (cbor_encode_negative_integer(writer, value)
+				!= CBOR_SUCCESS) {
+			return 0;
+		}
 	}
 
 	return cbor_writer_len(writer) - len;

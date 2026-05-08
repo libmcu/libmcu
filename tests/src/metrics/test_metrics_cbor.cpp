@@ -5,6 +5,27 @@
  */
 
 #include "CppUTest/TestHarness.h"
+#include <stddef.h>
+#include <stdint.h>
+
+static const uint64_t default_unix_timestamp = 1234567890ULL;
+static uint64_t unix_timestamps[2];
+static size_t nr_unix_timestamps;
+static size_t unix_timestamp_index;
+
+static void reset_unix_timestamp_sequence(void)
+{
+	nr_unix_timestamps = 0;
+	unix_timestamp_index = 0;
+}
+
+static void set_unix_timestamp_sequence(uint64_t first, uint64_t second)
+{
+	unix_timestamps[0] = first;
+	unix_timestamps[1] = second;
+	nr_unix_timestamps = 2;
+	unix_timestamp_index = 0;
+}
 
 extern "C" {
 #include "libmcu/metrics.h"
@@ -18,7 +39,15 @@ const char *metrics_get_serial_number_string(void)
 
 uint64_t metrics_get_unix_timestamp(void)
 {
-	return 1234567890ULL;
+	if (nr_unix_timestamps == 0) {
+		return default_unix_timestamp;
+	}
+
+	if (unix_timestamp_index < nr_unix_timestamps) {
+		return unix_timestamps[unix_timestamp_index++];
+	}
+
+	return unix_timestamps[nr_unix_timestamps - 1];
 }
 
 const char *metrics_get_version_string(void)
@@ -39,6 +68,7 @@ TEST_GROUP(metrics_cbor)
 {
 	void setup(void)
 	{
+		reset_unix_timestamp_sequence();
 		metrics_init(true);
 	}
 
@@ -121,6 +151,34 @@ TEST(metrics_cbor, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenWriterIsNu
 	metrics_set(ReportInterval, 1);
 
 	size_t written = metrics_collect_reset(buf, sizeof(buf), NULL);
+
+	LONGS_EQUAL(0, written);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(1, metrics_get(ReportInterval));
+}
+
+TEST(metrics_cbor, collect_reset_ShouldReset_WhenTimestampSizeGrowsAndBufferFits)
+{
+	uint8_t buf[19] = { 0, };
+	cbor_writer_t writer;
+	set_unix_timestamp_sequence(23, 24);
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), &writer);
+
+	LONGS_EQUAL(sizeof(buf), written);
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+}
+
+TEST(metrics_cbor, collect_reset_ShouldReturnZero_WhenTimestampSizeGrowsPastBuffer)
+{
+	uint8_t buf[18] = { 0, };
+	cbor_writer_t writer;
+	set_unix_timestamp_sequence(23, 24);
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), &writer);
 
 	LONGS_EQUAL(0, written);
 	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
