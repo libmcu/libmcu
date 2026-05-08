@@ -11,11 +11,11 @@
 
 LIBMCU_WEAK ratelim_time_t ratelim_get_time_seconds(void)
 {
-	const time_t now = time(NULL);
+	struct timespec now;
 
-	if (now == (time_t)-1) {
+	if (clock_gettime(CLOCK_MONOTONIC, &now) != 0 || now.tv_sec < 0) {
 		return 0;
 	}
 
-	return (ratelim_time_t)now;
+	return (ratelim_time_t)now.tv_sec;
 }

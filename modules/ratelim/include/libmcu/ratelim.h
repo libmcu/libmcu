@@ -118,6 +118,7 @@ bool ratelim_full(struct ratelim *bucket);
  *
  * Override this function to provide a platform-specific time source. The
  * returned value must be non-negative and monotonic or non-decreasing.
+ * The rate limiter does not leak tokens while this value does not advance.
  *
  * @return Current time in seconds.
  */
