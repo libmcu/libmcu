@@ -21,4 +21,4 @@ jobs:
       - name: Host Compile
         run: STACK_LIMIT=512 make clean all
       - name: Cross Compile
-        run: CROSS_COMPILE=arm-none-eabi make clean all
+        run: CROSS_COMPILE=arm-none-eabi LIBMCU_RATELIM_PORT=stubs make clean all

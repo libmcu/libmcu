@@ -73,8 +73,9 @@ ratelim_request_format(&bucket, custom_logger, "System status: %s, Error code: %
 
 ## Time Source Override
 `ratelim_get_time_seconds()` supplies the elapsed time used by the bucket leak
-calculation. Generic hosted builds use a POSIX `time()` based port by default,
-while ESP-IDF and Zephyr builds use their platform uptime sources.
+calculation. Generic hosted builds use a POSIX `clock_gettime()` based port
+with `CLOCK_MONOTONIC` by default, while ESP-IDF and Zephyr builds use their
+platform uptime sources.
 
 Override `ratelim_get_time_seconds()` to provide an application-specific time
 source. The returned value is in seconds and must be non-negative and monotonic
