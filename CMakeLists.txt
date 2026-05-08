@@ -4,6 +4,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/project/modules.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/project/interfaces.cmake)
 
 set(LIBMCU_PORT_SRCS)
+set(LIBMCU_RATELIM_PORT posix CACHE STRING "ratelim time source port for non-platform CMake builds")
+set_property(CACHE LIBMCU_RATELIM_PORT PROPERTY STRINGS posix stubs)
 list(FIND LIBMCU_MODULES ratelim LIBMCU_RATELIM_INDEX)
 
 if(COMMAND idf_component_register)
@@ -30,8 +32,11 @@ if(COMMAND idf_component_register)
 else()
 	project(libmcu LANGUAGES C CXX)
 	if(NOT LIBMCU_RATELIM_INDEX EQUAL -1)
+		if(NOT LIBMCU_RATELIM_PORT MATCHES "^(posix|stubs)$")
+			message(FATAL_ERROR "Unsupported LIBMCU_RATELIM_PORT: ${LIBMCU_RATELIM_PORT}")
+		endif()
 		list(APPEND LIBMCU_PORT_SRCS
-			${CMAKE_CURRENT_LIST_DIR}/ports/stubs/ratelim.c)
+			${CMAKE_CURRENT_LIST_DIR}/ports/${LIBMCU_RATELIM_PORT}/ratelim.c)
 	endif()
 
 	add_library(${PROJECT_NAME} STATIC

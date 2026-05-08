@@ -72,9 +72,19 @@ ratelim_request_format(&bucket, custom_logger, "System status: %s, Error code: %
 ```
 
 ## Time Source Override
-Override `ratelim_get_time_seconds()` to provide a platform-specific time source
-when no system time is available, such as on bare-metal platforms. The returned
-value is in seconds and must be non-negative and monotonic or non-decreasing.
+`ratelim_get_time_seconds()` supplies the elapsed time used by the bucket leak
+calculation. Generic hosted builds use a POSIX `time()` based port by default,
+while ESP-IDF and Zephyr builds use their platform uptime sources.
+
+Override `ratelim_get_time_seconds()` to provide an application-specific time
+source. The returned value is in seconds and must be non-negative and monotonic
+or non-decreasing.
+
+For bare-metal builds without a clock source, select the `stubs` ratelim port.
+Use `-DLIBMCU_RATELIM_PORT=stubs` for generic CMake builds or
+`LIBMCU_RATELIM_PORT=stubs` for Make builds. The stub returns `0`, so buckets do
+not leak unless the application provides a strong `ratelim_get_time_seconds()`
+implementation.
 
 ## Advantages
 - Modularity: Provides flexible APIs for direct request handling or callback-based execution.
