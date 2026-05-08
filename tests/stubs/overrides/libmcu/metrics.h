@@ -21,6 +21,7 @@ typedef uint16_t metric_key_t;
 #define metrics_unset(k)
 #define metrics_iterate(f, a)
 #define metrics_collect(a, b, c)
+#define metrics_collect_reset(a, b, c)
 #define metrics_count()
 #define metrics_init(x)
 #define metrics_is_set(x)

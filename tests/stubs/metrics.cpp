@@ -56,9 +56,17 @@ void metrics_iterate(void (*callback_each)(const metric_key_t key,
 	(void)ctx;
 }
 
-size_t metrics_collect(void *buf, const size_t bufsize) {
+size_t metrics_collect(void *buf, const size_t bufsize, void *ctx) {
 	(void)buf;
 	(void)bufsize;
+	(void)ctx;
+	return 0;
+}
+
+size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx) {
+	(void)buf;
+	(void)bufsize;
+	(void)ctx;
 	return 0;
 }
 

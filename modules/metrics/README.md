@@ -7,7 +7,7 @@
    macro[^1]. e.g. [`-DMETRICS_USER_DEFINES=\"src/my_metrics.def\"`](https://github.com/onkwon/libmcu/blob/master/project/runner.mk#L10)
 3. Call `metrics_init()` once at startup
 4. Update metric values with the set APIs throughout your code
-5. Periodically call `metrics_collect()` to encode and transmit the current snapshot, then `metrics_reset()` to clear for the next interval
+5. Periodically call `metrics_collect()` to encode and transmit the current snapshot, then `metrics_reset()` to clear for the next interval. Use `metrics_collect_reset()` when collect and reset must be atomic.
 
 ### Metric Types
 
@@ -40,7 +40,7 @@ under `ports/metrics/`. It encodes metrics as a CBOR map with device metadata
 [libcbor](https://github.com/libmcu/cbor) dependency to use it.
 
 To get the exact encoded payload size before allocation, call
-`metrics_collect(NULL, 0)`.
+`metrics_collect(NULL, 0, NULL)`.
 
 ### Usage
 
@@ -69,14 +69,28 @@ metrics_set_pct(CpuUsagePCT, busy_ticks, total_ticks);
 #### Collecting
 
 `metrics_collect()` encodes all current values into a caller-supplied buffer.
-Call with `NULL` / `0` first to determine the exact size needed.
+Call it with `NULL` / `0` first to perform a dry run and determine the exact
+size needed.
 
 ```c
-size_t len = metrics_collect(NULL, 0); /* dry run to get size */
+size_t len = metrics_collect(NULL, 0, NULL); /* dry run to get size */
 uint8_t buf[len];
-metrics_collect(buf, len);
+metrics_collect(buf, len, NULL);
 /* transmit buf over your transport of choice */
 metrics_reset(); /* clear values for the next interval */
+```
+
+`metrics_collect_reset()` performs collect and reset in the same lock section.
+This function does not support dry runs. If a `NULL` buffer or insufficient
+buffer is provided, it returns 0 and leaves metric values unchanged.
+Because it performs an internal sizing pass, encoders must handle `buf == NULL`
+without side effects.
+
+```c
+size_t len = metrics_collect(NULL, 0, NULL);
+uint8_t buf[len];
+size_t written = metrics_collect_reset(buf, len, NULL);
+/* transmit buf[0..written) if written is not zero */
 ```
 
 ### Synchronisation

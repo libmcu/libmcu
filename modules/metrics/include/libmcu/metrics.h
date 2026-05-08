@@ -201,13 +201,38 @@ void metrics_iterate(void (*callback_each)(const metric_key_t key,
 size_t metrics_collect(void *buf, const size_t bufsize, void *ctx);
 
 /**
+ * @brief Collects all metrics and resets them atomically.
+ *
+ * This function collects all current metrics and resets them while holding the
+ * metrics lock. Unlike metrics_collect(), this function does not support
+ * dry-run sizing. Passing @p NULL as @p buf or 0 as @p bufsize returns 0 and
+ * leaves all metrics unchanged.
+ *
+ * If @p bufsize is smaller than the required encoded payload size, this
+ * function returns 0 and leaves all metrics unchanged.
+ *
+ * If there are no metrics currently set, the required encoded payload size may
+ * be 0. In that case, this function also returns 0.
+ *
+ * @param[out] buf Pointer to the buffer where metrics data will be stored.
+ * @param[in] bufsize Size of the buffer in bytes.
+ * @param[in] ctx context to be used
+ *
+ * @return size_t The number of bytes written to the buffer. Returns 0 if no
+ *                bytes are produced (for example, because there is nothing to
+ *                collect), or if @p buf is NULL, @p bufsize is 0, or
+ *                @p bufsize is too small for the encoded payload.
+ */
+size_t metrics_collect_reset(void *buf, const size_t bufsize, void *ctx);
+
+/**
  * @brief Retrieves the count of all metrics.
  *
  * This function returns the number of declared user metrics currently being
  * tracked.
  *
  * @warning This count excludes any encoder-specific metadata. Do not derive an
- *          output buffer size from this value. Use `metrics_collect(NULL, 0)`
+ *          output buffer size from this value. Use `metrics_collect(NULL, 0, NULL)`
  *          when an exact encoded payload size is needed.
  *
  * @return size_t The count of all metrics.

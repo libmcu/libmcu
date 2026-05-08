@@ -423,6 +423,51 @@ TEST(metrics, collect_ShouldReturnNeededSize_WhenBufIsNull) {
 	LONGS_EQUAL(needed, written);
 }
 
+TEST(metrics, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenBufIsNull) {
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(NULL, 0, NULL);
+
+	LONGS_EQUAL(0, written);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(1, metrics_get(ReportInterval));
+}
+
+TEST(metrics, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenBufSizeIsZero) {
+	uint8_t buf[8];
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(buf, 0, NULL);
+
+	LONGS_EQUAL(0, written);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(1, metrics_get(ReportInterval));
+}
+
+TEST(metrics, collect_reset_ShouldReturnZeroAndKeepMetricSet_WhenBufferIsTooSmall) {
+	uint8_t buf[7];
+	metrics_set(ReportInterval, 1);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), NULL);
+
+	LONGS_EQUAL(0, written);
+	LONGS_EQUAL(true, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(1, metrics_get(ReportInterval));
+}
+
+TEST(metrics, collect_reset_ShouldEncodeAndReset_WhenBufferIsLargeEnough) {
+	uint8_t expected_encoded_data[8] = { 0, 0, 0, 0, 0x78, 0x56, 0x34, 0x12, };
+	uint8_t buf[8];
+	metrics_set(ReportInterval, 0x12345678);
+
+	size_t written = metrics_collect_reset(buf, sizeof(buf), NULL);
+
+	LONGS_EQUAL(8, written);
+	MEMCMP_EQUAL(expected_encoded_data, buf, written);
+	LONGS_EQUAL(false, metrics_is_set(ReportInterval));
+	LONGS_EQUAL(0, metrics_get(ReportInterval));
+}
+
 /* collect: 잘못된 key는 무시 (V2) */
 
 TEST(metrics, set_ShouldDoNothing_WhenInvalidKeyGiven) {
