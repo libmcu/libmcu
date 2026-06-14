@@ -125,13 +125,26 @@ static int write_reg(struct lm_i2c_device *dev,
 	err |= i2c_master_transmit(dev->handle, buf, len, timeout_ms);
 	pthread_mutex_unlock(&dev->bus->mutex);
 
+	free(buf);
+
 	if (err != ESP_OK) {
 		return -err;
 	}
 
-	free(buf);
-
 	return 0;
+}
+
+static void del_device(struct lm_i2c_device *dev)
+{
+	memset(dev, 0, sizeof(*dev));
+}
+
+static void delete_device(struct lm_i2c_device *dev)
+{
+	pthread_mutex_lock(&dev->bus->mutex);
+	i2c_master_bus_rm_device(dev->handle);
+	del_device(dev);
+	pthread_mutex_unlock(&dev->bus->mutex);
 }
 
 static struct lm_i2c_device *new_device(struct lm_i2c *bus)
@@ -143,6 +156,7 @@ static struct lm_i2c_device *new_device(struct lm_i2c *bus)
 		if (memcmp(dev, &empty, sizeof(empty)) == 0) {
 			dev->bus = bus;
 			dev->api = (struct lm_i2c_device_api) {
+				.delete_device = delete_device,
 				.read = read_i2c,
 				.write = write_i2c,
 				.read_reg = read_reg,
@@ -153,11 +167,6 @@ static struct lm_i2c_device *new_device(struct lm_i2c *bus)
 	}
 
 	return NULL;
-}
-
-static void del_device(struct lm_i2c_device *dev)
-{
-	memset(dev, 0, sizeof(*dev));
 }
 
 static struct lm_i2c_device *create_device(struct lm_i2c *bus,
@@ -186,14 +195,6 @@ out:
 	pthread_mutex_unlock(&bus->mutex);
 
 	return dev;
-}
-
-static void delete_device(struct lm_i2c_device *dev)
-{
-	pthread_mutex_lock(&dev->bus->mutex);
-	i2c_master_bus_rm_device(dev->handle);
-	del_device(dev);
-	pthread_mutex_unlock(&dev->bus->mutex);
 }
 
 static int enable_i2c(struct lm_i2c *bus)
