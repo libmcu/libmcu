@@ -145,9 +145,22 @@ static int on_characteristic_request(uint16_t conn_handle, uint16_t attr_handle,
 	return 0;
 }
 
+static int delete_peer_bond(uint16_t conn_handle)
+{
+	struct ble_gap_conn_desc desc;
+	int err = ble_gap_conn_find(conn_handle, &desc);
+
+	if (err == 0) {
+		err = ble_store_util_delete_peer(&desc.peer_id_addr);
+	}
+
+	return err;
+}
+
 static int on_gap_event(struct ble_gap_event *event, void *arg)
 {
 	struct ble *iface = (struct ble *)arg;
+	int rc = 0;
 	enum ble_gap_evt evt = BLE_GAP_EVT_UNKNOWN;
 	uint16_t handle = 0;
 
@@ -207,6 +220,11 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 	case BLE_GAP_EVENT_REPEAT_PAIRING:
 		evt = BLE_GAP_EVT_ALREADY_BONDED;
 		handle = event->repeat_pairing.conn_handle;
+		/* The peer lost its bond. Delete the stale one and let it
+		 * pair again. Returning 0 would ignore the pairing request. */
+		rc = delete_peer_bond(handle)?
+			BLE_GAP_REPEAT_PAIRING_IGNORE :
+			BLE_GAP_REPEAT_PAIRING_RETRY;
 		break;
 	case BLE_GAP_EVENT_PASSKEY_ACTION:
 		evt = BLE_GAP_EVT_PASSKEY;
@@ -220,7 +238,7 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 			(*iface->param.pairing_callback)(method,
 					&pkey.passkey, sizeof(pkey.oob));
 		}
-		int rc = ble_sm_inject_io(handle, &pkey);
+		int err = ble_sm_inject_io(handle, &pkey);
 		break;
 	case BLE_GAP_EVENT_IDENTITY_RESOLVED:
 		evt = BLE_GAP_EVT_IDENTITY_RESOLVED;
@@ -256,7 +274,7 @@ static int on_gap_event(struct ble_gap_event *event, void *arg)
 		iface->gap_event_callback(iface, evt, &state);
 	}
 
-	return 0;
+	return rc;
 }
 
 static void on_gatt_register(struct ble_gatt_register_ctxt *ctxt, void *arg)
