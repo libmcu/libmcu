@@ -7,6 +7,7 @@
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
 #include "CppUTestExt/MockSupport.h"
+#include <stdint.h>
 #include "libmcu/msgq.h"
 
 static int f_lock(void *ctx) {

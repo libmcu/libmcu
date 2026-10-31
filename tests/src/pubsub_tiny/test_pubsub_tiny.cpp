@@ -6,6 +6,7 @@
 
 #include "CppUTest/TestHarness.h"
 #include "CppUTest/TestHarness_c.h"
+#include <stdint.h>
 #include <string.h>
 #include "libmcu/pubsub.h"
 
