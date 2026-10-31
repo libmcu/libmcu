@@ -157,6 +157,8 @@ static void on_wifi_events(void *arg, esp_event_base_t event_base,
 		/* The connection event will be raised when IP acquired as DHCP
 		 * is getting started automatically by netif which is
 		 * registered earlier at the initailization. */
+		self->status.channel =
+			((wifi_event_sta_connected_t *)event_data)->channel;
 		break;
 	case WIFI_EVENT_STA_DISCONNECTED:
 		self->state = ESP32_STATE_STA_STARTED;
@@ -275,6 +277,13 @@ static int connect_wifi(struct wifi *self, const struct wifi_conn_param *param)
 		conf.sta.threshold.authmode = WIFI_AUTH_OPEN;
 	} else if (param->security == WIFI_SEC_TYPE_WEP) {
 		conf.sta.threshold.authmode = WIFI_AUTH_WEP;
+	}
+
+	/* Scanning all channels takes seconds. With the channel known, scan
+	 * only that one and connect to the first AP found */
+	if (param->channel) {
+		conf.sta.channel = param->channel;
+		conf.sta.scan_method = WIFI_FAST_SCAN;
 	}
 
 	if (esp_wifi_set_config(WIFI_IF_STA, &conf) != ESP_OK) {
