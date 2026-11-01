@@ -12,10 +12,18 @@ static wifi_event_callback_t callback;
 static void *callback_ctx;
 
 static int do_connect(struct wifi *self, const struct wifi_conn_param *param) {
+	/* kept for checking without an expectation to set in every test */
+	mock().setData("wifi_connect_channel", (unsigned int)param->channel);
 	return mock().actualCall("wifi_connect")
 		.withMemoryBufferParameter("ssid", (const uint8_t *)param->ssid, param->ssid_len)
 		.withMemoryBufferParameter("pass", (const uint8_t *)param->psk, param->psk_len)
 		.returnIntValue();
+}
+
+static int do_get_status(struct wifi *self, struct wifi_iface_info *info) {
+	return mock().actualCall("wifi_get_status")
+		.withOutputParameter("info", info)
+		.returnIntValueOrDefault(0);
 }
 
 static int do_disconnect(struct wifi *self) {
@@ -51,6 +59,7 @@ struct wifi *wifi_create(int id) {
 			.scan = do_scan,
 			.enable = do_enable,
 			.disable = do_disable,
+			.get_status = do_get_status,
 			.register_event_callback = do_register_event_callback,
 		},
 	};
