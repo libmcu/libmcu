@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#include <errno.h>
 #include <stdint.h>
 
 typedef enum {
@@ -39,6 +40,10 @@ typedef enum {
 
 struct lm_adc;
 
+struct lm_adc_channel_param {
+	uint32_t max_input_mv; /**< Highest input voltage to measure, in mV. */
+};
+
 struct lm_adc_api {
 	int (*enable)(struct lm_adc *self);
 	int (*disable)(struct lm_adc *self);
@@ -47,6 +52,10 @@ struct lm_adc_api {
 	int (*measure)(struct lm_adc *self);
 	int (*read)(struct lm_adc *self, lm_adc_channel_t channel);
 	int (*convert_to_millivolts)(struct lm_adc *self, int value);
+	int (*init_channel_param)(struct lm_adc *self, lm_adc_channel_t channel,
+			const struct lm_adc_channel_param *param);
+	int (*convert_to_millivolts_channel)(struct lm_adc *self,
+			lm_adc_channel_t channel, int value);
 };
 
 static inline int lm_adc_enable(struct lm_adc *self) {
@@ -60,6 +69,29 @@ static inline int lm_adc_disable(struct lm_adc *self) {
 static inline int lm_adc_channel_init(struct lm_adc *self,
 		lm_adc_channel_t channel) {
 	return ((struct lm_adc_api *)self)->init_channel(self, channel);
+}
+
+/**
+ * @brief Configure a channel for the requested input voltage range.
+ *
+ * @param[in] self The ADC instance.
+ * @param[in] channel The channel to configure.
+ * @param[in] param The channel parameters.
+ *
+ * @return Zero on success or a negative error code on failure.
+ * @retval -EINVAL The channel is invalid or param is NULL.
+ * @retval -ERANGE The requested range is too large.
+ * @retval -ENOTSUP The port omits this operation.
+ */
+static inline int lm_adc_channel_init_param(struct lm_adc *self,
+		lm_adc_channel_t channel,
+		const struct lm_adc_channel_param *param) {
+	const struct lm_adc_api *api = (const struct lm_adc_api *)self;
+
+	if (!api->init_channel_param) {
+		return -ENOTSUP;
+	}
+	return api->init_channel_param(self, channel, param);
 }
 
 static inline int lm_adc_calibrate(struct lm_adc *self) {
@@ -76,6 +108,29 @@ static inline int lm_adc_read(struct lm_adc *self, lm_adc_channel_t channel) {
 
 static inline int lm_adc_convert_to_millivolts(struct lm_adc *self, int value) {
 	return ((struct lm_adc_api *)self)->convert_to_millivolts(self, value);
+}
+
+/**
+ * @brief Convert a raw sample using the channel's calibration.
+ *
+ * Channels initialized with lm_adc_channel_init() use the default
+ * calibration established by lm_adc_calibrate().
+ *
+ * @param[in] self The ADC instance.
+ * @param[in] channel The channel from which the sample was read.
+ * @param[in] value The raw ADC sample.
+ *
+ * @return The voltage in millivolts on success, -ENOTSUP if the port omits
+ *         this operation, or another negative error on failure.
+ */
+static inline int lm_adc_convert_channel_to_millivolts(struct lm_adc *self,
+		lm_adc_channel_t channel, int value) {
+	const struct lm_adc_api *api = (const struct lm_adc_api *)self;
+
+	if (!api->convert_to_millivolts_channel) {
+		return -ENOTSUP;
+	}
+	return api->convert_to_millivolts_channel(self, channel, value);
 }
 
 struct lm_adc *lm_adc_create(uint8_t adc_num);

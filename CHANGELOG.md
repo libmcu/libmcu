@@ -1,4 +1,7 @@
 # Changelog
+## Unreleased
+- adc: add optional per-channel input ranges and calibrated millivolt conversion on ESP-IDF
+
 ## v0.3.0 - March 30, 2026
 - mcumgr: add management interface and ESP-IDF port
 - pki: add certificate chain verification support
