@@ -141,10 +141,13 @@ static void del_device(struct lm_i2c_device *dev)
 
 static void delete_device(struct lm_i2c_device *dev)
 {
-	pthread_mutex_lock(&dev->bus->mutex);
+	/* del_device() clears dev including the bus pointer. */
+	struct lm_i2c *bus = dev->bus;
+
+	pthread_mutex_lock(&bus->mutex);
 	i2c_master_bus_rm_device(dev->handle);
 	del_device(dev);
-	pthread_mutex_unlock(&dev->bus->mutex);
+	pthread_mutex_unlock(&bus->mutex);
 }
 
 static struct lm_i2c_device *new_device(struct lm_i2c *bus)
